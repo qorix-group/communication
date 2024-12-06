@@ -82,6 +82,11 @@ Runtime::Runtime(const Configuration& config,
                           ? score::cpp::optional<MessagePassingFacade::AsilSpecificCfg>{Runtime::GetMessagePassingCfg(
                                 QualityType::kASIL_B)}
                           : score::cpp::nullopt},
+      lola_messaging_service_{Runtime::GetMessagePassingCfg(QualityType::kASIL_QM),
+                              Runtime::HasAsilBSupport()
+                                  ? score::cpp::optional<MessagePassingFacade::AsilSpecificCfg>{Runtime::GetMessagePassingCfg(
+                                        QualityType::kASIL_B)}
+                                  : score::cpp::nullopt},
       service_discovery_client_{long_running_threads_},
       tracing_runtime_{std::move(lola_tracing_runtime)},
       rollback_data_{},
@@ -106,8 +111,13 @@ IMessagePassingService& Runtime::GetLolaMessaging() noexcept
     // This instance exposes another sub-API that can change the its state and therefore also the state of instance
     // holder. API callers get the reference and use it in place without leaving the scope, so the reference remains
     // valid.
+#if 1
+    // coverity[autosar_cpp14_a9_3_1_violation]
+    return lola_messaging_service_;
+#else
     // coverity[autosar_cpp14_a9_3_1_violation]
     return lola_messaging_;
+#endif
 }
 
 bool Runtime::HasAsilBSupport() const noexcept

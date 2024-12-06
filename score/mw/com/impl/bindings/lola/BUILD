@@ -129,6 +129,7 @@ cc_library(
         "@score-baselibs//score/concurrency:long_running_threads_container",
         "@score-baselibs//score/memory/shared",
         "//score/mw/com/impl/bindings/lola/messaging",
+        "//score/mw/com/impl/bindings/lola/messaging:messaging2",
         "//score/mw/com/impl/bindings/lola/service_discovery/client:service_discovery_client",
         "//score/mw/com/impl/bindings/lola/tracing:tracing_runtime",
         "@score-baselibs//score/mw/log",
