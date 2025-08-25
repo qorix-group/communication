@@ -872,7 +872,7 @@ cc_gtest_unit_test(
     deps = [
         ":runtime",
         ":runtime_mock",
-        "@score-baselibs//score/analysis/tracing/library/generic_trace_api/mocks:trace_library_mock",
+        "@score-baselibs//score/analysis/tracing/generic_trace_library/mock:trace_library_mock",
         "//score/mw/com/impl/bindings/lola:runtime_mock",
         "//score/mw/com/impl/configuration",
         "//score/mw/com/impl/tracing:tracing_runtime",
@@ -931,7 +931,7 @@ cc_test(
         ":runtime_mock",
         ":service_discovery_mock",
         ":service_element_map",
-        "@score-baselibs//score/analysis/tracing/library/generic_trace_api/mocks:trace_library_mock",
+        "@score-baselibs//score/analysis/tracing/generic_trace_library/mock:trace_library_mock",
         "@score-baselibs//score/language/safecpp/coverage_termination_handler",
         "@score-baselibs//score/os/mocklib:mman_mock",
         "@score-baselibs//score/os/mocklib:stat_mock",
