@@ -1,15 +1,3 @@
-/********************************************************************************
- * Copyright (c) 2025 Contributors to the Eclipse Foundation
- *
- * See the NOTICE file(s) distributed with this work for additional
- * information regarding copyright ownership.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Apache License Version 2.0 which is available at
- * https://www.apache.org/licenses/LICENSE-2.0
- *
- * SPDX-License-Identifier: Apache-2.0
- ********************************************************************************/
 #include <gtest/gtest.h>
 
 #include "score/message_passing/unix_domain/unix_domain_client_factory.h"
@@ -193,7 +181,7 @@ class ServerToClientTestFixtureUnix : public ::testing::Test, public testing::Wi
         };
 
         std::lock_guard<std::mutex> guard(client_mutex_);
-        client_->Start(state_callback, IClientConnection::NotifyCallback{});
+        client_->Start(state_callback);
     }
 
     void WhenClientStartedRestartingFromCallback(std::uint32_t retry_count)
@@ -227,7 +215,7 @@ class ServerToClientTestFixtureUnix : public ::testing::Test, public testing::Wi
         };
 
         std::lock_guard<std::mutex> guard(client_mutex_);
-        client_->Start(state_callback, IClientConnection::NotifyCallback{});
+        client_->Start(state_callback);
     }
 
     void WaitClientConnected()
@@ -318,8 +306,8 @@ class ServerToClientTestFixtureUnix : public ::testing::Test, public testing::Wi
 
     IServerFactory::ServerConfig server_config_{};
     IClientFactory::ClientConfig client_config_{};
-    std::optional<UnixDomainServerFactory> server_factory_;
-    std::optional<UnixDomainClientFactory> client_factory_;
+    score::cpp::optional<UnixDomainServerFactory> server_factory_;
+    score::cpp::optional<UnixDomainClientFactory> client_factory_;
 
     score::cpp::pmr::unique_ptr<IServer> server_;
     std::mutex client_mutex_;

@@ -16,7 +16,6 @@
 #include "score/mw/com/impl/bindings/lola/i_runtime.h"
 #include "score/mw/com/impl/bindings/lola/messaging/message_passing_control.h"
 #include "score/mw/com/impl/bindings/lola/messaging/message_passing_facade.h"
-#include "score/mw/com/impl/bindings/lola/messaging/message_passing_service.h"
 #include "score/mw/com/impl/bindings/lola/rollback_synchronization.h"
 #include "score/mw/com/impl/bindings/lola/service_discovery/client/service_discovery_client.h"
 #include "score/mw/com/impl/bindings/lola/tracing/tracing_runtime.h"
@@ -83,7 +82,7 @@ class Runtime final : public IRuntime
 
     pid_t GetPid() const noexcept override;
 
-    std::uint32_t GetApplicationId() const noexcept override;
+    uid_t GetUid() const noexcept override;
 
   private:
     const Configuration& configuration_;
@@ -92,7 +91,6 @@ class Runtime final : public IRuntime
 
     score::cpp::stop_source lola_messaging_stop_source_;
     MessagePassingFacade lola_messaging_;
-    MessagePassingService lola_messaging_service_;
     ServiceDiscoveryClient service_discovery_client_;
     std::unique_ptr<lola::tracing::TracingRuntime> tracing_runtime_;
     RollbackSynchronization rollback_data_;
@@ -107,9 +105,7 @@ class Runtime final : public IRuntime
                                       const std::unordered_map<QualityType, std::vector<uid_t>>& allowed_user_ids,
                                       const QualityType asil_level);
     pid_t pid_;
-    std::uint32_t application_id_;
-
-    std::uint32_t DetermineApplicationIdentifier(const Configuration& config) const noexcept;
+    uid_t uid_;
 };
 
 }  // namespace score::mw::com::impl::lola

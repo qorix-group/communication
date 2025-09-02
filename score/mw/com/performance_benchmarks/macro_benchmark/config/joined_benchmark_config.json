@@ -1,0 +1,16 @@
+{
+    "common": {
+        "number_of_clients": 20,
+        "asil_level": "QM"
+    },
+    "service_config":
+    {
+        "send_cycle_time_ms": 40
+    },
+    "client_config":
+    {
+        "read_cycle_time_ms": 80,
+        "service_finder_mode": "POLLING",
+        "number_of_samples_to_receive": 100
+    }
+}

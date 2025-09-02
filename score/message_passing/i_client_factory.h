@@ -1,15 +1,3 @@
-/********************************************************************************
- * Copyright (c) 2025 Contributors to the Eclipse Foundation
- *
- * See the NOTICE file(s) distributed with this work for additional
- * information regarding copyright ownership.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Apache License Version 2.0 which is available at
- * https://www.apache.org/licenses/LICENSE-2.0
- *
- * SPDX-License-Identifier: Apache-2.0
- ********************************************************************************/
 #ifndef SCORE_LIB_MESSAGE_PASSING_I_CLIENT_FACTORY_H
 #define SCORE_LIB_MESSAGE_PASSING_I_CLIENT_FACTORY_H
 
@@ -36,22 +24,16 @@ namespace message_passing
 class IClientFactory
 {
   public:
-    // Suppress "AUTOSAR C++14 A9-6-1" rule findings. This rule declares: "Data types used for interfacing with hardware
-    // or conforming to communication protocols shall be trivial, standard-layout and only contain members of types with
-    // defined sizes."
-    // False positive. These are configuration parameters.
     struct ClientConfig
     {
         std::uint32_t max_async_replies;  ///< Maximum number of SendWithCallback messages issued concurrently.
                                           ///< 0 if async replies are not used
         std::uint32_t max_queued_sends;   ///< Maximum number of Send messages queued on client side.
                                           ///< 0 if there is no client side queue
-        // coverity[autosar_cpp14_a9_6_1_violation : FALSE]
-        bool fully_ordered;  ///< true if the message delivery is serialized across delivery types
-                             ///< (send-with-reply and fire-and-forget)
-        // coverity[autosar_cpp14_a9_6_1_violation : FALSE]
-        bool truly_async;  ///< true if Send and SendWithCallback calls always use background thread
-                           ///< for IPC (requires nonzero max_queued_sends)
+        bool fully_ordered;               ///< true if the message delivery is serialized across delivery types
+                                          ///< (send-with-reply and fire-and-forget)
+        bool truly_async;                 ///< true if Send and SendWithCallback calls always use background thread
+                                          ///< for IPC (requires nonzero max_queued_sends)
     };
 
     /// \brief Creates an implementation instance of IClientConnection.
@@ -68,13 +50,7 @@ class IClientFactory
                                                            const ClientConfig& client_config) noexcept = 0;
 
   protected:
-    ~IClientFactory() = default;
-
-    IClientFactory() noexcept = default;
-    IClientFactory(const IClientFactory&) = delete;
-    IClientFactory(IClientFactory&&) = delete;
-    IClientFactory& operator=(const IClientFactory&) = delete;
-    IClientFactory& operator=(IClientFactory&&) = delete;
+    virtual ~IClientFactory() = default;
 };
 
 }  // namespace message_passing

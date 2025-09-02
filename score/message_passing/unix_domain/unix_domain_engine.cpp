@@ -1,15 +1,3 @@
-/********************************************************************************
- * Copyright (c) 2025 Contributors to the Eclipse Foundation
- *
- * See the NOTICE file(s) distributed with this work for additional
- * information regarding copyright ownership.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Apache License Version 2.0 which is available at
- * https://www.apache.org/licenses/LICENSE-2.0
- *
- * SPDX-License-Identifier: Apache-2.0
- ********************************************************************************/
 #include "score/message_passing/unix_domain/unix_domain_engine.h"
 
 #include "score/message_passing/unix_domain/unix_domain_socket_address.h"
@@ -30,13 +18,12 @@ UnixDomainEngine::UnixDomainEngine(score::cpp::pmr::memory_resource* memory_reso
       posix_receive_buffer_{memory_resource}
 {
     os_resources_.unistd->pipe(pipe_fds_.data());
-    std::lock_guard acquire{thread_mutex_};  // postpone thread start till we assign thread_
-    thread_ = std::thread([this]() noexcept {
-        {
-            std::lock_guard release{thread_mutex_};
-        }
+    std::promise<void> started;  // TODO: avoid promises, they may allocate
+    thread_ = std::thread([this, future = started.get_future()]() noexcept {
+        future.wait();
         RunOnThread();
     });
+    started.set_value();
 }
 
 UnixDomainEngine::~UnixDomainEngine() noexcept
@@ -48,7 +35,7 @@ UnixDomainEngine::~UnixDomainEngine() noexcept
 }
 
 score::cpp::expected<std::int32_t, score::os::Error> UnixDomainEngine::TryOpenClientConnection(
-    std::string_view identifier) noexcept
+    score::cpp::string_view identifier) noexcept
 {
     const auto fd_expected = os_resources_.socket->socket(score::os::Socket::Domain::kUnix, SOCK_STREAM, 0);
     if (!fd_expected.has_value())
@@ -155,7 +142,7 @@ void UnixDomainEngine::CleanUpOwner(const void* const owner) noexcept
     }
     else
     {
-        std::promise<void> done;  // TODO: maybe switch to NonAllocatingFuture
+        std::promise<void> done;  // TODO: avoid promise
         detail::TimedCommandQueue::Entry cleanup_command;
         timer_queue_.RegisterImmediateEntry(
             cleanup_command,

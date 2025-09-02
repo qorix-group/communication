@@ -1,18 +1,4 @@
-/********************************************************************************
- * Copyright (c) 2025 Contributors to the Eclipse Foundation
- *
- * See the NOTICE file(s) distributed with this work for additional
- * information regarding copyright ownership.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Apache License Version 2.0 which is available at
- * https://www.apache.org/licenses/LICENSE-2.0
- *
- * SPDX-License-Identifier: Apache-2.0
- ********************************************************************************/
 #include "score/message_passing/timed_command_queue.h"
-
-#include <score/utility.hpp>
 
 namespace score
 {
@@ -36,12 +22,12 @@ void TimedCommandQueue::RegisterTimedEntry(Entry& entry,
     entry.callback_ = std::move(callback);
 
     std::lock_guard<std::mutex> guard(mutex_);
-    score::cpp::ignore = queue_.insert(std::find_if(queue_.begin(),
-                                             queue_.end(),
-                                             [until](const Entry& queue_entry) {
-                                                 return until < queue_entry.until_;
-                                             }),
-                                entry);
+    queue_.insert(std::find_if(queue_.begin(),
+                               queue_.end(),
+                               [until](const Entry& queue_entry) {
+                                   return until < queue_entry.until_;
+                               }),
+                  entry);
 }
 
 TimedCommandQueue::TimePoint TimedCommandQueue::ProcessQueue(const TimePoint now) noexcept

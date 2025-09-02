@@ -1,19 +1,8 @@
-/********************************************************************************
- * Copyright (c) 2025 Contributors to the Eclipse Foundation
- *
- * See the NOTICE file(s) distributed with this work for additional
- * information regarding copyright ownership.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Apache License Version 2.0 which is available at
- * https://www.apache.org/licenses/LICENSE-2.0
- *
- * SPDX-License-Identifier: Apache-2.0
- ********************************************************************************/
 #ifndef SCORE_LIB_MESSAGE_PASSING_UNIX_DOMAIN_UNIX_DOMAIN_ENGINE_H
 #define SCORE_LIB_MESSAGE_PASSING_UNIX_DOMAIN_UNIX_DOMAIN_ENGINE_H
 
 #include <score/callback.hpp>
+#include <score/deque.hpp>
 #include <score/memory.hpp>
 #include <score/span.hpp>
 #include <score/vector.hpp>
@@ -25,7 +14,6 @@
 #include "score/os/unistd.h"
 
 #include <mutex>
-#include <string_view>
 #include <thread>
 
 #include <poll.h>
@@ -54,7 +42,7 @@ class UnixDomainEngine final : public ISharedResourceEngine
     };
 
     UnixDomainEngine(score::cpp::pmr::memory_resource* memory_resource) noexcept;
-    ~UnixDomainEngine() noexcept override;
+    ~UnixDomainEngine() noexcept;
 
     UnixDomainEngine(const UnixDomainEngine&) = delete;
     UnixDomainEngine& operator=(const UnixDomainEngine&) = delete;
@@ -77,7 +65,7 @@ class UnixDomainEngine final : public ISharedResourceEngine
 
     using FinalizeOwnerCallback = score::cpp::callback<void() /* noexcept */>;
 
-    score::cpp::expected<std::int32_t, score::os::Error> TryOpenClientConnection(std::string_view identifier) noexcept override;
+    score::cpp::expected<std::int32_t, score::os::Error> TryOpenClientConnection(score::cpp::string_view identifier) noexcept override;
 
     void CloseClientConnection(std::int32_t client_fd) noexcept override;
 
@@ -131,7 +119,6 @@ class UnixDomainEngine final : public ISharedResourceEngine
     std::array<std::int32_t, 2> pipe_fds_;
     bool quit_flag_;
     std::thread thread_;
-    std::mutex thread_mutex_;
     ISharedResourceEngine::PosixEndpointEntry command_endpoint_;
 
     score::cpp::pmr::vector<pollfd> poll_fds_;

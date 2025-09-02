@@ -1,0 +1,90 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "service_app_config_schema",
+  "description": "LoLa benchmarking joined configuration. This is the complete LoLa benchmark configuration, provided by the user. Specific configurations for the client apps and service apps making up the entire benchmark are generated from this joined configuration.",
+  "type": "object",
+  "required": [
+    "common",
+    "service_config",
+    "client_config"
+  ],
+  "properties": {
+    "common": {
+      "type": "object",
+      "description": "Common benchmark settings, which influence service AND client application parts of the benchmark",
+      "required": [
+        "number_of_clients",
+        "asil_level"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "number_of_clients": {
+          "type": "integer",
+          "description": "How many client activities shall be spawned in the benchmark. This is a common setting, as the service app needs this number during runtime, to know, when ALL clients are done with reception and it needs it in its mw_com_config.json because the <numberOfSampleSlots> are calculated based on the number. Client app needs it, as it has to spawn the given number of client threads."
+        },
+        "asil_level": {
+          "description": "Configures the ASIL level of the communication. The chosen level determines the ASIL level of service and client app.",
+          "type": "string",
+          "enum": [
+            "QM",
+            "B"
+          ]
+        }
+      }
+    },
+    "service_config": {
+      "type": "object",
+      "description": "Service app specific benchmark settings.",
+      "required": [
+        "send_cycle_time_ms"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "send_cycle_time_ms": {
+          "description": "Time between sample sends in milliseconds.",
+          "type": "integer",
+          "enum": [
+            40,
+            80,
+            1000
+          ]
+        }
+      }
+    },
+    "client_config": {
+      "type": "object",
+      "description": "Client app specific benchmark settings.",
+      "required": [
+        "read_cycle_time_ms",
+        "service_finder_mode",
+        "number_of_samples_to_receive"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "read_cycle_time_ms": {
+          "description": "Time between sample reads (polling) in milliseconds. A value of 0 means, that the client installs a receive-handler and reads 'event-based'.",
+          "type": "integer",
+          "enum": [
+            0,
+            40,
+            80,
+            100
+          ]
+        },
+        "service_finder_mode": {
+          "description": "Configures the client app to find the service in either POLLING or ASYNC mode. Currently ASYNC mode is not implemented.",
+          "type": "string",
+          "enum": [
+            "POLLING",
+            "ASYNC"
+          ]
+        },
+        "number_of_samples_to_receive": {
+          "description": "Total number of samples that each of the spawned clients will try to acquire via GetNewSamples(). After this the client will unsubscribe and shut down.",
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    }
+  }
+}

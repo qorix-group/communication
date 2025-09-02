@@ -1,0 +1,24 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "service_app_config_schema",
+    "description": "LoLa benchmarking service app configuration.",
+    "type": "object",
+    "required": [
+        "number_of_clients",
+        "send_cycle_time_ms"
+    ],
+    "properties": {
+        "number_of_clients" : {
+            "description": "Number of concurrent event consumption activities, which the client app will spawn in multiple threads. The service app needs to know this information, so it can wait for the correct amount of clients, before shutting down.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20
+        },
+        "send_cycle_time_ms": {
+            "description": "Time between sample sends in milliseconds.",
+            "type": "integer",
+            "enum": [40, 80, 1000]
+
+        }
+    }
+}

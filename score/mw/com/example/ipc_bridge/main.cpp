@@ -11,6 +11,7 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 #include "assert_handler.h"
+#include "score/mw/com/impl/instance_specifier.h"
 #include "sample_sender_receiver.h"
 
 #include <boost/program_options.hpp>
@@ -71,7 +72,7 @@ Params ParseCommandLineArguments(const int argc, const char** argv)
     if (args.count("help") > 0U)
     {
         std::cerr << options << std::endl;
-        std::exit(EXIT_SUCCESS);
+        throw std::runtime_error("Could not parse command line arguments");
     }
 
     return {GetValueIfProvided<std::string>(args, "mode"),

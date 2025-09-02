@@ -1,15 +1,3 @@
-/********************************************************************************
- * Copyright (c) 2025 Contributors to the Eclipse Foundation
- *
- * See the NOTICE file(s) distributed with this work for additional
- * information regarding copyright ownership.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Apache License Version 2.0 which is available at
- * https://www.apache.org/licenses/LICENSE-2.0
- *
- * SPDX-License-Identifier: Apache-2.0
- ********************************************************************************/
 #ifndef SCORE_LIB_MESSAGE_PASSING_CLIENT_CONNECTION_H
 #define SCORE_LIB_MESSAGE_PASSING_CLIENT_CONNECTION_H
 
@@ -17,13 +5,12 @@
 #include "score/message_passing/i_client_factory.h"
 #include "score/message_passing/i_shared_resource_engine.h"
 
+#include <score/deque.hpp>
 #include <score/string.hpp>
 #include <score/vector.hpp>
 
 #include <atomic>
 #include <condition_variable>
-#include <mutex>
-#include <optional>
 
 namespace score
 {
@@ -38,12 +25,7 @@ class ClientConnection final : public IClientConnection
     ClientConnection(std::shared_ptr<ISharedResourceEngine> engine,
                      const ServiceProtocolConfig& protocol_config,
                      const IClientFactory::ClientConfig& client_config) noexcept;
-    ~ClientConnection() noexcept override;
-
-    ClientConnection(const ClientConnection&) = delete;
-    ClientConnection(ClientConnection&&) = delete;
-    ClientConnection& operator=(const ClientConnection&) = delete;
-    ClientConnection& operator=(ClientConnection&&) = delete;
+    ~ClientConnection() noexcept;
 
     score::cpp::expected_blank<score::os::Error> Send(score::cpp::span<const std::uint8_t> message) noexcept override;
 
@@ -58,7 +40,8 @@ class ClientConnection final : public IClientConnection
 
     StopReason GetStopReason() const noexcept override;
 
-    void Start(StateCallback state_callback, NotifyCallback notify_callback) noexcept override;
+    void Start(StateCallback state_callback = StateCallback{},
+               NotifyCallback notify_callback = NotifyCallback{}) noexcept override;
 
     void Stop() noexcept override;
 
@@ -119,10 +102,7 @@ class ClientConnection final : public IClientConnection
     {
       public:
         using allocator_type = score::cpp::pmr::polymorphic_allocator<SendCommand>;
-        explicit SendCommand(const allocator_type& allocator)
-            : score::containers::intrusive_list_element<>{}, message(allocator), callback{}
-        {
-        }
+        SendCommand(const allocator_type& allocator) : message(allocator) {}
 
         score::cpp::pmr::vector<std::uint8_t> message;
         ReplyCallback callback;
@@ -131,7 +111,7 @@ class ClientConnection final : public IClientConnection
     score::containers::intrusive_list<SendCommand> send_pool_;
     score::containers::intrusive_list<SendCommand> send_queue_;
 
-    std::optional<ReplyCallback> waiting_for_reply_;
+    score::cpp::optional<ReplyCallback> waiting_for_reply_;
 
     ISharedResourceEngine::CommandQueueEntry connection_timer_;
     ISharedResourceEngine::CommandQueueEntry disconnection_command_;
