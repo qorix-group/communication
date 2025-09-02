@@ -17,12 +17,11 @@
 
 namespace score::mw::com::impl
 {
+
 /**
- * \brief Error codes for the mw::com API
- * \details Enum values map 1:1 to the Communication Management error codes.
+ * @brief error codes of ara::com API as standardized
+ *
  * \requirement SWS_CM_10432
- * \public
- * \threadsafe
  */
 enum class ComErrc : score::result::ErrorCode
 {
@@ -60,11 +59,9 @@ enum class ComErrc : score::result::ErrorCode
 };
 
 /**
- * \brief Error domain for mw::com (CommunicationManagement)
- * \details This class implements the ErrorDomain interface for the mw::com API.
+ * @brief Error domain for ara::com (CommunicationManagement)
+ *
  * \requirement SWS_CM_11329
- * \public
- * \threadsafe
  */
 // This switch-case statement implements a "mapping table". Length of the mapping table does not add complexity!
 class ComErrorDomain final : public score::result::ErrorDomain
@@ -80,14 +77,6 @@ class ComErrorDomain final : public score::result::ErrorDomain
     /// \todo Gcc compiler bug leads to a compiler warning if override is not added, even if final keyword is there
     /// (https://gcc.gnu.org/bugzilla/show_bug.cgi?id=78010). When bug is fixed, remove the override keyword from the
     /// MessageFor function signature and the AUTOSAR.MEMB.VIRTUAL.SPEC klocwork suppression.
-    /**
-     * \brief Translates an error code into a human readable message
-     * \details This function is required by the std::error_domain interface
-     * \param code The error code to translates
-     * \return returns a string view to the human readable message
-     * \public
-     * \threadsafe
-     */
     std::string_view MessageFor(const score::result::ErrorCode& code) const noexcept override final
     // Suppress "AUTOSAR C++14 A10-3-1" rule finding: Virtual function declaration shall contain exactly one of the
     // three specifiers: (1) virtual, (2) override, (3) final.
@@ -201,7 +190,6 @@ class ComErrorDomain final : public score::result::ErrorDomain
         }
     }
 };
-
 score::result::Error MakeError(const ComErrc code, const std::string_view message = "");
 
 }  // namespace score::mw::com::impl

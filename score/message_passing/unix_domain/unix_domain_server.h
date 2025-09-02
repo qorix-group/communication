@@ -1,15 +1,3 @@
-/********************************************************************************
- * Copyright (c) 2025 Contributors to the Eclipse Foundation
- *
- * See the NOTICE file(s) distributed with this work for additional
- * information regarding copyright ownership.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Apache License Version 2.0 which is available at
- * https://www.apache.org/licenses/LICENSE-2.0
- *
- * SPDX-License-Identifier: Apache-2.0
- ********************************************************************************/
 #ifndef SCORE_LIB_MESSAGE_PASSING_UNIX_DOMAIN_UNIX_DOMAIN_SERVER_H
 #define SCORE_LIB_MESSAGE_PASSING_UNIX_DOMAIN_UNIX_DOMAIN_SERVER_H
 
@@ -20,8 +8,7 @@
 #include "score/message_passing/unix_domain/unix_domain_server_factory.h"
 
 #include <score/string.hpp>
-
-#include <optional>
+#include <score/unordered_map.hpp>
 
 namespace score
 {
@@ -54,7 +41,7 @@ class UnixDomainServer final : public IServer
 
       private:
         UnixDomainServer& server_;
-        std::optional<UserData> user_data_;
+        score::cpp::optional<UserData> user_data_;
         ClientIdentity client_identity_;
         std::int32_t fd_;
         ISharedResourceEngine::PosixEndpointEntry endpoint_;
@@ -64,7 +51,7 @@ class UnixDomainServer final : public IServer
     UnixDomainServer(std::shared_ptr<UnixDomainEngine> engine,
                      const ServiceProtocolConfig& protocol_config,
                      const IServerFactory::ServerConfig& server_config) noexcept;
-    ~UnixDomainServer() noexcept override;
+    ~UnixDomainServer() noexcept;
 
     score::cpp::expected_blank<score::os::Error> StartListening(
         ConnectCallback connect_callback,

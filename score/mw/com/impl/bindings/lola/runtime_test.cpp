@@ -376,5 +376,10 @@ TEST_F(RuntimeFixture, EnsureCorrectPidReturned)
     EXPECT_EQ(unit_->GetPid(), kOurPid);
 }
 
+TEST_F(RuntimeFixture, EnsureCorrectUidReturned)
+{
+    EXPECT_EQ(unit_->GetUid(), kOurUid);
+}
+
 }  // namespace
 }  // namespace score::mw::com::impl::lola

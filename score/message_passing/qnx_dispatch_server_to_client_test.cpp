@@ -1,15 +1,3 @@
-/********************************************************************************
- * Copyright (c) 2025 Contributors to the Eclipse Foundation
- *
- * See the NOTICE file(s) distributed with this work for additional
- * information regarding copyright ownership.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Apache License Version 2.0 which is available at
- * https://www.apache.org/licenses/LICENSE-2.0
- *
- * SPDX-License-Identifier: Apache-2.0
- ********************************************************************************/
 #include <gtest/gtest.h>
 
 #include "score/message_passing/qnx_dispatch/qnx_dispatch_client_factory.h"
@@ -193,7 +181,7 @@ class ServerToClientTestFixtureQnx : public ::testing::Test, public testing::Wit
         };
 
         std::lock_guard<std::mutex> guard(client_mutex_);
-        client_->Start(state_callback, IClientConnection::NotifyCallback{});
+        client_->Start(state_callback);
     }
 
     void WhenClientStartedRestartingFromCallback(std::uint32_t retry_count)
@@ -227,7 +215,7 @@ class ServerToClientTestFixtureQnx : public ::testing::Test, public testing::Wit
         };
 
         std::lock_guard<std::mutex> guard(client_mutex_);
-        client_->Start(state_callback, IClientConnection::NotifyCallback{});
+        client_->Start(state_callback);
     }
 
     void WaitClientConnected()
@@ -318,8 +306,8 @@ class ServerToClientTestFixtureQnx : public ::testing::Test, public testing::Wit
 
     IServerFactory::ServerConfig server_config_{};
     IClientFactory::ClientConfig client_config_{};
-    std::optional<QnxDispatchServerFactory> server_factory_;
-    std::optional<QnxDispatchClientFactory> client_factory_;
+    score::cpp::optional<QnxDispatchServerFactory> server_factory_;
+    score::cpp::optional<QnxDispatchClientFactory> client_factory_;
 
     score::cpp::pmr::unique_ptr<IServer> server_;
     std::mutex client_mutex_;

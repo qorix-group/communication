@@ -1,15 +1,3 @@
-# *******************************************************************************
-# Copyright (c) 2025 Contributors to the Eclipse Foundation
-#
-# See the NOTICE file(s) distributed with this work for additional
-# information regarding copyright ownership.
-#
-# This program and the accompanying materials are made available under the
-# terms of the Apache License Version 2.0 which is available at
-# https://www.apache.org/licenses/LICENSE-2.0
-#
-# SPDX-License-Identifier: Apache-2.0
-# *******************************************************************************
 import sys
 import json
 import os
@@ -52,7 +40,7 @@ def calculate_slot_numbers(joined_config_json: dict):
     if (read_cycle_time_ms == 0):
         number_of_sample_slots = reader_count
         max_samples = 1
-    else:
+    else :
         sender_advantage = read_cycle_time_ms / send_cycle_time_ms
         max_samples = math.ceil(sender_advantage)
         number_of_sample_slots = reader_count * max_samples
@@ -73,17 +61,13 @@ def create_client_benchmark_config(joined_config_json: dict, max_samples: int):
                 client benchmark config in form of a dict suitable to generate the expected json file from.
     '''
 
-    client_config: dict = joined_config_json["client_config"]
     client_benchmark_config = dict()
     client_benchmark_config["number_of_clients"] = joined_config_json["common"]["number_of_clients"]
-    client_benchmark_config["read_cycle_time_ms"] = client_config["read_cycle_time_ms"]
+    client_benchmark_config["read_cycle_time_ms"] = joined_config_json["client_config"]["read_cycle_time_ms"]
     client_benchmark_config["max_num_samples"] = max_samples
-    client_benchmark_config["service_finder_mode"] = client_config["service_finder_mode"]
-
-    run_time_limit = client_config.get("run_time_limit")
-    if run_time_limit is not None:
-        client_benchmark_config["run_time_limit"] = run_time_limit
-
+    client_benchmark_config["service_finder_mode"] = joined_config_json["client_config"]["service_finder_mode"]
+    client_benchmark_config["number_of_samples_to_receive"] = joined_config_json["client_config"][
+        "number_of_samples_to_receive"]
     return client_benchmark_config
 
 

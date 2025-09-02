@@ -1,0 +1,8 @@
+{
+    "$schema": "client_config_schema.json",
+    "number_of_clients": 20,
+    "read_cycle_time_ms": 40,
+    "max_num_samples": 3,
+    "service_finder_mode": "POLLING",
+    "number_of_samples_to_receive": 1000
+}

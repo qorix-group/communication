@@ -589,9 +589,9 @@ class ProxyUidPidRegistrationFixture : public ProxyMockedMemoryFixture
   protected:
     ProxyUidPidRegistrationFixture() noexcept {}
 
-    void AddApplicationIdPidMapping(std::uint32_t application_id, pid_t pid) noexcept
+    void AddUidPidMapping(uid_t uid, pid_t pid) noexcept
     {
-        auto result = fake_data_.data_control->application_id_pid_mapping_.RegisterPid(application_id, pid);
+        auto result = fake_data_.data_control->uid_pid_mapping_.RegisterPid(uid, pid);
         ASSERT_TRUE(result.has_value());
         ASSERT_EQ(result.value(), pid);
     }
@@ -604,9 +604,6 @@ TEST_F(ProxyUidPidRegistrationFixture, NoOutdatedPidNotificationWillBeSent)
 {
     // Given a fake Skeleton which sets up ServiceDataControl with an initial empty UidPidMapping
 
-    // Expect that GetApplicationId is called once, but we don't care about the return value for this test
-    EXPECT_CALL(binding_runtime_, GetApplicationId()).WillOnce(Return(123));
-
     // we expect that IMessagePassingService::NotifyOutdatedNodeId() will NOT get called!
     EXPECT_CALL(*mock_service_, NotifyOutdatedNodeId(_, _, _)).Times(0);
 
@@ -617,16 +614,16 @@ TEST_F(ProxyUidPidRegistrationFixture, NoOutdatedPidNotificationWillBeSent)
 
 TEST_F(ProxyUidPidRegistrationFixture, OutdatedPidNotificationWillBeSent)
 {
-    std::uint32_t our_application_id{22};
+    uid_t our_uid{22};
     pid_t old_pid{1};
     pid_t new_pid{2};
 
     // Given a fake Skeleton which sets up ServiceDataControl with an UidPidMapping, which contains an "old pid" for
     // our uid
-    AddApplicationIdPidMapping(our_application_id, old_pid);
+    AddUidPidMapping(our_uid, old_pid);
 
-    // expect, that the LoLa runtime returns our application id (simulating fallback to uid) and new pid
-    EXPECT_CALL(binding_runtime_, GetApplicationId()).WillOnce(Return(our_application_id));
+    // expect, that the Loa runtime return our_uid and new_pid, when asked for current uid/pid
+    EXPECT_CALL(binding_runtime_, GetUid()).WillRepeatedly(Return(our_uid));
     EXPECT_CALL(binding_runtime_, GetPid()).WillRepeatedly(Return(new_pid));
 
     // we expect that IMessagePassingService::NotifyOutdatedNodeId() will get called to notify about an outdated pid!
@@ -645,8 +642,7 @@ class ProxyTransactionLogRollbackFixture : public ProxyMockedMemoryFixture
         InitialiseDummySkeletonEvent(kDummyElementFqId, SkeletonEventProperties{kMaxNumSlots, kMaxSubscribers, true});
     }
 
-    static constexpr std::uint32_t kDummyApplicationId{665U};
-    TransactionLogId transaction_log_id_{kDummyApplicationId};
+    TransactionLogId transaction_log_id_{kDummyUid};
     const InstanceIdentifier instance_identifier_{
         make_InstanceIdentifier(kServiceInstanceDeployment, kServiceTypeDeployment)};
 
@@ -661,8 +657,6 @@ TEST_F(ProxyTransactionLogRollbackFixture, RollbackWillBeCalledOnExistingTransac
     InsertProxyTransactionLogWithValidTransactions(
         *event_control_, subscription_max_sample_count_, transaction_log_id_);
     EXPECT_TRUE(IsProxyTransactionLogIdRegistered(*event_control_, transaction_log_id_));
-
-    EXPECT_CALL(binding_runtime_, GetApplicationId()).WillOnce(Return(transaction_log_id_));
 
     // When creating a proxy
     InitialiseProxyWithCreate(instance_identifier_);
@@ -704,8 +698,6 @@ TEST_F(ProxyTransactionLogRollbackFixture, FailureInRollingBackExistingTransacti
     InsertProxyTransactionLogWithInvalidTransactions(
         *event_control_, subscription_max_sample_count_, transaction_log_id_);
     EXPECT_TRUE(IsProxyTransactionLogIdRegistered(*event_control_, transaction_log_id_));
-
-    EXPECT_CALL(binding_runtime_, GetApplicationId()).WillOnce(Return(transaction_log_id_));
 
     // Given a valid deployment information
 

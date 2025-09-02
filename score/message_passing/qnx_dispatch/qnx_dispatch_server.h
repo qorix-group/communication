@@ -1,15 +1,3 @@
-/********************************************************************************
- * Copyright (c) 2025 Contributors to the Eclipse Foundation
- *
- * See the NOTICE file(s) distributed with this work for additional
- * information regarding copyright ownership.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Apache License Version 2.0 which is available at
- * https://www.apache.org/licenses/LICENSE-2.0
- *
- * SPDX-License-Identifier: Apache-2.0
- ********************************************************************************/
 #ifndef SCORE_LIB_MESSAGE_PASSING_QNX_DISPATCH_QNX_DISPATCH_SERVER_H
 #define SCORE_LIB_MESSAGE_PASSING_QNX_DISPATCH_QNX_DISPATCH_SERVER_H
 
@@ -20,17 +8,21 @@
 #include "score/message_passing/qnx_dispatch/qnx_dispatch_server_factory.h"
 
 #include <score/string.hpp>
+#include <score/unordered_map.hpp>
 
-#include <optional>
+// TODO: remove
+#include <deque>
 
-namespace score::message_passing::detail
+namespace score
+{
+namespace message_passing
+{
+namespace detail
 {
 
-// NOLINTNEXTLINE(score-struct-usage-compliance): see QnxDispatchEngine::ResourceManagerServer
 class QnxDispatchServer final : public IServer, private QnxDispatchEngine::ResourceManagerServer
 {
   public:
-    // NOLINTNEXTLINE(score-struct-usage-compliance): see QnxDispatchEngine::ResourceManagerConnection
     class ServerConnection final : public IServerConnection, public QnxDispatchEngine::ResourceManagerConnection
     {
       public:
@@ -51,23 +43,12 @@ class QnxDispatchServer final : public IServer, private QnxDispatchEngine::Resou
         void ProcessDisconnect() noexcept override;
 
         // Server methods
-        void AcceptConnection(UserData&& data, score::cpp::pmr::unique_ptr<ServerConnection>&& self) noexcept;
+        void ApproveConnection(UserData&& data, score::cpp::pmr::unique_ptr<ServerConnection>&& self) noexcept;
 
         ~ServerConnection() noexcept;
 
-        ServerConnection(const ServerConnection&) = delete;
-        ServerConnection(ServerConnection&&) = delete;
-        ServerConnection& operator=(const ServerConnection&) = delete;
-        ServerConnection& operator=(ServerConnection&&) = delete;
-
       private:
-        QnxDispatchServer& GetQnxDispatchServer() noexcept
-        {
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast) by API design
-            return static_cast<QnxDispatchServer&>(GetServer());
-        }
-
-        std::optional<UserData> user_data_;
+        score::cpp::optional<UserData> user_data_;
         ClientIdentity client_identity_;
 
         score::cpp::pmr::unique_ptr<ServerConnection> self_;
@@ -76,10 +57,7 @@ class QnxDispatchServer final : public IServer, private QnxDispatchEngine::Resou
         {
           public:
             using allocator_type = score::cpp::pmr::polymorphic_allocator<SendMessage>;
-            explicit SendMessage(const allocator_type& allocator)
-                : score::containers::intrusive_list_element<>{}, message{allocator}, code{}
-            {
-            }
+            SendMessage(const allocator_type& allocator) : message(allocator) {}
 
             score::cpp::pmr::vector<std::uint8_t> message;
             std::uint8_t code;
@@ -93,17 +71,13 @@ class QnxDispatchServer final : public IServer, private QnxDispatchEngine::Resou
     QnxDispatchServer(std::shared_ptr<QnxDispatchEngine> engine,
                       const ServiceProtocolConfig& protocol_config,
                       const IServerFactory::ServerConfig& server_config) noexcept;
-    ~QnxDispatchServer() noexcept override;
+    ~QnxDispatchServer() noexcept;
 
-    QnxDispatchServer(const QnxDispatchServer&) = delete;
-    QnxDispatchServer(QnxDispatchServer&&) = delete;
-    QnxDispatchServer& operator=(const QnxDispatchServer&) = delete;
-    QnxDispatchServer& operator=(QnxDispatchServer&&) = delete;
-
-    score::cpp::expected_blank<score::os::Error> StartListening(ConnectCallback connect_callback,
-                                                       DisconnectCallback disconnect_callback,
-                                                       MessageCallback sent_callback,
-                                                       MessageCallback sent_with_reply_callback) noexcept override;
+    score::cpp::expected_blank<score::os::Error> StartListening(
+        ConnectCallback connect_callback,
+        DisconnectCallback disconnect_callback = DisconnectCallback{},
+        MessageCallback sent_callback = MessageCallback{},
+        MessageCallback sent_with_reply_callback = MessageCallback{}) noexcept override;
 
     void StopListening() noexcept override;
 
@@ -125,6 +99,8 @@ class QnxDispatchServer final : public IServer, private QnxDispatchEngine::Resou
     ISharedResourceEngine::PosixEndpointEntry listener_endpoint_;
 };
 
-}  // namespace score::message_passing::detail
+}  // namespace detail
+}  // namespace message_passing
+}  // namespace score
 
 #endif  // SCORE_LIB_MESSAGE_PASSING_QNX_DISPATCH_QNX_DISPATCH_SERVER_H

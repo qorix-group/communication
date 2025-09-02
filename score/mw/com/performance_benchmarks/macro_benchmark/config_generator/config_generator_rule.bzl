@@ -1,15 +1,3 @@
-# *******************************************************************************
-# Copyright (c) 2025 Contributors to the Eclipse Foundation
-#
-# See the NOTICE file(s) distributed with this work for additional
-# information regarding copyright ownership.
-#
-# This program and the accompanying materials are made available under the
-# terms of the Apache License Version 2.0 which is available at
-# https://www.apache.org/licenses/LICENSE-2.0
-#
-# SPDX-License-Identifier: Apache-2.0
-# *******************************************************************************
 def _make_configs(ctx):
     config_json = ctx.file.config_json_path
     mw_com_config = ctx.file.mw_com_config_path

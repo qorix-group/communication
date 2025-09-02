@@ -42,7 +42,7 @@ class SkeletonFieldBase;
 /// \brief Defines the processing modes for the service implementation side.
 ///
 /// \requirement SWS_CM_00301
-/// \public
+///
 enum class MethodCallProcessingMode : std::uint8_t
 {
     kPoll,

@@ -38,8 +38,7 @@ ProxyEventCommon::ProxyEventCommon(Proxy& parent, const ElementFqId element_fq_i
       parent_{parent},
       event_fq_id_{element_fq_id},
       event_name_{event_name},
-      // The transaction log is identified by the application's unique identifier.
-      transaction_log_id_{static_cast<TransactionLogId>(GetBindingRuntime().GetApplicationId())},
+      transaction_log_id_{GetBindingRuntime().GetUid()},
       event_control_{parent_.GetEventControl(event_fq_id_)},
       subscription_event_state_machine_{parent_.GetQualityType(),
                                         event_fq_id_,
