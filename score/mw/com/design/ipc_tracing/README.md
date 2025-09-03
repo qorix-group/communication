@@ -154,7 +154,7 @@ constructor calls of the binding independent classes for events/fields at proxy 
 skeleton side binding specific information is required for setting `SkeletonEventTracingData::trace_context_id`.
 So instead these classes create those `tracing_data_` members within their constructor in the following way:
 
-![SEQUENCE_API_TRACE_SETUP](https://www.plantuml.com/plantuml/proxy?src=https://raw.githubusercontent.com/swh/safe-posix-platform/score/mw/com/design/ipc_tracing/sequence_API_trace_setup.puml)
+<img alt="SEQUENCE_API_TRACE_SETUP" src="https://www.plantuml.com/plantuml/proxy?src=https://raw.githubusercontent.com/eclipse-score/communication/refs/heads/main/score/mw/com/design/ipc_tracing/sequence_api_trace_setup.puml">
 
 As mentioned above the `SkeletonEventTracingData` has (opposed to `ProxyEventTracingData`) an additional member
 `trace_context_id`, which has to be set up, because only the skeleton side tracing deals with the asynchronous trace
