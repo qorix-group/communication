@@ -11,15 +11,12 @@
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
 
-load("@trlc//:trlc.bzl", "trlc_requirements")
+# Carry over from Eclipse S-Core including slight modifications:
+# https://github.com/eclipse-score/docs-as-code/tree/v0.4.0/src/extensions/score_source_code_linker
 
-trlc_requirements(
-    name = "assumed_system_requirements",
-    srcs = [
-        "assumed_system_requirements.trlc",
-    ],
-    spec = [
-        "@//third_party/traceability/config/trlc/score_model:requirement_metamodel",
-    ],
+py_binary(
+    name = "parsed_source_files_for_source_code_linker",
+    srcs = ["parse_source_files.py"],
+    main = "parse_source_files.py",
     visibility = ["//visibility:public"],
 )
