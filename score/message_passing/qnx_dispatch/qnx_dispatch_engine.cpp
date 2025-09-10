@@ -25,12 +25,33 @@ namespace
 constexpr std::int32_t kTimerPulseCode = _PULSE_CODE_MINAVAIL;
 constexpr std::int32_t kEventPulseCode = _PULSE_CODE_MINAVAIL + 1;
 
+template <typename T>
+T ValueOrTerminate(const score::cpp::expected<T, score::os::Error> expected, const std::string_view error_text)
+{
+    if (!expected.has_value())
+    {
+        std::cerr << "QnxDispatchEngine: " << error_text << ": " << expected.error().ToString() << std::endl;
+        std::terminate();
+    }
+    return expected.value();
+}
+
+template <typename T>
+void IfUnexpectedTerminate(const score::cpp::expected<T, score::os::Error> expected, const std::string_view error_text)
+{
+    if (!expected.has_value())
+    {
+        std::cerr << "QnxDispatchEngine: " << error_text << ": " << expected.error().ToString() << std::endl;
+        std::terminate();
+    }
+}
+
 }  // namespace
 
-QnxDispatchEngine::QnxDispatchEngine(score::cpp::pmr::memory_resource* memory_resource) noexcept
+QnxDispatchEngine::QnxDispatchEngine(score::cpp::pmr::memory_resource* memory_resource, OsResources os_resources) noexcept
     : ISharedResourceEngine{},
       memory_resource_{memory_resource},
-      os_resources_{GetDefaultOsResources(memory_resource)},
+      os_resources_{std::move(os_resources)},
       quit_flag_{false},
       thread_{},
       thread_mutex_{},
@@ -46,32 +67,19 @@ QnxDispatchEngine::QnxDispatchEngine(score::cpp::pmr::memory_resource* memory_re
       connect_funcs_{},
       io_funcs_{}
 {
-    // NOLINTNEXTLINE(score-banned-function) implementing FFI wrapper
-    const auto dpp_expected = os_resources_.dispatch->dispatch_create_channel(-1, 0);
-    if (!dpp_expected.has_value())
-    {
-        std::cerr << "QnxDispatchEngine: Unable to allocate dispatch handle." << std::endl;
-        std::terminate();
-    }
-    dispatch_pointer_ = dpp_expected.value();
-
-    if (!os_resources_.dispatch->pulse_attach(dispatch_pointer_, 0, kTimerPulseCode, &TimerPulseCallback, this)
-             .has_value())
-    {
-        std::cerr << "QnxDispatchEngine: Failed to attach pulse code " << kTimerPulseCode << std::endl;
-        std::terminate();
-    }
-    if (!os_resources_.dispatch->pulse_attach(dispatch_pointer_, 0, kEventPulseCode, &EventPulseCallback, this)
-             .has_value())
-    {
-        std::cerr << "QnxDispatchEngine: Failed to attach pulse code " << kEventPulseCode << std::endl;
-        std::terminate();
-    }
+    dispatch_pointer_ =  // NOLINTNEXTLINE(score-banned-function) implementing FFI wrapper
+        ValueOrTerminate(os_resources_.dispatch->dispatch_create_channel(-1, 0), "Unable to allocate dispatch handle");
+    IfUnexpectedTerminate(
+        os_resources_.dispatch->pulse_attach(dispatch_pointer_, 0, kTimerPulseCode, &TimerPulseCallback, this),
+        "Unable to attach timer pulse code");
+    IfUnexpectedTerminate(
+        os_resources_.dispatch->pulse_attach(dispatch_pointer_, 0, kEventPulseCode, &EventPulseCallback, this),
+        "Unable to attach event pulse code");
 
     /* resmgr_attach */
-
-    const auto coid_expected = os_resources_.dispatch->message_connect(dispatch_pointer_, MSG_FLAG_SIDE_CHANNEL);
-    side_channel_coid_ = coid_expected.value();
+    side_channel_coid_ =
+        ValueOrTerminate(os_resources_.dispatch->message_connect(dispatch_pointer_, MSG_FLAG_SIDE_CHANNEL),
+                         "Unable to create side channel");
 
     struct sigevent event{};
     event.sigev_notify = SIGEV_PULSE;
@@ -80,25 +88,20 @@ QnxDispatchEngine::QnxDispatchEngine(score::cpp::pmr::memory_resource* memory_re
     event.sigev_code = kTimerPulseCode;
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access) C API
     event.sigev_value.sival_int = 0;
-    const auto timer_id_expected = os_resources_.timer->TimerCreate(CLOCK_MONOTONIC, &event);
-    timer_id_ = timer_id_expected.value();
+    timer_id_ = ValueOrTerminate(os_resources_.timer->TimerCreate(CLOCK_MONOTONIC, &event), "Unable to create timer");
 
     // it's actually the default settings for resmgr buffers; we are just making them explicit here
     // Ourselves, we are not limited by these values, as we use resmgr_msgget() and we don't use ctp.iov
     resmgr_attr_t resmgr_attr_;
     resmgr_attr_.nparts_max = 1U;
     resmgr_attr_.msg_max_size = 2088U;
-    score::cpp::ignore = os_resources_.dispatch->resmgr_attach(
-        dispatch_pointer_, &resmgr_attr_, nullptr, _FTYPE_ANY, 0, nullptr, nullptr, nullptr);
+    IfUnexpectedTerminate(os_resources_.dispatch->resmgr_attach(
+                              dispatch_pointer_, &resmgr_attr_, nullptr, _FTYPE_ANY, 0, nullptr, nullptr, nullptr),
+                          "Unable to set up resource manager operations");
 
     // NOLINTNEXTLINE(score-banned-function) implementing FFI wrapper
-    const auto ctp_expected = os_resources_.dispatch->dispatch_context_alloc(dispatch_pointer_);
-    if (!ctp_expected.has_value())
-    {
-        std::cerr << "QnxDispatchEngine: Unable to allocate context pointer." << kEventPulseCode << std::endl;
-        std::terminate();
-    }
-    context_pointer_ = ctp_expected.value();
+    context_pointer_ = ValueOrTerminate(os_resources_.dispatch->dispatch_context_alloc(dispatch_pointer_),
+                                        "Unable to allocate context pointer");
 
     SetupResourceManagerCallbacks();
 

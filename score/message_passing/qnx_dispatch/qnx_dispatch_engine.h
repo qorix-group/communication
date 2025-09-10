@@ -145,7 +145,11 @@ class QnxDispatchEngine final : public ISharedResourceEngine
         virtual std::int32_t ProcessReadRequest(resmgr_context_t* const ctp) noexcept = 0;
     };
 
-    explicit QnxDispatchEngine(score::cpp::pmr::memory_resource* memory_resource) noexcept;
+    QnxDispatchEngine(score::cpp::pmr::memory_resource* memory_resource, OsResources os_resources) noexcept;
+    explicit QnxDispatchEngine(score::cpp::pmr::memory_resource* memory_resource) noexcept
+        : QnxDispatchEngine(memory_resource, GetDefaultOsResources(memory_resource))
+    {
+    }
     ~QnxDispatchEngine() noexcept override;
 
     QnxDispatchEngine(const QnxDispatchEngine&) = delete;
@@ -235,13 +239,13 @@ class QnxDispatchEngine final : public ISharedResourceEngine
     static ResourceManagerConnection& OcbToConnection(RESMGR_OCB_T* const ocb)
     {
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast) by API design
-        return *static_cast<ResourceManagerConnection*>(ocb);
+        return static_cast<ResourceManagerConnection&>(*ocb);
     }
 
     static ResourceManagerServer& ResmgrHandleToServer(RESMGR_HANDLE_T* const handle)
     {
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast) by API design
-        return *static_cast<ResourceManagerServer*>(handle);
+        return static_cast<ResourceManagerServer&>(*handle);
     }
 
     static ResourceManagerServer& OcbToServer(RESMGR_OCB_T* const ocb)

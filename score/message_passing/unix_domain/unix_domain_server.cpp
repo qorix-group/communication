@@ -41,8 +41,8 @@ UnixDomainServer::ServerConnection::ServerConnection(UnixDomainServer& server,
 {
 }
 
-void UnixDomainServer::ServerConnection::ApproveConnection(UserData&& data,
-                                                           score::cpp::pmr::unique_ptr<ServerConnection>&& self) noexcept
+void UnixDomainServer::ServerConnection::AcceptConnection(UserData&& data,
+                                                          score::cpp::pmr::unique_ptr<ServerConnection>&& self) noexcept
 {
     user_data_ = std::move(data);
     endpoint_.owner = &server_;
@@ -265,7 +265,7 @@ void UnixDomainServer::ProcessConnect() noexcept
     {
         return;
     }
-    connection->ApproveConnection(std::move(data_expected.value()), std::move(connection));
+    connection->AcceptConnection(std::move(data_expected.value()), std::move(connection));
 }
 
 }  // namespace detail

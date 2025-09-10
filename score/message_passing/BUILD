@@ -238,11 +238,20 @@ cc_gtest_unit_test(
 cc_gtest_unit_test(
     name = "qnx_dispatch_test",
     srcs = [
+        "qnx_dispatch_engine_test.cpp",
         "qnx_dispatch_server_test.cpp",
         "qnx_dispatch_server_to_client_test.cpp",
     ],
     target_compatible_with = ["@platforms//os:qnx"],
     deps = [
         ":message_passing_qnx_dispatch",
+        "@score-baselibs//score/concurrency",
+        "@score-baselibs//score/os/mocklib:fcntl_mock",
+        "@score-baselibs//score/os/mocklib:sys_uio_mock",
+        "@score-baselibs//score/os/mocklib:unistd_mock",
+        "@score-baselibs//score/os/mocklib/qnx:channel_mock",
+        "@score-baselibs//score/os/mocklib/qnx:dispatch_mock",
+        "@score-baselibs//score/os/mocklib/qnx:iofunc_mock",
+        "@score-baselibs//score/os/mocklib/qnx:timer_mock",
     ],
 )

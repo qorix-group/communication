@@ -47,7 +47,7 @@ class UnixDomainServer final : public IServer
         void RequestDisconnect() noexcept override;
 
         // Server methods
-        void ApproveConnection(UserData&& data, score::cpp::pmr::unique_ptr<ServerConnection>&& self) noexcept;
+        void AcceptConnection(UserData&& data, score::cpp::pmr::unique_ptr<ServerConnection>&& self) noexcept;
         bool ProcessInput() noexcept;
 
         ~ServerConnection() noexcept;
