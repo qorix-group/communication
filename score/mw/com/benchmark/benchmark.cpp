@@ -27,17 +27,7 @@ using namespace std::chrono_literals;
 using namespace score::mw::com;
 using namespace std::chrono;
 
-std::mutex cout_mutex{};
 score::cpp::latch benchmark_ab_start_point{3}, benchmark_ab_finish_point{3}, init_ab_sync_point{3}, deinit_ab_sync_point{2};
-score::cpp::latch benchmark_multi_start_point{1 + kThreadsMultiTotal}, benchmark_multi_finish_point{1 + kThreadsMultiTotal}, init_multi_sync_point{kThreadsMultiTotal}, deinit_multi_sync_point{kThreadsMultiTotal};
-const auto instance_specifier_skeleton_a_optional = InstanceSpecifier::Create("benchmark/SkeletonA");
-const auto instance_specifier_skeleton_b_optional = InstanceSpecifier::Create("benchmark/SkeletonB");
-
-score::cpp::optional<std::reference_wrapper<impl::ProxyEvent<DummyBenchmarkData>>> GetBenchmarkDataProxyEvent(
-    BenchmarkProxy& proxy)
-{
-    return proxy.dummy_benchmark_data_;
-}
 
 void SetupThread(int cpu)
 {
@@ -64,7 +54,7 @@ void SetupThread(int cpu)
     }
 }
 
-void Transmitter(int cpu, bool starter, impl::InstanceSpecifier skeleton_instance_specifier, impl::InstanceSpecifier proxy_instance_specifier)
+void Transceiver(int cpu, bool starter, impl::InstanceSpecifier skeleton_instance_specifier, impl::InstanceSpecifier proxy_instance_specifier)
 {
     SetupThread(cpu);
 
@@ -106,13 +96,7 @@ void Transmitter(int cpu, bool starter, impl::InstanceSpecifier skeleton_instanc
     }
     auto& proxy = proxy_result.value();
 
-    auto dummy_data_event_optional = GetBenchmarkDataProxyEvent(proxy);
-    if (!dummy_data_event_optional.has_value())
-    {
-        std::cerr << "Could not get dummy_data proxy event" << std::endl;
-        return;
-    }
-    impl::ProxyEvent<score::mw::com::DummyBenchmarkData>& dummy_data_event = dummy_data_event_optional.value().get();
+    impl::ProxyEvent<score::mw::com::DummyBenchmarkData>& dummy_data_event = proxy.dummy_benchmark_data_;
     score::Result<score::mw::com::impl::SampleAllocateePtr<score::mw::com::DummyBenchmarkData>> sample_result;
 
     dummy_data_event.Subscribe(1);
@@ -128,11 +112,21 @@ void Transmitter(int cpu, bool starter, impl::InstanceSpecifier skeleton_instanc
     }
     for (std::size_t cycle = 0U; cycle < kIterations; cycle++)
     {
-        while (!dummy_data_event.GetNewSamples((
+        while (true) {
+            auto result = dummy_data_event.GetNewSamples((
             [](SamplePtr<DummyBenchmarkData> sample) noexcept {
                 std::ignore = sample;
-            }),
-            1).has_value()) {};
+            }),1);
+            if (result.has_value())
+            {
+                if (result.value() == 0)
+                {
+                    continue;
+                } else {
+                    break;
+                }
+            }
+        };
         do {
             sample_result = skeleton.dummy_benchmark_data_.Allocate();
         } while (!sample_result.has_value());
@@ -173,64 +167,65 @@ void Subscriber(int cpu, impl::InstanceSpecifier proxy_instance_specifier)
     }
     auto& proxy = proxy_result.value();
 
-    auto dummy_data_event_optional = GetBenchmarkDataProxyEvent(proxy);
-    if (!dummy_data_event_optional.has_value())
-    {
-        std::cerr << "Could not get dummy_data proxy event" << std::endl;
-        return;
-    }
-    impl::ProxyEvent<score::mw::com::DummyBenchmarkData>& dummy_data_event = dummy_data_event_optional.value().get();
+    impl::ProxyEvent<score::mw::com::DummyBenchmarkData>& dummy_data_event = proxy.dummy_benchmark_data_;
 
     dummy_data_event.Subscribe(1);
-    init_multi_sync_point.arrive_and_wait();
-    benchmark_multi_start_point.arrive_and_wait();
     for (std::size_t cycle = 0U; cycle < kIterations; cycle++)
     {
-        while (!dummy_data_event.GetNewSamples((
+        while (true) {
+            auto result = dummy_data_event.GetNewSamples((
             [](SamplePtr<DummyBenchmarkData> sample) noexcept {
                 std::ignore = sample;
-            }),
-            1).has_value()) {};
-
+            }),1);
+            if (result.has_value())
+            {
+                if (result.value() == 0)
+                {
+                    continue;
+                } else {
+                    break;
+                }
+            }
+        };
     }
-    benchmark_multi_finish_point.arrive_and_wait();
     dummy_data_event.Unsubscribe();
-    deinit_multi_sync_point.arrive_and_wait();
 }
 
 int main()
 {
     int cpu = 0;
+    const auto instance_specifier_instance_a_result = InstanceSpecifier::Create("benchmark/InstanceA");
+    const auto instance_specifier_instance_b_result = InstanceSpecifier::Create("benchmark/InstanceB");
 
-    if (!instance_specifier_skeleton_a_optional.has_value() || !instance_specifier_skeleton_b_optional.has_value())
+    if (!instance_specifier_instance_a_result.has_value() || !instance_specifier_instance_b_result.has_value())
     {
         std::cerr << "Invalid instance specifier, terminating." << std::endl;
         return EXIT_FAILURE;
     }
-    const auto& instance_specifier_skeleton_a = instance_specifier_skeleton_a_optional.value();
-    const auto& instance_specifier_skeleton_b = instance_specifier_skeleton_b_optional.value();
+    const auto& instance_specifier_instance_a = instance_specifier_instance_a_result.value();
+    const auto& instance_specifier_instance_b = instance_specifier_instance_b_result.value();
 
     std::cout << "Starting benchmark" << std::endl;
 
-    std::thread transmitterA(Transmitter, cpu++, true, std::ref(instance_specifier_skeleton_a), std::ref(instance_specifier_skeleton_b));
-    std::thread transmitterB(Transmitter, cpu++, false, std::ref(instance_specifier_skeleton_b), std::ref(instance_specifier_skeleton_a));
+    std::thread transceiverA(Transceiver, cpu++, true, std::ref(instance_specifier_instance_a), std::ref(instance_specifier_instance_b));
+    std::thread transceiverB(Transceiver, cpu++, false, std::ref(instance_specifier_instance_b), std::ref(instance_specifier_instance_a));
 #if kSubscribers > 0
     std::thread subscribers[kSubscribers];
     if (kSubscribers > 0)
     {
-        subscribers[i] = std::thread(Subscriber, cpu++, std::ref(instance_specifier_skeleton_a));
-        subscribers[i] = std::thread(Subscriber, cpu++, std::ref(instance_specifier_skeleton_b));
+        subscribers[i] = std::thread(Subscriber, cpu++, std::ref(instance_specifier_instance_a));
+        subscribers[i] = std::thread(Subscriber, cpu++, std::ref(instance_specifier_instance_b));
     }
 #endif
     init_ab_sync_point.arrive_and_wait();
-    const auto benchmark_ab_start_time = std::chrono::steady_clock::now();
     benchmark_ab_start_point.arrive_and_wait();
+    const auto benchmark_ab_start_time = std::chrono::steady_clock::now();
     benchmark_ab_finish_point.arrive_and_wait();
     const auto benchmark_ab_stop_time = std::chrono::steady_clock::now();
     const auto benchmark_ab_time = benchmark_ab_stop_time - benchmark_ab_start_time;
 
-    transmitterA.join();
-    transmitterB.join();
+    transceiverA.join();
+    transceiverB.join();
 #if kSubscribers > 0
     for (std::size_t i = 0; i < kSubscribers; i++)
     {

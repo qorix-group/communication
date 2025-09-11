@@ -22,7 +22,7 @@
   ],
   "serviceInstances": [
     {
-      "instanceSpecifier": "benchmark/SkeletonA",
+      "instanceSpecifier": "benchmark/InstanceA",
       "serviceTypeName": "/lola/benchmark",
       "version": {
         "major": 1,
@@ -38,7 +38,7 @@
           "events": [
             {
               "eventName": "dummy_data_arrived",
-              "numberOfSampleSlots": 100,
+              "numberOfSampleSlots": 1,
               "maxSubscribers": 3
             }
           ],
@@ -47,7 +47,7 @@
       ]
     },
     {
-      "instanceSpecifier": "benchmark/SkeletonB",
+      "instanceSpecifier": "benchmark/InstanceB",
       "serviceTypeName": "/lola/benchmark",
       "version": {
         "major": 1,
@@ -63,7 +63,7 @@
           "events": [
             {
               "eventName": "dummy_data_arrived",
-              "numberOfSampleSlots": 100,
+              "numberOfSampleSlots": 1,
               "maxSubscribers": 3
             }
           ],
