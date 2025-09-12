@@ -182,6 +182,53 @@ cc_library(
     ],
 )
 
+# MessagePassingFacade::AsilSpecificCfg
+cc_library(
+    name = "messaging2_legacy_headers_to_remove",
+    hdrs = [
+        "i_message_passing_control.h",
+        "message_passing_facade.h",
+        "notify_event_handler.h",
+    ],
+    tags = ["FFI"],
+    deps = [
+        # TODO:
+        ":i_message_passing_service",
+        ":i_notify_event_handler",
+        ":thread_abstraction",
+        #
+        "@score-baselibs//score/os:errno_logging",
+        "//score/mw/com/impl/bindings/lola/messaging/messages",
+        "//score/mw/com/message_passing",
+        "@score-baselibs//score/mw/log",
+        "@score-baselibs//score/language/futurecpp",
+    ],
+)
+
+cc_library(
+    name = "messaging2",
+    srcs = [
+        "message_passing_client_cache.cpp",
+        "message_passing_service.cpp",
+        "message_passing_service_instance.cpp",
+    ],
+    hdrs = [
+        "message_passing_client_cache.h",
+        "message_passing_service.h",
+        "message_passing_service_instance.h",
+        "thread_abstraction.h",
+    ],
+    features = COMPILER_WARNING_FEATURES,
+    tags = ["FFI"],
+    visibility = ["//score/mw/com/impl/bindings/lola:__pkg__"],
+    deps = [
+        ":messaging2_legacy_headers_to_remove",
+        "@communication//score/message_passing",
+        "@score-baselibs//score/language/futurecpp",
+        "@score-baselibs//score/mw/log",
+    ],
+)
+
 cc_library(
     name = "mock",
     testonly = True,

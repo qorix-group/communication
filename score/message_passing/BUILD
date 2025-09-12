@@ -1,3 +1,15 @@
+# *******************************************************************************
+# Copyright (c) 2025 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# SPDX-License-Identifier: Apache-2.0
+# *******************************************************************************
 load("@score-baselibs//:bazel/unit_tests.bzl", "cc_gtest_unit_test")
 load("@score-baselibs//third_party/itf:py_unittest_qnx_test.bzl", "py_unittest_qnx_test")
 
@@ -8,6 +20,9 @@ py_unittest_qnx_test(
         ":qnx_dispatch_test",
         ":unix_domain_test",
     ],
+    test_suites = [
+        "@communication//score/message_passing/non_allocating_future:unit_test_suite_qnx",
+    ],
     visibility = ["//score/message_passing:__pkg__"],
 )
 
@@ -16,6 +31,7 @@ test_suite(
     tests = [
         ":client_connection_test",
         ":unix_domain_test",
+        "@communication//score/message_passing/non_allocating_future:unit_test_suite_host",
     ],
     visibility = ["//score/message_passing:__pkg__"],
 )
@@ -26,7 +42,9 @@ alias(
         "@platforms//os:qnx": ":message_passing_qnx_dispatch",
         "//conditions:default": ":message_passing_unix_domain",
     }),
-    visibility = ["//visibility:public"],
+    visibility = [
+        "//score/mw/com/impl:__subpackages__",
+    ],
 )
 
 cc_library(
@@ -51,7 +69,10 @@ cc_library(
         "strict_warnings",
         "additional_warnings",
     ],
-    visibility = ["//visibility:public"],
+    tags = ["FFI"],
+    visibility = [
+        "//score/mw/com/impl:__subpackages__",
+    ],
     deps = [
         "@score-baselibs//score/containers:intrusivelist",
         "@score-baselibs//score/language/futurecpp",
@@ -75,9 +96,13 @@ cc_library(
         "strict_warnings",
         "additional_warnings",
     ],
-    visibility = ["//visibility:public"],
+    tags = ["FFI"],
+    visibility = [
+        "//score/mw/com/impl:__subpackages__",
+    ],
     deps = [
         ":common_headers",
+        "@communication//score/message_passing/non_allocating_future",
     ],
 )
 
@@ -101,7 +126,9 @@ cc_library(
         "strict_warnings",
         "additional_warnings",
     ],
-    visibility = ["//visibility:public"],
+    visibility = [
+        "//score/mw/com/impl:__subpackages__",
+    ],
     deps = [
         ":message_passing_common",
         "@score-baselibs//score/os:socket",
@@ -132,17 +159,19 @@ cc_library(
         "strict_warnings",
         "additional_warnings",
     ],
-    visibility = ["//visibility:public"],
+    tags = ["FFI"],
+    visibility = [
+        "//score/mw/com/impl:__subpackages__",
+    ],
     deps = [
         ":message_passing_common",
-        # sys_io
+        "@score-baselibs//score/os:fcntl",
+        "@score-baselibs//score/os:sys_uio",
+        "@score-baselibs//score/os:unistd",
         "@score-baselibs//score/os/qnx:channel",
         "@score-baselibs//score/os/qnx:dispatch",
         "@score-baselibs//score/os/qnx:iofunc",
         "@score-baselibs//score/os/qnx:timer",
-        "@score-baselibs//score/os:unistd",
-        "@score-baselibs//score/os:fcntl",
-        "@score-baselibs//score/os:sys_uio",
     ],
 )
 
@@ -165,7 +194,9 @@ cc_library(
         "strict_warnings",
         "additional_warnings",
     ],
-    visibility = ["//visibility:public"],
+    visibility = [
+        "//score/mw/com/impl:__subpackages__",
+    ],
     deps = [
         ":common_headers",
         "@googletest//:gtest",

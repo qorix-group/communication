@@ -31,8 +31,8 @@ namespace score::mw::com::impl
 
 /**
  * \brief Represents a specific instance of a given service
- *
  * \requirement SWS_CM_00302
+ * \public
  */
 class InstanceIdentifier final
 {
@@ -40,6 +40,9 @@ class InstanceIdentifier final
     /**
      * \brief Exception-less constructor to create InstanceIdentifier from a serialized InstanceIdentifier created with
      * InstanceIdentifier::ToString()
+     * \param serialized_format The serialized format to create the InstanceIdentifier from
+     * \return The created InstanceIdentifier or an error
+     * \public
      */
     static score::Result<InstanceIdentifier> Create(std::string_view serialized_format) noexcept;
 
@@ -60,16 +63,41 @@ class InstanceIdentifier final
      * \post *this == other
      * \param other The InstanceIdentifier *this shall be constructed from
      * \return The InstanceIdentifier that was constructed
+     * \public
      */
     InstanceIdentifier& operator=(const InstanceIdentifier& other) = default;
+    /**
+     * \brief Copy constructor for InstanceIdentifier
+     *
+     * \param other The InstanceIdentifier to copy from
+     * \return The InstanceIdentifier that was constructed
+     * \public
+     */
     InstanceIdentifier(const InstanceIdentifier&) = default;
+    /**
+     * \brief Move constructor for InstanceIdentifier
+     *
+     * \post *this == other
+     * \param other The InstanceIdentifier to move from
+     * \return The moved InstanceIdentifier
+     * \public
+     */
     InstanceIdentifier(InstanceIdentifier&&) noexcept = default;
+    /**
+     * \brief MoveAssignment for InstanceIdentifier
+     *
+     * \post *this == other
+     * \param other The InstanceIdentifier *this shall be constructed from
+     * \return The InstanceIdentifier that was constructed
+     * \public
+     */
     InstanceIdentifier& operator=(InstanceIdentifier&& other) = default;
 
     /**
      * \brief Returns the serialized form of the unknown internals of this class as a meaningful string
      *
      * \return A non-owning string representation of the internals of this class
+     * \public
      */
     std::string_view ToString() const noexcept;
 
@@ -79,6 +107,7 @@ class InstanceIdentifier final
      * \param lhs The first instance to check for equality
      * \param rhs The second instance to check for equality
      * \return true if other and *this equal, false otherwise
+     * \public
      */
     friend bool operator==(const InstanceIdentifier& lhs, const InstanceIdentifier& rhs) noexcept;
 
@@ -88,6 +117,7 @@ class InstanceIdentifier final
      * \param lhs The first InstanceIdentifier instance to compare
      * \param rhs The second InstanceIdentifier instance to compare
      * \return true if *this is less then other, false otherwise
+     * \public
      */
     friend bool operator<(const InstanceIdentifier& lhs, const InstanceIdentifier& rhs) noexcept;
 

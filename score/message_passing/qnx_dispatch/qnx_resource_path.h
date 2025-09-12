@@ -1,8 +1,21 @@
+/********************************************************************************
+ * Copyright (c) 2025 Contributors to the Eclipse Foundation
+ *
+ * See the NOTICE file(s) distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Apache License Version 2.0 which is available at
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ ********************************************************************************/
 #ifndef SCORE_LIB_MESSAGE_PASSING_QNX_DISPATCH_QNX_RESOURCE_PATH_H
 #define SCORE_LIB_MESSAGE_PASSING_QNX_DISPATCH_QNX_RESOURCE_PATH_H
 
 #include <score/static_vector.hpp>
-#include <score/string_view.hpp>
+
+#include <string_view>
 
 namespace score
 {
@@ -11,16 +24,23 @@ namespace message_passing
 namespace detail
 {
 
-inline constexpr score::cpp::string_view GetQnxPrefix() noexcept
+inline constexpr std::string_view GetQnxPrefix() noexcept
 {
-    using score::cpp::literals::operator""_sv;
-    return "/bmw/message_passing/"_sv;
+    using std::literals::string_view_literals::operator""sv;
+    // TODO: add new path to secpol (after switching users of message_passing to 2.0)
+#if 0
+    // NOLINTNEXTLINE(score-no-user-defined-literals): _sv is not user defined but a C++17 provided by amp
+    return "/bmw/message_passing/"sv;
+#else
+    // NOLINTNEXTLINE(score-no-user-defined-literals): _sv is not user defined but a C++17 provided by amp
+    return "/mw_com/message_passing/"sv;
+#endif
 }
 
 class QnxResourcePath
 {
   public:
-    explicit QnxResourcePath(const score::cpp::string_view identifier) noexcept;
+    explicit QnxResourcePath(const std::string_view identifier) noexcept;
 
     const char* c_str() const noexcept
     {

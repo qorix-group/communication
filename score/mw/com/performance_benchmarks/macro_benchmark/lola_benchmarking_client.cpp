@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cstdlib>
+#include <exception>
 #include <optional>
 #include <string_view>
 #include <thread>
@@ -21,6 +22,7 @@ namespace score::mw::com::test
 namespace
 {
 
+using score::mw::com::test::TestDataProxy;
 using namespace std::chrono_literals;
 
 bool signal_service_that_client_is_done()
@@ -122,9 +124,178 @@ struct ReceiveHandlerContext
     ReceptionState reception_state{ReceptionState::RUNNING};
 };
 
+class RunDurationHandler
+{
+
+    std::optional<ClientConfig::RunTimeLimit> run_time_limit_;
+    std::chrono::time_point<std::chrono::high_resolution_clock> start_;
+
+  public:
+    RunDurationHandler(const ClientConfig& cc) : run_time_limit_(cc.run_time_limit)
+    {
+        start_ = std::chrono::high_resolution_clock::now();
+    }
+
+    bool run_duration_was_exceeded(unsigned long number_of_samples_received) const
+    {
+        if (!run_time_limit_.has_value())
+        {
+            return false;
+        }
+
+        const auto now = std::chrono::high_resolution_clock::now();
+
+        const auto duration = run_time_limit_.value().duration;
+        switch (run_time_limit_.value().unit)
+        {
+            case score::mw::com::test::DurationUnit::sample_count:
+            {
+                return number_of_samples_received >= duration;
+            }
+            break;
+            case score::mw::com::test::DurationUnit::ms:
+            {
+                const auto time_duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_);
+                return time_duration.count() >= duration;
+            }
+            break;
+            case score::mw::com::test::DurationUnit::s:
+            {
+                const auto time_duration = std::chrono::duration_cast<std::chrono::seconds>(now - start_);
+                return time_duration.count() >= duration;
+            }
+            break;
+            default:
+            {
+                score::mw::log::LogError(kLogContext) << "unknown duration type provided. Stopping the client.";
+                return true;
+            }
+        }
+    }
+};
+
+bool ReceiveEvent(TestDataProxy& lola_proxy,
+                  const ClientConfig& config,
+                  score::cpp::stop_token test_stop_token,
+                  const RunDurationHandler& rdh)
+{
+    score::mw::log::LogInfo(kLogContext) << "read_cycle_time_ms == 0 -> Registering EventReceiveHandler.";
+    ReceiveHandlerContext receive_handler_context{config};
+    auto set_receive_handler_result =
+        lola_proxy.test_event.SetReceiveHandler([&lola_proxy, &receive_handler_context, &rdh]() {
+            if (receive_handler_context.reception_state != ReceptionState::RUNNING)
+            {
+                return;
+            }
+            auto number_of_callbacks_called_result = lola_proxy.test_event.GetNewSamples(
+                [](SamplePtr<DataType> /*sample*/) noexcept {
+                    // we receive the sample and do nothing with it.
+                    // We could come up with a check to validate at least the size of the sample here.
+                },
+                receive_handler_context.config.max_num_samples);
+
+            if (!number_of_callbacks_called_result.has_value())
+            {
+                score::mw::log::LogError() << "Client: " << number_of_callbacks_called_result.error();
+                receive_handler_context.reception_state = ReceptionState::FINISHED_ERROR;
+                receive_handler_context.cv.notify_one();
+                return;
+            }
+
+            SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD(number_of_callbacks_called_result.value() > 0);
+
+            receive_handler_context.number_of_samples_received += number_of_callbacks_called_result.value();
+
+            if (rdh.run_duration_was_exceeded(receive_handler_context.number_of_samples_received))
+            {
+                receive_handler_context.reception_state = ReceptionState::FINISHED_SUCCESS;
+                receive_handler_context.cv.notify_one();
+                return;
+            }
+        });
+
+    if (!set_receive_handler_result.has_value())
+    {
+        score::mw::log::LogError(kLogContext)
+            << "Registering EventReceiveHandler failed: " << set_receive_handler_result.error();
+        return false;
+    }
+
+    // stop_callback, which sets reception state to ABORTED and notifies waiting thread.
+    score::cpp::stop_callback stop_callback{test_stop_token, [&receive_handler_context]() {
+                                         {
+                                             std::unique_lock lk(receive_handler_context.mutex);
+                                             receive_handler_context.reception_state = ReceptionState::ABORTED;
+                                         }
+                                         receive_handler_context.cv.notify_one();
+                                     }};
+
+    // wait until receive-handler notifies, that it is done (successfully or not) with sample reception or until
+    // we get stopped by stop_token.
+    std::unique_lock lk(receive_handler_context.mutex);
+    receive_handler_context.cv.wait(lk, [&receive_handler_context] {
+        return receive_handler_context.reception_state != ReceptionState::RUNNING;
+    });
+    return receive_handler_context.reception_state != ReceptionState::FINISHED_ERROR;
+}
+
+bool PollForEvent(TestDataProxy& lola_proxy,
+                  const ClientConfig& config,
+                  score::cpp::stop_token test_stop_token,
+                  const RunDurationHandler& rdh)
+{
+    score::mw::log::LogInfo(kLogContext) << "Entering the  GetNewSamples poll loop.";
+    unsigned long number_of_samples_received{0U};
+    while (!test_stop_token.stop_requested())
+    {
+        auto num_available_samples_result = lola_proxy.test_event.GetNumNewSamplesAvailable();
+        if (!num_available_samples_result.has_value())
+        {
+            log::LogError() << num_available_samples_result.error();
+            return false;
+        }
+
+        if (num_available_samples_result.value() == 0)
+        {
+            continue;
+        }
+
+        auto number_of_callbacks_called_result = lola_proxy.test_event.GetNewSamples(
+            [](SamplePtr<DataType> /*sample*/) noexcept {
+                // we receive the sample and do nothing with it.
+                // We could come up with a check to validate at least the size of the sample here.
+            },
+            config.max_num_samples);
+
+        if (!number_of_callbacks_called_result.has_value())
+        {
+            score::mw::log::LogError(kLogContext)
+                << "Call to GetNewSamples failed: " << number_of_callbacks_called_result.error();
+            return false;
+        }
+
+        // This assertion here is valid as we would have prematurely continued the loop, if
+        // GetNumNewSamplesAvailable() would have returned 0! So we can expect here, that at least one callback has
+        // been triggered (note, there could in-theory be race-conditions, between
+        // GetNumNewSamplesAvailable/GetNewSamples, so that GetNewSamples does NOT lead to a callback, although
+        // GetNumNewSamplesAvailable reports one available sample ... but this should not happen in our setup.
+        SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(number_of_callbacks_called_result.value() > 0,
+                               "At least one callback from GetNewSamples expected!");
+
+        number_of_samples_received += number_of_callbacks_called_result.value();
+
+        if (rdh.run_duration_was_exceeded(number_of_samples_received))
+        {
+            break;
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds{config.read_cycle_time_ms});
+    }
+    return true;
+}
+
 bool RunClient(const ClientConfig& config, score::cpp::stop_token test_stop_token)
 {
-    using score::mw::com::test::TestDataProxy;
 
     auto instance_specifier = InstanceSpecifier::Create(kLoLaBenchmarkInstanceSpecifier).value();
     score::mw::log::LogInfo(kLogContext) << "Starting a Client thread";
@@ -164,119 +335,14 @@ bool RunClient(const ClientConfig& config, score::cpp::stop_token test_stop_toke
 
     score::mw::log::LogInfo(kLogContext) << "Subscribed to the test event.";
 
-    unsigned long number_of_samples_received{0U};
-
+    RunDurationHandler rdh(config);
     if (config.read_cycle_time_ms == 0)
     {
-        score::mw::log::LogInfo(kLogContext) << "read_cycle_time_ms == 0 -> Registering EventReceiveHandler.";
-        ReceiveHandlerContext receive_handler_context{config};
-        auto set_receive_handler_result =
-            lola_proxy.test_event.SetReceiveHandler([&lola_proxy, &receive_handler_context]() {
-                if (receive_handler_context.reception_state != ReceptionState::RUNNING)
-                {
-                    return;
-                }
-                auto number_of_callbacks_called_result = lola_proxy.test_event.GetNewSamples(
-                    [](SamplePtr<DataType> /*sample*/) noexcept {
-                        // we receive the sample and do nothing with it.
-                        // We could come up with a check to validate at least the size of the sample here.
-                    },
-                    receive_handler_context.config.max_num_samples);
-
-                if (!number_of_callbacks_called_result.has_value())
-                {
-                    score::mw::log::LogError() << "Client: " << number_of_callbacks_called_result.error();
-                    receive_handler_context.reception_state = ReceptionState::FINISHED_ERROR;
-                    receive_handler_context.cv.notify_one();
-                    return;
-                }
-
-                SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD(number_of_callbacks_called_result.value() > 0);
-
-                receive_handler_context.number_of_samples_received += number_of_callbacks_called_result.value();
-
-                if (receive_handler_context.number_of_samples_received >=
-                    receive_handler_context.config.number_of_samples_to_receive)
-                {
-                    receive_handler_context.reception_state = ReceptionState::FINISHED_SUCCESS;
-                    receive_handler_context.cv.notify_one();
-                    return;
-                }
-            });
-
-        if (!set_receive_handler_result.has_value())
-        {
-            score::mw::log::LogError(kLogContext)
-                << "Registering EventReceiveHandler failed: " << set_receive_handler_result.error();
-            return false;
-        }
-
-        // stop_callback, which sets reception state to ABORTED and notifies waiting thread.
-        score::cpp::stop_callback stop_callback{test_stop_token, [&receive_handler_context]() {
-                                             {
-                                                 std::unique_lock lk(receive_handler_context.mutex);
-                                                 receive_handler_context.reception_state = ReceptionState::ABORTED;
-                                             }
-                                             receive_handler_context.cv.notify_one();
-                                         }};
-
-        // wait until receive-handler notifies, that it is done (successfully or not) with sample reception or until
-        // we get stopped by stop_token.
-        std::unique_lock lk(receive_handler_context.mutex);
-        receive_handler_context.cv.wait(lk, [&receive_handler_context] {
-            return receive_handler_context.reception_state != ReceptionState::RUNNING;
-        });
-        return receive_handler_context.reception_state != ReceptionState::FINISHED_ERROR;
+        return ReceiveEvent(lola_proxy, config, test_stop_token, rdh);
     }
     else
     {
-
-        score::mw::log::LogInfo(kLogContext) << "Entering the  GetNewSamples poll loop.";
-        while (!test_stop_token.stop_requested())
-        {
-            auto num_available_samples_result = lola_proxy.test_event.GetNumNewSamplesAvailable();
-            if (!num_available_samples_result.has_value())
-            {
-                log::LogError() << num_available_samples_result.error();
-                return false;
-            }
-
-            if (num_available_samples_result.value() == 0)
-            {
-                continue;
-            }
-
-            auto number_of_callbacks_called_result = lola_proxy.test_event.GetNewSamples(
-                [](SamplePtr<DataType> /*sample*/) noexcept {
-                    // we receive the sample and do nothing with it.
-                    // We could come up with a check to validate at least the size of the sample here.
-                },
-                config.max_num_samples);
-
-            if (!number_of_callbacks_called_result.has_value())
-            {
-                score::mw::log::LogError(kLogContext)
-                    << "Call to GetNewSamples failed: " << number_of_callbacks_called_result.error();
-                return false;
-            }
-
-            // This assertion here is valid as we would have prematurely continued the loop, if
-            // GetNumNewSamplesAvailable() would have returned 0! So we can expect here, that at least one callback has
-            // been triggered (note, there could in-theory be race-conditions, between
-            // GetNumNewSamplesAvailable/GetNewSamples, so that GetNewSamples does NOT lead to a callback, although
-            // GetNumNewSamplesAvailable reports one available sample ... but this should not happen in our setup.
-            SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(number_of_callbacks_called_result.value() > 0,
-                                   "At least one callback from GetNewSamples expected!");
-
-            number_of_samples_received += number_of_callbacks_called_result.value();
-
-            if (number_of_samples_received >= config.number_of_samples_to_receive)
-            {
-                break;
-            }
-
-            std::this_thread::sleep_for(std::chrono::milliseconds{config.read_cycle_time_ms});
-        }
+        return PollForEvent(lola_proxy, config, test_stop_token, rdh);
     }
 
     lola_proxy.test_event.Unsubscribe();

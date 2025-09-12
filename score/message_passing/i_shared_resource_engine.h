@@ -1,9 +1,22 @@
+/********************************************************************************
+ * Copyright (c) 2025 Contributors to the Eclipse Foundation
+ *
+ * See the NOTICE file(s) distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Apache License Version 2.0 which is available at
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ ********************************************************************************/
 #ifndef SCORE_LIB_MESSAGE_PASSING_I_SHARED_RESOURCE_ENGINE_H
 #define SCORE_LIB_MESSAGE_PASSING_I_SHARED_RESOURCE_ENGINE_H
 
 #include <score/memory.hpp>
 #include <score/span.hpp>
-#include <score/string_view.hpp>
+
+#include <string_view>
 
 #include "score/os/errno.h"
 
@@ -24,7 +37,7 @@ class ISharedResourceEngine
     virtual bool IsOnCallbackThread() const noexcept = 0;
 
     virtual score::cpp::expected<std::int32_t, score::os::Error> TryOpenClientConnection(
-        score::cpp::string_view identifier) noexcept = 0;
+        std::string_view identifier) noexcept = 0;
 
     virtual void CloseClientConnection(std::int32_t client_fd) noexcept = 0;
 
@@ -49,12 +62,13 @@ class ISharedResourceEngine
     virtual void EnqueueCommand(CommandQueueEntry& entry,
                                 const TimePoint until,
                                 CommandCallback callback,
-                                const void* const owner = nullptr) noexcept = 0;
+                                const void* const owner) noexcept = 0;
 
     using EndpointCallback = score::cpp::callback<void(void) /* noexcept */>;
     class PosixEndpointEntry : public score::containers::intrusive_list_element<>
     {
       public:
+        PosixEndpointEntry() : score::containers::intrusive_list_element<>{} {}
         void* owner{nullptr};
         std::int32_t fd{-1};
         std::uint32_t max_receive_size{0};
@@ -68,6 +82,13 @@ class ISharedResourceEngine
 
     // this call is blocking
     virtual void CleanUpOwner(const void* const owner) noexcept = 0;
+
+  protected:
+    ISharedResourceEngine() noexcept = default;
+    ISharedResourceEngine(const ISharedResourceEngine&) = delete;
+    ISharedResourceEngine(ISharedResourceEngine&&) = delete;
+    ISharedResourceEngine& operator=(const ISharedResourceEngine&) = delete;
+    ISharedResourceEngine& operator=(ISharedResourceEngine&&) = delete;
 };
 
 }  // namespace message_passing

@@ -1,8 +1,19 @@
+/********************************************************************************
+ * Copyright (c) 2025 Contributors to the Eclipse Foundation
+ *
+ * See the NOTICE file(s) distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Apache License Version 2.0 which is available at
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ ********************************************************************************/
 #ifndef SCORE_LIB_MESSAGE_PASSING_QNX_DISPATCH_QNX_DISPATCH_ENGINE_H
 #define SCORE_LIB_MESSAGE_PASSING_QNX_DISPATCH_QNX_DISPATCH_ENGINE_H
 
 #include <score/callback.hpp>
-#include <score/deque.hpp>
 #include <score/memory.hpp>
 #include <score/span.hpp>
 #include <score/vector.hpp>
@@ -22,9 +33,7 @@
 #include <mutex>
 #include <thread>
 
-namespace score
-{
-namespace message_passing
+namespace score::message_passing
 {
 
 /// \brief Class encapsulating resources needed for QNX Dispatch Client/Server implementation
@@ -45,21 +54,28 @@ class QnxDispatchEngine final : public ISharedResourceEngine
         score::cpp::pmr::unique_ptr<score::os::Fcntl> fcntl{};
         score::cpp::pmr::unique_ptr<score::os::IoFunc> iofunc{};
         score::cpp::pmr::unique_ptr<score::os::qnx::Timer> timer{};
-        score::os::SysUio* uio{};  // TODO: implement uio OSAL "properly"?
+        score::cpp::pmr::unique_ptr<score::os::SysUio> uio{};
         score::cpp::pmr::unique_ptr<score::os::Unistd> unistd{};
     };
 
     using QnxResourcePath = detail::QnxResourcePath;
 
     // we don't need "extended" attributes for us, but the OSAL is written in such a way...
-    // TODO: remove "public"
-    class ResourceManagerServer : public extended_dev_attr_t
+    // NOLINTNEXTLINE(score-struct-usage-compliance): controlled downcasting from a reference to plain C API datatype
+    class ResourceManagerServer : private extended_dev_attr_t
     {
       public:
-        ResourceManagerServer(std::shared_ptr<QnxDispatchEngine> engine) noexcept
-            : engine_{std::move(engine)}, resmgr_id_{-1}
+        explicit ResourceManagerServer(std::shared_ptr<QnxDispatchEngine> engine) noexcept
+            : extended_dev_attr_t{}, engine_{std::move(engine)}, resmgr_id_{-1}
         {
         }
+
+        virtual ~ResourceManagerServer() = default;
+
+        ResourceManagerServer(const ResourceManagerServer&) = delete;
+        ResourceManagerServer(ResourceManagerServer&&) = delete;
+        ResourceManagerServer& operator=(const ResourceManagerServer&) = delete;
+        ResourceManagerServer& operator=(ResourceManagerServer&&) = delete;
 
         score::cpp::expected_blank<score::os::Error> Start(const QnxResourcePath& path) noexcept
         {
@@ -71,8 +87,10 @@ class QnxDispatchEngine final : public ISharedResourceEngine
             engine_->StopServer(*this);
         }
 
-      private:
-      public:  // TODO: remove
+      protected:
+        // Suppress "AUTOSAR C++14 A11-3-1" rule finding: "Friend declarations shall not be used."
+        // QnxDispatchEngine acts like a module scope
+        // coverity[autosar_cpp14_a11_3_1_violation]
         friend QnxDispatchEngine;
 
         // TODO: isolate resmgr stuff
@@ -82,16 +100,41 @@ class QnxDispatchEngine final : public ISharedResourceEngine
         std::int32_t resmgr_id_;
     };
 
-    // TODO: remove "public"
-    class ResourceManagerConnection : public iofunc_ocb_t
+    // NOLINTNEXTLINE(score-struct-usage-compliance): controlled downcasting from a reference to plain C API datatype
+    class ResourceManagerConnection : private iofunc_ocb_t
     {
       public:
-        ResourceManagerConnection() noexcept
+        ResourceManagerConnection() noexcept : iofunc_ocb_t{}, notify_{}
         {
-            IOFUNC_NOTIFY_INIT(notify_);
+            // Suppress "AUTOSAR C++14 M5-0-15" rule finding: "Array indexing shall be the only form of pointer
+            // arithmetic".
+            // Suppress "AUTOSAR C++14 A4-10-1" rule finding: "Only nullptr literal shall be used as the
+            // null-pointer-constant.
+            // OS API
+            // coverity[autosar_cpp14_m5_0_15_violation]
+            // coverity[autosar_cpp14_a4_10_1_violation]
+            IOFUNC_NOTIFY_INIT(notify_.data());
         }
 
+        virtual ~ResourceManagerConnection() = default;
+
+        ResourceManagerConnection(const ResourceManagerConnection&) = delete;
+        ResourceManagerConnection(ResourceManagerConnection&&) = delete;
+        ResourceManagerConnection& operator=(const ResourceManagerConnection&) = delete;
+        ResourceManagerConnection& operator=(ResourceManagerConnection&&) = delete;
+
+        ResourceManagerServer& GetServer()
+        {
+            return QnxDispatchEngine::OcbToServer(this);
+        }
+
+      protected:
+        std::array<iofunc_notify_t, 3> notify_;
+
       private:
+        // Suppress "AUTOSAR C++14 A11-3-1" rule finding: "Friend declarations shall not be used."
+        // Only QnxDispatchEngine is allowed to trigger these callbacks
+        // coverity[autosar_cpp14_a11_3_1_violation]
         friend QnxDispatchEngine;
 
         virtual bool ProcessInput(const std::uint8_t code, const score::cpp::span<const std::uint8_t> message) noexcept = 0;
@@ -100,17 +143,15 @@ class QnxDispatchEngine final : public ISharedResourceEngine
 
         // TODO: isolate resmgr stuff
         virtual std::int32_t ProcessReadRequest(resmgr_context_t* const ctp) noexcept = 0;
-
-        // TODO: private
-      public:
-        iofunc_notify_t notify_[3];
     };
 
-    QnxDispatchEngine(score::cpp::pmr::memory_resource* memory_resource) noexcept;
-    ~QnxDispatchEngine() noexcept;
+    explicit QnxDispatchEngine(score::cpp::pmr::memory_resource* memory_resource) noexcept;
+    ~QnxDispatchEngine() noexcept override;
 
     QnxDispatchEngine(const QnxDispatchEngine&) = delete;
+    QnxDispatchEngine(QnxDispatchEngine&&) = delete;
     QnxDispatchEngine& operator=(const QnxDispatchEngine&) = delete;
+    QnxDispatchEngine& operator=(QnxDispatchEngine&&) = delete;
 
     static OsResources GetDefaultOsResources(score::cpp::pmr::memory_resource* const memory_resource) noexcept
     {
@@ -119,7 +160,7 @@ class QnxDispatchEngine final : public ISharedResourceEngine
                 score::os::Fcntl::Default(memory_resource),
                 score::os::IoFunc::Default(memory_resource),
                 score::cpp::pmr::make_unique<score::os::qnx::TimerImpl>(memory_resource),
-                &score::os::SysUio::instance(),
+                score::os::SysUio::Default(memory_resource),
                 score::os::Unistd::Default(memory_resource)};
     }
 
@@ -127,14 +168,14 @@ class QnxDispatchEngine final : public ISharedResourceEngine
     {
         return memory_resource_;
     }
-    OsResources& GetOsResources() noexcept
+    const OsResources& GetOsResources() noexcept
     {
         return os_resources_;
     }
 
     using FinalizeOwnerCallback = score::cpp::callback<void() /* noexcept */>;
 
-    score::cpp::expected<std::int32_t, score::os::Error> TryOpenClientConnection(score::cpp::string_view identifier) noexcept override;
+    score::cpp::expected<std::int32_t, score::os::Error> TryOpenClientConnection(std::string_view identifier) noexcept override;
 
     void CloseClientConnection(std::int32_t client_fd) noexcept override;
 
@@ -144,7 +185,7 @@ class QnxDispatchEngine final : public ISharedResourceEngine
     void EnqueueCommand(CommandQueueEntry& entry,
                         const TimePoint until,
                         CommandCallback callback,
-                        const void* const owner = nullptr) noexcept override;
+                        const void* const owner) noexcept override;
 
     // this call is blocking
     void CleanUpOwner(const void* const owner) noexcept override;
@@ -157,20 +198,25 @@ class QnxDispatchEngine final : public ISharedResourceEngine
         const std::int32_t fd,
         std::uint8_t& code) noexcept override;
 
+    static score::cpp::expected_blank<std::int32_t> AttachConnection(resmgr_context_t* const ctp,
+                                                              io_open_t* const msg,
+                                                              ResourceManagerServer& server,
+                                                              ResourceManagerConnection& connection) noexcept;
+
     bool IsOnCallbackThread() const noexcept override
     {
         return std::this_thread::get_id() == thread_.get_id();
     }
 
   private:
-    enum class PulseEvent : uint8_t
+    enum class PulseEvent : std::uint8_t
     {
         QUIT,
         TIMER
     };
 
-    void SendPulseEvent(PulseEvent pulse_event) noexcept;
-    void ProcessPulseEvent(PulseEvent pulse_event) noexcept;
+    void SendPulseEvent(const PulseEvent pulse_event) noexcept;
+    void ProcessPulseEvent(const std::uint8_t pulse_event) noexcept;
     void ProcessCleanup(const void* const owner) noexcept;
     void RunOnThread() noexcept;
 
@@ -188,16 +234,19 @@ class QnxDispatchEngine final : public ISharedResourceEngine
 
     static ResourceManagerConnection& OcbToConnection(RESMGR_OCB_T* const ocb)
     {
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast) by API design
         return *static_cast<ResourceManagerConnection*>(ocb);
     }
 
     static ResourceManagerServer& ResmgrHandleToServer(RESMGR_HANDLE_T* const handle)
     {
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast) by API design
         return *static_cast<ResourceManagerServer*>(handle);
     }
 
     static ResourceManagerServer& OcbToServer(RESMGR_OCB_T* const ocb)
     {
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast) by API design
         return *static_cast<ResourceManagerServer*>(ocb->attr);
     }
 
@@ -220,6 +269,7 @@ class QnxDispatchEngine final : public ISharedResourceEngine
     OsResources os_resources_;
 
     bool quit_flag_;
+    // NOLINTNEXTLINE(score-banned-type) TODO: wait for new clarification of CB #26380215 from QNX
     std::thread thread_;
     std::mutex thread_mutex_;
     std::condition_variable thread_condition_;
@@ -234,11 +284,10 @@ class QnxDispatchEngine final : public ISharedResourceEngine
     timer_t timer_id_;
     std::mutex attach_mutex_;
 
-    resmgr_connect_funcs_t connect_funcs_{};
-    resmgr_io_funcs_t io_funcs_{};
+    resmgr_connect_funcs_t connect_funcs_;
+    resmgr_io_funcs_t io_funcs_;
 };
 
-}  // namespace message_passing
-}  // namespace score
+}  // namespace score::message_passing
 
 #endif  // SCORE_LIB_MESSAGE_PASSING_QNX_DISPATCH_QNX_DISPATCH_ENGINE_H

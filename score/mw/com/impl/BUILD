@@ -879,7 +879,7 @@ cc_gtest_unit_test(
         "//score/mw/com/impl/tracing/configuration:proxy_event_trace_point_type",
         "//score/mw/com/impl/tracing/configuration:skeleton_event_trace_point_type",
         "//score/mw/com/impl/tracing/configuration:tracing_filter_config",
-        "@score-baselibs//score/analysis/tracing/library/generic_trace_api/mocks:trace_library_mock",
+        "@score-baselibs//score/analysis/tracing/generic_trace_library/mock:trace_library_mock",
         "@score-baselibs//score/mw/log",
     ],
 )
@@ -946,7 +946,7 @@ cc_test(
         "//score/mw/com/impl/test:proxy_resources",
         "//score/mw/com/impl/tracing:tracing_test_resources",
         "@googletest//:gtest_main",
-        "@score-baselibs//score/analysis/tracing/library/generic_trace_api/mocks:trace_library_mock",
+        "@score-baselibs//score/analysis/tracing/generic_trace_library/mock:trace_library_mock",
         "@score-baselibs//score/language/futurecpp",
         "@score-baselibs//score/language/safecpp/coverage_termination_handler",
         "@score-baselibs//score/mw/log",

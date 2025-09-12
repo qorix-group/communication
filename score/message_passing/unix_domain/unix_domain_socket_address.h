@@ -1,22 +1,30 @@
+/********************************************************************************
+ * Copyright (c) 2025 Contributors to the Eclipse Foundation
+ *
+ * See the NOTICE file(s) distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Apache License Version 2.0 which is available at
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ ********************************************************************************/
 #ifndef SCORE_LIB_MESSAGE_PASSING_UNIX_DOMAIN_UNIX_DOMAIN_SOCKET_ADDRESS_H
 #define SCORE_LIB_MESSAGE_PASSING_UNIX_DOMAIN_UNIX_DOMAIN_SOCKET_ADDRESS_H
 
-#include <score/string_view.hpp>
+#include <string_view>
 
 #include <sys/socket.h>
 #include <sys/un.h>
 
-namespace score
-{
-namespace message_passing
-{
-namespace detail
+namespace score::message_passing::detail
 {
 
 class UnixDomainSocketAddress
 {
   public:
-    UnixDomainSocketAddress(score::cpp::string_view path, bool isAbstract) noexcept;
+    UnixDomainSocketAddress(std::string_view path, bool isAbstract) noexcept;
     const char* GetAddressString() const noexcept
     {
         return &(addr_.sun_path[IsAbstract() ? 1 : 0]);
@@ -40,7 +48,7 @@ class UnixDomainSocketAddress
     struct sockaddr_un addr_;
 };
 
-inline UnixDomainSocketAddress::UnixDomainSocketAddress(const score::cpp::string_view path, const bool isAbstract) noexcept
+inline UnixDomainSocketAddress::UnixDomainSocketAddress(const std::string_view path, const bool isAbstract) noexcept
 {
     std::memset(static_cast<void*>(&addr_), 0, sizeof(addr_));
     addr_.sun_family = static_cast<sa_family_t>(AF_UNIX);
@@ -48,8 +56,6 @@ inline UnixDomainSocketAddress::UnixDomainSocketAddress(const score::cpp::string
     std::memcpy(addr_.sun_path + (isAbstract ? 1 : 0), path.data(), len);
 }
 
-}  // namespace detail
-}  // namespace message_passing
-}  // namespace score
+}  // namespace score::message_passing::detail
 
 #endif  // SCORE_LIB_MESSAGE_PASSING_UNIX_DOMAIN_UNIX_DOMAIN_SOCKET_ADDRESS_H
