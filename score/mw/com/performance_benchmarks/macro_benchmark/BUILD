@@ -72,19 +72,25 @@ cc_library(
     ],
 )
 
+make_configs(
+    name = "make_configs",
+    config_json_path = ":joined_config.json",
+    mw_com_config_path = ":mw_com_config.json",
+    out_dir = "gen_config",
+)
+
 cc_binary(
     name = "lola_benchmarking_service",
     srcs = [
         "lola_benchmarking_service.cpp",
     ],
     args = [
-        "$(locations //score/mw/com/performance_benchmarks/macro_benchmark/config:service_benchmark_config)",
-        "$(location :mw_com_config.json)",
+        "$(location :make_configs)/service_benchmark_config.json",
+        "$(location :make_configs)/service_mw_com_config.json",
     ],
     data = [
         ":logging.json",
-        ":mw_com_config.json",
-        "//score/mw/com/performance_benchmarks/macro_benchmark/config:service_benchmark_config",
+        ":make_configs",
     ],
     env = {"MW_LOG_CONFIG_FILE": "$(location logging.json)"},
     features = COMPILER_WARNING_FEATURES + [
@@ -111,13 +117,12 @@ cc_binary(
         "lola_benchmarking_client.cpp",
     ],
     args = [
-        "$(locations //score/mw/com/performance_benchmarks/macro_benchmark/config:client_benchmark_config)",
-        "$(location :mw_com_config.json)",
+        "$(location :make_configs)/client_benchmark_config.json",
+        "$(location :make_configs)/client_mw_com_config.json",
     ],
     data = [
         ":logging.json",
-        ":mw_com_config.json",
-        "//score/mw/com/performance_benchmarks/macro_benchmark/config:client_benchmark_config",
+        ":make_configs",
     ],
     env = {"MW_LOG_CONFIG_FILE": "$(location logging.json)"},
     features = COMPILER_WARNING_FEATURES + [
@@ -138,13 +143,6 @@ cc_binary(
     ],
 )
 
-make_configs(
-    name = "make_configs",
-    config_json_path = ":joined_config.json",
-    mw_com_config_path = ":mw_com_config.json",
-    out_dir = "gen_config",
-)
-
 py_binary(
     name = "perf_run",
     srcs = ["perf_run.py"],
@@ -157,8 +155,6 @@ py_binary(
         ":lola_benchmarking_client",
         ":lola_benchmarking_service",
         ":make_configs",
-        "//score/mw/com/performance_benchmarks/macro_benchmark/config:client_benchmark_config",
-        "//score/mw/com/performance_benchmarks/macro_benchmark/config:service_benchmark_config",
     ],
     env = {"MW_LOG_CONFIG_FILE": "$(location logging.json)"},
 )

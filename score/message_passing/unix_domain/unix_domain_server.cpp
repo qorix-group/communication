@@ -1,3 +1,15 @@
+/********************************************************************************
+ * Copyright (c) 2025 Contributors to the Eclipse Foundation
+ *
+ * See the NOTICE file(s) distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Apache License Version 2.0 which is available at
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ ********************************************************************************/
 #include "score/message_passing/unix_domain/unix_domain_server.h"
 
 #include "score/message_passing/client_server_communication.h"
@@ -101,25 +113,16 @@ bool UnixDomainServer::ServerConnection::ProcessInput() noexcept
     switch (code)
     {
         case score::cpp::to_underlying(ClientToServer::REQUEST):
-            if (score::cpp::holds_alternative<HandlerPointerT>(user_data))
-            {
-                score::cpp::get<HandlerPointerT>(user_data)->OnMessageSentWithReply(*this, message);
-            }
-            else
-            {
-                server_.sent_with_reply_callback_(*this, message);
-            }
-            break;
+            return (std::holds_alternative<HandlerPointerT>(user_data)
+                        ? std::get<HandlerPointerT>(user_data)->OnMessageSentWithReply(*this, message)
+                        : server_.sent_with_reply_callback_(*this, message))
+                .has_value();
+
         case score::cpp::to_underlying(ClientToServer::SEND):
-            if (score::cpp::holds_alternative<HandlerPointerT>(user_data))
-            {
-                score::cpp::get<HandlerPointerT>(user_data)->OnMessageSent(*this, message);
-            }
-            else
-            {
-                server_.sent_callback_(*this, message);
-            }
-            break;
+            return (std::holds_alternative<HandlerPointerT>(user_data)
+                        ? std::get<HandlerPointerT>(user_data)->OnMessageSent(*this, message)
+                        : server_.sent_callback_(*this, message))
+                .has_value();
 
         default:
             // unrecognised message; drop connection
@@ -134,9 +137,9 @@ UnixDomainServer::ServerConnection::~ServerConnection() noexcept
     {
         auto& user_data = *user_data_;
         using HandlerPointerT = score::cpp::pmr::unique_ptr<IConnectionHandler>;
-        if (score::cpp::holds_alternative<HandlerPointerT>(user_data))
+        if (std::holds_alternative<HandlerPointerT>(user_data))
         {
-            score::cpp::get<HandlerPointerT>(user_data)->OnDisconnect(*this);
+            std::get<HandlerPointerT>(user_data)->OnDisconnect(*this);
         }
         else
         {
@@ -186,12 +189,16 @@ score::cpp::expected_blank<score::os::Error> UnixDomainServer::StartListening(Co
     auto bind_expected = socket->bind(server_fd_, addr.data(), addr.size());
     if (!bind_expected.has_value())
     {
+        engine_->GetOsResources().unistd->close(server_fd_);
+        server_fd_ = -1;
         return score::cpp::make_unexpected(bind_expected.error());
     }
 
     auto listen_expected = socket->listen(server_fd_, kSocketListenBacklog);
     if (!listen_expected.has_value())
     {
+        engine_->GetOsResources().unistd->close(server_fd_);
+        server_fd_ = -1;
         return score::cpp::make_unexpected(listen_expected.error());
     }
 
@@ -231,6 +238,7 @@ void UnixDomainServer::ProcessConnect() noexcept
 
     const std::int32_t data_fd = socket->accept(server_fd_, nullptr, nullptr).value();
 #ifdef __QNX__
+    // no support for SO_PEERCRED on QNX
     ClientIdentity identity{0, 0, 0};
 #else
     ucred cr;

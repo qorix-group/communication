@@ -1,8 +1,25 @@
+/********************************************************************************
+ * Copyright (c) 2025 Contributors to the Eclipse Foundation
+ *
+ * See the NOTICE file(s) distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Apache License Version 2.0 which is available at
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ ********************************************************************************/
 #include "score/message_passing/client_connection.h"
 
 #include "score/message_passing/client_server_communication.h"
+#include "score/message_passing/non_allocating_future/non_allocating_future.h"
 
 #include <score/utility.hpp>
+
+// TODO: usleep only; remove if we decide to go back to assert stopped on destruction
+#include <unistd.h>
+#include <iostream>
 
 namespace score
 {
@@ -21,7 +38,8 @@ constexpr std::int32_t kConnectRetryMsMax = 5000;
 ClientConnection::ClientConnection(std::shared_ptr<ISharedResourceEngine> engine,
                                    const ServiceProtocolConfig& protocol_config,
                                    const IClientFactory::ClientConfig& client_config) noexcept
-    : engine_{std::move(engine)},
+    : IClientConnection{},
+      engine_{std::move(engine)},
       identifier_{protocol_config.identifier.data(), protocol_config.identifier.size(), engine_->GetMemoryResource()},
       max_send_size_{protocol_config.max_send_size},
       max_receive_size_{std::max(protocol_config.max_reply_size, protocol_config.max_notify_size)},
@@ -32,8 +50,17 @@ ClientConnection::ClientConnection(std::shared_ptr<ISharedResourceEngine> engine
       callback_context_{score::cpp::pmr::make_shared<CallbackContext>(engine_->GetMemoryResource())},
       notify_callback_{},
       connect_retry_ms_{kConnectRetryMsStart},
+      send_mutex_{},
+      send_condition_{},
       send_storage_{client_config.max_queued_sends + client_config.max_async_replies,
-                    score::cpp::pmr::polymorphic_allocator<>(engine_->GetMemoryResource())}
+                    score::cpp::pmr::polymorphic_allocator<>(engine_->GetMemoryResource())},
+      send_pool_{},
+      send_queue_{},
+      waiting_for_reply_{},
+      connection_timer_{},
+      disconnection_command_{},
+      async_send_command_{},
+      posix_endpoint_{}
 {
     // TODO: separate max_queued_sends, max_async_replies, and maybe queued SendWaitReply
     for (auto& send_command : send_storage_)
@@ -45,13 +72,31 @@ ClientConnection::ClientConnection(std::shared_ptr<ISharedResourceEngine> engine
 
 ClientConnection::~ClientConnection() noexcept
 {
+    // TODO: we will need to decide if the second approach (force-stopping instead of asserting on being stopped)
+    // is more viable. If it is, we will need to update the design docs.
+#if 0
     SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD(state_ == State::kStopped);
     {
         // if we are not called from the state callback, wait until it finishes
         std::lock_guard<std::recursive_mutex> guard{callback_context_->finalize_mutex};
     }
     SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD(state_ == State::kStopped);
-
+#else
+    if (state_ == State::kStopped)
+    {
+        // if we are not called from the state callback, wait until it finishes
+        std::lock_guard<std::recursive_mutex> guard{callback_context_->finalize_mutex};
+    }
+    else
+    {
+        Stop();
+        while (state_ != State::kStopped)
+        {
+            score::cpp::ignore = usleep(10000);
+        }
+        std::lock_guard<std::recursive_mutex> guard{callback_context_->finalize_mutex};
+    }
+#endif
     send_pool_.clear();
 }
 
@@ -137,52 +182,53 @@ score::cpp::expected<score::cpp::span<std::uint8_t>, score::os::Error> ClientCon
         return score::cpp::make_unexpected(score::os::Error::createFromErrno(EINVAL));
     }
 
-    std::unique_lock lock{send_mutex_};  // non-allocating replacement for promise
     score::cpp::expected<score::cpp::span<std::uint8_t>, score::os::Error> result{};
-    bool done{false};
+    NonAllocatingFuture future(send_mutex_, send_condition_, result);
 
-    auto context = std::tie(reply, result, done);
-    auto callback = [this, &context](score::cpp::expected<score::cpp::span<const std::uint8_t>, score::os::Error> message_expected) {
-        auto& [reply_ref, result_ref, done_ref] = context;
+    auto callback = [&reply, &future](score::cpp::expected<score::cpp::span<const std::uint8_t>, score::os::Error> message_expected) {
         if (!message_expected.has_value())
         {
-            std::lock_guard guard{send_mutex_};
-            result_ref = score::cpp::make_unexpected(message_expected.error());
-            done_ref = true;
-            send_condition_.notify_all();
+            future.UpdateValueMarkReady(score::cpp::make_unexpected(message_expected.error()));
             return;
         }
         auto reply_message = message_expected.value();
-        if (reply_message.size() > reply_ref.size())
+        if (reply_message.size() > reply.size())
         {
-            std::lock_guard guard{send_mutex_};
-            result_ref = score::cpp::make_unexpected(score::os::Error::createFromErrno(ENOMEM));
-            done_ref = true;
-            send_condition_.notify_all();
+            future.UpdateValueMarkReady(score::cpp::make_unexpected(score::os::Error::createFromErrno(ENOMEM)));
             return;
         }
-        std::memcpy(reply_ref.data(), reply_message.data(), static_cast<std::size_t>(reply_message.size()));
-        std::lock_guard guard{send_mutex_};
-        result_ref = score::cpp::span<std::uint8_t>{reply_ref.data(), reply_message.size()};
-        done_ref = true;
-        send_condition_.notify_all();
+        // NOLINTNEXTLINE(score-banned-function) copying byte buffer
+        score::cpp::ignore = std::memcpy(reply.data(), reply_message.data(), static_cast<std::size_t>(reply_message.size()));
+        future.UpdateValueMarkReady(score::cpp::span<std::uint8_t>{reply.data(), reply_message.size()});
     };
 
     if (waiting_for_reply_.has_value())
     {
         // TODO: avoid copying the message
+
+        // Suppress "AUTOSAR C++14 A5-1-4" rule finding: "A lambda expression object shall not outlive any of its
+        // reference-captured objects.".
+        // Either the callback is destructed inside the TryQueueMessage call, or it is queued and then fired only once
+        // unblocking the send_condition_ while holding send_mutex_. We don't access the referenced values after
+        // the send_condition_ is unblocked and we don't leave the SendWaitReply function scope before it's unblocked.
+        // coverity[autosar_cpp14_a5_1_4_violation]
         if (!TryQueueMessage(message, std::move(callback)))
         {
             return score::cpp::make_unexpected(score::os::Error::createFromErrno(ENOMEM));
         }
-        return {};
     }
-    waiting_for_reply_ = std::move(callback);
-    engine_->SendProtocolMessage(client_fd_, score::cpp::to_underlying(ClientToServer::REQUEST), message);
+    else
+    {
+        waiting_for_reply_ = std::move(callback);
+        const auto expected =
+            engine_->SendProtocolMessage(client_fd_, score::cpp::to_underlying(ClientToServer::REQUEST), message);
+        if (!expected.has_value())
+        {
+            return score::cpp::make_unexpected(expected.error());
+        }
+    }
 
-    send_condition_.wait(lock, [&done]() {
-        return done;
-    });
+    future.Wait();
     return result;
 }
 
@@ -225,7 +271,12 @@ score::cpp::expected_blank<score::os::Error> ClientConnection::SendWithCallback(
     else
     {
         waiting_for_reply_ = std::move(callback);
-        engine_->SendProtocolMessage(client_fd_, score::cpp::to_underlying(ClientToServer::REQUEST), message);
+        const auto expected =
+            engine_->SendProtocolMessage(client_fd_, score::cpp::to_underlying(ClientToServer::REQUEST), message);
+        if (!expected.has_value())
+        {
+            return score::cpp::make_unexpected(expected.error());
+        }
     }
     return {};
 }
@@ -253,13 +304,20 @@ void ClientConnection::Stop() noexcept
     if (TrySetStopReason(StopReason::kUserRequested))
     {
         ProcessStateChange(State::kStopping);
-        engine_->EnqueueCommand(
-            disconnection_command_,
-            ISharedResourceEngine::TimePoint{},
-            [this](auto) noexcept {
-                SwitchToStopState();
-            },
-            this);
+        if (IsInCallback())
+        {
+            SwitchToStopState();
+        }
+        else
+        {
+            engine_->EnqueueCommand(
+                disconnection_command_,
+                ISharedResourceEngine::TimePoint{},
+                [this](auto) noexcept {
+                    SwitchToStopState();
+                },
+                this);
+        }
     }
 }
 
@@ -278,6 +336,9 @@ void ClientConnection::DoRestart() noexcept
     stop_reason_ = StopReason::kNone;
     ProcessStateChange(State::kStarting);
 
+    std::cerr << "ClientConnection::DoRestart " << engine_->IsOnCallbackThread() << " " << identifier_ << " "
+              << std::endl;
+
     connect_retry_ms_ = kConnectRetryMsStart;
     engine_->EnqueueCommand(
         connection_timer_,
@@ -295,6 +356,7 @@ void ClientConnection::TryConnect() noexcept
                ((state_ == State::kStopping) && (stop_reason_ == StopReason::kUserRequested)));
     SCORE_LANGUAGE_FUTURECPP_ASSERT(IsInCallback());
 
+    std::cerr << "TryOpenClientConnection " << identifier_ << std::endl;
     auto fd_expected = engine_->TryOpenClientConnection(identifier_);
     if (!fd_expected.has_value())
     {
@@ -348,7 +410,7 @@ void ClientConnection::TryConnect() noexcept
 
 IClientConnection::StopReason ClientConnection::ProcessInputEvent() noexcept
 {
-    std::uint8_t code;
+    std::uint8_t code{};
     auto message_expected = engine_->ReceiveProtocolMessage(client_fd_, code);
     if (!message_expected.has_value())
     {
@@ -399,9 +461,11 @@ void ClientConnection::ProcessSendQueueUnderLock() noexcept
         if (!send.callback.empty())
         {
             waiting_for_reply_ = std::move(send.callback);
+            // NOLINTNEXTLINE(score-no-unnamed-temporary-objects) TODO:
             engine_->SendProtocolMessage(client_fd_, score::cpp::to_underlying(ClientToServer::REQUEST), send.message);
             break;
         }
+        // NOLINTNEXTLINE(score-no-unnamed-temporary-objects) TODO:
         engine_->SendProtocolMessage(client_fd_, score::cpp::to_underlying(ClientToServer::SEND), send.message);
     }
 }
@@ -411,7 +475,6 @@ void ClientConnection::SwitchToStopState() noexcept
     SCORE_LANGUAGE_FUTURECPP_ASSERT(state_ == State::kStopping);
     SCORE_LANGUAGE_FUTURECPP_ASSERT(stop_reason_ != StopReason::kNone);
     SCORE_LANGUAGE_FUTURECPP_ASSERT(IsInCallback());
-
     posix_endpoint_.disconnect = {};  // no need to trigger the cleanup once more
     engine_->CleanUpOwner(this);
     if (client_fd_ != -1)
@@ -425,7 +488,10 @@ void ClientConnection::SwitchToStopState() noexcept
         auto callback = std::move(*waiting_for_reply_);
         waiting_for_reply_.reset();
         lock.unlock();
-        callback(score::cpp::make_unexpected(score::os::Error::createFromErrno(EPIPE)));
+        if (!callback.empty())
+        {
+            callback(score::cpp::make_unexpected(score::os::Error::createFromErrno(EPIPE)));
+        }
         lock.lock();
     }
     while (!send_queue_.empty())
@@ -436,8 +502,8 @@ void ClientConnection::SwitchToStopState() noexcept
         {
             lock.unlock();
             callback(score::cpp::make_unexpected(score::os::Error::createFromErrno(EPIPE)));
+            lock.lock();
         }
-        lock.lock();
     }
     lock.unlock();
     ProcessStateChange(State::kStopped);
@@ -476,6 +542,7 @@ void ClientConnection::ProcessStateChangeToStopped() noexcept
 
 void ClientConnection::ProcessStateChange(const State state) noexcept
 {
+    std::cerr << "ProcessStateChange " << static_cast<std::uint32_t>(score::cpp::to_underlying(state)) << std::endl;
     if (state != State::kStopped)
     {
         state_ = state;

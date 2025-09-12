@@ -46,9 +46,9 @@ cc_library(
         "@score-baselibs//score/language/futurecpp",
     ] + select({
         "//score/mw/com/flags:tracing_library_real": [
-            "@score-baselibs//score/analysis/tracing/library/generic_trace_api",
+            "@score-baselibs//score/analysis/tracing/generic_trace_library",
         ],
-        "//score/mw/com/flags:tracing_library_stub": ["@score-baselibs//score/analysis/tracing/library/generic_trace_api_stub"],
+        "//score/mw/com/flags:tracing_library_stub": ["@score-baselibs//score/analysis/tracing/generic_trace_library/stub_implementation"],
     }),
 )
 
@@ -202,9 +202,9 @@ cc_library(
         "@score-baselibs//score/language/futurecpp",
     ] + select({
         "//score/mw/com/flags:tracing_library_real": [
-            "@score-baselibs//score/analysis/tracing/library/generic_trace_api",
+            "@score-baselibs//score/analysis/tracing/generic_trace_library",
         ],
-        "//score/mw/com/flags:tracing_library_stub": ["@score-baselibs//score/analysis/tracing/library/generic_trace_api_stub"],
+        "//score/mw/com/flags:tracing_library_stub": ["@score-baselibs//score/analysis/tracing/generic_trace_library/stub_implementation"],
     }),
 )
 
@@ -231,9 +231,9 @@ cc_library(
         "@score-baselibs//score/memory/shared:pointer_arithmetic_util",
     ] + select({
         "//score/mw/com/flags:tracing_library_real": [
-            "@score-baselibs//score/analysis/tracing/library/generic_trace_api",
+            "@score-baselibs//score/analysis/tracing/generic_trace_library",
         ],
-        "//score/mw/com/flags:tracing_library_stub": ["@score-baselibs//score/analysis/tracing/library/generic_trace_api_stub"],
+        "//score/mw/com/flags:tracing_library_stub": ["@score-baselibs//score/analysis/tracing/generic_trace_library/stub_implementation"],
     }),
     tags = ["FFI"],
     visibility = ["//score/mw/com/impl:__subpackages__"],
@@ -284,7 +284,7 @@ cc_gtest_unit_test(
     deps = [
         ":tracing_runtime",
         ":tracing_test_resources",
-        "@score-baselibs//score/analysis/tracing/library/generic_trace_api/mocks:trace_library_mock",
+        "@score-baselibs//score/analysis/tracing/generic_trace_library/mock:trace_library_mock",
         "//score/mw/com/impl/bindings/mock_binding/tracing:tracing_runtime",
     ],
 )

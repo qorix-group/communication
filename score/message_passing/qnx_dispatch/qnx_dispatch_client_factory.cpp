@@ -1,3 +1,15 @@
+/********************************************************************************
+ * Copyright (c) 2025 Contributors to the Eclipse Foundation
+ *
+ * See the NOTICE file(s) distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Apache License Version 2.0 which is available at
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ ********************************************************************************/
 #include "score/message_passing/qnx_dispatch/qnx_dispatch_client_factory.h"
 
 #include "score/message_passing/client_connection.h"
@@ -14,10 +26,11 @@ QnxDispatchClientFactory::QnxDispatchClientFactory(score::cpp::pmr::memory_resou
 }
 
 QnxDispatchClientFactory::QnxDispatchClientFactory(const std::shared_ptr<QnxDispatchEngine> engine) noexcept
-    : engine_{engine}
+    : IClientFactory{}, engine_{engine}
 {
 }
 
+// NOLINTNEXTLINE(modernize-use-equals-default) false positive: the destructor is not trivial
 QnxDispatchClientFactory::~QnxDispatchClientFactory() noexcept {}
 
 score::cpp::pmr::unique_ptr<IClientConnection> QnxDispatchClientFactory::Create(const ServiceProtocolConfig& protocol_config,

@@ -1,3 +1,15 @@
+/********************************************************************************
+ * Copyright (c) 2025 Contributors to the Eclipse Foundation
+ *
+ * See the NOTICE file(s) distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Apache License Version 2.0 which is available at
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ ********************************************************************************/
 #include <gtest/gtest.h>
 
 #include "score/message_passing/client_connection.h"
@@ -71,7 +83,7 @@ class ClientConnectionTest : public ::testing::Test
 
     void AtTryOpenCall_Return(score::cpp::expected<std::int32_t, score::os::Error> result)
     {
-        EXPECT_CALL(*engine_, TryOpenClientConnection(score::cpp::string_view{service_identifier_})).WillOnce(Return(result));
+        EXPECT_CALL(*engine_, TryOpenClientConnection(std::string_view{service_identifier_})).WillOnce(Return(result));
     }
 
     void ExpectCleanUpOwner(detail::ClientConnection& connection)
@@ -142,7 +154,7 @@ class ClientConnectionTest : public ::testing::Test
     void MakeSuccessfulConnection(detail::ClientConnection& connection)
     {
         CatchImmediateConnectCommand();
-        connection.Start();
+        connection.Start(IClientConnection::StateCallback(), IClientConnection::NotifyCallback());
         EXPECT_EQ(connection.GetState(), State::kStarting);
 
         AtTryOpenCall_Return(kValidFd);
@@ -196,7 +208,7 @@ TEST_F(ClientConnectionTest, TryingToConnectOnceStoppingOnHardError)
         detail::ClientConnection connection(engine_, protocol_config_, client_config_);
 
         CatchImmediateConnectCommand();
-        connection.Start();
+        connection.Start(IClientConnection::StateCallback(), IClientConnection::NotifyCallback());
         EXPECT_EQ(connection.GetState(), State::kStarting);
 
         AtTryOpenCall_Return(score::cpp::make_unexpected(score::os::Error::createFromErrno(entry.first)));
@@ -219,7 +231,7 @@ TEST_F(ClientConnectionTest, TryingToConnectMultipleTimesStoppingOnPermissionErr
         if (entry == *error_list_to_test.begin())
         {
             CatchImmediateConnectCommand();
-            connection.Start();
+            connection.Start(IClientConnection::StateCallback(), IClientConnection::NotifyCallback());
             EXPECT_EQ(connection.GetState(), State::kStarting);
         }
         AtTryOpenCall_Return(score::cpp::make_unexpected(score::os::Error::createFromErrno(entry)));

@@ -1,7 +1,7 @@
 {
     "common": {
-        "number_of_clients": 20,
-        "asil_level": "QM"
+        "number_of_clients": 4,
+        "asil_level": "B"
     },
     "service_config":
     {
@@ -9,8 +9,11 @@
     },
     "client_config":
     {
-        "read_cycle_time_ms": 80,
+        "read_cycle_time_ms": 0,
         "service_finder_mode": "POLLING",
-        "number_of_samples_to_receive": 100
+        "run_time_limit": {
+            "duration": 80,
+            "unit": "s"
+        }
     }
 }
