@@ -1,3 +1,15 @@
+# *******************************************************************************
+# Copyright (c) 2025 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# SPDX-License-Identifier: Apache-2.0
+# *******************************************************************************
 load("@score-baselibs//score/language/safecpp:toolchain_features.bzl", "COMPILER_WARNING_FEATURES")
 load("//score/mw/com/performance_benchmarks/macro_benchmark/config_generator:config_generator_rule.bzl", "make_configs")
 
@@ -47,8 +59,8 @@ cc_library(
     visibility = ["//score/mw/com/performance_benchmarks/macro_benchmark:__pkg__"],
     deps = [
         "//score/mw/com",
-        "//score/mw/com/test/common_test_resources:shared_memory_object_creator",
-        "//score/mw/com/test/common_test_resources:stop_token_sig_term_handler",
+        "//score/mw/com/performance_benchmarks/common_test_resources:shared_memory_object_creator",
+        "//score/mw/com/performance_benchmarks/common_test_resources:stop_token_sig_term_handler",
         "@score-baselibs//score/mw/log",
         "@boost.program_options",
     ],
@@ -66,8 +78,8 @@ cc_library(
         ":common_resources",
         "@score-baselibs//score/json",
         "//score/mw/com",
-        "//score/mw/com/test/common_test_resources:shared_memory_object_creator",
-        "//score/mw/com/test/common_test_resources:stop_token_sig_term_handler",
+        "//score/mw/com/performance_benchmarks/common_test_resources:shared_memory_object_creator",
+        "//score/mw/com/performance_benchmarks/common_test_resources:stop_token_sig_term_handler",
         "@score-baselibs//score/mw/log",
     ],
 )
@@ -105,8 +117,8 @@ cc_binary(
         ":common_resources",
         ":lola_interface",
         "//score/mw/com",
-        "//score/mw/com/test/common_test_resources:shared_memory_object_creator",
-        "//score/mw/com/test/common_test_resources:shared_memory_object_guard",
+        "//score/mw/com/performance_benchmarks/common_test_resources:shared_memory_object_creator",
+        "//score/mw/com/performance_benchmarks/common_test_resources:shared_memory_object_guard",
         "@score-baselibs//score/mw/log",
     ],
 )
@@ -137,8 +149,8 @@ cc_binary(
         ":config_parser",
         ":lola_interface",
         "//score/mw/com",
-        "//score/mw/com/test/common_test_resources:shared_memory_object_creator",
-        "//score/mw/com/test/common_test_resources:shared_memory_object_guard",
+        "//score/mw/com/performance_benchmarks/common_test_resources:shared_memory_object_creator",
+        "//score/mw/com/performance_benchmarks/common_test_resources:shared_memory_object_guard",
         "@score-baselibs//score/mw/log",
     ],
 )

@@ -36,7 +36,7 @@ section "com" {
 
                 Note: {{Skeleton}} is the name used for the created Skeleton in subsequent requirements.'''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.CommunicationInterfaces@1, Communication.SupportForMultipleProgrammingLanguages@1]
                 version = 1
             }
 
@@ -48,7 +48,7 @@ section "com" {
 
                 * with a type providing the features required in Skeleton Event'''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.EventType@1, Communication.SupportForDataDrivenArchitecture@1, Communication.CommunicationInterfaces@1]
                 version = 1
             }
 
@@ -60,7 +60,7 @@ section "com" {
 
                 * with a type providing the features required in SkeletonField'''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.CommunicationInterfaces@1, Communication.SupportForDataDrivenArchitecture@1]
                 version = 1
             }
 
@@ -74,7 +74,7 @@ section "com" {
 
                 * with return value and arguments according to: TBD'''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.SupportForRequestDrivenArchitecture@1, Communication.Method@1, Communication.CommunicationInterfaces@1]
                 version = 1
             }
 
@@ -84,7 +84,7 @@ section "com" {
 
                 Therefore the signature of the constructor of {{Skeleton}} is implementation defined.'''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.SupportForProgrammingLanguageIdioms@1]
                 version = 1
             }
 
@@ -96,7 +96,7 @@ section "com" {
 
                 Behaviour: If the service provided by the skeleton is currently being offered at the time of the destruction, the offering shall be stopped.'''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.ServiceInstance@1, Communication.SupportForProgrammingLanguageIdioms@1]
                 version = 1
             }
 
@@ -148,10 +148,9 @@ section "com" {
 
             /* broken_link_c/issue/17432387 */
             ScoreReq.CompReq SkeletonCopySemantics {
-                description = '''The {{Skeleton}}
-                class shall neither be copy-constructable nor copy-assignable.'''
+                description = '''The {{Skeleton}} class shall neither be copy-constructable nor copy-assignable.'''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.DataLoss@1, Communication.ZeroCopy@1]
                 version = 1
             }
 
@@ -160,7 +159,7 @@ section "com" {
                 description = '''The {{Skeleton}}
                 class shall be move-constructible as well as being move-assignable.'''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.SupportForProgrammingLanguageIdioms@1, Communication.SupportForMultipleProgrammingLanguages@1]
                 version = 1
             }
 
@@ -274,7 +273,7 @@ section "com" {
 
                     Return value: {{bmw::ResultBlank}}{{bmw::result::Error}}returned  which contains a  containing the value {{ComErrc::kNotOffered}} if Skeleton OfferService has not been called or the service offering has been withdrawn with a call to Skeleton StopOfferService.'''
                     safety = ScoreReq.Asil.B
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.StatelessCommunication@1]
                     version = 1
                 }
 
@@ -292,7 +291,7 @@ section "com" {
 
                     Return value: {{bmw::ResultBlank}}{{bmw::result::Error}}returned  which contains a  containing the value {{ComErrc::kNotOffered}} if Skeleton OfferService has not been called or the service offering has been withdrawn with a call to Skeleton StopOfferService'''
                     safety = ScoreReq.Asil.B
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.ZeroCopy@1]
                     version = 1
                 }
             }

@@ -10,4 +10,4 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#include "score/mw/com/performance_benchmarks/macro_benchmark/lola_interface.h"
+#include "score/mw/com/performance_benchmarks/common_test_resources/shared_memory_object_guard.h"
