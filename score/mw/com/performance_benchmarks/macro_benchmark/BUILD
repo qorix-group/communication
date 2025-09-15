@@ -94,6 +94,7 @@ make_configs(
     config_json_path = ":joined_config.json",
     mw_com_config_path = ":mw_com_config.json",
     out_dir = "gen_config",
+    visibility = ["//score/mw/com/performance_benchmarks/macro_benchmark:__subpackages__"],
 )
 
 cc_binary(
@@ -115,7 +116,7 @@ cc_binary(
     ],
     visibility = [
         "//platform/aas/test/pas/perf_tests/tools/artificial_load/apps/lola_ipc:__pkg__",
-        "//score/mw/com/performance_benchmarks/macro_benchmark:__pkg__",
+        "//score/mw/com/performance_benchmarks/macro_benchmark:__subpackages__",
     ],
     deps = [
         "config_parser",
@@ -147,7 +148,7 @@ cc_binary(
     ],
     visibility = [
         "//platform/aas/test/pas/perf_tests/tools/artificial_load/apps/lola_ipc:__pkg__",
-        "//score/mw/com/performance_benchmarks/macro_benchmark:__pkg__",
+        "//score/mw/com/performance_benchmarks/macro_benchmark:__subpackages__",
     ],
     deps = [
         ":common_resources",

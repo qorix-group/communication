@@ -135,7 +135,7 @@ TYPED_TEST(JsonParsingConvinienceFuncionsTypedTest, ParseJsonKeySucceedsWhenValu
 {
     auto [json_str, val] = TypeIntrospector::GetJsonStr<TypeParam>();
 
-    const auto root_json { json::operator""_json(json_str.c_str(), json_str.size()) };
+    const auto root_json{json::operator""_json(json_str.c_str(), json_str.size())};
     auto parsed_val = parse_json_key<TypeParam>("root_key", root_json);
 
     EXPECT_EQ(parsed_val, val);
