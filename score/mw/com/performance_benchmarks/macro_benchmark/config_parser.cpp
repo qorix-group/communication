@@ -1,12 +1,10 @@
 #include "score/mw/com/performance_benchmarks/macro_benchmark/config_parser.h"
-#include "score/json/internal/model/any.h"
 #include "score/mw/com/performance_benchmarks/macro_benchmark/common_resources.h"
+#include "score/mw/com/performance_benchmarks/macro_benchmark/json_parsing_convenience_wrappers.h"
 #include "score/mw/log/logging.h"
 #include <exception>
-#include <map>
 #include <optional>
 #include <string_view>
-#include <utility>
 
 namespace
 {
@@ -27,57 +25,6 @@ std::optional<score::mw::com::test::ServiceFinderMode> ParseServiceFinderModeFro
     score::mw::log::LogError(gLogContext) << "Unidentified ServiceFinderMode " << mode;
     score::mw::log::LogError(gLogContext) << "only allowed strings are POLLING and ASYNC" << mode;
     return std::nullopt;
-}
-
-score::json::Any parse_json_from_file(std::string_view path)
-{
-    score::json::JsonParser json_parser;
-
-    auto json_res = json_parser.FromFile(path);
-    if (!json_res.has_value())
-    {
-        score::mw::log::LogError(gLogContext) << "Can not create a json from: " << path;
-        score::mw::log::LogError(gLogContext) << json_res.error();
-        std::exit(EXIT_FAILURE);
-    }
-
-    return std::move(json_res).value();
-}
-
-auto find_json_key(std::string_view key, const score::json::Any& json_root)
-{
-    const auto& top_level_object = json_root.As<score::json::Object>().value().get();
-
-    const auto value_it = top_level_object.find(key);
-    return std::make_pair(value_it, value_it != top_level_object.end());
-}
-
-template <typename ElementType>
-ElementType cast_json_any_to_type(const score::json::Any& value_as_any)
-{
-    auto value_result = value_as_any.As<ElementType>();
-
-    if (!value_result.has_value())
-    {
-        score::mw::log::LogError(gLogContext) << "key: could not be interpreted as the provided type.";
-        score::mw::log::LogError(gLogContext) << value_result.error();
-        score::mw::com::test::test_failure("failed during json parsing.", gLogContext);
-    }
-    return value_result.value();
-}
-
-template <typename ElementType>
-ElementType parse_json_key(std::string_view key, const score::json::Any& json_root)
-{
-    const auto [search_res, search_success] = find_json_key(key, json_root);
-    if (!search_success)
-    {
-        score::mw::log::LogError(gLogContext) << "key: " << key << " could not be found";
-        score::mw::com::test::test_failure("failed during json parsing.", gLogContext);
-    }
-
-    const auto& value_as_any = search_res->second;
-    return cast_json_any_to_type<ElementType>(value_as_any);
 }
 
 score::mw::com::test::DurationUnit ParseDurationUnitFromString(std::string_view unit_sv)
@@ -119,23 +66,25 @@ ClientConfig ParseClientConfig(std::string_view path, std::string_view log_conte
         score::mw::com::test::test_failure("failed during json parsing.", log_context);
     }
 
-    const auto& [run_time_limit_it, run_time_limit_found] = find_json_key("run_time_limit", json_root);
-    std::optional<ClientConfig::RunTimeLimit> run_time_limit = std::nullopt;
-    if (run_time_limit_found)
-    {
-        const auto& [duration_it, duration_found] = find_json_key("duration", run_time_limit_it->second);
-        if (!duration_found)
-        {
-            score::mw::com::test::test_failure("failed during json parsing.", log_context);
-        }
-        const auto duration = cast_json_any_to_type<unsigned int>(duration_it->second);
+    const auto run_time_limit_it_opt = find_json_key("run_time_limit", json_root);
 
-        const auto& [duration_unit_it, duration_unit_found] = find_json_key("unit", run_time_limit_it->second);
-        if (!duration_unit_found)
+    std::optional<ClientConfig::RunTimeLimit> run_time_limit = std::nullopt;
+    if (run_time_limit_it_opt.has_value())
+    {
+        const auto& runtime_limit_val = run_time_limit_it_opt.value()->second;
+        const auto& duration_opt = find_json_key("duration", runtime_limit_val);
+        if (!duration_opt.has_value())
         {
             score::mw::com::test::test_failure("failed during json parsing.", log_context);
         }
-        const auto duration_unit_str = cast_json_any_to_type<std::string_view>(duration_unit_it->second);
+        const auto duration = cast_json_any_to_type<unsigned int>(duration_opt.value()->second);
+
+        const auto& duration_unit_opt = find_json_key("unit", runtime_limit_val);
+        if (!duration_unit_opt.has_value())
+        {
+            score::mw::com::test::test_failure("failed during json parsing.", log_context);
+        }
+        const auto duration_unit_str = cast_json_any_to_type<std::string_view>(duration_unit_opt.value()->second);
 
         const auto duration_unit = ParseDurationUnitFromString(duration_unit_str);
         run_time_limit = {duration, duration_unit};

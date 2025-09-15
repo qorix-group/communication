@@ -3,6 +3,8 @@
 #include "score/mw/com/runtime.h"
 #include "score/mw/log/logging.h"
 
+#include <score/stop_token.hpp>
+
 #include <boost/program_options.hpp>
 
 namespace score::mw::com::test
@@ -35,7 +37,6 @@ std::optional<SharedMemoryObjectCreator<CounterType>> GetSharedFlag()
         return std::nullopt;
     }
 
-    // auto& proxy_is_done_flag = proxy_is_done_flag_res.value();
     return std::move(proxy_is_done_flag_res.value());
 }
 
@@ -69,8 +70,8 @@ std::optional<TestCommanLineArguments> ParseCommandLineArgs(int argc, const char
     TestCommanLineArguments args;
     // clang-format off
     options.add_options()("help", "Display the help message")
-        ("config_path", po::value<std::string>(&args.config_path)->default_value(""), "REQUIRED: path to <service|client>_config file. The parser assumes that this config file has been validated against it's schema and conforms to it.")
-        ("service_instance_manifest", po::value<std::string>(&args.service_instance_manifest)->default_value(""), "optional: path/to/mw_com_config.json. By default ./etc/mw_com_config.json will be chosen.");
+        ("config_path", po::value<std::string>(&args.config_path), "REQUIRED: path to <service|client>_config file. The parser assumes that this config file has been validated against it's schema and conforms to it.")
+        ("service_instance_manifest", po::value<std::string>(&args.service_instance_manifest), "optional: path/to/mw_com_config.json. By default ./etc/mw_com_config.json will be chosen.");
     // clang-format on
 
     po::positional_options_description positional_options;
@@ -93,6 +94,12 @@ std::optional<TestCommanLineArguments> ParseCommandLineArgs(int argc, const char
         return std::nullopt;
     }
 
+    if (arg_map.count("service_instance_manifest") != 1)
+    {
+        std::cerr << options << std::endl;
+        return std::nullopt;
+    }
+
     po::notify(arg_map);
     score::mw::log::LogInfo(log_context) << "config_path: " << args.config_path;
     score::mw::log::LogInfo(log_context) << "service_instance_manifest: " << args.service_instance_manifest;
@@ -103,7 +110,6 @@ void InitializeRuntime(const std::string& path)
 {
     auto rtc = path.empty() ? score::mw::com::runtime::RuntimeConfiguration()
                             : score::mw::com::runtime::RuntimeConfiguration(path);
-
     score::mw::com::runtime::InitializeRuntime(rtc);
     score::mw::log::LogInfo() << "LoLa Runtime initialized!";
 }

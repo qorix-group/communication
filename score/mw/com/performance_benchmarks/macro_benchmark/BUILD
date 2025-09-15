@@ -1,3 +1,4 @@
+load("@score-baselibs//:bazel/unit_tests.bzl", "cc_gtest_unit_test", "cc_unit_test_suites_for_host_and_qnx")
 load("@score-baselibs//score/language/safecpp:toolchain_features.bzl", "COMPILER_WARNING_FEATURES")
 load("//score/mw/com/performance_benchmarks/macro_benchmark/config_generator:config_generator_rule.bzl", "make_configs")
 
@@ -50,6 +51,22 @@ cc_library(
         "//score/mw/com/performance_benchmarks/common_test_resources:shared_memory_object_creator",
         "//score/mw/com/performance_benchmarks/common_test_resources:stop_token_sig_term_handler",
         "@boost.program_options",
+        "@score-baselibs//score/language/futurecpp",
+        "@score-baselibs//score/mw/log",
+    ],
+)
+
+cc_library(
+    name = "json_parsing_convenience_wrappers",
+    srcs = ["json_parsing_convenience_wrappers.cpp"],
+    hdrs = ["json_parsing_convenience_wrappers.h"],
+    features = COMPILER_WARNING_FEATURES + [
+        "aborts_upon_exception",
+    ],
+    visibility = ["//score/mw/com/performance_benchmarks/macro_benchmark:__pkg__"],
+    deps = [
+        ":common_resources",
+        "@score-baselibs//score/json",
         "@score-baselibs//score/mw/log",
     ],
 )
@@ -64,10 +81,10 @@ cc_library(
     visibility = ["//score/mw/com/performance_benchmarks/macro_benchmark:__pkg__"],
     deps = [
         ":common_resources",
+        ":json_parsing_convenience_wrappers",
         "//score/mw/com",
         "//score/mw/com/performance_benchmarks/common_test_resources:shared_memory_object_creator",
         "//score/mw/com/performance_benchmarks/common_test_resources:stop_token_sig_term_handler",
-        "@score-baselibs//score/json",
         "@score-baselibs//score/mw/log",
     ],
 )
@@ -157,4 +174,35 @@ py_binary(
         ":make_configs",
     ],
     env = {"MW_LOG_CONFIG_FILE": "$(location logging.json)"},
+)
+
+cc_gtest_unit_test(
+    name = "json_parsing_convenience_wrappers_test",
+    srcs = ["json_parsing_convenience_wrappers_test.cpp"],
+    features = COMPILER_WARNING_FEATURES + [
+        "aborts_upon_exception",
+    ],
+    visibility = ["//score/mw/com/performance_benchmarks/macro_benchmark:__pkg__"],
+    deps = [
+        ":common_resources",
+        ":json_parsing_convenience_wrappers",
+        "@score-baselibs//score/json",
+    ],
+)
+
+cc_gtest_unit_test(
+    name = "common_resources_test",
+    srcs = ["common_resources_test.cpp"],
+    deps = [
+        ":common_resources",
+    ],
+)
+
+cc_unit_test_suites_for_host_and_qnx(
+    name = "unit_test_suite",
+    cc_unit_tests = [
+        ":common_resources_test",
+        ":json_parsing_convenience_wrappers_test",
+    ],
+    visibility = ["//score/mw/com:__pkg__"],
 )
