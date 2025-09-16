@@ -14,7 +14,7 @@
 
 #include "score/mw/com/impl/com_error.h"
 
-#include <cctype>
+#include <regex>
 
 namespace score::mw::com::impl
 {
@@ -22,47 +22,27 @@ namespace score::mw::com::impl
 namespace
 {
 
-/**
- * @brief Validates whether a shortname string adheres to the naming requirements.
- *
- * @details Validation Rules:
- * - Must not be empty
- * - First character must be: letter (a-z, A-Z), underscore (_), or forward slash (/)
- * - Subsequent characters must be: alphanumeric (a-z, A-Z, 0-9), underscore (_), or forward slash (/)
- * - Must not end with a forward slash (/)
- * - Must not contain consecutive forward slashes (//)
- *
- * @param shortname The shortname string to validate
- * @return true if the shortname is valid according to all rules, false otherwise
- */
+// Suppress "AUTOSAR C++14 A15-5-3" rule finding. This rule states: "The std::terminate()
+// function shall not be called implicitly". std::regex_search() will not throw exception
+// as characters passed are pre checked for invalid data.
+// coverity[autosar_cpp14_a15_5_3_violation]
 bool IsShortNameValid(const std::string_view shortname) noexcept
 {
-    if (shortname.empty() || shortname.back() == '/')
-    {
-        return false;
-    }
+    // Suppress "AUTOSAR C++14 A3-3-2" rule finding. This rule states: "Static and thread-local objects shall be
+    // constant-initialized". std::regex does not have a constexpr constructor and hence cannot be constexpr.
+    // coverity[autosar_cpp14_a3_3_2_violation]
+    static std::regex check_characters_regex("^[A-Za-z_/][A-Za-z_/0-9]*", std::regex_constants::basic);
+    // coverity[autosar_cpp14_a3_3_2_violation]
+    static std::regex check_trailing_slash_regex("/$", std::regex_constants::basic);
+    // coverity[autosar_cpp14_a3_3_2_violation]
+    static std::regex check_duplicate_slashes_regex("/{2,}", std::regex_constants::extended);
 
-    // Validate first character
-    const char first = shortname[0];
-    if (!((static_cast<bool>(std::isalpha(first)) || first == '_') || first == '/'))
-    {
-        return false;
-    }
-    // Single pass validation
-    for (std::size_t i = 1; i < shortname.size(); ++i)
-    {
-        const char c = shortname[i];
-        if (!((static_cast<bool>(std::isalnum(c)) || c == '_') || c == '/'))
-        {
-            return false;
-        }
-        if (c == '/' && shortname[i - 1] == '/')
-        {
-            return false;
-        }
-    }
+    const bool all_characters_valid = std::regex_match(shortname.begin(), shortname.end(), check_characters_regex);
+    const bool duplicate_slashes_found =
+        std::regex_search(shortname.begin(), shortname.end(), check_duplicate_slashes_regex);
+    const bool trailing_slash_found = std::regex_search(shortname.begin(), shortname.end(), check_trailing_slash_regex);
 
-    return true;
+    return (((all_characters_valid) && (!duplicate_slashes_found)) && (!trailing_slash_found));
 }
 
 }  // namespace
