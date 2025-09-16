@@ -83,7 +83,7 @@ It defines for specific `trace points`, whether they shall be enabled or not. A 
 `mw::com`/`LoLa`. It is identified by:
 - the service type
 - the element within the service (which event/field/method)
-- the provided API of this element ([see here](broken_link_g/swh/ddad_platform/tree/master/aas/analysis/tracing/generic_trace_library/design#providerskeleton-side-trace-points))
+- the provided API of this element ([see here](/score/analysis/tracing/generic_trace_library/design#providerskeleton-side-trace-points))
   for an overview of the supported APIs.
 
 Note: Currently the *trace filter config* does **NOT** distinguish between service instances! I.e. if a certain
