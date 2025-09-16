@@ -47,8 +47,8 @@ cc_library(
     visibility = ["//score/mw/com/performance_benchmarks/macro_benchmark:__pkg__"],
     deps = [
         "//score/mw/com",
-        "//score/mw/com/test/common_test_resources:shared_memory_object_creator",
-        "//score/mw/com/test/common_test_resources:stop_token_sig_term_handler",
+        "//score/mw/com/performance_benchmarks/common_test_resources:shared_memory_object_creator",
+        "//score/mw/com/performance_benchmarks/common_test_resources:stop_token_sig_term_handler",
         "@boost.program_options",
         "@score-baselibs//score/mw/log",
     ],
@@ -65,8 +65,8 @@ cc_library(
     deps = [
         ":common_resources",
         "//score/mw/com",
-        "//score/mw/com/test/common_test_resources:shared_memory_object_creator",
-        "//score/mw/com/test/common_test_resources:stop_token_sig_term_handler",
+        "//score/mw/com/performance_benchmarks/common_test_resources:shared_memory_object_creator",
+        "//score/mw/com/performance_benchmarks/common_test_resources:stop_token_sig_term_handler",
         "@score-baselibs//score/json",
         "@score-baselibs//score/mw/log",
     ],
@@ -105,8 +105,8 @@ cc_binary(
         ":common_resources",
         ":lola_interface",
         "//score/mw/com",
-        "//score/mw/com/test/common_test_resources:shared_memory_object_creator",
-        "//score/mw/com/test/common_test_resources:shared_memory_object_guard",
+        "//score/mw/com/performance_benchmarks/common_test_resources:shared_memory_object_creator",
+        "//score/mw/com/performance_benchmarks/common_test_resources:shared_memory_object_guard",
         "@score-baselibs//score/mw/log",
     ],
 )
@@ -137,8 +137,8 @@ cc_binary(
         ":config_parser",
         ":lola_interface",
         "//score/mw/com",
-        "//score/mw/com/test/common_test_resources:shared_memory_object_creator",
-        "//score/mw/com/test/common_test_resources:shared_memory_object_guard",
+        "//score/mw/com/performance_benchmarks/common_test_resources:shared_memory_object_creator",
+        "//score/mw/com/performance_benchmarks/common_test_resources:shared_memory_object_guard",
         "@score-baselibs//score/mw/log",
     ],
 )

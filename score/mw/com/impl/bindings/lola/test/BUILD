@@ -70,6 +70,10 @@ cc_library(
     srcs = ["skeleton_event_test_resources.cpp"],
     hdrs = ["skeleton_event_test_resources.h"],
     features = COMPILER_WARNING_FEATURES,
+    target_compatible_with = select({
+        "@platforms//os:qnx": ["@score-baselibs//bazel/platforms/qnx_version:qnx7"],  # TODO: Ticket-214229 QNX8 incompatible
+        "//conditions:default": [],
+    }),
     visibility = [
         "//score/mw/com/impl/bindings/lola:__subpackages__",
     ],
@@ -89,6 +93,10 @@ cc_library(
     srcs = ["service_discovery_test_resources.cpp"],
     hdrs = ["service_discovery_test_resources.h"],
     features = COMPILER_WARNING_FEATURES,
+    target_compatible_with = select({
+        "@platforms//os:qnx": ["@score-baselibs//bazel/platforms/qnx_version:qnx7"],  # TODO: Ticket-214229 QNX8 incompatible
+        "//conditions:default": [],
+    }),
     visibility = ["//score/mw/com/impl:__subpackages__"],
     deps = [
         ":skeleton_test_resources",
@@ -129,6 +137,10 @@ cc_test(
         "aborts_upon_exception",
     ],
     tags = ["unit"],
+    target_compatible_with = select({
+        "@platforms//os:qnx": ["@score-baselibs//bazel/platforms/qnx_version:qnx7"],  # TODO: Ticket-214229 QNX8 incompatible
+        "//conditions:default": [],
+    }),
     visibility = [
         "//score/mw/com/impl/bindings/lola:__subpackages__",
     ],
@@ -152,6 +164,10 @@ cc_test(
         "aborts_upon_exception",
     ],
     tags = ["unit"],
+    target_compatible_with = select({
+        "@platforms//os:qnx": ["@score-baselibs//bazel/platforms/qnx_version:qnx7"],  # TODO: Ticket-214229 QNX8 incompatible
+        "//conditions:default": [],
+    }),
     visibility = [
         "//score/mw/com/impl/bindings/lola:__subpackages__",
     ],
