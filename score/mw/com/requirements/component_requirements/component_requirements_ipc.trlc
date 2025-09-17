@@ -849,7 +849,7 @@ section "com" {
 
                     {{{using FieldType = <data type of field>}}}'''
                     safety = ScoreReq.Asil.B
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.CommunicationInterfaces@1]
                     version = 1
                 }
 
@@ -872,7 +872,7 @@ section "com" {
 
                     Return value is described in Return value of Subscribe.'''
                     safety = ScoreReq.Asil.B
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.DataLoss@1, Communication.ProducerConsumerPattern@1]
                     version = 1
                 }
 
@@ -884,7 +884,7 @@ section "com" {
 
                     Behaviour is described in Behaviour of Unsubscribe'''
                     safety = ScoreReq.Asil.B
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.SafeCommunication@1]
                     version = 1
                 }
 
@@ -1001,7 +1001,7 @@ section "com" {
 
                     Return value is described in Return value of GetFreeSampleCount.'''
                     safety = ScoreReq.Asil.B
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.SafeCommunication@1, Communication.ProducerConsumerPattern@1]
                     version = 1
                 }
 
@@ -1064,7 +1064,7 @@ section "com" {
             ScoreReq.CompReq GenericProxyClass {
                 description = '''The class {{GenericProxy}} is not a generated class and shall be provided in the namespace {{bmw::mw::com}}. {{GenericProxy}}{{platform/aas/mw/com/types.h}}Users shall be able to access the definition of  by inclusion of '''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.CommunicationInterfaces@1, Communication.SupportForMultipleProgrammingLanguages@1]
                 version = 1
             }
 
@@ -1076,7 +1076,7 @@ section "com" {
 
                 Therefore the signature of the constructor of {{GenericProxy}} is implementation defined.'''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.SupportForProgrammingLanguageIdioms@1]
                 version = 1
             }
 
@@ -1098,7 +1098,7 @@ section "com" {
             ScoreReq.CompReq GenericProxyCopySemantics {
                 description = '''The {{GenericProxy}} class shall neither be copy-constructable nor copy-assignable.'''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.DataLoss@1, Communication.ZeroCopy@1]
                 version = 1
             }
 
@@ -1106,7 +1106,7 @@ section "com" {
             ScoreReq.CompReq GenericProxyMoveSemantics {
                 description = '''The {{GenericProxy}} class shall be move-constructible as well as being move-assignable.'''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.SupportForProgrammingLanguageIdioms@1, Communication.SupportForMultipleProgrammingLanguages@1]
                 version = 1
             }
 
@@ -1131,7 +1131,7 @@ section "com" {
 
                 *  '''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.ServiceDiscovery@1]
                 version = 1
             }
 
@@ -1155,7 +1155,7 @@ section "com" {
 
                 *  or, a {{bmw::result::Error}} containing the value {{ComErrc::kBindingFailure}} if the lookup of all service instances corresponding to the service instance (See InstanceSpecifier Correspondence to Service Instances) by the binding returned errors.'''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.ServiceDiscovery@1]
                 version = 1
             }
 
@@ -1180,7 +1180,7 @@ section "com" {
 
                 *  or, a {{bmw::result::Error}} containing the value {{ComErrc::kFindServiceHandlerFailure}} if the handler could not be installed.'''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.MultiBindingSupport@1]
                 version = 1
             }
 
@@ -1205,7 +1205,7 @@ section "com" {
 
                 *  or, a {{bmw::result::Error}} containing the value {{ComErrc::kFindServiceHandlerFailure}} if the handler could not be installed.'''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.ServiceDiscovery@1]
                 version = 1
             }
 
@@ -1223,7 +1223,7 @@ section "com" {
 
                 Return values: returned {{bmw::ResultBlank}}, which contains a {{bmw::result::Error}} containing the value {{ComErrc::kInvalidHandle}}, in case the given handle hasn't been returned by a corresponding {{StartFindService}} call on the same class or is a handle for a search, which has already been stopped.'''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.ServiceDiscovery@1, Communication.SafeCommunication@1]
                 version = 1
             }
 
@@ -1247,7 +1247,7 @@ section "com" {
 
                 Return value: the {{GenericProxy}}handle from which the  instance has been created whose type is specified in GenericProxy HandleType class.'''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.ServiceInstance@1]
                 version = 1
             }
 
@@ -1258,7 +1258,7 @@ section "com" {
 
                  class shall contain a public member type  which shall adhere to the requirements of HandleType'''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.CommunicationInterfaces@1]
                 version = 1
             }
 
@@ -1304,7 +1304,7 @@ section "com" {
 
                     The class {{GenericProxyEvent}} is essentially a ProxyEvent class class, where the concrete event data type / {{SampleType}} is unknown and therefore represented as {{void}}.'''
                     safety = ScoreReq.Asil.B
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.EventType@1, Communication.CommunicationInterfaces@1]
                     version = 1
                 }
 
@@ -1314,7 +1314,7 @@ section "com" {
 
                     * {{SetReceiveHandler}} (See GenericProxyEvent SetReceiveHandler)'''
                     safety = ScoreReq.Asil.B
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.SupportForProgrammingLanguageIdioms@1]
                     version = 1
                 }
 
@@ -1323,7 +1323,7 @@ section "com" {
                     description = '''The {{GenericProxyEvent}}
                      class shall neither be copy-constructable nor copy-assignable'''
                     safety = ScoreReq.Asil.B
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.DataLoss@1, Communication.ZeroCopy@1]
                     version = 1
                 }
 
@@ -1338,7 +1338,7 @@ section "com" {
 
                     Return value is described in Return value of Subscribe.'''
                     safety = ScoreReq.Asil.B
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.EventType@1]
                     version = 1
                 }
 
@@ -1350,7 +1350,7 @@ section "com" {
 
                     Behaviour is described in Behaviour of Unsubscribe.'''
                     safety = ScoreReq.Asil.B
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.EventType@1]
                     version = 1
                 }
 
@@ -1362,7 +1362,7 @@ section "com" {
 
                     Return value: returns the subscription state of an event.'''
                     safety = ScoreReq.Asil.B
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.ProducerConsumerPattern@1]
                     version = 1
                 }
 
@@ -1380,7 +1380,7 @@ section "com" {
 
                     Behaviour: is described in Behaviour of SetSubscriptionStateChangeHandler.'''
                     safety = ScoreReq.Asil.B
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.SupportForTimeBasedArchitecture@1, Communication.EventType@1, Communication.ProducerConsumerPattern@1]
                     version = 1
                 }
 
@@ -1393,7 +1393,7 @@ section "com" {
 
                     Behaviour: is described in default-cursor Behaviour of UnsetSubscriptionStateChangeHandler.'''
                     safety = ScoreReq.Asil.B
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.SupportForTimeBasedArchitecture@1, Communication.EventType@1, Communication.ProducerConsumerPattern@1]
                     version = 1
                 }
 
@@ -1420,7 +1420,7 @@ section "com" {
 
                     * or, a {{bmw::result::Error}}, according to Error Codes relating to Active Subscription.'''
                     safety = ScoreReq.Asil.B
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.DataLoss@1, Communication.EventType@1]
                     version = 1
                 }
 
@@ -1438,7 +1438,7 @@ section "com" {
 
                     Return value: In case {{SetReceiveHandler()}} fails, {{ComErrc::kSetHandlerNotSet}} shall be returned in the {{Result}}.'''
                     safety = ScoreReq.Asil.B
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.Method@1]
                     version = 1
                 }
 
@@ -1452,7 +1452,7 @@ section "com" {
 
                     Return value: {{UnsetReceiveHandler()}}{{ComErrc::kUnsetFailure}}{{Result}}In case  fails,  shall be returned in the '''
                     safety = ScoreReq.Asil.B
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.Method@1]
                     version = 1
                 }
 
@@ -1464,7 +1464,7 @@ section "com" {
 
                     Return value is described in Return value of GetFreeSampleCount.'''
                     safety = ScoreReq.Asil.B
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.DataLoss@1, Communication.DataReordering@1]
                     version = 1
                 }
 
@@ -1482,7 +1482,7 @@ section "com" {
 
                     * or, a {{bmw::result::ErrorCode}}, according to Error Codes relating to Active Subscription'''
                     safety = ScoreReq.Asil.B
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.DataLoss@1]
                     version = 1
                 }
 
