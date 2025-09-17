@@ -92,10 +92,10 @@ pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
 pip.parse(
     hub_name = "communication_pip",
     python_version = "3.12",
-    requirements_lock = "//:requirements.txt",
+    requirements_lock = "//third_party/python:requirements.txt",
 )
 use_repo(pip, "communication_pip")
- 
+
 # TRLC dependency for requirements traceability
 bazel_dep(name = "trlc", version = "0.0.0")
 git_override(
@@ -103,11 +103,13 @@ git_override(
     remote = "https://github.com/bmw-software-engineering/trlc.git",
     commit = "650b51a47264a4f232b3341f473527710fc32669",  # trlc-2.0.2 release
 )
- 
-# LOBSTER dependency for traceability
-bazel_dep(name = "lobster", version = "0.0.0")
-git_override(
-    module_name = "lobster",
-    remote = "https://github.com/bmw-software-engineering/lobster.git",
-    commit = "ae6838ab6a7c43ed588458bb9580ce67cfd59da7",
+
+lobster_ext = use_extension("//third_party/lobster:lobster.bzl", "lobster_ext")
+use_repo(lobster_ext, "lobster")
+# Use lobster's upstream requirements.txt directly for this module's Python hub
+pip.parse(
+    hub_name = "lobster_dependencies",
+    python_version = "3.12",
+    requirements_lock = "@lobster//:requirements.txt",
 )
+use_repo(pip, "lobster_dependencies")

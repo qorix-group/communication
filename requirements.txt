@@ -1,4 +1,0 @@
-# Python dependencies for traceability tools (Python 3.9 compatible)
-bigtree<1.0.0,>=0.30.0
-pydot>=1.4.0
-pyparsing>=3.0.0
