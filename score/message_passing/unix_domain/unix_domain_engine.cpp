@@ -185,7 +185,7 @@ score::cpp::expected_blank<score::os::Error> UnixDomainEngine::SendProtocolMessa
     io[1].iov_len = sizeof(size);
     io[2].iov_base = const_cast<std::uint8_t*>(message.data());
     io[2].iov_len = static_cast<std::size_t>(message.size());
-    msg.msg_iov = &io[0];
+    msg.msg_iov = io.data();
     msg.msg_iovlen = kVectorCount;
 
     const auto result_expected = os_resources_.socket->sendmsg(fd, &msg, ::score::os::Socket::MessageFlag::kWaitAll);
@@ -209,7 +209,7 @@ score::cpp::expected<score::cpp::span<const std::uint8_t>, score::os::Error> Uni
     io[0].iov_len = sizeof(code);
     io[1].iov_base = &size;
     io[1].iov_len = sizeof(size);
-    msg.msg_iov = &io[0];
+    msg.msg_iov = io.data();
     msg.msg_iovlen = kVectorCount;
 
     auto size_expected = os_resources_.socket->recvmsg(fd, &msg, ::score::os::Socket::MessageFlag::kWaitAll);
