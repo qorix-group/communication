@@ -22,7 +22,7 @@ namespace score
 namespace message_passing
 {
 
-class ServerConnectionMock final : public IServerConnection
+class ServerConnectionMock : public IServerConnection
 {
   public:
     MOCK_METHOD(const ClientIdentity&, GetClientIdentity, (), (const, noexcept, override));
@@ -30,6 +30,8 @@ class ServerConnectionMock final : public IServerConnection
     MOCK_METHOD(score::cpp::expected_blank<score::os::Error>, Reply, (score::cpp::span<const std::uint8_t>), (noexcept, override));
     MOCK_METHOD(score::cpp::expected_blank<score::os::Error>, Notify, (score::cpp::span<const std::uint8_t>), (noexcept, override));
     MOCK_METHOD(void, RequestDisconnect, (), (noexcept, override));
+
+    virtual ~ServerConnectionMock() = default;  // virtual to make compiler happy
 };
 
 }  // namespace message_passing

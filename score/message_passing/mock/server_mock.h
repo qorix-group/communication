@@ -22,7 +22,7 @@ namespace score
 namespace message_passing
 {
 
-class ServerMock final : public IServer
+class ServerMock : public IServer
 {
   public:
     MOCK_METHOD(score::cpp::expected_blank<score::os::Error>,

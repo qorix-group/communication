@@ -22,7 +22,7 @@ namespace score
 namespace message_passing
 {
 
-class ClientConnectionMock final : public IClientConnection
+class ClientConnectionMock : public IClientConnection
 {
   public:
     MOCK_METHOD(score::cpp::expected_blank<score::os::Error>, Send, (score::cpp::span<const std::uint8_t>), (noexcept, override));

@@ -22,7 +22,7 @@ namespace score
 namespace message_passing
 {
 
-class SharedResourceEngineMock final : public ISharedResourceEngine
+class SharedResourceEngineMock : public ISharedResourceEngine
 {
   public:
     MOCK_METHOD(score::cpp::pmr::memory_resource*, GetMemoryResource, (), (noexcept, override));

@@ -22,13 +22,15 @@ namespace score
 namespace message_passing
 {
 
-class ClientFactoryMock final : public IClientFactory
+class ClientFactoryMock : public IClientFactory
 {
   public:
     MOCK_METHOD(score::cpp::pmr::unique_ptr<IClientConnection>,
                 Create,
                 (const ServiceProtocolConfig&, const ClientConfig&),
                 (noexcept, override));
+
+    virtual ~ClientFactoryMock() = default;  // virtual to make compiler happy
 };
 
 }  // namespace message_passing

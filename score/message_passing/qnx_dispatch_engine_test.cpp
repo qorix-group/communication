@@ -24,6 +24,7 @@
 #include "score/os/mocklib/sys_uio_mock.h"
 #include "score/os/mocklib/unistdmock.h"
 
+#include <future>
 #include <unordered_map>
 
 namespace score
@@ -34,6 +35,26 @@ namespace
 {
 
 using namespace ::testing;
+
+class ResourceManagerServerMock : public QnxDispatchEngine::ResourceManagerServer
+{
+  public:
+    ResourceManagerServerMock(std::shared_ptr<QnxDispatchEngine> engine)
+        : QnxDispatchEngine::ResourceManagerServer(std::move(engine))
+    {
+    }
+
+    MOCK_METHOD(std::int32_t, ProcessConnect, (resmgr_context_t*, io_open_t*), (noexcept, override));
+};
+
+class ResourceManagerConnectionMock : public QnxDispatchEngine::ResourceManagerConnection
+{
+  public:
+    MOCK_METHOD(bool, ProcessInput, (std::uint8_t code, score::cpp::span<const std::uint8_t>), (noexcept, override));
+    MOCK_METHOD(void, ProcessDisconnect, (), (noexcept, override));
+    MOCK_METHOD(bool, HasSomethingToRead, (), (noexcept, override));
+    MOCK_METHOD(std::int32_t, ProcessReadRequest, (resmgr_context_t*), (noexcept, override));
+};
 
 class ResourceMockHelper
 {
@@ -51,6 +72,21 @@ class ResourceMockHelper
     {
         pulse_handlers_.emplace(code, std::make_pair(func, handle));
         return code;
+    }
+
+    score::cpp::expected<std::int32_t, score::os::Error> resmgr_attach(dispatch_t* const dpp,
+                                                              resmgr_attr_t* const attr,
+                                                              const char* const path,
+                                                              const enum _file_type file_type,
+                                                              const std::uint32_t flags,
+                                                              const resmgr_connect_funcs_t* const connect_funcs,
+                                                              const resmgr_io_funcs_t* const io_funcs,
+                                                              RESMGR_HANDLE_T* const handle) noexcept
+    {
+        connect_funcs_ = connect_funcs;
+        io_funcs_ = io_funcs;
+        handle_ = handle;
+        return kFakeResmgrServerId;
     }
 
     score::cpp::expected_blank<score::os::Error> dispatch_block(dispatch_context_t* const /*ctp*/) noexcept
@@ -72,18 +108,54 @@ class ResourceMockHelper
 
     score::cpp::expected_blank<std::int32_t> dispatch_handler(dispatch_context_t* const /*ctp*/) noexcept
     {
-        message_context_t context;
-        resmgr_iomsgs_t message;
-        context.msg = &message;
-
         if (std::holds_alternative<PulseMessage>(current_message_))
         {
             auto& pulse = std::get<PulseMessage>(current_message_);
+
+            message_context_t context{};
+            resmgr_iomsgs_t message{};
+            context.msg = &message;
             message.pulse.value.sival_int = pulse.value;
 
             auto& handler = pulse_handlers_[pulse.code];
             score::cpp::ignore = handler.first(&context, pulse.code, 0, handler.second);
         }
+        else if (std::holds_alternative<IoOpenMessage>(current_message_))
+        {
+            auto& io_open = std::get<IoOpenMessage>(current_message_);
+            status_to_return_ = io_open.iofunc_open_status;
+
+            resmgr_context_t context{};
+            io_open_t message{};
+
+            score::cpp::ignore = (*connect_funcs_->open)(&context, &message, handle_, nullptr);
+            promises_.open.set_value();
+        }
+        return {};
+    }
+
+    score::cpp::expected_blank<std::int32_t> iofunc_open(resmgr_context_t* const /*ctp*/,
+                                                  io_open_t* const /*msg*/,
+                                                  iofunc_attr_t* const /*attr*/,
+                                                  iofunc_attr_t* const /*dattr*/,
+                                                  struct _client_info* const /*info*/) noexcept
+    {
+        if (status_to_return_ != EOK)
+        {
+            return score::cpp::make_unexpected(status_to_return_);
+        }
+        return {};
+    }
+
+    score::cpp::expected_blank<std::int32_t> iofunc_attr_lock(iofunc_attr_t* const attr) noexcept
+    {
+        ++lock_count_;
+        return {};
+    }
+
+    score::cpp::expected_blank<std::int32_t> iofunc_attr_unlock(iofunc_attr_t* const attr) noexcept
+    {
+        --lock_count_;
         return {};
     }
 
@@ -101,6 +173,25 @@ class ResourceMockHelper
         message_queue_.CreateSender().push(ErrnoPseudoMessage{error});
     }
 
+    void HelperInsertIoOpen(std::int32_t iofunc_open_status)
+    {
+        message_queue_.CreateSender().push(IoOpenMessage{iofunc_open_status});
+    }
+
+    bool HelperIsLocked() const
+    {
+        return lock_count_ != 0;
+    }
+
+    constexpr static std::int32_t kFakeResmgrServerId{1};
+
+    struct Promises
+    {
+        std::promise<void> open;
+    };
+
+    Promises promises_{};
+
   private:
     struct PulseMessage
     {
@@ -113,13 +204,24 @@ class ResourceMockHelper
         std::int32_t error;
     };
 
-    using QueueMessage = std::variant<std::monostate, ErrnoPseudoMessage, PulseMessage>;
+    struct IoOpenMessage
+    {
+        std::int32_t iofunc_open_status;
+    };
+
+    using QueueMessage = std::variant<std::monostate, ErrnoPseudoMessage, PulseMessage, IoOpenMessage>;
 
     std::unordered_map<std::int32_t, std::pair<pulse_handler_t, void*>> pulse_handlers_{};
+    const resmgr_connect_funcs_t* connect_funcs_{};
+    const resmgr_io_funcs_t* io_funcs_{};
+    RESMGR_HANDLE_T* handle_{};
 
     constexpr static std::size_t kMaxQueueLength{5};
     score::concurrency::SynchronizedQueue<QueueMessage> message_queue_{kMaxQueueLength};
     QueueMessage current_message_{};
+
+    std::int32_t status_to_return_{EOK};
+    std::int32_t lock_count_{0};
 };
 
 class QnxDispatchEngineTestFixture : public ::testing::Test
@@ -162,7 +264,9 @@ class QnxDispatchEngineTestFixture : public ::testing::Test
             .Times(2)
             .WillRepeatedly(Invoke(&helper_, &ResourceMockHelper::pulse_attach));
         EXPECT_CALL(*dispatch_, message_connect).Times(1).WillOnce(Return(kFakeCoid));
-        EXPECT_CALL(*dispatch_, resmgr_attach).Times(1).WillOnce(Return(kFakeResmgrId));
+        EXPECT_CALL(*dispatch_, resmgr_attach(_, _, IsNull(), _, _, _, _, _))
+            .Times(1)
+            .WillOnce(Return(kFakeResmgrEmptyId));
         EXPECT_CALL(*dispatch_, dispatch_context_alloc).Times(1).WillOnce(Return(kFakeContextPtr));
         EXPECT_CALL(*timer_, TimerCreate).Times(1).WillOnce(Return(kFakeTimerId));
         EXPECT_CALL(*iofunc_, iofunc_func_init).Times(1);
@@ -191,6 +295,32 @@ class QnxDispatchEngineTestFixture : public ::testing::Test
         EXPECT_CALL(*dispatch_, dispatch_context_free).Times(1);
     }
 
+    void ExpectServerAttached()
+    {
+        EXPECT_CALL(*dispatch_, resmgr_attach(_, _, NotNull(), _, _, _, _, _))
+            .Times(1)
+            .WillOnce(Invoke(&helper_, &ResourceMockHelper::resmgr_attach));
+        EXPECT_CALL(*iofunc_, iofunc_attr_init).Times(1);
+    }
+
+    void ExpectServerDetached()
+    {
+        EXPECT_CALL(*dispatch_,
+                    resmgr_detach(_, kFakeResmgrServerId, static_cast<std::uint32_t>(_RESMGR_DETACH_CLOSE)));
+    }
+
+    void ExpectConnectionOpen()
+    {
+        InSequence is;
+        EXPECT_CALL(*iofunc_, iofunc_attr_lock)
+            .Times(1)
+            .WillOnce(Invoke(&helper_, &ResourceMockHelper::iofunc_attr_lock));
+        EXPECT_CALL(*iofunc_, iofunc_open).Times(1).WillOnce(Invoke(&helper_, &ResourceMockHelper::iofunc_open));
+        EXPECT_CALL(*iofunc_, iofunc_attr_unlock)
+            .Times(1)
+            .WillOnce(Invoke(&helper_, &ResourceMockHelper::iofunc_attr_unlock));
+    }
+
     template <typename Mock>
     using mock_ptr = score::cpp::pmr::unique_ptr<StrictMock<Mock>>;
 
@@ -208,7 +338,8 @@ class QnxDispatchEngineTestFixture : public ::testing::Test
     constexpr static dispatch_context_t* kFakeContextPtr{nullptr};
     constexpr static std::int32_t kFakeCoid{0};
     constexpr static std::int32_t kFakeTimerId{0};
-    constexpr static std::int32_t kFakeResmgrId{0};
+    constexpr static std::int32_t kFakeResmgrEmptyId{0};
+    constexpr static std::int32_t kFakeResmgrServerId{ResourceMockHelper::kFakeResmgrServerId};
     const score::cpp::unexpected<score::os::Error> kFakeOsError{score::os::Error::createFromErrno(EINVAL)};
 };
 
@@ -286,7 +417,9 @@ TEST_F(QnxDispatchEngineDeathTest, EngineCreation_SetUpResourceManager)
         .WillRepeatedly(Invoke(&helper_, &ResourceMockHelper::pulse_attach));
     EXPECT_CALL(*dispatch_, message_connect).Times(AnyNumber()).WillOnce(Return(kFakeCoid));
     EXPECT_CALL(*timer_, TimerCreate).Times(AnyNumber()).WillOnce(Return(kFakeTimerId));
-    EXPECT_CALL(*dispatch_, resmgr_attach).Times(AnyNumber()).WillOnce(Return(kFakeOsError));
+    EXPECT_CALL(*dispatch_, resmgr_attach(_, _, IsNull(), _, _, _, _, _))
+        .Times(AnyNumber())
+        .WillOnce(Return(kFakeOsError));
 
     std::optional<QnxDispatchEngine> engine;
     EXPECT_DEATH(engine.emplace(score::cpp::pmr::get_default_resource(), MoveMockOsResources()),
@@ -302,7 +435,9 @@ TEST_F(QnxDispatchEngineDeathTest, EngineCreation_AllocateContext)
         .WillRepeatedly(Invoke(&helper_, &ResourceMockHelper::pulse_attach));
     EXPECT_CALL(*dispatch_, message_connect).Times(AnyNumber()).WillOnce(Return(kFakeCoid));
     EXPECT_CALL(*timer_, TimerCreate).Times(AnyNumber()).WillOnce(Return(kFakeTimerId));
-    EXPECT_CALL(*dispatch_, resmgr_attach).Times(AnyNumber()).WillOnce(Return(kFakeResmgrId));
+    EXPECT_CALL(*dispatch_, resmgr_attach(_, _, IsNull(), _, _, _, _, _))
+        .Times(AnyNumber())
+        .WillOnce(Return(kFakeResmgrEmptyId));
     EXPECT_CALL(*dispatch_, dispatch_context_alloc).Times(AnyNumber()).WillOnce(Return(kFakeOsError));
 
     std::optional<QnxDispatchEngine> engine;
@@ -344,6 +479,130 @@ TEST_F(QnxDispatchEngineDeathTest, PosixEndpoint_UnregisterNotOnCallbackThread)
     QnxDispatchEngine engine(score::cpp::pmr::get_default_resource(), MoveMockOsResources());
     ISharedResourceEngine::PosixEndpointEntry posix_endpoint;
     EXPECT_DEATH(engine.UnregisterPosixEndpoint(posix_endpoint), "");
+}
+
+TEST_F(QnxDispatchEngineTestFixture, ServerStart_Unsuccessful)
+{
+    ExpectEngineConstructed();
+    ExpectEngineThreadRunning();
+    EXPECT_CALL(*dispatch_, resmgr_attach(_, _, NotNull(), _, _, _, _, _)).Times(1).WillOnce(Return(kFakeOsError));
+    ExpectEngineDestructed();
+
+    auto engine = std::make_shared<QnxDispatchEngine>(score::cpp::pmr::get_default_resource(), MoveMockOsResources());
+    StrictMock<ResourceManagerServerMock> server{engine};
+    QnxDispatchEngine::QnxResourcePath path{"fake_path"};
+
+    EXPECT_FALSE(server.Start(path));
+}
+
+TEST_F(QnxDispatchEngineTestFixture, ServerStartStop)
+{
+    ExpectEngineConstructed();
+    ExpectEngineThreadRunning();
+    {
+        InSequence is;
+        EXPECT_CALL(*dispatch_, resmgr_attach(_, _, NotNull(), _, _, _, _, _))
+            .Times(1)
+            .WillOnce(Return(kFakeResmgrServerId));
+        EXPECT_CALL(*iofunc_, iofunc_attr_init).Times(1);
+
+        EXPECT_CALL(*dispatch_,
+                    resmgr_detach(_, kFakeResmgrServerId, static_cast<std::uint32_t>(_RESMGR_DETACH_CLOSE)));
+    }
+    ExpectEngineDestructed();
+
+    auto engine = std::make_shared<QnxDispatchEngine>(score::cpp::pmr::get_default_resource(), MoveMockOsResources());
+    StrictMock<ResourceManagerServerMock> server{engine};
+    QnxDispatchEngine::QnxResourcePath path{"fake_path"};
+
+    // shall be ignored by engine
+    server.Stop();
+
+    EXPECT_TRUE(server.Start(path));
+    server.Stop();
+}
+
+TEST_F(QnxDispatchEngineTestFixture, ServerOpenCheckFailure)
+{
+    ExpectEngineConstructed();
+    ExpectEngineThreadRunning();
+    ExpectServerAttached();
+    ExpectConnectionOpen();
+
+    ExpectServerDetached();
+    ExpectEngineDestructed();
+
+    auto engine = std::make_shared<QnxDispatchEngine>(score::cpp::pmr::get_default_resource(), MoveMockOsResources());
+    StrictMock<ResourceManagerServerMock> server{engine};
+    QnxDispatchEngine::QnxResourcePath path{"fake_path"};
+    EXPECT_TRUE(server.Start(path));
+
+    helper_.HelperInsertIoOpen(ENOMEM);
+    helper_.promises_.open.get_future().get();
+    EXPECT_FALSE(helper_.HelperIsLocked());
+
+    server.Stop();
+}
+
+TEST_F(QnxDispatchEngineTestFixture, ServerOpenCheckSuccess)
+{
+    ExpectEngineConstructed();
+    ExpectEngineThreadRunning();
+    ExpectServerAttached();
+    ExpectConnectionOpen();
+
+    ExpectServerDetached();
+    ExpectEngineDestructed();
+
+    auto engine = std::make_shared<QnxDispatchEngine>(score::cpp::pmr::get_default_resource(), MoveMockOsResources());
+    StrictMock<ResourceManagerServerMock> server{engine};
+    QnxDispatchEngine::QnxResourcePath path{"fake_path"};
+
+    EXPECT_CALL(server, ProcessConnect).Times(1).WillOnce([this](auto&&...) {
+        EXPECT_TRUE(helper_.HelperIsLocked());
+        return EOK;
+    });
+
+    EXPECT_TRUE(server.Start(path));
+
+    helper_.HelperInsertIoOpen(EOK);
+    helper_.promises_.open.get_future().get();
+    EXPECT_FALSE(helper_.HelperIsLocked());
+
+    server.Stop();
+}
+
+TEST_F(QnxDispatchEngineTestFixture, ServerOpenCheckSuccessConnectionAttached)
+{
+    ExpectEngineConstructed();
+    ExpectEngineThreadRunning();
+    ExpectServerAttached();
+    ExpectConnectionOpen();
+    EXPECT_CALL(*iofunc_, iofunc_ocb_attach).Times(1);
+
+    ExpectServerDetached();
+    ExpectEngineDestructed();
+
+    auto engine = std::make_shared<QnxDispatchEngine>(score::cpp::pmr::get_default_resource(), MoveMockOsResources());
+    StrictMock<ResourceManagerServerMock> server{engine};
+    QnxDispatchEngine::QnxResourcePath path{"fake_path"};
+
+    EXPECT_CALL(server, ProcessConnect)
+        .Times(1)
+        .WillOnce([this, &server, &engine](resmgr_context_t* const ctp, io_open_t* const msg) {
+            EXPECT_TRUE(helper_.HelperIsLocked());
+            StrictMock<ResourceManagerConnectionMock> connection;
+            score::cpp::ignore = engine->AttachConnection(ctp, msg, server, connection);
+            return EOK;
+        });
+
+    EXPECT_TRUE(server.Start(path));
+
+    helper_.HelperInsertIoOpen(EOK);
+    helper_.promises_.open.get_future().get();
+    EXPECT_FALSE(helper_.HelperIsLocked());
+
+    server.Stop();
 }
 
 }  // namespace
