@@ -42,7 +42,7 @@ bool DeserializeFromPayload(const score::cpp::span<const std::uint8_t> payload, 
     // representation in memory shall not be performed on objects."
     // False-positive: trivially-copyable object
     // coverity[autosar_cpp14_a12_0_2_violation : FALSE]
-    std::memcpy(&t, payload.data(), sizeof(T));
+    std::memcpy(&t, payload.data(), payload.size());
     // NOLINTEND(score-banned-function) deserialization of trivially copyable
     return true;
 }

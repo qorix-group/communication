@@ -1,5 +1,7 @@
 #include "score/mw/com/performance_benchmarks/common_test_resources/shared_memory_object_creator.h"
 
+#include "score/language/safecpp/string_view/null_termination_check.h"
+
 #include "score/os/stat.h"
 
 #include <chrono>
@@ -24,7 +26,12 @@ constexpr std::string_view kSharedMemoryPathPrefix = "/dev/shm/";
 bool DoesFileExist(const std::string_view file_path) noexcept
 {
     ::score::os::StatBuffer buffer{};
-    const auto result = ::score::os::Stat::instance().stat(file_path.data(), buffer);
+    // NOTE: Below use of `safecpp::GetPtrToNullTerminatedUnderlyingBufferOf()` will emit a deprecation warning here
+    //       since it is used in conjunction with `std::string_view`. Thus, it must get fixed appropriately instead!
+    //       For examples about how to achieve that, see
+    //       broken_link_g/swh/safe-posix-platform/blob/master/score/language/safecpp/string_view/README.md
+    const auto result =
+        ::score::os::Stat::instance().stat(safecpp::GetPtrToNullTerminatedUnderlyingBufferOf(file_path), buffer);
     if (!result.has_value())
     {
         if (result.error() != os::Error::Code::kNoSuchFileOrDirectory)

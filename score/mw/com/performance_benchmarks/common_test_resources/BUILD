@@ -12,6 +12,9 @@ cc_library(
         "shared_memory_object_creator.h",
     ],
     features = COMPILER_WARNING_FEATURES,
+    implementation_deps = [
+        "@score-baselibs//score/language/safecpp/string_view:null_termination_check",
+    ],
     visibility = [
         "//score/mw/com/performance_benchmarks:__subpackages__",
     ],

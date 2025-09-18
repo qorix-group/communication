@@ -101,6 +101,9 @@ cc_library(
         ":common_hdrs",
     ],
     features = COMPILER_WARNING_FEATURES,
+    implementation_deps = [
+        "@score-baselibs//score/language/safecpp/string_view:null_termination_check",
+    ],
     tags = ["FFI"],
     visibility = [
         "//score/mw/com/impl:__subpackages__",
