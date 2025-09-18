@@ -26,7 +26,7 @@ class ClientConnectionMock : public IClientConnection
 {
   public:
     MOCK_METHOD(score::cpp::expected_blank<score::os::Error>, Send, (score::cpp::span<const std::uint8_t>), (noexcept, override));
-    MOCK_METHOD((score::cpp::expected<score::cpp::span<std::uint8_t>, score::os::Error>),
+    MOCK_METHOD((score::cpp::expected<score::cpp::span<const std::uint8_t>, score::os::Error>),
                 SendWaitReply,
                 (score::cpp::span<const std::uint8_t>, score::cpp::span<std::uint8_t>),
                 (noexcept, override));

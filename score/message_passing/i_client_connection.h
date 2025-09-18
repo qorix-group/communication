@@ -58,7 +58,7 @@ class IClientConnection
     /// \param message The memory span containing the message to send
     /// \param reply The memory span designating the buffer for the reply message
     /// \return the reply span trimmed to the actual size of the reply message if succeeds, error if fails
-    virtual score::cpp::expected<score::cpp::span<std::uint8_t>, score::os::Error> SendWaitReply(
+    virtual score::cpp::expected<score::cpp::span<const std::uint8_t>, score::os::Error> SendWaitReply(
         score::cpp::span<const std::uint8_t> message,
         score::cpp::span<std::uint8_t> reply) noexcept = 0;
 

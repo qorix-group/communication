@@ -165,7 +165,7 @@ score::cpp::expected_blank<score::os::Error> ClientConnection::Send(score::cpp::
     return {};
 }
 
-score::cpp::expected<score::cpp::span<std::uint8_t>, score::os::Error> ClientConnection::SendWaitReply(
+score::cpp::expected<score::cpp::span<const std::uint8_t>, score::os::Error> ClientConnection::SendWaitReply(
     score::cpp::span<const std::uint8_t> message,
     score::cpp::span<std::uint8_t> reply) noexcept
 {
@@ -182,7 +182,7 @@ score::cpp::expected<score::cpp::span<std::uint8_t>, score::os::Error> ClientCon
         return score::cpp::make_unexpected(score::os::Error::createFromErrno(EINVAL));
     }
 
-    score::cpp::expected<score::cpp::span<std::uint8_t>, score::os::Error> result{};
+    score::cpp::expected<score::cpp::span<const std::uint8_t>, score::os::Error> result{};
     NonAllocatingFuture future(send_mutex_, send_condition_, result);
 
     auto callback = [&reply, &future](score::cpp::expected<score::cpp::span<const std::uint8_t>, score::os::Error> message_expected) {
@@ -199,7 +199,7 @@ score::cpp::expected<score::cpp::span<std::uint8_t>, score::os::Error> ClientCon
         }
         // NOLINTNEXTLINE(score-banned-function) copying byte buffer
         score::cpp::ignore = std::memcpy(reply.data(), reply_message.data(), static_cast<std::size_t>(reply_message.size()));
-        future.UpdateValueMarkReady(score::cpp::span<std::uint8_t>{reply.data(), reply_message.size()});
+        future.UpdateValueMarkReady(score::cpp::span<const std::uint8_t>{reply.data(), reply_message.size()});
     };
 
     if (waiting_for_reply_.has_value())

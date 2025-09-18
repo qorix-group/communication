@@ -56,6 +56,32 @@ class ResourceManagerConnectionMock : public QnxDispatchEngine::ResourceManagerC
     MOCK_METHOD(std::int32_t, ProcessReadRequest, (resmgr_context_t*), (noexcept, override));
 };
 
+/// \brief Provides QNX Resource Manager emulation layer for use with OSAL mocks
+///
+/// This helper class is used to emulate the QNX Resource Manager dispatch loop functionality and to provide the ability
+/// to inject different events into the loop.
+///
+/// It consists of two sets of methods:
+///
+/// * One set is the OSAL function substitutes that are supposed to keep the needed consitent
+///   state of the emulator between the mock calls. These functions have the same names as the respective OSAL methods
+///   and are supposed to be employed as drop-in mock actions using gmock Invoke() functionality, like in:
+///   ```
+///       EXPECT_CALL(*dispatch_, dispatch_block)
+///           .Times(AnyNumber())
+///           .WillRepeatedly(Invoke(&helper_, &ResourceMockHelper::dispatch_block));
+///   ```
+///
+/// * The other set, with the method names starting with `Helper` prefix, is supposed to analyze and modify the emulated
+///   Resource Manager state for testing purposes.
+///
+/// The class also exposes the synchronizatio objects (promises) to help synchronize the events in dispatch loop thread
+/// under testing with the events in the main thread of the test suite, and in particular, to make sure that some events
+/// on the dispatch loop thread happened before the main thread proceeds with future actions.
+///
+/// The QNX Resource Manager emulation is not perfect and could be incorrect in some edge cases that are not supposed
+/// to not appear in testing. In particular, one should be carefl with ending the lifetimes of server and conection
+/// mocks before the injected events associated with them have been processed by the dispatch loop thread.
 class ResourceMockHelper
 {
   public:
@@ -64,6 +90,7 @@ class ResourceMockHelper
                                              std::uint32_t flags,
                                              void* handle) noexcept;
 
+    /// Registers the pulse handler callback to call in dispatch loop
     score::cpp::expected<std::int32_t, score::os::Error> pulse_attach(dispatch_t* const /*dpp*/,
                                                              const std::int32_t /*flags*/,
                                                              const std::int32_t code,
@@ -74,6 +101,7 @@ class ResourceMockHelper
         return code;
     }
 
+    /// Registers the `connect_funcs` and `io_funcs` callbacks to call in dispatch loop
     score::cpp::expected<std::int32_t, score::os::Error> resmgr_attach(dispatch_t* const dpp,
                                                               resmgr_attr_t* const attr,
                                                               const char* const path,
@@ -89,6 +117,7 @@ class ResourceMockHelper
         return kFakeResmgrServerId;
     }
 
+    /// Blocks the dispatch loop till it has an event to process. Special treatment for `ErrnoPseudoMessage` event
     score::cpp::expected_blank<score::os::Error> dispatch_block(dispatch_context_t* const /*ctp*/) noexcept
     {
         const auto max_wait = std::chrono::milliseconds(1000);
@@ -106,6 +135,7 @@ class ResourceMockHelper
         return {};
     }
 
+    /// Processes the event extracted by `dispatch_block`
     score::cpp::expected_blank<std::int32_t> dispatch_handler(dispatch_context_t* const /*ctp*/) noexcept
     {
         if (std::holds_alternative<PulseMessage>(current_message_))
@@ -134,6 +164,7 @@ class ResourceMockHelper
         return {};
     }
 
+    /// Gives the ability to trigger the error handling branch in the `io_open` handler
     score::cpp::expected_blank<std::int32_t> iofunc_open(resmgr_context_t* const /*ctp*/,
                                                   io_open_t* const /*msg*/,
                                                   iofunc_attr_t* const /*attr*/,
@@ -147,18 +178,21 @@ class ResourceMockHelper
         return {};
     }
 
+    /// Helps maintain lock counter for testing purposes by increasing the counter
     score::cpp::expected_blank<std::int32_t> iofunc_attr_lock(iofunc_attr_t* const attr) noexcept
     {
         ++lock_count_;
         return {};
     }
 
+    /// Helps maintain lock counter for testing purposes by decreasing the counter
     score::cpp::expected_blank<std::int32_t> iofunc_attr_unlock(iofunc_attr_t* const attr) noexcept
     {
         --lock_count_;
         return {};
     }
 
+    /// Queues a pulse event to process in dispatch loop
     score::cpp::expected_blank<score::os::Error> MsgSendPulse(const std::int32_t coid,
                                                      const std::int32_t priority,
                                                      const std::int32_t code,
@@ -168,16 +202,19 @@ class ResourceMockHelper
         return {};
     }
 
+    /// Queues a special kind of event that causes `dispatch_block` to return failure
     void HelperInsertDispatchBlockError(std::int32_t error)
     {
         message_queue_.CreateSender().push(ErrnoPseudoMessage{error});
     }
 
+    /// Queues an io_open event (specifying the return status of the respective `iofunc_open`)
     void HelperInsertIoOpen(std::int32_t iofunc_open_status)
     {
         message_queue_.CreateSender().push(IoOpenMessage{iofunc_open_status});
     }
 
+    /// Check if the server resource attribute structure is locked
     bool HelperIsLocked() const
     {
         return lock_count_ != 0;
@@ -187,7 +224,7 @@ class ResourceMockHelper
 
     struct Promises
     {
-        std::promise<void> open;
+        std::promise<void> open;  ///< Fulfilled when `io_open` event has been processed
     };
 
     Promises promises_{};

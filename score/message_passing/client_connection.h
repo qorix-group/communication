@@ -47,7 +47,7 @@ class ClientConnection final : public IClientConnection
 
     score::cpp::expected_blank<score::os::Error> Send(score::cpp::span<const std::uint8_t> message) noexcept override;
 
-    score::cpp::expected<score::cpp::span<std::uint8_t>, score::os::Error> SendWaitReply(
+    score::cpp::expected<score::cpp::span<const std::uint8_t>, score::os::Error> SendWaitReply(
         score::cpp::span<const std::uint8_t> message,
         score::cpp::span<std::uint8_t> reply) noexcept override;
 
