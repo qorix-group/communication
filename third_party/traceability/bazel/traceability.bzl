@@ -67,6 +67,7 @@ def safety_software_seooc(
         reqs = None,  # @unused A list of system requirements / assumptions. Only trlc_* deps allowed
         units = None,  # @unused A list of safety_software_unit
         design = None,  # @unused Represents the Software Architectural Design => puml_* deps allowed
-        tests = None):  # @unused e.g. ITF Tests, SCTF Test
+        tests = None,  # @unused e.g. Integration Tests
+        analysis = None):  # @unused e.g. ITF Tests, SCTF Test
     # This is just to show the idea, will be filled in another commit.
     pass

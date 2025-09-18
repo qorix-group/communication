@@ -60,3 +60,64 @@ The strings are split here to not enable tracking by the source code linker.
     },
 ]
 ```
+
+### Layout for Lobster Trace Files:
+
+Code:
+```json
+{
+  "data": [
+    {
+      "tag": "cpp SampleLibrary.SampleRequirement",
+      "location": {
+        "kind": "file",
+        "file": "platform/aas/tools/traceability/doc/sample_library/unit_1/foo.cpp",
+        "line": 1,
+        "column": 1
+      },
+      "name": "platform/aas/tools/traceability/doc/sample_library/unit_1/foo.cpp",
+      "messages": [],
+      "just_up": [],
+      "just_down": [],
+      "just_global": [],
+      "refs": [
+        "req SampleLibrary.SampleRequirement"
+      ],
+      "language": "cpp",
+      "kind": "Function"
+    }
+  ],
+  "generator": "lobster_cpp",
+  "schema": "lobster-imp-trace",
+  "version": 3
+}
+```
+
+Requirement:
+```json
+{
+  "data": [
+    {
+      "tag": "req SampleLibrary.SampleRequirement",
+      "location": {
+        "kind": "file",
+        "file": "platform/aas/tools/traceability/doc/sample_library/requirements/component_requirements.trlc",
+        "line": 18,
+        "column": 18
+      },
+      "name": "SampleLibrary.SampleRequirement",
+      "messages": [],
+      "just_up": [],
+      "just_down": [],
+      "just_global": [],
+      "framework": "TRLC",
+      "kind": "CompReq",
+      "text": "Description of our SampleRequirement",
+      "status": null
+    }
+  ],
+  "generator": "lobster-trlc",
+  "schema": "lobster-req-trace",
+  "version": 4
+}
+```

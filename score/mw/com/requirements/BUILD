@@ -10,7 +10,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
-load("//third_party/traceability:traceability.bzl", "safety_software_unit")
+load("//third_party/traceability/bazel:traceability.bzl", "safety_software_unit")
 
 safety_software_unit(
     name = "safety_software_unit_com",

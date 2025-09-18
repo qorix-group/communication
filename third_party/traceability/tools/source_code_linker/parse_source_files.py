@@ -18,123 +18,116 @@ import argparse
 import collections
 import json
 import logging
-import os
-import sys
-import subprocess
+import debugpy
 
+from get_git_info import get_git_hash, get_github_repo
+from typing import List, Optional, Tuple
 
-# Importing from collections.abc as typing.Callable is deprecated since Python 3.9
-#from collections.abc import Callable
 from pathlib import Path
 from typing import Callable, Union
 from typing import Dict, List
 
 logger = logging.getLogger(__name__)
 
-TAGS = [
-    "# req-traceability:",
-    "# req-Id:",
-    "// trace:"
+TAGS_STD = [
+    "# trace:",
+    "// trace:",
+    "' trace:",
 ]
 
+NODES_STD = [
+    "component",
+]
 
-def get_github_base_url() -> str:
-    git_root = find_git_root()
-    repo = get_github_repo_info(git_root)
-    return f"https://github.com/{repo}"
+lobster_code_template = {
+        "data": [],
+        "generator": "lobster_cpp",
+        "schema": "lobster-imp-trace",
+        "version": 3
+    }
 
+lobster_reqs_template = {
+        "data": [],
+        "generator": "lobster-trlc",
+        "schema": "lobster-req-trace",
+        "version": 4
+    }
 
-def parse_git_output(str_line: str) -> str:
-    if len(str_line.split()) < 2:
-        logger.warning(
-            f"Got wrong input line from 'get_github_repo_info'. Input: {str_line}. Expected example: 'origin git@github.com:user/repo.git'"
-        )
-        return ""
-    url = str_line.split()[1]  # Get the URL part
-    # Handle SSH format (git@github.com:user/repo.git)
-    if url.startswith("git@"):
-        path = url.split(":")[1]
-    else:
-        path = "/".join(url.split("/")[3:])  # Get part after github.com/
-    return path.replace(".git", "")
-
-
-def get_github_repo_info(git_root_cwd: Path) -> str:
-    process = subprocess.run(
-        ["git", "remote", "-v"], capture_output=True, text=True, cwd=git_root_cwd
-    )
-    repo = ""
-    for line in process.stdout.split("\n"):
-        if "origin" in line and "(fetch)" in line:
-            repo = parse_git_output(line)
-            break
-    else:
-        # If we do not find 'origin' we just take the first line
-        logger.info(
-            "Did not find origin remote name. Will now take first result from: 'git remote -v'"
-        )
-        repo = parse_git_output(process.stdout.split("\n")[0])
-    assert repo != "", (
-        "Remote repository is not defined. Make sure you have a remote set. Check this via 'git remote -v'"
-    )
-    return repo
-
-
-def find_git_root():
+def extract_id_from_line(line: str, tags: List[str], nodes: List[str]) -> Optional[Tuple[str, str]]:
     """
-    This is copied from 'find_runfiles' as the import does not work for some reason.
-    This should be fixed.
+    Parse a single line to extract the ID from tags or nodes.
+
+    Steps:
+    1. Clean the line by removing '\n' and '\\n'
+    2. Remove all single and double quotes
+    3. Search for any tag or node
+    4. Capture the ID based on the type (tag or node)
+
+    Parameters
+    ----------
+    line : str
+        A single line of text containing either a tag or a node.
+    tags : List[str]
+        A list of tag strings to search for.
+    nodes : List[str]
+        A list of node strings to search for.
+
+    Returns
+    -------
+    Optional[str]
+        The extracted ID if found, None otherwise.
+
+    Examples
+    --------
+    >>> tags = ["# trace:", "// trace:", "' trace:", "$TopEvent"]
+    >>> nodes = ["$BasicEvent"]
+    >>> extract_id_from_line('# trace: id123', tags, nodes)
+    'id123'
+    >>> extract_id_from_line('$TopEvent(Description, id456)', tags, nodes)
+    'id456'
+    >>> extract_id_from_line('$BasicEvent(Description,id789,extra1,extra2)', tags, nodes)
+    'id789'
+    >>> extract_id_from_line("Invalid line", tags, nodes)
+    None
     """
-    git_root = Path(__file__).resolve()
-    while not (git_root / ".git").exists():
-        git_root = git_root.parent
-        if git_root == Path("/"):
-            sys.exit(
-                "Could not find git root. Please run this script from the "
-                "root of the repository."
-            )
-    return git_root
+    # Step 1: Clean the line of $, \n, and \\n
+    cleaned_line = line.replace('\n', '').replace('\\n', '')
 
+    # Step 2: Remove all single and double quotes
+    cleaned_line = cleaned_line.replace('"', '').replace("'", '').replace("{",'').strip()
 
-def get_git_hash(file_path: str) -> str:
-    """
-    Grabs the latest git hash found for particular file
+    # Step 3 and 4: Search for tags or nodes and capture the last element
+    for tag in tags:
+        if cleaned_line.startswith(tag):
+            return cleaned_line.split(tag, 1)[1].strip(), []
 
-    Args:
-        file_path (str): Filepath of for which the githash should be retrieved.
+    for node in nodes:
+        if cleaned_line.startswith(node):
+            # Scan for Macro
+            if node.startswith('$'):
+                parts = cleaned_line.split(',')
+                if len(parts) >= 2:
+                    return parts[1].strip().rstrip(')'), node
+            else: # scan for normal plantuml element
+                # Remove the identifier from the start of the line
+                parts = cleaned_line[len(node):].strip().split()
 
-    Returns:
-        (str): Full 40char length githash of the latest commit this file was changed.
+                # If there are at least 3 parts and the second-to-last is 'as', return the last part
+                if len(parts) >= 3 and parts[-2] == 'as':
+                    return parts[-1], node
 
-        Example:
-                3b3397ebc2777f47b1ae5258afc4d738095adb83
-    """
-    abs_path = None
-    try:
-        abs_path = Path(file_path).resolve()
-        if not os.path.isfile(abs_path):
-            logger.warning(f"File not found: {abs_path}")
-            return "file_not_found"
-        result = subprocess.run(
-            ["git", "log", "-n", "1", "--pretty=format:%H", "--", abs_path],
-            cwd=Path(abs_path).parent,
-            capture_output=True,
-        )
-        decoded_result = result.stdout.strip().decode()
+                # If there's only one part after the identifier, return it
+                if len(parts) == 1:
+                    return parts[0], node
 
-        # sanity check
-        assert all(c in "0123456789abcdef" for c in decoded_result)
-        return decoded_result
-    except Exception as e:
-        logger.warning(f"Unexpected error: {abs_path}: {e}")
-        return "error"
+    return None
 
-
-def extract_requirements(
+def extract_tags(
     source_file: str,
     github_base_url: str,
+    nodes: List[str],
     git_hash_func: Union[Callable[[str], str], None] = get_git_hash
-) -> Dict[str, List[str]]:
+) -> Dict[str, List[Tuple[str, str]]]:
     """
     This extracts the file-path, lineNr as well as the git hash of the file
     where a tag was found.
@@ -144,87 +137,135 @@ def extract_requirements(
         git_hash_func (Optional[callable]): Optional parameter
                                             only supplied during testing.
                                             If left empty func 'get_git_hash' is used.
+    """
 
-    Returns:
-        # TODO: change these links
-        Returns dictionary per file like this:
-        {
-            "TOOL_REQ__toolchain_sphinx_needs_build__requirement_linkage_types": [
-                    https://github.com/eclipse-score/score/blob/3b3397ebc2777f47b1ae5258afc4d738095adb83/_tooling/extensions/score_metamodel/utils.py,
-                    ... # further found places of the same ID if there are any
-                ]
-            "TOOL_REQ__toolchain_sphinx_needs_build__...": [
-                    https://github.com/eclipse-score/score/blob/3b3397ebc2777f47b1ae5258afc4d738095adb83/_tooling/extensions/score_metamodel/checks/id.py,
-                    ... # places where this ID as found
-            ]
-        }
+    # force None to get_git_hash
+    if git_hash_func is None:
+        git_hash_func = get_git_hash
+
+    requirement_mapping: dict[str, List[Tuple[str, str]]] = collections.defaultdict(list)
+    with open(source_file) as f:
+        hash = git_hash_func(source_file)
+        for line_number, line in enumerate(f):
+            line_number = line_number + 1
+            result = extract_id_from_line(line, TAGS_STD, NODES_STD)
+            if result is None:
+                continue
+
+            req_id, matched_node = result
+
+            if req_id:
+                link = f"{github_base_url}/blob/{hash}/{source_file}#L{line_number}"
+                requirement_mapping[req_id].append((link, matched_node))
+
+    return requirement_mapping
+
+def _extract_tags_dispatch(
+    source_file: str,
+    github_base_url: str,
+    mode=str,
+    git_hash_func: Union[Callable[[str], str], None] = get_git_hash
+) -> Dict[str, List[str]]:
+    """
+    Dispatch to a specialized parser based on file extension.
+    - If file is .puml -> use PlantUML path
+    - Otherwise -> use the original TAGS-based extractor (via extract_requirements)
     """
     # force None to get_git_hash
     if git_hash_func is None:
         git_hash_func = get_git_hash
 
-    requirement_mapping: dict[str, list[str]] = collections.defaultdict(list)
-    with open(source_file) as f:
-        for line_number, line in enumerate(f):
-            line_number = line_number + 1
-            line = line.strip()
-            if any(x in line for x in TAGS):
-                hash = git_hash_func(source_file)
-                cleaned_line = (
-                    line.replace("'", "").replace('"', "").replace(",", "").strip()
-                )
-                check_tag = cleaned_line.split(":")[1].strip()
-                if check_tag:
-                    req_id = cleaned_line.split(":")[-1].strip()
-                    link = f"{github_base_url}/blob/{hash}/{source_file}#L{line_number}"
-                    requirement_mapping[req_id].append(link)
-    return requirement_mapping
+    if mode == "reqs":
+        foo = lobster_reqs_template
+        rm =  extract_tags(source_file, github_base_url, [], git_hash_func)
+        for id, item in rm.items():
+            link, node = item[0]
+            requirement = {
+                "tag": f"req {id}",
+                "location": {
+                    "kind": "file",
+                    "file": link.strip(),
+                    "line": 1,
+                    "column": 1,
+                },
+                "name": f"{source_file.strip()}",
+                "messages": [],
+                "just_up": [],
+                "just_down": [],
+                "just_global": [],
+                "framework": "TRLC",
+                "kind": node.replace('$','').strip(),
+                "text": f"{id}",
+                }
 
+            foo["data"].append(requirement)
+    else:
+        # Fallback to defining tags as code
+        foo = lobster_code_template
+        rm = extract_tags(source_file, github_base_url, NODES_STD, git_hash_func)
+        for id, item in rm.items():
+            link, node = item[0]
+            codetag = {
+                "tag": f"cpp {id}",
+                "location": {
+                    "kind": "file",
+                    "file": link.strip(),
+                    "line": 1,
+                    "column": 1,
+                },
+                "name": f"{source_file.strip()}",
+                "messages": [],
+                "just_up": [],
+                "just_down": [],
+                "just_global": [],
+                "refs": [
+                    f"req {id}"
+                ],
+                "language": "cpp",
+                "kind": "Function"
+                }
+            foo["data"].append(codetag)
+
+    return foo
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-o", "--output")
+    parser.add_argument("-t", "--trace", default="code")
+    parser.add_argument("-u", "--url", default="https://www.github.com/")
+    parser.add_argument("--tags")
+    parser.add_argument("--nodes")
     parser.add_argument("inputs", nargs="*")
 
     args, _ = parser.parse_known_args()
 
+    # Process optional overrides
+    if args.tags:
+        args.tags.split("|")
+        extra_tags = [t.strip() for t in args.tags.split("|") if t.strip()]
+        # Extend TAGS_STD in place
+        TAGS_STD.extend(extra_tags)
+
+    if args.nodes:
+        extra_nodes = [n.strip() for n in args.nodes.split("|") if n.strip()]
+        NODES_STD.extend(extra_nodes)
+
     logger.info(f"Parsing source files: {args.inputs}")
 
-    foo = {
-        "data": [],
-        "generator": "lobster_cpp",
-        "schema": "lobster-imp-trace",
-        "version": 3
-    }
-
-
     # Finding the GH URL
-    gh_base_url = get_github_base_url()
-    requirement_mappings: Dict[str, List[str]] = collections.defaultdict(list)
+    gh_base_url=f"{args.url}{get_github_repo()}"
+
+    # debugpy.listen(5678)
+    # print("Waiting for debugger attach")
+    # debugpy.wait_for_client()
+    # debugpy.breakpoint()
+    # print('break on this line')
+
+    requirement_mappings: Dict[str, List[Tuple[str, str]]] = collections.defaultdict(list)
     for input in args.inputs:
         with open(input) as f:
             for source_file in f:
-                rm = extract_requirements(source_file.strip(), gh_base_url)
-                for k, v in rm.items():
-                    requirement = {
-                        "tag": f"cpp {k}",
-                        "location": {
-                            "kind": "file",
-                            "file": source_file.strip(),
-                            "line": 1,
-                            "column": 1,
-                        },
-                        "name": f"{source_file.strip()}",
-                        "messages": [],
-                        "just_up": [],
-                        "just_down": [],
-                        "just_global": [],
-                        "refs": [
-                            f"req {k}"
-                        ],
-                        "language": "cpp",
-                        "kind": "Function"
-                        }
-                    foo["data"].append(requirement)
+                foo = _extract_tags_dispatch(source_file.strip(), gh_base_url, args.trace)
+
     with open(args.output, "w") as f:
         f.write(json.dumps(foo, indent=2))

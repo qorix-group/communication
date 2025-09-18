@@ -18,6 +18,12 @@ filegroup(
     visibility = ["//visibility:public"],
 )
 
+filegroup(
+    name = "safety_analysis_conf",
+    srcs = ["lobster_analysis_req.yaml"],
+    visibility = ["//visibility:public"],
+)
+
 # Report Definitions
 
 filegroup(
@@ -29,5 +35,11 @@ filegroup(
 filegroup(
     name = "traceability_conf",
     srcs = ["lobster_rep.conf"],
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "traceability_safety_analysis_conf",
+    srcs = ["lobster_analysis_rep.conf"],
     visibility = ["//visibility:public"],
 )

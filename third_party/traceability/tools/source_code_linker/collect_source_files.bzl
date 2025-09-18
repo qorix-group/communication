@@ -108,6 +108,10 @@ def _collect_and_parse_source_files_impl(ctx):
     args = ctx.actions.args()
     args.add(sources_file)
     args.add("--output", parsed_sources_json_file)
+    args.add("--url", ctx.attr.url)
+    args.add("--trace", ctx.attr.trace)
+    args.add("--tags", "|".join(ctx.attr.trace_tags))
+    args.add("--nodes", "|".join(ctx.attr.trace_nodes))
 
     ctx.actions.run(
         arguments = [args],
@@ -134,6 +138,22 @@ parse_source_files_for_needs_links = rule(
             aspects = [_collect_source_files_aspect],
             allow_files = True,
             doc = "Dependencies and files to scan for links to documentation elements.",
+        ),
+        "trace": attr.string(
+            default = "code",
+            doc = "Element to trace (code/reqs)",
+        ),
+        "trace_nodes": attr.string_list(
+            default = [],
+            doc = "Additional Nodes to trace",
+        ),
+        "trace_tags": attr.string_list(
+            default = [],
+            doc = "Additional Tags to trace",
+        ),
+        "url": attr.string(
+            default = "broken_link_g/",
+            doc = "baseurl",
         ),
         "_source_files_parser": attr.label(
             # TODO: rename to source_files_parser in next PR
