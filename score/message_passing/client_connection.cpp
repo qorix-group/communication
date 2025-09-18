@@ -191,15 +191,17 @@ score::cpp::expected<score::cpp::span<const std::uint8_t>, score::os::Error> Cli
             future.UpdateValueMarkReady(score::cpp::make_unexpected(message_expected.error()));
             return;
         }
-        auto reply_message = message_expected.value();
+        const auto reply_message = message_expected.value();
         if (reply_message.size() > reply.size())
         {
             future.UpdateValueMarkReady(score::cpp::make_unexpected(score::os::Error::createFromErrno(ENOMEM)));
             return;
         }
+        // NOLINTBEGIN(bugprone-suspicious-stringview-data-usage) `reply`'s buffer size got checked above
         // NOLINTNEXTLINE(score-banned-function) copying byte buffer
-        score::cpp::ignore = std::memcpy(reply.data(), reply_message.data(), static_cast<std::size_t>(reply_message.size()));
+        score::cpp::ignore = std::memcpy(reply.data(), reply_message.data(), reply_message.size());
         future.UpdateValueMarkReady(score::cpp::span<const std::uint8_t>{reply.data(), reply_message.size()});
+        // NOLINTEND(bugprone-suspicious-stringview-data-usage)
     };
 
     if (waiting_for_reply_.has_value())
