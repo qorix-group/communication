@@ -1,4 +1,5 @@
 #include "score/mw/com/performance_benchmarks/macro_benchmark/json_parsing_convenience_wrappers.h"
+#include "score/json/internal/model/any.h"
 
 #include <optional>
 #include <string_view>
@@ -6,7 +7,7 @@
 namespace score::mw::com::test
 {
 
-score::json::Any parse_json_from_file(std::string_view path)
+score::json::Object parse_json_from_file(std::string_view path)
 {
     score::json::JsonParser json_parser;
 
@@ -18,21 +19,22 @@ score::json::Any parse_json_from_file(std::string_view path)
         std::exit(EXIT_FAILURE);
     }
 
-    return std::move(json_res).value();
-}
+    const auto& top_level_object = json_res.value().As<score::json::Object>();
 
-std::optional<json::Object::const_iterator> find_json_key(std::string_view key, const score::json::Any& json_root)
-{
-    const auto& top_level_object = json_root.As<score::json::Object>();
     if (!top_level_object.has_value())
     {
-        return std::nullopt;
+        score::mw::log::LogError(kJsonParserLogContext) << "Can not create a json from: " << path;
+        score::mw::log::LogError(kJsonParserLogContext) << json_res.error();
+        std::exit(EXIT_FAILURE);
     }
-    const auto& const_reference_wrapper_to_the_parsed_root = top_level_object.value();
-    const auto& parsed_root = const_reference_wrapper_to_the_parsed_root.get();
+    return std::move(top_level_object.value().get());
+}
 
-    json::Object::const_iterator value_it = parsed_root.find(key);
-    if (value_it == parsed_root.end())
+std::optional<json::Object::const_iterator> find_json_key(std::string_view key,
+                                                          const score::json::Object& top_level_object)
+{
+    auto value_it = top_level_object.find(key);
+    if (value_it == top_level_object.end())
     {
         return std::nullopt;
     }

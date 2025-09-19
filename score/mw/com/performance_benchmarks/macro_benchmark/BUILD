@@ -180,6 +180,9 @@ py_binary(
 cc_gtest_unit_test(
     name = "json_parsing_convenience_wrappers_test",
     srcs = ["json_parsing_convenience_wrappers_test.cpp"],
+    data = [
+        ":logging.json",
+    ],
     features = COMPILER_WARNING_FEATURES + [
         "aborts_upon_exception",
     ],

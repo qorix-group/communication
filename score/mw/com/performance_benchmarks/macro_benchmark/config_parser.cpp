@@ -1,4 +1,5 @@
 #include "score/mw/com/performance_benchmarks/macro_benchmark/config_parser.h"
+#include "score/json/internal/model/any.h"
 #include "score/mw/com/performance_benchmarks/macro_benchmark/common_resources.h"
 #include "score/mw/com/performance_benchmarks/macro_benchmark/json_parsing_convenience_wrappers.h"
 #include "score/mw/log/logging.h"
@@ -71,7 +72,14 @@ ClientConfig ParseClientConfig(std::string_view path, std::string_view log_conte
     std::optional<ClientConfig::RunTimeLimit> run_time_limit = std::nullopt;
     if (run_time_limit_it_opt.has_value())
     {
-        const auto& runtime_limit_val = run_time_limit_it_opt.value()->second;
+        const auto& runtime_limit_val_opt = run_time_limit_it_opt.value()->second.As<json::Object>();
+
+        if (!runtime_limit_val_opt.has_value())
+        {
+            score::mw::com::test::test_failure("failed during json parsing.", log_context);
+        }
+        const auto runtime_limit_val = runtime_limit_val_opt.value();
+
         const auto& duration_opt = find_json_key("duration", runtime_limit_val);
         if (!duration_opt.has_value())
         {

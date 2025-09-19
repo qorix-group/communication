@@ -18,7 +18,6 @@
 
 #include <gtest/gtest.h>
 #include <cstdint>
-#include <iostream>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -31,14 +30,23 @@ namespace
 {
 
 using score::json::operator""_json;
+TEST(JsonParsingConvinienceFuncionsTest, ParseJsonFromFile)
+{
+    std::string_view path = "score/mw/com/performance_benchmarks/macro_benchmark/config/logging.json";
+    auto parsed_json = parse_json_from_file(path);
+    EXPECT_TRUE(parsed_json.size() > 0);
+}
+
+using score::json::operator""_json;
 TEST(JsonParsingConvinienceFuncionsTest, FindJsonKeyWithValidKeySucceeds)
 {
     std::string_view key = "bla";
-    // given a root that does contain the searched key
+    // given a top level object that does contain the searched key
     const auto json_root = R"({ "bla" : 10 })"_json;
+    const auto& json_object = json_root.As<json::Object>().value().get();
 
     // when the key is searched for
-    auto found_key_optional = find_json_key(key, json_root);
+    auto found_key_optional = find_json_key(key, json_object);
 
     // when the key is searched for
     ASSERT_TRUE(found_key_optional.has_value());
@@ -48,10 +56,11 @@ TEST(JsonParsingConvinienceFuncionsTest, FindJsonKeyWithInValidKeyFails)
 {
     using score::json::operator""_json;
     std::string_view key = "bla";
-    // given a root that does not contain the searched key
+    // given a top level object that does not contain the searched key
     const auto json_root = R"({ "not_bla" : 10 })"_json;
+    const auto& json_object = json_root.As<json::Object>().value().get();
     // when the key is searched for
-    auto found_key_optional = find_json_key(key, json_root);
+    auto found_key_optional = find_json_key(key, json_object);
 
     // then an ampty optional is returned
     ASSERT_FALSE(found_key_optional.has_value());
@@ -90,7 +99,7 @@ class TypeIntrospector
         }
         if constexpr (std::is_floating_point_v<T>)
         {
-            auto val = static_cast<T>(12.1);
+            auto val = static_cast<T>(12.3);
             json_str << val << " }";
             return std::make_pair(json_str.str(), val);
         }
@@ -136,7 +145,8 @@ TYPED_TEST(JsonParsingConvinienceFuncionsTypedTest, ParseJsonKeySucceedsWhenValu
     auto [json_str, val] = TypeIntrospector::GetJsonStr<TypeParam>();
 
     const auto root_json{json::operator""_json(json_str.c_str(), json_str.size())};
-    auto parsed_val = parse_json_key<TypeParam>("root_key", root_json);
+    const auto& json_obj = root_json.template As<json::Object>().value().get();
+    auto parsed_val = parse_json_key<TypeParam>("root_key", json_obj);
 
     EXPECT_EQ(parsed_val, val);
 }

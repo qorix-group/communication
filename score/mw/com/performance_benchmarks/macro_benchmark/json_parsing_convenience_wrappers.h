@@ -7,15 +7,15 @@ namespace score::mw::com::test
 {
 
 constexpr static std::string_view kJsonParserLogContext{"Blib"};
-score::json::Any parse_json_from_file(std::string_view path);
+score::json::Object parse_json_from_file(std::string_view path);
 
-std::optional<json::Object::const_iterator> find_json_key(std::string_view key, const score::json::Any& json_root);
+std::optional<json::Object::const_iterator> find_json_key(std::string_view key,
+                                                          const score::json::Object& top_level_object);
 
 template <typename ElementType>
 ElementType cast_json_any_to_type(const score::json::Any& value_as_any)
 {
-    auto value_result = value_as_any.As<ElementType>();
-
+    const auto& value_result = value_as_any.As<ElementType>();
     if (!value_result.has_value())
     {
         score::mw::log::LogError(kJsonParserLogContext) << "key: could not be interpreted as the provided type.";
@@ -26,9 +26,9 @@ ElementType cast_json_any_to_type(const score::json::Any& value_as_any)
 }
 
 template <typename ElementType>
-ElementType parse_json_key(std::string_view key, const score::json::Any& json_root)
+ElementType parse_json_key(std::string_view key, const score::json::Object& json_object)
 {
-    const auto search_res_optional = find_json_key(key, json_root);
+    const auto& search_res_optional = find_json_key(key, json_object);
     if (!search_res_optional.has_value())
     {
         score::mw::log::LogError(kJsonParserLogContext) << "key: " << key << " could not be found";
