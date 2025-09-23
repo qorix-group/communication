@@ -12,14 +12,34 @@ https://github.com/eclipse-score/docs-as-code/tree/v0.4.0/src/extensions/score_s
 The extension uses two main components to integrate with Bazel:
 
 1. `collect_source_files`
-   - Processes all files from provided deps
-   - Passes files as `--input` arguments to `parse_source_files.py`
-   - Handles dependency tracking for incremental builds
+    - Processes all files from provided deps
+    - Passes files as `--input` arguments to `parse_source_files.py`
+    - Handles dependency tracking for incremental builds
 
 2. `parse_source_files.py`
-   - Scans input files for template tags (e.g., "#<!-- comment prevents parsing this occurance --> req-traceability:")
-   - Retrieves git information (hash, file location)
-   - Generates mapping file with requirement IDs and links
+    - Scans input files for template tags (e.g., "#<!-- comment prevents parsing this occurance --> req-traceability:")
+    - Retrieves git information (hash, file location)
+    - Generates mapping file with requirement IDs and links
+
+3. `Bazel BUILD file`
+   To integrate the Source Code Linker into a project following lines need to be added to the Build file:
+
+   ```
+   load("//platform/aas/tools/traceability/tools/source_code_linker:collect_source_files.bzl", "parsed_source_files_for_source_code_linker")
+
+    filegroup(
+        name = "...",
+        srcs = [
+        "...",
+        ],
+        visibility = ["//visibility:public"],
+    )
+
+    parsed_source_files_for_source_code_linker(
+        name = "...",
+        srcs_and_deps = [": ..."],
+    )
+   ```
 
 ### Link Generation Process
 

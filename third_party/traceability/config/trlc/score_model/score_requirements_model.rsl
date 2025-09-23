@@ -13,9 +13,9 @@
 package ScoreReq
 
 enum Asil {
-   QM
-   B
-   D
+    QM
+    B
+    D
 }
 
 enum Status {
@@ -26,16 +26,16 @@ enum Status {
 abstract type Requirement {
     description				String
     version                 Integer
-	  safety                  Asil
+	safety                  Asil
     note optional           String
     status                  Status
     freeze status =         Status.valid
 }
 
 tuple ReqId {
-   item                     Requirement
-   separator                @
-   version                  Integer
+    item                     Requirement
+    separator                @
+    version                  Integer
 }
 
 type AssumedSystemReq extends Requirement {
@@ -43,9 +43,9 @@ type AssumedSystemReq extends Requirement {
 }
 
 tuple AssumedSystemReqId {
-   item                     AssumedSystemReq
-   separator                @
-   version                  Integer
+    item                     AssumedSystemReq
+    separator                @
+    version                  Integer
 }
 
 type FeatReq extends Requirement {
@@ -53,13 +53,18 @@ type FeatReq extends Requirement {
 }
 
 tuple FeatReqId {
-   item                     FeatReq
-   separator                @
-   version                  Integer
+    item                     FeatReq
+    separator                @
+    version                  Integer
 }
 
 type CompReq extends Requirement {
     derived_from		    FeatReqId[1 .. *]
+    fulfilledBy optional    String
+}
+
+type Component extends Requirement {
+
 }
 
 abstract type StdReq extends Requirement {
