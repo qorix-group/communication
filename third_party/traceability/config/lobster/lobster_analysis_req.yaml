@@ -1,5 +1,5 @@
 inputs:
-  - "."
+  - .
 
 conversion-rules:
   - package: SafetyAnalysis

@@ -22,7 +22,4 @@ py_binary(
     ],
     main = "parse_source_files.py",
     visibility = ["//visibility:public"],
-    deps = [
-        "//third_party/debugpy",
-    ],
 )
