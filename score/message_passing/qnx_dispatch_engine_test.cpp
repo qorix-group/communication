@@ -102,11 +102,11 @@ class ResourceMockHelper
     }
 
     /// Registers the `connect_funcs` and `io_funcs` callbacks to call in dispatch loop
-    score::cpp::expected<std::int32_t, score::os::Error> resmgr_attach(dispatch_t* const /*dpp*/,
-                                                              resmgr_attr_t* const /*attr*/,
-                                                              const char* const /*path*/,
-                                                              const enum _file_type /*file_type*/,
-                                                              const std::uint32_t /*flags*/,
+    score::cpp::expected<std::int32_t, score::os::Error> resmgr_attach(dispatch_t* const dpp,
+                                                              resmgr_attr_t* const attr,
+                                                              const char* const path,
+                                                              const enum _file_type file_type,
+                                                              const std::uint32_t flags,
                                                               const resmgr_connect_funcs_t* const connect_funcs,
                                                               const resmgr_io_funcs_t* const io_funcs,
                                                               RESMGR_HANDLE_T* const handle) noexcept
@@ -152,55 +152,15 @@ class ResourceMockHelper
         }
         else if (std::holds_alternative<IoOpenMessage>(current_message_))
         {
+            auto& io_open = std::get<IoOpenMessage>(current_message_);
+            status_to_return_ = io_open.iofunc_open_status;
+
             resmgr_context_t context{};
             io_open_t message{};
 
-            const auto result = (*connect_funcs_->open)(&context, &message, handle_, nullptr);
-            promises_.open.set_value(result);
+            score::cpp::ignore = (*connect_funcs_->open)(&context, &message, handle_, nullptr);
+            promises_.open.set_value();
         }
-        else if (std::holds_alternative<IoWriteMessage>(current_message_))
-        {
-            auto& io_write = std::get<IoWriteMessage>(current_message_);
-            resmgr_context_t context{};
-            struct IoWriteData
-            {
-                io_write_t message;
-                char payload[4];
-            } data{{}, {1, 2, 3, 4}};
-            io_write_t& message = data.message;
-            message.i.xtype = io_write.xtype;
-            message.i.nbytes = io_write.nbytes;
-            context.offset = 0;  // explicitly
-            context.info.msglen = context.offset + sizeof(io_write_t) + io_write.nbytes_max;
-
-            const auto result = (*io_funcs_->write)(&context, &message, ocb_);
-            promises_.write.set_value(result);
-        }
-        else if (std::holds_alternative<IoReadMessage>(current_message_))
-        {
-            auto& io_read = std::get<IoReadMessage>(current_message_);
-            resmgr_context_t context{};
-            io_read_t message{};
-            message.i.xtype = io_read.xtype;
-            message.i.nbytes = io_read.nbytes;
-
-            const auto result = (*io_funcs_->read)(&context, &message, ocb_);
-            promises_.read.set_value(result);
-        }
-        return {};
-    }
-
-    /// Helps maintain lock counter for testing purposes by increasing the counter
-    score::cpp::expected_blank<std::int32_t> iofunc_attr_lock(iofunc_attr_t* const /*attr*/) noexcept
-    {
-        ++lock_count_;
-        return {};
-    }
-
-    /// Helps maintain lock counter for testing purposes by decreasing the counter
-    score::cpp::expected_blank<std::int32_t> iofunc_attr_unlock(iofunc_attr_t* const /*attr*/) noexcept
-    {
-        --lock_count_;
         return {};
     }
 
@@ -211,40 +171,25 @@ class ResourceMockHelper
                                                   iofunc_attr_t* const /*dattr*/,
                                                   struct _client_info* const /*info*/) noexcept
     {
-        auto& io_open = std::get<IoOpenMessage>(current_message_);
-        return io_open.iofunc_open_result;
-    }
-
-    /// Binds the resource manager connection object to the resource manager server that created the connection
-    score::cpp::expected_blank<std::int32_t> iofunc_ocb_attach(resmgr_context_t* const /*ctp*/,
-                                                        io_open_t* const /*msg*/,
-                                                        iofunc_ocb_t* const ocb,
-                                                        iofunc_attr_t* const attr,
-                                                        const resmgr_io_funcs_t* const /*io_funcs*/) noexcept
-    {
-        ocb->attr = (extended_dev_attr_t*)attr;
-        ocb_ = ocb;
+        if (status_to_return_ != EOK)
+        {
+            return score::cpp::make_unexpected(status_to_return_);
+        }
         return {};
     }
 
-    /// Returns the specified iofunc_write_verify result
-    score::cpp::expected_blank<std::int32_t> iofunc_write_verify(resmgr_context_t* const /*ctp*/,
-                                                          io_write_t* const /*msg*/,
-                                                          iofunc_ocb_t* const /*ocb*/,
-                                                          std::int32_t* const /*nonblock*/) noexcept
+    /// Helps maintain lock counter for testing purposes by increasing the counter
+    score::cpp::expected_blank<std::int32_t> iofunc_attr_lock(iofunc_attr_t* const attr) noexcept
     {
-        auto& io_write = std::get<IoWriteMessage>(current_message_);
-        return io_write.iofunc_write_verify_result;
+        ++lock_count_;
+        return {};
     }
 
-    /// Returns the specified iofunc_read_verify result
-    score::cpp::expected_blank<std::int32_t> iofunc_read_verify(resmgr_context_t* const /*ctp*/,
-                                                         io_read_t* const /*msg*/,
-                                                         iofunc_ocb_t* const /*ocb*/,
-                                                         std::int32_t* const /*nonblock*/) noexcept
+    /// Helps maintain lock counter for testing purposes by decreasing the counter
+    score::cpp::expected_blank<std::int32_t> iofunc_attr_unlock(iofunc_attr_t* const attr) noexcept
     {
-        auto& io_read = std::get<IoReadMessage>(current_message_);
-        return io_read.iofunc_read_verify_result;
+        --lock_count_;
+        return {};
     }
 
     /// Queues a pulse event to process in dispatch loop
@@ -264,9 +209,9 @@ class ResourceMockHelper
     }
 
     /// Queues an io_open event (specifying the return status of the respective `iofunc_open`)
-    void HelperInsertIoOpen(score::cpp::expected_blank<std::int32_t> iofunc_open_result)
+    void HelperInsertIoOpen(std::int32_t iofunc_open_status)
     {
-        message_queue_.CreateSender().push(IoOpenMessage{iofunc_open_result});
+        message_queue_.CreateSender().push(IoOpenMessage{iofunc_open_status});
     }
 
     /// Check if the server resource attribute structure is locked
@@ -275,30 +220,11 @@ class ResourceMockHelper
         return lock_count_ != 0;
     }
 
-    /// Queues an io_write event
-    void HelperInsertIoWrite(score::cpp::expected_blank<std::int32_t> iofunc_write_verify_result,
-                             std::int32_t xtype = _IO_XTYPE_NONE,
-                             std::size_t nbytes = 0UL,
-                             std::size_t nbytes_max = 0UL)
-    {
-        message_queue_.CreateSender().push(IoWriteMessage{iofunc_write_verify_result, xtype, nbytes, nbytes_max});
-    }
-
-    /// Queues an io_write event
-    void HelperInsertIoRead(score::cpp::expected_blank<std::int32_t> iofunc_read_verify_result,
-                            std::int32_t xtype = _IO_XTYPE_NONE,
-                            std::size_t nbytes = 0UL)
-    {
-        message_queue_.CreateSender().push(IoReadMessage{iofunc_read_verify_result, xtype, nbytes});
-    }
-
     constexpr static std::int32_t kFakeResmgrServerId{1};
 
     struct Promises
     {
-        std::promise<std::int32_t> open;   ///< Fulfilled when `io_open` event has been processed
-        std::promise<std::int32_t> write;  ///< Fulfilled when `io_write` event has been processed
-        std::promise<std::int32_t> read;   ///< Fulfilled when `io_read` event has been processed
+        std::promise<void> open;  ///< Fulfilled when `io_open` event has been processed
     };
 
     Promises promises_{};
@@ -317,37 +243,21 @@ class ResourceMockHelper
 
     struct IoOpenMessage
     {
-        score::cpp::expected_blank<std::int32_t> iofunc_open_result;
+        std::int32_t iofunc_open_status;
     };
 
-    struct IoWriteMessage
-    {
-        score::cpp::expected_blank<std::int32_t> iofunc_write_verify_result;
-        std::int32_t xtype;
-        std::size_t nbytes;
-        std::size_t nbytes_max;
-    };
-
-    struct IoReadMessage
-    {
-        score::cpp::expected_blank<std::int32_t> iofunc_read_verify_result;
-        std::int32_t xtype;
-        std::size_t nbytes;
-    };
-
-    using QueueMessage =
-        std::variant<std::monostate, ErrnoPseudoMessage, PulseMessage, IoOpenMessage, IoWriteMessage, IoReadMessage>;
+    using QueueMessage = std::variant<std::monostate, ErrnoPseudoMessage, PulseMessage, IoOpenMessage>;
 
     std::unordered_map<std::int32_t, std::pair<pulse_handler_t, void*>> pulse_handlers_{};
     const resmgr_connect_funcs_t* connect_funcs_{};
     const resmgr_io_funcs_t* io_funcs_{};
     RESMGR_HANDLE_T* handle_{};
-    RESMGR_OCB_T* ocb_{};
 
     constexpr static std::size_t kMaxQueueLength{5};
     score::concurrency::SynchronizedQueue<QueueMessage> message_queue_{kMaxQueueLength};
     QueueMessage current_message_{};
 
+    std::int32_t status_to_return_{EOK};
     std::int32_t lock_count_{0};
 };
 
@@ -446,13 +356,6 @@ class QnxDispatchEngineTestFixture : public ::testing::Test
         EXPECT_CALL(*iofunc_, iofunc_attr_unlock)
             .Times(1)
             .WillOnce(Invoke(&helper_, &ResourceMockHelper::iofunc_attr_unlock));
-    }
-
-    void ExpectConnectionAccepted()
-    {
-        EXPECT_CALL(*iofunc_, iofunc_ocb_attach)
-            .Times(1)
-            .WillOnce(Invoke(&helper_, &ResourceMockHelper::iofunc_ocb_attach));
     }
 
     template <typename Mock>
@@ -671,8 +574,8 @@ TEST_F(QnxDispatchEngineTestFixture, ServerOpenCheckFailure)
     QnxDispatchEngine::QnxResourcePath path{"fake_path"};
     EXPECT_TRUE(server.Start(path));
 
-    helper_.HelperInsertIoOpen(score::cpp::unexpected{ENOMEM});
-    EXPECT_EQ(helper_.promises_.open.get_future().get(), ENOMEM);
+    helper_.HelperInsertIoOpen(ENOMEM);
+    helper_.promises_.open.get_future().get();
     EXPECT_FALSE(helper_.HelperIsLocked());
 
     server.Stop();
@@ -699,8 +602,8 @@ TEST_F(QnxDispatchEngineTestFixture, ServerOpenCheckSuccess)
 
     EXPECT_TRUE(server.Start(path));
 
-    helper_.HelperInsertIoOpen(score::cpp::blank{});
-    EXPECT_EQ(helper_.promises_.open.get_future().get(), EOK);
+    helper_.HelperInsertIoOpen(EOK);
+    helper_.promises_.open.get_future().get();
     EXPECT_FALSE(helper_.HelperIsLocked());
 
     server.Stop();
@@ -720,212 +623,21 @@ TEST_F(QnxDispatchEngineTestFixture, ServerOpenCheckSuccessConnectionAttached)
     auto engine = std::make_shared<QnxDispatchEngine>(score::cpp::pmr::get_default_resource(), MoveMockOsResources());
     StrictMock<ResourceManagerServerMock> server{engine};
     QnxDispatchEngine::QnxResourcePath path{"fake_path"};
-    StrictMock<ResourceManagerConnectionMock> connection;
 
     EXPECT_CALL(server, ProcessConnect)
         .Times(1)
-        .WillOnce([this, &server, &engine, &connection](resmgr_context_t* const ctp, io_open_t* const msg) {
+        .WillOnce([this, &server, &engine](resmgr_context_t* const ctp, io_open_t* const msg) {
             EXPECT_TRUE(helper_.HelperIsLocked());
+            StrictMock<ResourceManagerConnectionMock> connection;
             score::cpp::ignore = engine->AttachConnection(ctp, msg, server, connection);
             return EOK;
         });
 
     EXPECT_TRUE(server.Start(path));
 
-    helper_.HelperInsertIoOpen(score::cpp::blank{});
-    EXPECT_EQ(helper_.promises_.open.get_future().get(), EOK);
+    helper_.HelperInsertIoOpen(EOK);
+    helper_.promises_.open.get_future().get();
     EXPECT_FALSE(helper_.HelperIsLocked());
-
-    server.Stop();
-}
-
-TEST_F(QnxDispatchEngineTestFixture, ServerWriteChecksFailure)
-{
-    ExpectEngineConstructed();
-    ExpectEngineThreadRunning();
-    ExpectServerAttached();
-    ExpectConnectionOpen();
-    ExpectConnectionAccepted();
-
-    EXPECT_CALL(*iofunc_, iofunc_write_verify)
-        .Times(AnyNumber())
-        .WillRepeatedly(Invoke(&helper_, &ResourceMockHelper::iofunc_write_verify));
-
-    ExpectServerDetached();
-    ExpectEngineDestructed();
-
-    auto engine = std::make_shared<QnxDispatchEngine>(score::cpp::pmr::get_default_resource(), MoveMockOsResources());
-    StrictMock<ResourceManagerServerMock> server{engine};
-    QnxDispatchEngine::QnxResourcePath path{"fake_path"};
-    StrictMock<ResourceManagerConnectionMock> connection;
-
-    EXPECT_CALL(server, ProcessConnect)
-        .Times(1)
-        .WillOnce([this, &server, &engine, &connection](resmgr_context_t* const ctp, io_open_t* const msg) {
-            score::cpp::ignore = engine->AttachConnection(ctp, msg, server, connection);
-            return EOK;
-        });
-
-    EXPECT_TRUE(server.Start(path));
-
-    helper_.HelperInsertIoOpen(score::cpp::blank{});
-    helper_.promises_.open.get_future().get();
-
-    // iofunc_write_verify unexpected
-    helper_.HelperInsertIoWrite(score::cpp::unexpected{ENOMEM});
-    EXPECT_EQ(helper_.promises_.write.get_future().get(), ENOMEM);
-    helper_.promises_.write = std::promise<std::int32_t>();  // reset
-
-    // unsupported write request type
-    helper_.HelperInsertIoWrite(score::cpp::blank{}, _IO_XTYPE_READDIR);
-    EXPECT_EQ(helper_.promises_.write.get_future().get(), ENOSYS);
-    helper_.promises_.write = std::promise<std::int32_t>();  // reset
-
-    // too small write request size
-    helper_.HelperInsertIoWrite(score::cpp::blank{}, _IO_XTYPE_NONE, 0UL, 4UL);
-    EXPECT_EQ(helper_.promises_.write.get_future().get(), EBADMSG);
-    helper_.promises_.write = std::promise<std::int32_t>();  // reset
-
-    // too large write request size
-    helper_.HelperInsertIoWrite(score::cpp::blank{}, _IO_XTYPE_NONE, 8UL, 4UL);
-    EXPECT_EQ(helper_.promises_.write.get_future().get(), EMSGSIZE);
-
-    server.Stop();
-}
-
-TEST_F(QnxDispatchEngineTestFixture, ServerWriteChecksSuccess)
-{
-    ExpectEngineConstructed();
-    ExpectEngineThreadRunning();
-    ExpectServerAttached();
-    ExpectConnectionOpen();
-    ExpectConnectionAccepted();
-
-    EXPECT_CALL(*iofunc_, iofunc_write_verify)
-        .Times(AnyNumber())
-        .WillRepeatedly(Invoke(&helper_, &ResourceMockHelper::iofunc_write_verify));
-
-    ExpectServerDetached();
-    ExpectEngineDestructed();
-
-    auto engine = std::make_shared<QnxDispatchEngine>(score::cpp::pmr::get_default_resource(), MoveMockOsResources());
-    StrictMock<ResourceManagerServerMock> server{engine};
-    QnxDispatchEngine::QnxResourcePath path{"fake_path"};
-    StrictMock<ResourceManagerConnectionMock> connection;
-
-    EXPECT_CALL(server, ProcessConnect)
-        .Times(1)
-        .WillOnce([this, &server, &engine, &connection](resmgr_context_t* const ctp, io_open_t* const msg) {
-            score::cpp::ignore = engine->AttachConnection(ctp, msg, server, connection);
-            return EOK;
-        });
-
-    EXPECT_CALL(connection, ProcessInput)
-        .Times(1)
-        .WillOnce([](const std::uint8_t code, const score::cpp::span<const std::uint8_t> message) noexcept {
-            EXPECT_EQ(code, 1);
-            EXPECT_EQ(message.size(), 3);
-            return EOK;
-        });
-
-    EXPECT_TRUE(server.Start(path));
-
-    helper_.HelperInsertIoOpen(score::cpp::blank{});
-    helper_.promises_.open.get_future().get();
-
-    helper_.HelperInsertIoWrite(score::cpp::blank{}, _IO_XTYPE_NONE, 4UL, 4UL);
-    EXPECT_EQ(helper_.promises_.write.get_future().get(), EOK);
-
-    server.Stop();
-}
-
-TEST_F(QnxDispatchEngineTestFixture, ServerReadChecksFailure)
-{
-    ExpectEngineConstructed();
-    ExpectEngineThreadRunning();
-    ExpectServerAttached();
-    ExpectConnectionOpen();
-    ExpectConnectionAccepted();
-
-    EXPECT_CALL(*iofunc_, iofunc_read_verify)
-        .Times(AnyNumber())
-        .WillRepeatedly(Invoke(&helper_, &ResourceMockHelper::iofunc_read_verify));
-
-    ExpectServerDetached();
-    ExpectEngineDestructed();
-
-    auto engine = std::make_shared<QnxDispatchEngine>(score::cpp::pmr::get_default_resource(), MoveMockOsResources());
-    StrictMock<ResourceManagerServerMock> server{engine};
-    QnxDispatchEngine::QnxResourcePath path{"fake_path"};
-    StrictMock<ResourceManagerConnectionMock> connection;
-
-    EXPECT_CALL(server, ProcessConnect)
-        .Times(1)
-        .WillOnce([this, &server, &engine, &connection](resmgr_context_t* const ctp, io_open_t* const msg) {
-            score::cpp::ignore = engine->AttachConnection(ctp, msg, server, connection);
-            return EOK;
-        });
-
-    EXPECT_TRUE(server.Start(path));
-
-    helper_.HelperInsertIoOpen(score::cpp::blank{});
-    helper_.promises_.open.get_future().get();
-
-    // iofunc_reaf_verify unexpected
-    helper_.HelperInsertIoRead(score::cpp::unexpected{ENOMEM});
-    EXPECT_EQ(helper_.promises_.read.get_future().get(), ENOMEM);
-    helper_.promises_.read = std::promise<std::int32_t>();  // reset
-
-    // unsupported read request type
-    helper_.HelperInsertIoRead(score::cpp::blank{}, _IO_XTYPE_READDIR);
-    EXPECT_EQ(helper_.promises_.read.get_future().get(), ENOSYS);
-    helper_.promises_.read = std::promise<std::int32_t>();  // reset
-
-    // too small read request size
-    helper_.HelperInsertIoRead(score::cpp::blank{}, _IO_XTYPE_NONE, 0UL);
-    EXPECT_EQ(helper_.promises_.read.get_future().get(), _RESMGR_NPARTS(0));
-
-    server.Stop();
-}
-
-TEST_F(QnxDispatchEngineTestFixture, ServerReadChecksSuccess)
-{
-    ExpectEngineConstructed();
-    ExpectEngineThreadRunning();
-    ExpectServerAttached();
-    ExpectConnectionOpen();
-    ExpectConnectionAccepted();
-
-    EXPECT_CALL(*iofunc_, iofunc_read_verify)
-        .Times(AnyNumber())
-        .WillRepeatedly(Invoke(&helper_, &ResourceMockHelper::iofunc_read_verify));
-
-    ExpectServerDetached();
-    ExpectEngineDestructed();
-
-    auto engine = std::make_shared<QnxDispatchEngine>(score::cpp::pmr::get_default_resource(), MoveMockOsResources());
-    StrictMock<ResourceManagerServerMock> server{engine};
-    QnxDispatchEngine::QnxResourcePath path{"fake_path"};
-    StrictMock<ResourceManagerConnectionMock> connection;
-
-    EXPECT_CALL(server, ProcessConnect)
-        .Times(1)
-        .WillOnce([this, &server, &engine, &connection](resmgr_context_t* const ctp, io_open_t* const msg) {
-            score::cpp::ignore = engine->AttachConnection(ctp, msg, server, connection);
-            return EOK;
-        });
-
-    EXPECT_CALL(connection, ProcessReadRequest).Times(1).WillOnce([](auto) noexcept {
-        return _RESMGR_NPARTS(1);
-    });
-
-    EXPECT_TRUE(server.Start(path));
-
-    helper_.HelperInsertIoOpen(score::cpp::blank{});
-    helper_.promises_.open.get_future().get();
-
-    helper_.HelperInsertIoRead(score::cpp::blank{}, _IO_XTYPE_NONE, 4UL);
-    EXPECT_EQ(helper_.promises_.read.get_future().get(), _RESMGR_NPARTS(1));
 
     server.Stop();
 }

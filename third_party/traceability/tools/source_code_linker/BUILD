@@ -21,6 +21,8 @@ py_binary(
         "parse_source_files.py",
     ],
     main = "parse_source_files.py",
-    imports = ["."],
     visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/debugpy",
+    ],
 )

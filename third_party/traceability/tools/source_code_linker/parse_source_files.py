@@ -18,6 +18,7 @@ import argparse
 import collections
 import json
 import logging
+import debugpy
 
 from get_git_info import get_git_hash, get_github_repo
 from typing import List, Optional, Tuple
@@ -237,7 +238,6 @@ if __name__ == "__main__":
     parser.add_argument("inputs", nargs="*")
 
     args, _ = parser.parse_known_args()
-    foo = []
 
     # Process optional overrides
     if args.tags:
@@ -255,18 +255,17 @@ if __name__ == "__main__":
     # Finding the GH URL
     gh_base_url=f"{args.url}{get_github_repo()}"
 
-    requirement_mappings: Dict[str, List[Tuple[str, str]]] = collections.defaultdict(list)
+    # debugpy.listen(5678)
+    # print("Waiting for debugger attach")
+    # debugpy.wait_for_client()
+    # debugpy.breakpoint()
+    # print('break on this line')
 
+    requirement_mappings: Dict[str, List[Tuple[str, str]]] = collections.defaultdict(list)
     for input in args.inputs:
         with open(input) as f:
             for source_file in f:
                 foo = _extract_tags_dispatch(source_file.strip(), gh_base_url, args.trace)
-
-    if not foo:
-        if args.trace == "reqs":
-            foo = lobster_reqs_template
-        else:
-            foo = lobster_code_template
 
     with open(args.output, "w") as f:
         f.write(json.dumps(foo, indent=2))

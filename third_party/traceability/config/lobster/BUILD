@@ -2,19 +2,19 @@
 
 filegroup(
     name = "assumed_system_reqs_conf",
-    srcs = ["lobster_sys_req.yaml"],
+    srcs = ["lobster_sys_req.conf"],
     visibility = ["//visibility:public"],
 )
 
 filegroup(
     name = "feature_reqs_conf",
-    srcs = ["lobster_feat_req.yaml"],
+    srcs = ["lobster_feat_req.conf"],
     visibility = ["//visibility:public"],
 )
 
 filegroup(
     name = "comp_reqs_conf",
-    srcs = ["lobster_comp_req.yaml"],
+    srcs = ["lobster_comp_req.conf"],
     visibility = ["//visibility:public"],
 )
 
@@ -25,6 +25,7 @@ filegroup(
 )
 
 # Report Definitions
+
 filegroup(
     name = "traceability_feat_conf",
     srcs = ["lobster_feat_rep.conf"],
@@ -32,14 +33,8 @@ filegroup(
 )
 
 filegroup(
-    name = "traceability_comp_conf",
-    srcs = ["lobster_comp_rep.conf"],
-    visibility = ["//visibility:public"],
-)
-
-filegroup(
-    name = "traceability_sw_unit_conf",
-    srcs = ["lobster_sw_unit_rep.conf"],
+    name = "traceability_conf",
+    srcs = ["lobster_rep.conf"],
     visibility = ["//visibility:public"],
 )
 

@@ -43,20 +43,20 @@ bool IsShortNameValid(const std::string_view shortname) noexcept
     }
 
     // Validate first character
-    const char first_char = shortname[0];
-    if (!((static_cast<bool>(std::isalpha(first_char)) || first_char == '_') || first_char == '/'))
+    const char first = shortname[0];
+    if (!((static_cast<bool>(std::isalpha(first)) || first == '_') || first == '/'))
     {
         return false;
     }
     // Single pass validation
-    for (std::size_t char_index = 1; char_index < shortname.size(); ++char_index)
+    for (std::size_t i = 1; i < shortname.size(); ++i)
     {
-        const char current_char = shortname[char_index];
-        if (!((static_cast<bool>(std::isalnum(current_char)) || current_char == '_') || current_char == '/'))
+        const char c = shortname[i];
+        if (!((static_cast<bool>(std::isalnum(c)) || c == '_') || c == '/'))
         {
             return false;
         }
-        if (current_char == '/' && shortname[char_index - 1] == '/')
+        if (c == '/' && shortname[i - 1] == '/')
         {
             return false;
         }
@@ -67,7 +67,7 @@ bool IsShortNameValid(const std::string_view shortname) noexcept
 
 }  // namespace
 
-score::Result<InstanceSpecifier> InstanceSpecifier::Create(std::string&& shortname_path) noexcept
+score::Result<InstanceSpecifier> InstanceSpecifier::Create(const std::string_view shortname_path) noexcept
 {
     if (!IsShortNameValid(shortname_path))
     {
@@ -76,7 +76,8 @@ score::Result<InstanceSpecifier> InstanceSpecifier::Create(std::string&& shortna
         return MakeUnexpected(ComErrc::kInvalidMetaModelShortname);
     }
 
-    return InstanceSpecifier{std::move(shortname_path)};
+    const InstanceSpecifier instance_specifier{shortname_path};
+    return instance_specifier;
 }
 
 std::string_view InstanceSpecifier::ToString() const noexcept
@@ -84,8 +85,8 @@ std::string_view InstanceSpecifier::ToString() const noexcept
     return instance_specifier_string_;
 }
 
-InstanceSpecifier::InstanceSpecifier(std::string&& shortname_path) noexcept
-    : instance_specifier_string_{std::move(shortname_path)}
+InstanceSpecifier::InstanceSpecifier(const std::string_view shortname_path) noexcept
+    : instance_specifier_string_{shortname_path}
 {
 }
 

@@ -7,11 +7,10 @@ def safety_software_unit(
         name,
         reqs = None,
         impl = None,
-        design = None,
+        design = None,  # @unused
         tests = None):
-    COMPONENT_REQUIREMENTS = "{}_component_requirements".format(name)
+    COMPONENT_REQUIREMENTS = "{}_component_requirements_lobster".format(name)
     SOURCE_LINKS = "{}_sourcelinks".format(name)
-    DESIGN_LINKS = "{}_design".format(name)
     TEST_LINKS = "{}_gtest_lobster".format(name)
 
     lobster_trlc(
@@ -23,12 +22,6 @@ def safety_software_unit(
     parse_source_files_for_needs_links(
         name = SOURCE_LINKS,
         srcs_and_deps = impl,
-    )
-
-    parse_source_files_for_needs_links(
-        name = DESIGN_LINKS,
-        srcs_and_deps = design,
-        trace = "reqs",
     )
 
     executed_tests = []
@@ -50,13 +43,12 @@ def safety_software_unit(
     LOBSTER_CONFIG = "{}_lobster_config".format(name)
     expand_template(
         name = LOBSTER_CONFIG,
-        template = "//third_party/traceability/config/lobster:traceability_sw_unit_conf",
+        template = "//third_party/traceability/config/lobster:traceability_conf",
         out = "{}_traceability_config".format(name),
         substitutions = {
-            "component_requirements": COMPONENT_REQUIREMENTS,
-            "gtest": TEST_LINKS,
+            "component_requirements_lobster": COMPONENT_REQUIREMENTS,
+            "gtest_lobster": TEST_LINKS,
             "sourcelinks": SOURCE_LINKS,
-            "unit_design": DESIGN_LINKS,
         },
     )
 
@@ -65,9 +57,8 @@ def safety_software_unit(
         config = LOBSTER_CONFIG,
         inputs = [
             COMPONENT_REQUIREMENTS,
-            SOURCE_LINKS,
-            DESIGN_LINKS,
             TEST_LINKS,
+            SOURCE_LINKS,
         ],
     )
 
