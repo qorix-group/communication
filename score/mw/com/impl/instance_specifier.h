@@ -21,7 +21,8 @@
 
 namespace score::mw::com::impl
 {
-/** \brief Identifier for an application port. Maps design to deployment.
+/** \api
+ * \brief Identifier for an application port. Maps design to deployment.
  * \public
  * \requirement SWS_CM_00350
  */
@@ -37,6 +38,7 @@ class InstanceSpecifier
 
   public:
     /**
+     * \api
      * \brief Create an InstanceSpecifier from a shortname path.
      * \param shortname_path The shortname path to create the InstanceSpecifier from.
      * \return A Result containing the created InstanceSpecifier or an error.
@@ -45,6 +47,7 @@ class InstanceSpecifier
     static score::Result<InstanceSpecifier> Create(const std::string_view shortname_path) noexcept;
 
     /**
+     * \api
      * \brief Convert the InstanceSpecifier to a string representation.
      * \return A string representation of the InstanceSpecifier.
      * \public

@@ -39,6 +39,7 @@ namespace score::mw::com::impl
 class SkeletonEventBase;
 class SkeletonFieldBase;
 
+/// \api
 /// \brief Defines the processing modes for the service implementation side.
 ///
 /// \requirement SWS_CM_00301

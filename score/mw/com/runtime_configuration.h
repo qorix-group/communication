@@ -23,7 +23,9 @@
 
 namespace score::mw::com::runtime
 {
-/** \brief RuntimeConfiguration object which a user can construct and pass to the public InitializeRuntime call
+/**
+ * \api
+ * \brief RuntimeConfiguration object which a user can construct and pass to the public InitializeRuntime call
  * \public
  */
 class RuntimeConfiguration
@@ -37,6 +39,7 @@ class RuntimeConfiguration
     RuntimeConfiguration();
 
     /**
+     * \api
      * \brief Constructor which initialiases the stored configuration path from command line arguments.
      * \details The constructor parses the command line arguments for a specific key to extract the configuration
      *          path. If the key is not found, a default path is used.
@@ -48,6 +51,7 @@ class RuntimeConfiguration
     RuntimeConfiguration(const std::int32_t argc, score::StringLiteral argv[]);
 
     /**
+     * \api
      * \brief Constructor which initialiases the stored configuration path with the provided path.
      * \param configuration_path The configuration path to be stored.
      * \public
@@ -55,6 +59,7 @@ class RuntimeConfiguration
     explicit RuntimeConfiguration(filesystem::Path configuration_path);
 
     /**
+     * \api
      * \brief Returns the stored configuration path.
      * \return The stored configuration path.
      * \public

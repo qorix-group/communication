@@ -30,7 +30,9 @@
 
 namespace score::mw::com::runtime
 {
-/** \brief Resolves given InstanceSpecifier (port name in the model) to a collection of InstanceIdentifiers via
+/**
+ * \api
+ * \brief Resolves given InstanceSpecifier (port name in the model) to a collection of InstanceIdentifiers via
  * manifest lookup.
  *
  * \param modelName (name of the SWC port)
@@ -41,6 +43,7 @@ namespace score::mw::com::runtime
 score::Result<score::mw::com::InstanceIdentifierContainer> ResolveInstanceIDs(const InstanceSpecifier model_name);
 
 /**
+ * \api
  * \brief Initializes mw::com subsystem with the given configuration referenced in the command-line options.
  * \details This call is optional for a mw::com user. Only if the mw::com configuration (json) is not located in the
  *         default manifest path, this function shall be called with the commandline option
@@ -53,6 +56,7 @@ score::Result<score::mw::com::InstanceIdentifierContainer> ResolveInstanceIDs(co
 void InitializeRuntime(const std::int32_t argc, score::StringLiteral argv[]);
 
 /**
+ * \api
  * \brief Initializes mw::com subsystem with the given configuration.
  * \details This call is optional for a mw::com user. Only if the mw::com configuration (json) is not located in the
  *         default manifest path, this function shall be called when the caller already has the configuration path.

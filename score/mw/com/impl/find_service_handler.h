@@ -22,12 +22,14 @@
 namespace score::mw::com::impl
 {
 
+/// \api
 /// \brief The container holds a list of service handles and is used as a return value of the FindService methods.
 /// \requirement SWS_CM_00304
 /// \public
 template <typename T>
 using ServiceHandleContainer = std::vector<T>;
 
+/// \api
 /// \brief A function wrapper for the handler function that gets called by the Communication Management software in case
 /// the service availability changes.
 ///

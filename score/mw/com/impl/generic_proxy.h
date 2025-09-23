@@ -41,6 +41,7 @@ class GenericProxyAttorney;
 // As per requirement 14005999 constructor shall be private.
 // coverity[autosar_cpp14_a12_1_6_violation]
 /**
+ * \api
  * \brief GenericProxy is a non-binding specific Proxy class which doesn't require any type information for its events.
  * This means that it can connect to a service providing instance (skeleton) just based on deployment information
  * specified at runtime.
@@ -62,6 +63,7 @@ class GenericProxy : public ProxyBase
     using EventMap = ServiceElementMap<GenericProxyEvent>;
 
     /**
+     * \api
      * \brief Exception-less GenericProxy constructor
      * \param instance_handle Handle to the instance
      * \return Result containing the created GenericProxy instance or an error code.
@@ -70,6 +72,7 @@ class GenericProxy : public ProxyBase
     static Result<GenericProxy> Create(HandleType instance_handle) noexcept;
 
     /**
+     * \api
      * \brief Returns a reference to the event map.
      * \return Reference to the event map.
      * \public

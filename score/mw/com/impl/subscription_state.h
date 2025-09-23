@@ -18,6 +18,7 @@
 namespace score::mw::com::impl
 {
 
+/// \api
 /// \brief state of a proxy event.
 /// \requirement SWS_CM_00310
 /// \public
