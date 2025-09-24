@@ -457,7 +457,7 @@
   "moduleExtensions": {
     "//third_party/lobster:lobster.bzl%lobster_ext": {
       "general": {
-        "bzlTransitiveDigest": "MDCkmg8oRv8Dp3rQgcm0fi4IUGL11OIrC4vEMt1OPT8=",
+        "bzlTransitiveDigest": "WeAcRBt9zulTOUuuXh8PyiJnDi1xjnx86d11aKeGO6Q=",
         "usagesDigest": "rhJIGdeAw63AHn9zSwGUIaeonuq4HCD9uUErQCkXfdY=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},

@@ -70,6 +70,13 @@ download_archive(
     strip_prefix = "json-schema-validator-2.1.0",
 )
 
+download_archive(
+    name = "jsonschema",
+    urls = ["https://github.com/python-jsonschema/jsonschema/archive/refs/tags/v4.23.0.tar.gz"],
+    build = "//third_party/jsonschema:jsonschema.BUILD",
+    strip_prefix = "jsonschema-4.23.0",
+)
+
 bazel_dep(name = "nlohmann_json", version = "3.11.3")
 bazel_dep(name = "bazel_skylib", version = "1.7.1")
 
