@@ -470,7 +470,6 @@ std::int32_t QnxDispatchEngine::io_write(resmgr_context_t* const ctp,
 {
     QnxDispatchEngine& self = *OcbToServer(ocb).engine_;
     auto& iofunc = self.GetOsResources().iofunc;
-    auto& dispatch = self.GetOsResources().dispatch;
 
     // check if the write operation is allowed
     auto result = iofunc->iofunc_write_verify(ctp, msg, ocb, nullptr);
@@ -487,25 +486,28 @@ std::int32_t QnxDispatchEngine::io_write(resmgr_context_t* const ctp,
 
     // get the number of bytes we were asked to write, check that there are enough bytes in the message
     const std::size_t nbytes = _IO_WRITE_GET_NBYTES(msg);  // LCOV_EXCL_BR_LINE library macro with benign conditional
-    const std::size_t nbytes_max = static_cast<std::size_t>(ctp->info.srcmsglen) - ctp->offset - sizeof(io_write_t);
-    if (nbytes > nbytes_max)
+    if (nbytes < 1)
     {
         return EBADMSG;
     }
 
-    // take from engine and control nbytes
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init) C API; don't pessimize
-    std::array<std::uint8_t, 2048> buffer;
-
-    auto msgget_expected = dispatch->resmgr_msgget(ctp, buffer.data(), nbytes, sizeof(msg->i));
-    if (!msgget_expected.has_value())
+    // check that the message doesn't ask us to access beyond the valid part of the message
+    // this may happen either if we have not received the whole message (ctp->info.msglen < ctp->info.srcmsglen)
+    // or if the sent message is malformed (nbytes field contains incorrect information)
+    const std::size_t nbytes_max = static_cast<std::size_t>(ctp->info.msglen) - ctp->offset - sizeof(io_write_t);
+    if (nbytes > nbytes_max)
     {
-        return msgget_expected.error().GetOsDependentErrorCode();
+        return EMSGSIZE;
     }
 
+    // the message payload starts right after the io_write_t message header
+    // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic) C API
+    // coverity[autosar_cpp14_m5_2_8_violation] handling raw data from C-style API payload
+    const auto buffer = const_cast<const std::uint8_t*>(static_cast<std::uint8_t*>(static_cast<void*>(&msg[1])));
     const std::uint8_t code = buffer[0];
     const score::cpp::span<const std::uint8_t> message = {&buffer[1],
                                                    static_cast<score::cpp::span<std::uint8_t>::size_type>(nbytes - 1)};
+    // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic) C API
 
     // TODO: close connection on false (once this functionality is demanded)
     score::cpp::ignore = OcbToConnection(ocb).ProcessInput(code, message);
@@ -533,7 +535,7 @@ std::int32_t QnxDispatchEngine::io_read(resmgr_context_t* const ctp,
         return ENOSYS;
     }
 
-    size_t nbytes = _IO_READ_GET_NBYTES(msg);
+    size_t nbytes = _IO_READ_GET_NBYTES(msg);  // LCOV_EXCL_BR_LINE library macro with benign conditional
     if (nbytes == 0)
     {
         _IO_SET_READ_NBYTES(ctp, 0);
