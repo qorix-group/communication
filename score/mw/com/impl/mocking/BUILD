@@ -34,6 +34,159 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "proxy_event_mock",
+    srcs = ["proxy_event_mock.cpp"],
+    hdrs = ["proxy_event_mock.h"],
+    features = COMPILER_WARNING_FEATURES,
+    visibility = [
+        "//score/mw/com/impl:__subpackages__",
+    ],
+    deps = [
+        "//score/mw/com/impl:event_receive_handler",
+        "//score/mw/com/impl:subscription_state",
+        "//score/mw/com/impl/plumbing:sample_ptr",
+        "@score-baselibs//score/language/futurecpp",
+        "@score-baselibs//score/result",
+    ],
+)
+
+cc_library(
+    name = "proxy_event_mock_impl",
+    testonly = True,
+    srcs = ["proxy_event_mock_impl.cpp"],
+    hdrs = ["proxy_event_mock_impl.h"],
+    features = COMPILER_WARNING_FEATURES,
+    visibility = [
+        "//score/mw/com/impl:__subpackages__",
+    ],
+    deps = [
+        ":proxy_event_mock",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_library(
+    name = "proxy_field_mock",
+    srcs = ["proxy_field_mock.cpp"],
+    hdrs = ["proxy_field_mock.h"],
+    features = COMPILER_WARNING_FEATURES,
+    visibility = [
+        "//score/mw/com/impl:__subpackages__",
+    ],
+    deps = [
+        "//score/mw/com/impl:event_receive_handler",
+        "//score/mw/com/impl:subscription_state",
+        "//score/mw/com/impl/plumbing:sample_ptr",
+        "@score-baselibs//score/language/futurecpp",
+        "@score-baselibs//score/result",
+    ],
+)
+
+cc_library(
+    name = "proxy_field_mock_impl",
+    testonly = True,
+    srcs = ["proxy_field_mock_impl.cpp"],
+    hdrs = ["proxy_field_mock_impl.h"],
+    features = COMPILER_WARNING_FEATURES,
+    visibility = [
+        "//score/mw/com/impl:__subpackages__",
+    ],
+    deps = [
+        ":proxy_field_mock",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_library(
+    name = "skeleton_mock",
+    srcs = ["skeleton_mock.cpp"],
+    hdrs = ["skeleton_mock.h"],
+    features = COMPILER_WARNING_FEATURES,
+    visibility = [
+        "//score/mw/com/impl:__subpackages__",
+    ],
+    deps = [
+        "@score-baselibs//score/language/futurecpp",
+        "@score-baselibs//score/result",
+    ],
+)
+
+cc_library(
+    name = "skeleton_mock_impl",
+    testonly = True,
+    srcs = ["skeleton_mock_impl.cpp"],
+    hdrs = ["skeleton_mock_impl.h"],
+    features = COMPILER_WARNING_FEATURES,
+    visibility = [
+        "//score/mw/com/impl:__subpackages__",
+    ],
+    deps = [
+        ":skeleton_mock",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_library(
+    name = "skeleton_event_mock",
+    srcs = ["skeleton_event_mock.cpp"],
+    hdrs = ["skeleton_event_mock.h"],
+    features = COMPILER_WARNING_FEATURES,
+    visibility = [
+        "//score/mw/com/impl:__subpackages__",
+    ],
+    deps = [
+        "//score/mw/com/impl/plumbing:sample_allocatee_ptr",
+        "@score-baselibs//score/language/futurecpp",
+        "@score-baselibs//score/result",
+    ],
+)
+
+cc_library(
+    name = "skeleton_event_mock_impl",
+    testonly = True,
+    srcs = ["skeleton_event_mock_impl.cpp"],
+    hdrs = ["skeleton_event_mock_impl.h"],
+    features = COMPILER_WARNING_FEATURES,
+    visibility = [
+        "//score/mw/com/impl:__subpackages__",
+    ],
+    deps = [
+        ":skeleton_event_mock",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_library(
+    name = "skeleton_field_mock",
+    srcs = ["skeleton_field_mock.cpp"],
+    hdrs = ["skeleton_field_mock.h"],
+    features = COMPILER_WARNING_FEATURES,
+    visibility = [
+        "//score/mw/com/impl:__subpackages__",
+    ],
+    deps = [
+        "//score/mw/com/impl/plumbing:sample_allocatee_ptr",
+        "@score-baselibs//score/language/futurecpp",
+        "@score-baselibs//score/result",
+    ],
+)
+
+cc_library(
+    name = "skeleton_field_mock_impl",
+    testonly = True,
+    srcs = ["skeleton_field_mock_impl.cpp"],
+    hdrs = ["skeleton_field_mock_impl.h"],
+    features = COMPILER_WARNING_FEATURES,
+    visibility = [
+        "//score/mw/com/impl:__subpackages__",
+    ],
+    deps = [
+        "skeleton_field_mock",
+        "@googletest//:gtest",
+    ],
+)
+
 cc_gtest_unit_test(
     name = "test_type_factories_test",
     srcs = ["test_type_factories_test.cpp"],

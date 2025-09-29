@@ -327,6 +327,7 @@ cc_library(
     tags = ["FFI"],
     visibility = [
         "//score/mw/com:__pkg__",
+        "//score/mw/com/impl/mocking:__pkg__",
     ],
 )
 
