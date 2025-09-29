@@ -21,6 +21,8 @@
 #include "score/mw/com/impl/configuration/service_type_deployment.h"
 #include "score/mw/com/impl/configuration/service_version_type.h"
 
+#include "score/result/result.h"
+
 #include <functional>
 #include <string>
 #include <string_view>
@@ -46,7 +48,7 @@ class InstanceIdentifier final
      * \return The created InstanceIdentifier or an error
      * \public
      */
-    static score::Result<InstanceIdentifier> Create(std::string_view serialized_format) noexcept;
+    static score::Result<InstanceIdentifier> Create(std::string&& serialized_format) noexcept;
 
     InstanceIdentifier() = delete;
     ~InstanceIdentifier() noexcept = default;
@@ -139,7 +141,7 @@ class InstanceIdentifier final
      * @param json_object Used to construct the InstanceIdentifier (no copies of json_object are made internally).
      * @param serialized_string Serialized string which the json_object is derived from. Used to set serialized_string_.
      */
-    explicit InstanceIdentifier(const json::Object& json_object, std::string serialized_string) noexcept;
+    explicit InstanceIdentifier(const json::Object& json_object, std::string&& serialized_string) noexcept;
 
     /**
      * @brief internal impl. specific ctor.
