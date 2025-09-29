@@ -11,23 +11,44 @@
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
 
-## Carry over from Eclipse S-Core including slight modifications:
-# https://github.com/eclipse-score/docs-as-code/tree/v0.4.0/src/extensions/score_source_code_linker
+"""
+Git utility functions for source code linking.
 
+This module provides functionality for:
+- Finding git repository information
+- Getting git hashes for files
+- Parsing git remote URLs
+"""
+
+import logging
 import os
-import sys
 import subprocess
+import sys
 from pathlib import Path
 
+logger = logging.getLogger(__name__)
+
+
 def get_github_repo() -> str:
+    """Get the GitHub repository name from the current git repository."""
     git_root = find_git_root()
     repo = get_github_repo_info(git_root)
     return repo
 
+
 def parse_git_output(str_line: str) -> str:
+    """Parse git remote output to extract repository path.
+
+    Args:
+        str_line: Git remote output line (e.g., 'origin git@github.com:user/repo.git')
+
+    Returns:
+        Repository path (e.g., 'user/repo')
+    """
     if len(str_line.split()) < 2:
         logger.warning(
-            f"Got wrong input line from 'get_github_repo_info'. Input: {str_line}. Expected example: 'origin git@github.com:user/repo.git'"
+            f"Got wrong input line from 'get_github_repo_info'. Input: {str_line}. "
+            f"Expected example: 'origin git@github.com:user/repo.git'"
         )
         return ""
     url = str_line.split()[1]  # Get the URL part
@@ -40,6 +61,14 @@ def parse_git_output(str_line: str) -> str:
 
 
 def get_github_repo_info(git_root_cwd: Path) -> str:
+    """Get GitHub repository information from git remotes.
+
+    Args:
+        git_root_cwd: Path to git repository root
+
+    Returns:
+        Repository path (e.g., 'user/repo')
+    """
     process = subprocess.run(
         ["git", "remote", "-v"], capture_output=True, text=True, cwd=git_root_cwd
     )
@@ -60,10 +89,14 @@ def get_github_repo_info(git_root_cwd: Path) -> str:
     return repo
 
 
-def find_git_root():
-    """
-    This is copied from 'find_runfiles' as the import does not work for some reason.
-    This should be fixed.
+def find_git_root() -> Path:
+    """Find the git repository root directory.
+
+    Returns:
+        Path to git repository root
+
+    Raises:
+        SystemExit: If no git repository is found
     """
     git_root = Path(__file__).resolve()
     while not (git_root / ".git").exists():
@@ -77,17 +110,18 @@ def find_git_root():
 
 
 def get_git_hash(file_path: str) -> str:
-    """
-    Grabs the latest git hash found for particular file
+    """Get the latest git hash for a particular file.
 
     Args:
-        file_path (str): Filepath of for which the githash should be retrieved.
+        file_path: Filepath for which the git hash should be retrieved.
 
     Returns:
-        (str): Full 40char length githash of the latest commit this file was changed.
+        Full 40char length git hash of the latest commit this file was changed.
+        Returns "file_not_found" if file doesn't exist.
+        Returns "error" if an unexpected error occurs.
 
-        Example:
-                3b3397ebc2777f47b1ae5258afc4d738095adb83
+    Example:
+        3b3397ebc2777f47b1ae5258afc4d738095adb83
     """
     abs_path = None
     try:
@@ -101,6 +135,11 @@ def get_git_hash(file_path: str) -> str:
             capture_output=True,
         )
         decoded_result = result.stdout.strip().decode()
+
+        # If git hash is empty, return "master" to point to master branch
+        if not decoded_result:
+            logger.debug(f"Empty git hash for {abs_path}, using 'master'")
+            return "master"
 
         # sanity check
         assert all(c in "0123456789abcdef" for c in decoded_result)

@@ -17,7 +17,7 @@
 py_binary(
     name = "parsed_source_files_for_source_code_linker",
     srcs = [
-        "get_git_info.py",
+        "git_utils.py",
         "parse_source_files.py",
     ],
     main = "parse_source_files.py",

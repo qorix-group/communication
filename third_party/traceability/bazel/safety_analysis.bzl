@@ -6,11 +6,13 @@ def safety_analysis(
         name,
         failuremodes = None,
         fta = None,
-        controlmeasures = None):
+        controlmeasures = None,
+        public_api = None):
     FMEA_FAILUREMODES = "{}_failuremodes_lobster".format(name)
     FTA_TOPLEVELEVENTS = "{}_fta_tle".format(name)
     FTA_BASICEVENTS = "{}_fta_be".format(name)
     FMEA_CONTROLMEASURES = "{}_controlmeasures_lobster".format(name)
+    PUBLIC_API = "{}_public_api".format(name)
 
     lobster_trlc(
         name = FMEA_FAILUREMODES,
@@ -27,14 +29,21 @@ def safety_analysis(
     parse_source_files_for_needs_links(
         name = FTA_TOPLEVELEVENTS,
         srcs_and_deps = fta,
-        trace_nodes = ["$TopEvent"],
+        trace_tags = ["$TopEvent"],
     )
 
     parse_source_files_for_needs_links(
         name = FTA_BASICEVENTS,
         srcs_and_deps = fta,
         trace = "reqs",
-        trace_nodes = ["$BasicEvent"],
+        trace_tags = ["$BasicEvent"],
+    )
+
+    parse_source_files_for_needs_links(
+        name = PUBLIC_API,
+        srcs_and_deps = public_api,
+        trace = "interface",
+        trace_tags = ["interface"],
     )
 
     LOBSTER_CONFIG = "{}_lobster_config".format(name)
@@ -47,6 +56,7 @@ def safety_analysis(
             "fmea_failure_modes": FMEA_FAILUREMODES,
             "fta_basic": FTA_BASICEVENTS,
             "fta_toplevel": FTA_TOPLEVELEVENTS,
+            "public_api": PUBLIC_API,
         },
     )
 
@@ -58,5 +68,6 @@ def safety_analysis(
             FTA_TOPLEVELEVENTS,
             FTA_BASICEVENTS,
             FMEA_CONTROLMEASURES,
+            PUBLIC_API,
         ],
     )

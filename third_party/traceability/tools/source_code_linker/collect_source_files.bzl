@@ -111,7 +111,6 @@ def _collect_and_parse_source_files_impl(ctx):
     args.add("--url", ctx.attr.url)
     args.add("--trace", ctx.attr.trace)
     args.add("--tags", "|".join(ctx.attr.trace_tags))
-    args.add("--nodes", "|".join(ctx.attr.trace_nodes))
 
     ctx.actions.run(
         arguments = [args],
@@ -141,11 +140,7 @@ parse_source_files_for_needs_links = rule(
         ),
         "trace": attr.string(
             default = "code",
-            doc = "Element to trace (code/reqs)",
-        ),
-        "trace_nodes": attr.string_list(
-            default = [],
-            doc = "Additional Nodes to trace",
+            doc = "Element to trace (code/reqs/interface)",
         ),
         "trace_tags": attr.string_list(
             default = [],
