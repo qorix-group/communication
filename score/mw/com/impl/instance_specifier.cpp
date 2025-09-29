@@ -67,7 +67,7 @@ bool IsShortNameValid(const std::string_view shortname) noexcept
 
 }  // namespace
 
-score::Result<InstanceSpecifier> InstanceSpecifier::Create(const std::string_view shortname_path) noexcept
+score::Result<InstanceSpecifier> InstanceSpecifier::Create(std::string&& shortname_path) noexcept
 {
     if (!IsShortNameValid(shortname_path))
     {
@@ -76,8 +76,7 @@ score::Result<InstanceSpecifier> InstanceSpecifier::Create(const std::string_vie
         return MakeUnexpected(ComErrc::kInvalidMetaModelShortname);
     }
 
-    const InstanceSpecifier instance_specifier{shortname_path};
-    return instance_specifier;
+    return InstanceSpecifier{std::move(shortname_path)};
 }
 
 std::string_view InstanceSpecifier::ToString() const noexcept
@@ -85,8 +84,8 @@ std::string_view InstanceSpecifier::ToString() const noexcept
     return instance_specifier_string_;
 }
 
-InstanceSpecifier::InstanceSpecifier(const std::string_view shortname_path) noexcept
-    : instance_specifier_string_{shortname_path}
+InstanceSpecifier::InstanceSpecifier(std::string&& shortname_path) noexcept
+    : instance_specifier_string_{std::move(shortname_path)}
 {
 }
 
