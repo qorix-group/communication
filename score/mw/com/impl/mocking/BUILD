@@ -29,6 +29,7 @@ cc_library(
     deps = [
         "//score/mw/com/impl:handle_type",
         "//score/mw/com/impl:instance_identifier",
+        "//score/mw/com/impl/plumbing:sample_allocatee_ptr",
     ],
 )
 

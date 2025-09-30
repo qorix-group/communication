@@ -176,5 +176,20 @@ TEST_F(TestTypesDummyInstanceIdentifierCreationFixture, HashIsDifferentForDiffer
     EXPECT_NE(hash_result, hash_result_2);
 }
 
+using TestTypesSampleAllocateePtrCreationFixture = TestTypesFixture;
+TEST_F(TestTypesSampleAllocateePtrCreationFixture, CanCreateFakeSampleAllocateePtrWithUniquePtr)
+{
+    // Given a unique_ptr pointing to some value
+    const std::uint32_t pointed_to_value{10U};
+    auto my_unique_ptr = std::make_unique<std::uint32_t>(pointed_to_value);
+
+    // When creating a fake SampleAllocateePtr from the unique_ptr
+    auto sample_allocatee_ptr = MakeFakeSampleAllocateePtr(std::move(my_unique_ptr));
+
+    // Then the SampleAllocateePtr points to the same data
+    ASSERT_TRUE(sample_allocatee_ptr);
+    EXPECT_EQ(*sample_allocatee_ptr, pointed_to_value);
+}
+
 }  // namespace
 }  // namespace score::mw::com::impl
