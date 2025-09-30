@@ -43,20 +43,20 @@ bool IsShortNameValid(const std::string_view shortname) noexcept
     }
 
     // Validate first character
-    const char first = shortname[0];
-    if (!((static_cast<bool>(std::isalpha(first)) || first == '_') || first == '/'))
+    const char first_char = shortname[0];
+    if (!((static_cast<bool>(std::isalpha(first_char)) || first_char == '_') || first_char == '/'))
     {
         return false;
     }
     // Single pass validation
-    for (std::size_t i = 1; i < shortname.size(); ++i)
+    for (std::size_t char_index = 1; char_index < shortname.size(); ++char_index)
     {
-        const char c = shortname[i];
-        if (!((static_cast<bool>(std::isalnum(c)) || c == '_') || c == '/'))
+        const char current_char = shortname[char_index];
+        if (!((static_cast<bool>(std::isalnum(current_char)) || current_char == '_') || current_char == '/'))
         {
             return false;
         }
-        if (c == '/' && shortname[i - 1] == '/')
+        if (current_char == '/' && shortname[char_index - 1] == '/')
         {
             return false;
         }
