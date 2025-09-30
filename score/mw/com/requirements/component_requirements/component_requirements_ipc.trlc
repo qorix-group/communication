@@ -1036,7 +1036,7 @@ section "com" {
 
                     Note: A {{GenericProxy}} is created via the Create API based on {{HandleType}} containing its related deployment information.'''
                     safety = ScoreReq.Asil.B
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.DeploymentConfigurationAtRuntime@1]
                     version = 1
                 }
 
@@ -1046,7 +1046,7 @@ section "com" {
 
                     Note: This information is needed for the [GetSampleSize() API|ISSUE:14035184].'''
                     safety = ScoreReq.Asil.B
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.EventType@1, Communication.ZeroCopy@1]
                     version = 1
                 }
 
@@ -1873,7 +1873,7 @@ section "com" {
                 ScoreReq.CompReq InstanceSpecifierCorrespondenceToServiceInstances {
                     description = '''A valid {{InstanceSpecifier}} can correspond to 1..n service instances.'''
                     safety = ScoreReq.Asil.B
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.ServiceInstance@1]
                     version = 1
                 }
 
@@ -1985,7 +1985,7 @@ section "com" {
                 ScoreReq.CompReq InstanceidentifierCorrespondencetoserviceinstances {
                     description = '''A valid {{InstanceIdentifier}} can correspond to 1..n service instances. Each of the instances shall be of the same binding.'''
                     safety = ScoreReq.Asil.B
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.ServiceInstance@1]
                     version = 1
                 }
 
@@ -2098,7 +2098,7 @@ section "com" {
         ScoreReq.CompReq ReEntrancyAndThreadSafety {
             description = '''A class, {{MyClass}}, {{MyClass}}shall be re-entrant and thread-safe for different  class instances. When called re-entrant or concurrently on the same {{MyClass}} instance, the behavior is undefined.'''
             safety = ScoreReq.Asil.B
-            derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+            derived_from = [Communication.SafeCommunication@1]
             version = 1
         }
 
@@ -2122,7 +2122,7 @@ section "com" {
 
             *  if the total number of allowable subscribers is exceeded.'''
             safety = ScoreReq.Asil.B
-            derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+            derived_from = [Communication.SafeCommunication@1]
             version = 1
         }
 
@@ -2132,7 +2132,7 @@ section "com" {
 
             Otherwise it shall do an unsubscription of the event at the providing side.'''
             safety = ScoreReq.Asil.B
-            derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+            derived_from = [Communication.SafeCommunication@1]
             version = 1
         }
 
