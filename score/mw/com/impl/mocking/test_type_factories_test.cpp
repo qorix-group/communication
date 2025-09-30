@@ -191,5 +191,20 @@ TEST_F(TestTypesSampleAllocateePtrCreationFixture, CanCreateFakeSampleAllocateeP
     EXPECT_EQ(*sample_allocatee_ptr, pointed_to_value);
 }
 
+using TestTypesSamplePtrCreationFixture = TestTypesFixture;
+TEST_F(TestTypesSamplePtrCreationFixture, CanCreateFakeSamplePtrWithUniquePtr)
+{
+    // Given a unique_ptr pointing to some value
+    const std::uint32_t pointed_to_value{10U};
+    auto my_unique_ptr = std::make_unique<std::uint32_t>(pointed_to_value);
+
+    // When creating a fake SamplePtr from the unique_ptr
+    auto sample_ptr = MakeFakeSamplePtr(std::move(my_unique_ptr));
+
+    // Then the SamplePtr points to the same data
+    ASSERT_TRUE(sample_ptr);
+    EXPECT_EQ(*sample_ptr, pointed_to_value);
+}
+
 }  // namespace
 }  // namespace score::mw::com::impl
