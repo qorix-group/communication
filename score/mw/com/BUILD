@@ -56,6 +56,7 @@ cc_library(
         ":runtime_configuration",
         ":types",
         "//score/mw/com/impl:runtime",
+        "//score/mw/com/mocking:runtime_mock",
     ],
 )
 
@@ -99,9 +100,12 @@ cc_library(
         "//score/mw/com:__subpackages__",
     ],
     deps = [
+        ":runtime",
         ":types",
         "//score/mw/com/impl",
         "//score/mw/com/impl/mocking:test_type_factories",
+        "//score/mw/com/mocking:runtime_mock",
+        "//score/mw/com/mocking:test_type_factories",
     ],
 )
 
@@ -150,6 +154,7 @@ cc_unit_test_suites_for_host_and_qnx(
     ],
     test_suites_from_sub_packages = [
         "//score/mw/com/impl:unit_test_suite",
+        "//score/mw/com/mocking:unit_test_suite",
         "//score/mw/com/message_passing:unit_test_suite",
         "//score/mw/com/performance_benchmarks/macro_benchmark:unit_test_suite",
         # "//score/mw/com/test/api:unit_test_suite", Remove until API tests are open sourced Ticket-196988

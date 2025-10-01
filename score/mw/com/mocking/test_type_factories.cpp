@@ -10,37 +10,27 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#include "score/mw/com/test_types.h"
-
-#include "score/mw/com/impl/mocking/test_type_factories.h"
-#include "score/mw/com/mocking/runtime_mock.h"
 #include "score/mw/com/mocking/test_type_factories.h"
 
-namespace score::mw::com
+#include "score/mw/com/runtime.h"
+
+namespace score::mw::com::runtime
 {
-namespace runtime
+namespace detail
 {
 
+/// @brief Function which is a friend of RuntimeMockHolder in mw/com/runtime.h. It allows injecting a mock into the
+/// RuntimeMockHolder.
 void InjectRuntimeMock(RuntimeMock& runtime_mock)
 {
-    InjectRuntimeMockImpl(runtime_mock);
+    RuntimeMockHolder::InjectRuntimeMockImpl(runtime_mock);
 }
 
-}  // namespace runtime
+}  // namespace detail
 
-InstanceIdentifier MakeDummyInstanceIdentifier(const std::uint16_t unique_identifier)
+void InjectRuntimeMockImpl(RuntimeMock& runtime_mock)
 {
-    return impl::MakeFakeInstanceIdentifier(unique_identifier);
+    detail::InjectRuntimeMock(runtime_mock);
 }
 
-HandleType MakeDummyHandle(const std::uint16_t unique_identifier)
-{
-    return impl::MakeFakeHandle(unique_identifier);
-}
-
-void ResetInstanceIdentifierConfiguration()
-{
-    impl::ResetInstanceIdentifierConfiguration();
-}
-
-}  // namespace score::mw::com
+}  // namespace score::mw::com::runtime
