@@ -211,8 +211,8 @@ cc_gtest_unit_test(
     srcs = ["skeleton_event_mock_test.cpp"],
     deps = [
         ":skeleton_event_mock_impl",
+        ":test_type_factories",
         "//score/mw/com/impl:skeleton_event",
-        "//score/mw/com/impl/mocking:test_type_factories",
     ],
 )
 
@@ -221,9 +221,27 @@ cc_gtest_unit_test(
     srcs = ["skeleton_field_mock_test.cpp"],
     deps = [
         ":skeleton_field_mock_impl",
+        ":test_type_factories",
         "//score/mw/com/impl:skeleton_field",
-        "//score/mw/com/impl/mocking:test_type_factories",
     ],
+)
+
+cc_gtest_unit_test(
+    name = "proxy_event_mock_test",
+    srcs = ["proxy_event_mock_test.cpp"],
+    deps = [
+        ":proxy_event_mock_impl",
+        ":proxy_field_mock_impl",
+        ":test_type_factories",
+        "//score/mw/com/impl:proxy_event",
+        "//score/mw/com/impl:proxy_field",
+    ],
+)
+
+cc_gtest_unit_test(
+    name = "proxy_field_mock_test",
+    srcs = ["proxy_field_mock_test.cpp"],
+    deps = [],
 )
 
 cc_unit_test_suites_for_host_and_qnx(
@@ -233,6 +251,8 @@ cc_unit_test_suites_for_host_and_qnx(
         ":skeleton_field_mock_test",
         ":skeleton_mock_test",
         ":test_type_factories_test",
+        ":proxy_event_mock_test",
+        ":proxy_field_mock_test",
     ],
     test_suites_from_sub_packages = [],
     visibility = ["//score/mw/com/impl:__pkg__"],
