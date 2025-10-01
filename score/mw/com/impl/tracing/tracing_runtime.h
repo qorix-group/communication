@@ -172,6 +172,24 @@ class TracingRuntime : public ITracingRuntime
                                        ITracingRuntimeBinding& tracing_runtime_binding) noexcept;
 
     std::unordered_map<BindingType, ITracingRuntimeBinding*> tracing_runtime_bindings_;
+
+    /// \brief Threshold for switching from LogInfo to LogDebug level during consecutive failures
+    /// \details After this many consecutive (limited by 10 for the moment) "no tracing slot available" failures,
+    ///          subsequent failure messages will be logged at LogDebug level instead of LogInfo to reduce DLT
+    ///          bandwidth.
+    static constexpr std::uint8_t kDebounceAfter{10U};
+
+    /// \brief Counter for consecutive "no tracing slot available" failures
+    /// \details Tracks consecutive getting available slots failures. Incremented on each failure, reset to 0 when
+    ///          tracing slot becomes available again. Used with kDebounceAfter threshold to determine when to switch
+    ///          log levels from LogInfo to LogDebug.
+    std::uint8_t debounce_counter_{0U};
+
+    /// \brief Flag to track if this is the first time debouncing becomes active
+    /// \details Initially true. Set to false when debounce_counter_ first exceeds kDebounceAfter threshold. Used to log
+    ///          a one-time LogInfo message about switching to LogDebug level before the transition. Remains false for
+    ///          the lifetime of the TracingRuntime instance once debouncing has activated.
+    bool first_debounce_{true};
 };
 
 }  // namespace score::mw::com::impl::tracing

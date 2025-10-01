@@ -523,8 +523,44 @@ ResultBlank TracingRuntime::Trace(const BindingType binding_type,
         runtime_binding.EmplaceTypeErasedSamplePtr(std::move(sample_ptr), service_element_tracing_data);
     if (!trace_context_id.has_value())
     {
+        // Handle debounced logging for no available tracing slots
+        // Log first 10 failures at LogInfo level, then switch to LogDebug to reduce DLT bandwidth.
+        ++debounce_counter_;
+        const bool debouncing_active = (debounce_counter_ >= kDebounceAfter);
+
+        if (!debouncing_active)
+        {
+            score::mw::log::LogInfo("lola")
+                << "No tracing slot available for service element " << service_element_instance_identifier
+                << ". All slots assigned to this service element are already tracing active. "
+                << "Insufficient tracing slots were configured. Service element has "
+                << service_element_tracing_data.number_of_service_element_tracing_slots << " configured slots. "
+                << "Range starts at " << service_element_tracing_data.service_element_range_start << ".";
+        }
+        else
+        {
+            if (first_debounce_)
+            {
+                score::mw::log::LogInfo("lola")
+                    << "LogLevel for consecutive 'no tracing slot available' errors changed to kDebug";
+                first_debounce_ = false;
+            }
+            score::mw::log::LogDebug("lola")
+                << "No tracing slot available for service element " << service_element_instance_identifier
+                << ". All slots assigned to this service element are already tracing active. "
+                << "Insufficient tracing slots were configured. Service element has "
+                << service_element_tracing_data.number_of_service_element_tracing_slots << " configured slots. "
+                << "Range starts at " << service_element_tracing_data.service_element_range_start << ".";
+        }
+
         runtime_binding.SetDataLossFlag(true);
         return {};
+    }
+    else
+    {
+        // Reset debouncing state when a slot becomes available
+        debounce_counter_ = 0;
+        first_debounce_ = true;
     }
 
     const auto trace_context_id_value = trace_context_id.value();

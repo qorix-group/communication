@@ -391,14 +391,6 @@ auto TracingRuntime::GetTraceContextId(
         }
     }
 
-    score::mw::log::LogInfo("lola")
-        << "Can not retrieve trace_context_id which is necessary to set type erased sample pointer. All slots"
-        << "assigned to this service element are already tracing active. I.e. insufficient tracing slots were "
-           "configured."
-        << "This happened to the service element with "
-        << service_element_tracing_data.number_of_service_element_tracing_slots << " configured slots. "
-        << "The range of the service element starts at " << service_element_tracing_data.service_element_range_start
-        << ".";
     return {};
 }
 
