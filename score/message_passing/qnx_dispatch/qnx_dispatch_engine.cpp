@@ -560,7 +560,8 @@ std::int32_t QnxDispatchEngine::io_notify(resmgr_context_t* const ctp,
     std::int32_t trig = _NOTIFY_COND_OUTPUT; /* clients can always give us data */
     if (connection.HasSomethingToRead())
     {
-        trig = _NOTIFY_COND_INPUT; /* we have some data available */
+        // NOLINTNEXTLINE(hicpp-signed-bitwise): QNX API
+        trig |= _NOTIFY_COND_INPUT; /* we have some data available */
     }
     // NOLINTNEXTLINE(score-banned-function) implementing FFI wrapper
     return iofunc->iofunc_notify(ctp, msg, connection.notify_.data(), trig, nullptr, nullptr);

@@ -187,6 +187,14 @@ class ResourceMockHelper
             const auto result = (*io_funcs_->read)(&context, &message, ocb_);
             promises_.read.set_value(result);
         }
+        else if (std::holds_alternative<IoNotifyMessage>(current_message_))
+        {
+            resmgr_context_t context{};
+            io_notify_t message{};
+
+            const auto result = (*io_funcs_->notify)(&context, &message, ocb_);
+            promises_.notify.set_value(result);
+        }
         return {};
     }
 
@@ -247,6 +255,18 @@ class ResourceMockHelper
         return io_read.iofunc_read_verify_result;
     }
 
+    /// Compares the passed trig value with the expected one
+    std::int32_t iofunc_notify(resmgr_context_t* const /*ctp*/,
+                               io_notify_t* const /*msg*/,
+                               iofunc_notify_t* const /*nop*/,
+                               const std::int32_t trig,
+                               const std::int32_t* const /*notifycounts*/,
+                               std::int32_t* const /*armed*/) noexcept
+    {
+        auto& io_notify = std::get<IoNotifyMessage>(current_message_);
+        return io_notify.trig == trig ? EOK : EINVAL;
+    }
+
     /// Queues a pulse event to process in dispatch loop
     score::cpp::expected_blank<score::os::Error> MsgSendPulse(const std::int32_t coid,
                                                      const std::int32_t priority,
@@ -292,13 +312,20 @@ class ResourceMockHelper
         message_queue_.CreateSender().push(IoReadMessage{iofunc_read_verify_result, xtype, nbytes});
     }
 
+    /// Queues an io_notify event
+    void HelperInsertIoNotify(std::int32_t trig)
+    {
+        message_queue_.CreateSender().push(IoNotifyMessage{trig});
+    }
+
     constexpr static std::int32_t kFakeResmgrServerId{1};
 
     struct Promises
     {
-        std::promise<std::int32_t> open;   ///< Fulfilled when `io_open` event has been processed
-        std::promise<std::int32_t> write;  ///< Fulfilled when `io_write` event has been processed
-        std::promise<std::int32_t> read;   ///< Fulfilled when `io_read` event has been processed
+        std::promise<std::int32_t> open;    ///< Fulfilled when `io_open` event has been processed
+        std::promise<std::int32_t> write;   ///< Fulfilled when `io_write` event has been processed
+        std::promise<std::int32_t> read;    ///< Fulfilled when `io_read` event has been processed
+        std::promise<std::int32_t> notify;  ///< Fulfilled when `io_notify` event has been processed
     };
 
     Promises promises_{};
@@ -335,8 +362,18 @@ class ResourceMockHelper
         std::size_t nbytes;
     };
 
-    using QueueMessage =
-        std::variant<std::monostate, ErrnoPseudoMessage, PulseMessage, IoOpenMessage, IoWriteMessage, IoReadMessage>;
+    struct IoNotifyMessage
+    {
+        std::int32_t trig;
+    };
+
+    using QueueMessage = std::variant<std::monostate,
+                                      ErrnoPseudoMessage,
+                                      PulseMessage,
+                                      IoOpenMessage,
+                                      IoWriteMessage,
+                                      IoReadMessage,
+                                      IoNotifyMessage>;
 
     std::unordered_map<std::int32_t, std::pair<pulse_handler_t, void*>> pulse_handlers_{};
     const resmgr_connect_funcs_t* connect_funcs_{};
@@ -407,14 +444,13 @@ class QnxDispatchEngineTestFixture : public ::testing::Test
         EXPECT_CALL(*dispatch_, dispatch_handler)
             .Times(AnyNumber())
             .WillRepeatedly(Invoke(&helper_, &ResourceMockHelper::dispatch_handler));
+        EXPECT_CALL(*channel_, MsgSendPulse)
+            .Times(AnyNumber())
+            .WillRepeatedly(Invoke(&helper_, &ResourceMockHelper::MsgSendPulse));
     }
 
     void ExpectEngineDestructed()
     {
-        EXPECT_CALL(*channel_, MsgSendPulse)
-            .Times(1)
-            .WillRepeatedly(Invoke(&helper_, &ResourceMockHelper::MsgSendPulse));
-
         EXPECT_CALL(*timer_, TimerDestroy).Times(1);
         EXPECT_CALL(*channel_, ConnectDetach).Times(1);
         EXPECT_CALL(*dispatch_, pulse_detach).Times(2);
@@ -928,6 +964,134 @@ TEST_F(QnxDispatchEngineTestFixture, ServerReadChecksSuccess)
     EXPECT_EQ(helper_.promises_.read.get_future().get(), _RESMGR_NPARTS(1));
 
     server.Stop();
+}
+
+TEST_F(QnxDispatchEngineTestFixture, ServerNotify)
+{
+    ExpectEngineConstructed();
+    ExpectEngineThreadRunning();
+    ExpectServerAttached();
+    ExpectConnectionOpen();
+    ExpectConnectionAccepted();
+
+    EXPECT_CALL(*iofunc_, iofunc_notify)
+        .Times(AnyNumber())
+        .WillRepeatedly(Invoke(&helper_, &ResourceMockHelper::iofunc_notify));
+
+    ExpectServerDetached();
+    ExpectEngineDestructed();
+
+    auto engine = std::make_shared<QnxDispatchEngine>(score::cpp::pmr::get_default_resource(), MoveMockOsResources());
+    StrictMock<ResourceManagerServerMock> server{engine};
+    QnxDispatchEngine::QnxResourcePath path{"fake_path"};
+    StrictMock<ResourceManagerConnectionMock> connection;
+
+    EXPECT_CALL(server, ProcessConnect)
+        .Times(1)
+        .WillOnce([this, &server, &engine, &connection](resmgr_context_t* const ctp, io_open_t* const msg) {
+            score::cpp::ignore = engine->AttachConnection(ctp, msg, server, connection);
+            return EOK;
+        });
+
+    EXPECT_CALL(connection, HasSomethingToRead).Times(2).WillOnce(Return(false)).WillOnce(Return(true));
+
+    EXPECT_TRUE(server.Start(path));
+
+    helper_.HelperInsertIoOpen(score::cpp::blank{});
+    helper_.promises_.open.get_future().get();
+
+    helper_.HelperInsertIoNotify(_NOTIFY_COND_OUTPUT);
+    EXPECT_EQ(helper_.promises_.notify.get_future().get(), EOK);
+    helper_.promises_.notify = std::promise<std::int32_t>();  // reset
+
+    helper_.HelperInsertIoNotify(_NOTIFY_COND_INPUT | _NOTIFY_COND_OUTPUT);
+    EXPECT_EQ(helper_.promises_.notify.get_future().get(), EOK);
+
+    server.Stop();
+}
+
+TEST_F(QnxDispatchEngineTestFixture, PosixEndpoint)
+{
+    ExpectEngineConstructed();
+    ExpectEngineThreadRunning();
+
+    EXPECT_CALL(*dispatch_, select_attach).Times(1);
+    EXPECT_CALL(*dispatch_, select_detach).Times(1);
+
+    ExpectEngineDestructed();
+
+    QnxDispatchEngine engine(score::cpp::pmr::get_default_resource(), MoveMockOsResources());
+
+    // use the engine-provided way to run the code on the requirered thread
+    ISharedResourceEngine::CommandQueueEntry command;
+    std::promise<void> done;
+    engine.EnqueueCommand(
+        command,
+        ISharedResourceEngine::TimePoint{},
+        [this, &engine, &done](auto) noexcept {
+            ISharedResourceEngine::PosixEndpointEntry posix_endpoint{};
+            posix_endpoint.disconnect = [&done]() {
+                done.set_value();
+            };
+            engine.RegisterPosixEndpoint(posix_endpoint);
+            engine.UnregisterPosixEndpoint(posix_endpoint);
+        },
+        this);
+    done.get_future().wait();
+}
+
+TEST_F(QnxDispatchEngineTestFixture, SendProtocolMessageFailure)
+{
+    ExpectEngineConstructed();
+    ExpectEngineThreadRunning();
+
+    EXPECT_CALL(*sysuio_, writev).Times(1).WillOnce(Return(kFakeOsError));
+
+    ExpectEngineDestructed();
+
+    QnxDispatchEngine engine(score::cpp::pmr::get_default_resource(), MoveMockOsResources());
+    constexpr std::int32_t kFakeFd{-1};
+    constexpr std::uint8_t kFakeCode{0U};
+    const score::cpp::span<const std::uint8_t> kFakeMessage{};
+    EXPECT_FALSE(engine.SendProtocolMessage(kFakeFd, kFakeCode, kFakeMessage));
+}
+
+TEST_F(QnxDispatchEngineTestFixture, ReceiveProtocolMessageFailure)
+{
+    ExpectEngineConstructed();
+    ExpectEngineThreadRunning();
+
+    EXPECT_CALL(*unistd_, read).Times(2).WillOnce(Return(kFakeOsError)).WillOnce(Return(0));
+
+    ExpectEngineDestructed();
+
+    QnxDispatchEngine engine(score::cpp::pmr::get_default_resource(), MoveMockOsResources());
+    constexpr std::int32_t kFakeFd{-1};
+    std::uint8_t code{};
+
+    const auto os_error_result = engine.ReceiveProtocolMessage(kFakeFd, code);
+    EXPECT_FALSE(os_error_result);
+    EXPECT_EQ(os_error_result.error().GetOsDependentErrorCode(), EINVAL);
+
+    const auto zero_read_result = engine.ReceiveProtocolMessage(kFakeFd, code);
+    EXPECT_FALSE(zero_read_result);
+    EXPECT_EQ(zero_read_result.error().GetOsDependentErrorCode(), EPIPE);
+}
+
+TEST_F(QnxDispatchEngineTestFixture, CleanupNonOwner)
+{
+    ExpectEngineConstructed();
+    ExpectEngineThreadRunning();
+
+    ExpectEngineDestructed();
+
+    QnxDispatchEngine engine(score::cpp::pmr::get_default_resource(), MoveMockOsResources());
+
+    // purposedly does nothing
+    engine.CleanUpOwner(nullptr);
+
+    // purposedly cleans nothing on a callback thread
+    engine.CleanUpOwner(this);
 }
 
 }  // namespace
