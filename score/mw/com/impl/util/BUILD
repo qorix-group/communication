@@ -35,6 +35,19 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "type_erased_storage",
+    srcs = ["type_erased_storage.cpp"],
+    hdrs = ["type_erased_storage.h"],
+    features = COMPILER_WARNING_FEATURES,
+    tags = ["FFI"],
+    visibility = ["//score/mw/com/impl:__subpackages__"],
+    deps = [
+        "@score-baselibs//score/language/futurecpp",
+        "@score-baselibs//score/memory/shared:pointer_arithmetic_util",
+    ],
+)
+
 cc_gtest_unit_test(
     name = "copyable_atomic_test",
     srcs = ["copyable_atomic_test.cpp"],
@@ -51,5 +64,15 @@ cc_gtest_unit_test(
     deps = [
         ":arithmetic_utils",
         "@score-baselibs//score/language/futurecpp",
+    ],
+)
+
+cc_gtest_unit_test(
+    name = "type_erased_storage_test",
+    srcs = ["type_erased_storage_test.cpp"],
+    features = COMPILER_WARNING_FEATURES,
+    deps = [
+        ":type_erased_storage",
+        "@score-baselibs//score/mw/log",
     ],
 )
