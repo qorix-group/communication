@@ -363,7 +363,7 @@ void QnxDispatchEngine::ProcessTimerQueue() noexcept
     }
     const auto distance = std::chrono::duration_cast<std::chrono::nanoseconds>(then - Clock::now()).count() + 1;
     struct _itimer itimer{};
-    itimer.nsec = distance;
+    itimer.nsec = static_cast<std::uint64_t>(distance);
     itimer.interval_nsec = 0;
     score::cpp::ignore = os_resources_.timer->TimerSettime(timer_id_, 0, &itimer, nullptr);
 }

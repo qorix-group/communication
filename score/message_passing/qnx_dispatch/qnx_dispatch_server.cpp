@@ -162,7 +162,7 @@ std::int32_t QnxDispatchServer::ServerConnection::ProcessReadRequest(resmgr_cont
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access) C API
     io[1].iov_len = send_message.message.size();
 
-    _IO_SET_READ_NBYTES(ctp, sizeof(send_message.code) + send_message.message.size());
+    _IO_SET_READ_NBYTES(ctp, static_cast<std::int32_t>(sizeof(send_message.code) + send_message.message.size()));
 
     auto& server = GetQnxDispatchServer();
     auto& os_resources = server.engine_->GetOsResources();
