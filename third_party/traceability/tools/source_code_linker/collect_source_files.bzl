@@ -19,7 +19,7 @@ Bazel rules and aspects for linking source code to documentation.
 
 This module provides:
 - `SourceCodeLinksInfo`: A provider encapsulating parsed source code links.
-- `parse_source_files_for_needs_links`: A function to set up the parsing rule.
+- `parse_source_files_for_links`: A function to set up the parsing rule.
 """
 
 load("@lobster//:lobster.bzl", "LobsterProvider")
@@ -130,7 +130,7 @@ def _collect_and_parse_source_files_impl(ctx):
         LobsterProvider(lobster_input = {parsed_sources_json_file.basename: parsed_sources_json_file.path}),
     ]
 
-parse_source_files_for_needs_links = rule(
+parse_source_files_for_links = rule(
     implementation = _collect_and_parse_source_files_impl,
     attrs = {
         "srcs_and_deps": attr.label_list(
@@ -140,7 +140,7 @@ parse_source_files_for_needs_links = rule(
         ),
         "trace": attr.string(
             default = "code",
-            doc = "Element to trace (code/reqs/interface)",
+            doc = "Element to trace (code/plantuml_alias_cpp/plantuml_alias_req/plantuml)",
         ),
         "trace_tags": attr.string_list(
             default = [],

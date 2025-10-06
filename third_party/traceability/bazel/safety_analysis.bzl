@@ -1,6 +1,6 @@
 load("@lobster//:lobster.bzl", "lobster_test", "lobster_trlc")
 load("//bazel/rules:expand_template.bzl", "expand_template")
-load("//third_party/traceability/tools/source_code_linker:collect_source_files.bzl", "parse_source_files_for_needs_links")
+load("//third_party/traceability/tools/source_code_linker:collect_source_files.bzl", "parse_source_files_for_links")
 
 def safety_analysis(
         name,
@@ -26,23 +26,24 @@ def safety_analysis(
         requirements = controlmeasures,
     )
 
-    parse_source_files_for_needs_links(
+    parse_source_files_for_links(
         name = FTA_TOPLEVELEVENTS,
         srcs_and_deps = fta,
+        trace = "plantuml_alias_cpp",
         trace_tags = ["$TopEvent"],
     )
 
-    parse_source_files_for_needs_links(
+    parse_source_files_for_links(
         name = FTA_BASICEVENTS,
         srcs_and_deps = fta,
-        trace = "reqs",
+        trace = "plantuml_alias_req",
         trace_tags = ["$BasicEvent"],
     )
 
-    parse_source_files_for_needs_links(
+    parse_source_files_for_links(
         name = PUBLIC_API,
         srcs_and_deps = public_api,
-        trace = "interface",
+        trace = "plantuml",
         trace_tags = ["interface"],
     )
 

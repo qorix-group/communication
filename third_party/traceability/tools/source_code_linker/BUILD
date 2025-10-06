@@ -14,12 +14,26 @@
 # Carry over from Eclipse S-Core including slight modifications:
 # https://github.com/eclipse-score/docs-as-code/tree/v0.4.0/src/extensions/score_source_code_linker
 
+# Python library for the source code linker package
+py_library(
+    name = "source_code_linker_lib",
+    srcs = [
+        "src/source_code_linker/__init__.py",
+        "src/source_code_linker/git_utils.py",
+        "src/source_code_linker/main.py",
+        "src/source_code_linker/parser.py",
+        "src/source_code_linker/transformer.py",
+        "src/source_code_linker/writer.py",
+    ],
+    imports = ["src"],
+    visibility = ["//visibility:public"],
+)
+
+# Entry point binary
 py_binary(
     name = "parsed_source_files_for_source_code_linker",
-    srcs = [
-        "git_utils.py",
-        "parse_source_files.py",
-    ],
-    main = "parse_source_files.py",
+    srcs = ["source_code_linker_main.py"],
+    main = "source_code_linker_main.py",
     visibility = ["//visibility:public"],
+    deps = [":source_code_linker_lib"],
 )

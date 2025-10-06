@@ -11,6 +11,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
 
+## Carry over from Eclipse S-Core including slight modifications:
+# https://github.com/eclipse-score/docs-as-code/tree/v0.4.0/src/extensions/score_source_code_linker
+
 """
 Git utility functions for source code linking.
 
@@ -109,6 +112,36 @@ def find_git_root() -> Path:
     return git_root
 
 
+def get_default_branch() -> str:
+    """Get the default branch name for the current git repository.
+
+    Distinguishes between 'main' and 'master' branches.
+
+    Returns:
+        Default branch name ("main" or "master")
+    """
+    try:
+        # Check remote branches to determine if main or master exists
+        result = subprocess.run(
+            ["git", "branch", "-r"],
+            capture_output=True,
+            text=True,
+            cwd=find_git_root()
+        )
+        if result.returncode == 0:
+            branches = result.stdout.strip()
+            # Check for main first (modern default)
+            if 'origin/main' in branches:
+                return "main"
+            elif 'origin/master' in branches:
+                return "master"
+    except Exception as e:
+        logger.debug(f"Could not determine default branch: {e}")
+
+    # Default fallback: assume "main"
+    return "main"
+
+
 def get_git_hash(file_path: str) -> str:
     """Get the latest git hash for a particular file.
 
@@ -136,10 +169,11 @@ def get_git_hash(file_path: str) -> str:
         )
         decoded_result = result.stdout.strip().decode()
 
-        # If git hash is empty, return "master" to point to master branch
+        # If git hash is empty, return the default branch (main or master)
         if not decoded_result:
-            logger.debug(f"Empty git hash for {abs_path}, using 'master'")
-            return "master"
+            default_branch = get_default_branch()
+            logger.debug(f"Empty git hash for {abs_path}, using default branch '{default_branch}'")
+            return default_branch
 
         # sanity check
         assert all(c in "0123456789abcdef" for c in decoded_result)

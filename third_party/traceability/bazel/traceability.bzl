@@ -1,7 +1,7 @@
 load("@lobster//:lobster.bzl", "lobster_gtest", "lobster_test", "lobster_trlc")
 load("//bazel/rules:expand_template.bzl", "expand_template")
 load("//third_party/traceability/bazel:gtest_as_exec.bzl", "test_as_exec")
-load("//third_party/traceability/tools/source_code_linker:collect_source_files.bzl", "parse_source_files_for_needs_links")
+load("//third_party/traceability/tools/source_code_linker:collect_source_files.bzl", "parse_source_files_for_links")
 
 def safety_software_unit(
         name,
@@ -9,10 +9,10 @@ def safety_software_unit(
         impl = None,
         design = None,
         tests = None):
-    COMPONENT_REQUIREMENTS = "{}_component_requirements".format(name)
     SOURCE_LINKS = "{}_sourcelinks".format(name)
     DESIGN_LINKS = "{}_design".format(name)
     TEST_LINKS = "{}_gtest_lobster".format(name)
+    COMPONENT_REQUIREMENTS = "{}_component_requirements".format(name)
 
     lobster_trlc(
         name = COMPONENT_REQUIREMENTS,
@@ -20,15 +20,16 @@ def safety_software_unit(
         requirements = reqs,
     )
 
-    parse_source_files_for_needs_links(
+    parse_source_files_for_links(
         name = SOURCE_LINKS,
         srcs_and_deps = impl,
     )
 
-    parse_source_files_for_needs_links(
+    parse_source_files_for_links(
         name = DESIGN_LINKS,
         srcs_and_deps = design,
-        trace = "reqs",
+        trace = "plantuml",
+        trace_tags = ["component"],
     )
 
     executed_tests = []
@@ -71,10 +72,18 @@ def safety_software_unit(
         ],
     )
 
-def safety_software_seooc(
+def safety_software_component(
         name,
         reqs = None,  # @unused A list of system requirements / assumptions. Only trlc_* deps allowed
         units = None,  # @unused A list of safety_software_unit
+        design = None,  # @unused Represents the Software Architectural Design => puml_* deps allowed
+        tests = None):  # @unused e.g. Integration Tests
+    pass
+
+def safety_software_seooc(
+        name,
+        reqs = None,  # @unused A list of system requirements / assumptions. Only trlc_* deps allowed
+        components = None,  # @unused A list of safety_software_unit
         design = None,  # @unused Represents the Software Architectural Design => puml_* deps allowed
         tests = None,  # @unused e.g. Integration Tests
         analysis = None):  # @unused e.g. ITF Tests, SCTF Test
