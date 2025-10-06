@@ -16,6 +16,9 @@
 
 #include "score/message_passing/mock/shared_resource_engine_mock.h"
 
+#include <future>
+#include <thread>
+
 namespace score
 {
 namespace message_passing
@@ -44,15 +47,19 @@ class ClientConnectionTest : public ::testing::Test
         score::cpp::set_assertion_handler(stdout_handler);
 
         resource_ = score::cpp::pmr::get_default_resource();
-        engine_ = score::cpp::pmr::make_shared<SharedResourceEngineMock>(resource_);
+        engine_ = score::cpp::pmr::make_shared<StrictMock<SharedResourceEngineMock>>(resource_);
         EXPECT_CALL(*engine_, GetMemoryResource()).WillRepeatedly(Return(resource_));
-        EXPECT_CALL(*engine_, IsOnCallbackThread()).Times(AtLeast(0)).WillRepeatedly([&]() {
+        EXPECT_CALL(*engine_, IsOnCallbackThread()).Times(AtLeast(0)).WillRepeatedly([&]() -> bool {
             return on_callback_thread_;
         });
     }
 
     void TearDown() override
     {
+        if (background_thread_.joinable())
+        {
+            background_thread_.join();
+        }
         connect_command_callback_ = ISharedResourceEngine::CommandCallback{};
         engine_.reset();
     }
@@ -78,6 +85,14 @@ class ClientConnectionTest : public ::testing::Test
         EXPECT_CALL(*engine_, EnqueueCommand(_, ISharedResourceEngine::TimePoint{}, _, _))
             .WillOnce([&](auto&, auto, ISharedResourceEngine::CommandCallback callback, auto) {
                 disconnect_command_callback_ = std::move(callback);
+            });
+    }
+
+    void CatchSendQueueCommand()
+    {
+        EXPECT_CALL(*engine_, EnqueueCommand(_, ISharedResourceEngine::TimePoint{}, _, _))
+            .WillOnce([&](auto&, auto, ISharedResourceEngine::CommandCallback callback, auto) {
+                send_queue_command_callback_ = std::move(callback);
             });
     }
 
@@ -118,6 +133,34 @@ class ClientConnectionTest : public ::testing::Test
             // the destructor for callback capture, if any, is called now
         }
         on_callback_thread_ = false;
+    }
+
+    void InvokeSendQueueCommand()
+    {
+        on_callback_thread_ = true;
+        {
+            auto callback = std::move(send_queue_command_callback_);
+            callback(ISharedResourceEngine::Clock::now());
+            // the destructor for callback capture, if any, is called now
+        }
+        on_callback_thread_ = false;
+    }
+
+    void ExpectAndInvokeDelayedDisconnectCommand()
+    {
+        EXPECT_CALL(*engine_, EnqueueCommand(_, ISharedResourceEngine::TimePoint{}, _, _))
+            .WillOnce([&](auto&, auto, ISharedResourceEngine::CommandCallback callback, auto) {
+                disconnect_command_callback_ = std::move(callback);
+                background_thread_ = std::thread([&]() {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                    on_callback_thread_ = true;
+                    auto disconnect_callback = std::move(disconnect_command_callback_);
+                    disconnect_callback(ISharedResourceEngine::Clock::now());
+                    on_callback_thread_ = false;
+                });
+            });
+        EXPECT_CALL(*engine_, CleanUpOwner);
+        EXPECT_CALL(*engine_, CloseClientConnection);
     }
 
     void CatchPosixEndpointRegistration()
@@ -163,7 +206,7 @@ class ClientConnectionTest : public ::testing::Test
         EXPECT_EQ(connection.GetState(), State::kReady);
         EXPECT_EQ(posix_endpoint_->fd, kValidFd);
         EXPECT_EQ(posix_endpoint_->owner, &connection);
-        EXPECT_EQ(posix_endpoint_->max_receive_size, 1024);
+        EXPECT_EQ(posix_endpoint_->max_receive_size, kMaxNotifySize);
     }
 
     void StopCurrentConnection(detail::ClientConnection& connection)
@@ -180,20 +223,45 @@ class ClientConnectionTest : public ::testing::Test
         EXPECT_EQ(connection.GetStopReason(), StopReason::kUserRequested);
     }
 
+    void StopCurrentConnectionAsIfInCallback(detail::ClientConnection& connection)
+    {
+        on_callback_thread_ = true;
+        ExpectCleanUpOwner(connection);
+        ExpectCloseFd();
+        connection.Stop();
+
+        EXPECT_EQ(connection.GetState(), State::kStopped);
+        EXPECT_EQ(connection.GetStopReason(), StopReason::kUserRequested);
+    }
+
+    constexpr static std::uint32_t kMaxSendSize = 8U;
+    constexpr static std::uint32_t kMaxReplySize = 10U;
+    constexpr static std::uint32_t kMaxNotifySize = 12U;
+
     score::cpp::pmr::memory_resource* resource_{};
-    std::shared_ptr<SharedResourceEngineMock> engine_{};
+    std::shared_ptr<StrictMock<SharedResourceEngineMock>> engine_{};
     const std::string service_identifier_{"test_identifier"};
-    const ServiceProtocolConfig protocol_config_{service_identifier_, 1024, 1024, 1024};
-    const IClientFactory::ClientConfig client_config_{};
+    const ServiceProtocolConfig protocol_config_{service_identifier_, kMaxSendSize, kMaxReplySize, kMaxNotifySize};
+    IClientFactory::ClientConfig client_config_{0, 1, false, false};
     ISharedResourceEngine::CommandCallback connect_command_callback_{};
     ISharedResourceEngine::CommandCallback disconnect_command_callback_{};
+    ISharedResourceEngine::CommandCallback send_queue_command_callback_{};
     ISharedResourceEngine::PosixEndpointEntry* posix_endpoint_{};
-    bool on_callback_thread_{false};
+    std::atomic<bool> on_callback_thread_{false};  // only atomic for tsan and sleep synchronization
+    std::thread background_thread_{};
 };
 
 TEST_F(ClientConnectionTest, Constructed)
 {
     detail::ClientConnection connection(engine_, protocol_config_, client_config_);
+    EXPECT_EQ(connection.GetState(), State::kStopped);
+    EXPECT_EQ(connection.GetStopReason(), StopReason::kInit);
+}
+
+TEST_F(ClientConnectionTest, ConstructedStopDoesNothing)
+{
+    detail::ClientConnection connection(engine_, protocol_config_, client_config_);
+    connection.Stop();
     EXPECT_EQ(connection.GetState(), State::kStopped);
     EXPECT_EQ(connection.GetStopReason(), StopReason::kInit);
 }
@@ -248,12 +316,48 @@ TEST_F(ClientConnectionTest, TryingToConnectMultipleTimesStoppingOnPermissionErr
     EXPECT_EQ(connection.GetStopReason(), StopReason::kPermission);
 }
 
-TEST_F(ClientConnectionTest, SuccessfullyConnectingAtFirstAttemptThenStopping)
+TEST_F(ClientConnectionTest, TryingToConnectMultipleTimesFinallyConnectingAndImplicitlyStopping)
+{
+    detail::ClientConnection connection(engine_, protocol_config_, client_config_);
+
+    CatchImmediateConnectCommand();
+    connection.Start(IClientConnection::StateCallback(), IClientConnection::NotifyCallback());
+    EXPECT_EQ(connection.GetState(), State::kStarting);
+
+    // shall be enough to cover kConnectRetryMsMax
+    for (std::size_t i = 0; i < 20U; ++i)
+    {
+        AtTryOpenCall_Return(score::cpp::make_unexpected(score::os::Error::createFromErrno(ENOENT)));
+        CatchTimedConnectCommand();
+        InvokeConnectCommand();
+        EXPECT_EQ(connection.GetState(), State::kStarting);
+    }
+
+    AtTryOpenCall_Return(kValidFd);
+    CatchPosixEndpointRegistration();
+    InvokeConnectCommand();
+    EXPECT_EQ(connection.GetState(), State::kReady);
+    EXPECT_EQ(posix_endpoint_->fd, kValidFd);
+    EXPECT_EQ(posix_endpoint_->owner, &connection);
+    EXPECT_EQ(posix_endpoint_->max_receive_size, kMaxNotifySize);
+
+    ExpectAndInvokeDelayedDisconnectCommand();
+}
+
+TEST_F(ClientConnectionTest, SuccessfullyConnectingAtFirstAttemptThenExplicitlyStopping)
 {
     detail::ClientConnection connection(engine_, protocol_config_, client_config_);
     MakeSuccessfulConnection(connection);
 
     StopCurrentConnection(connection);
+}
+
+TEST_F(ClientConnectionTest, SuccessfullyConnectingAtFirstAttemptThenExplicitlyStoppingAsIfFromCallback)
+{
+    detail::ClientConnection connection(engine_, protocol_config_, client_config_);
+    MakeSuccessfulConnection(connection);
+
+    StopCurrentConnectionAsIfInCallback(connection);
 }
 
 TEST_F(ClientConnectionTest, SuccessfullyConnectingAtFirstAttemptThenFirstReadDisconnected)
@@ -268,6 +372,271 @@ TEST_F(ClientConnectionTest, SuccessfullyConnectingAtFirstAttemptThenFirstReadDi
     InvokeEndpointInput();
     EXPECT_EQ(connection.GetState(), State::kStopped);
     EXPECT_EQ(connection.GetStopReason(), StopReason::kClosedByPeer);
+}
+
+TEST_F(ClientConnectionTest, NotConnectedSendNotReady)
+{
+    detail::ClientConnection connection(engine_, protocol_config_, client_config_);
+
+    std::array<std::uint8_t, kMaxSendSize> send_buffer;
+    std::array<std::uint8_t, kMaxReplySize> reply_buffer;
+
+    auto send_result = connection.Send(send_buffer);
+    EXPECT_FALSE(send_result);
+    EXPECT_EQ(send_result.error().GetOsDependentErrorCode(), EINVAL);
+
+    auto send_wait_reply_result = connection.SendWaitReply(send_buffer, reply_buffer);
+    EXPECT_FALSE(send_wait_reply_result);
+    EXPECT_EQ(send_wait_reply_result.error().GetOsDependentErrorCode(), EINVAL);
+
+    auto send_with_callback_result = connection.SendWithCallback(send_buffer, IClientConnection::ReplyCallback{});
+    EXPECT_FALSE(send_with_callback_result);
+    EXPECT_EQ(send_with_callback_result.error().GetOsDependentErrorCode(), EINVAL);
+}
+
+TEST_F(ClientConnectionTest, ConnectedRestartdDoesNothing)
+{
+    detail::ClientConnection connection(engine_, protocol_config_, client_config_);
+    MakeSuccessfulConnection(connection);
+
+    connection.Restart();
+    EXPECT_EQ(connection.GetState(), State::kReady);
+
+    StopCurrentConnection(connection);
+}
+
+TEST_F(ClientConnectionTest, SendTooLarge)
+{
+    detail::ClientConnection connection(engine_, protocol_config_, client_config_);
+    MakeSuccessfulConnection(connection);
+
+    std::array<std::uint8_t, kMaxSendSize + 1> send_buffer;
+    std::array<std::uint8_t, kMaxReplySize> reply_buffer;
+
+    auto send_result = connection.Send(send_buffer);
+    EXPECT_FALSE(send_result);
+    EXPECT_EQ(send_result.error().GetOsDependentErrorCode(), ENOMEM);
+
+    auto send_wait_reply_result = connection.SendWaitReply(send_buffer, reply_buffer);
+    EXPECT_FALSE(send_wait_reply_result);
+    EXPECT_EQ(send_wait_reply_result.error().GetOsDependentErrorCode(), ENOMEM);
+
+    auto send_with_callback_result = connection.SendWithCallback(send_buffer, IClientConnection::ReplyCallback{});
+    EXPECT_FALSE(send_with_callback_result);
+    EXPECT_EQ(send_with_callback_result.error().GetOsDependentErrorCode(), ENOMEM);
+
+    StopCurrentConnection(connection);
+}
+
+TEST_F(ClientConnectionTest, SendIsDirectWithOurDefaultConfig)
+{
+    detail::ClientConnection connection(engine_, protocol_config_, client_config_);
+    MakeSuccessfulConnection(connection);
+
+    EXPECT_CALL(*engine_, SendProtocolMessage);
+
+    std::array<std::uint8_t, kMaxSendSize> send_buffer;
+    auto send_result = connection.Send(send_buffer);
+    EXPECT_TRUE(send_result);
+
+    StopCurrentConnection(connection);
+}
+
+TEST_F(ClientConnectionTest, SendIsDirectWithFullyOrderedAndEmptyQueue)
+{
+    client_config_.fully_ordered = true;
+    detail::ClientConnection connection(engine_, protocol_config_, client_config_);
+    MakeSuccessfulConnection(connection);
+
+    EXPECT_CALL(*engine_, SendProtocolMessage);
+
+    std::array<std::uint8_t, kMaxSendSize> send_buffer;
+    auto send_result = connection.Send(send_buffer);
+    EXPECT_TRUE(send_result);
+
+    StopCurrentConnection(connection);
+}
+
+TEST_F(ClientConnectionTest, SendIsQueuedIfTrulyAsync)
+{
+    client_config_.max_queued_sends = 2;
+    client_config_.truly_async = true;
+    detail::ClientConnection connection(engine_, protocol_config_, client_config_);
+    MakeSuccessfulConnection(connection);
+
+    CatchSendQueueCommand();
+
+    std::array<std::uint8_t, kMaxSendSize> send_buffer;
+    auto send_result = connection.Send(send_buffer);
+    EXPECT_TRUE(send_result);
+
+    send_result = connection.Send(send_buffer);
+    EXPECT_TRUE(send_result);
+
+    // third send shall fail as we only have two slots in the send queue
+    send_result = connection.Send(send_buffer);
+    EXPECT_FALSE(send_result);
+    EXPECT_EQ(send_result.error().GetOsDependentErrorCode(), ENOMEM);
+
+    // both queued messages shall be sent by the same command, as they have no receive callbacks
+    EXPECT_CALL(*engine_, SendProtocolMessage).Times(2);
+    InvokeSendQueueCommand();
+
+    StopCurrentConnection(connection);
+}
+
+TEST_F(ClientConnectionTest, SendIsNotQueuedIfTrulyAsyncButNoSlots)
+{
+    // this is a meaningless case, but as we check for it in the implementation, we shall cover it
+    client_config_.max_queued_sends = 0;
+    client_config_.truly_async = true;
+    detail::ClientConnection connection(engine_, protocol_config_, client_config_);
+    MakeSuccessfulConnection(connection);
+
+    std::array<std::uint8_t, kMaxSendSize> send_buffer;
+    auto send_result = connection.Send(send_buffer);
+    EXPECT_FALSE(send_result);
+    EXPECT_EQ(send_result.error().GetOsDependentErrorCode(), ENOMEM);
+
+    StopCurrentConnection(connection);
+}
+
+TEST_F(ClientConnectionTest, SendWaitReplyFailsWhenCalledInCallback)
+{
+    detail::ClientConnection connection(engine_, protocol_config_, client_config_);
+    MakeSuccessfulConnection(connection);
+
+    std::array<std::uint8_t, kMaxSendSize> send_buffer;
+    std::array<std::uint8_t, kMaxReplySize> reply_buffer;
+
+    on_callback_thread_ = true;
+    auto send_wait_reply_result = connection.SendWaitReply(send_buffer, reply_buffer);
+    on_callback_thread_ = false;
+    EXPECT_FALSE(send_wait_reply_result);
+    EXPECT_EQ(send_wait_reply_result.error().GetOsDependentErrorCode(), EAGAIN);
+
+    StopCurrentConnection(connection);
+}
+
+TEST_F(ClientConnectionTest, SendWaitReplyFailsWhenCannotSendMessageDirectly)
+{
+    detail::ClientConnection connection(engine_, protocol_config_, client_config_);
+    MakeSuccessfulConnection(connection);
+
+    std::array<std::uint8_t, kMaxSendSize> send_buffer;
+    std::array<std::uint8_t, kMaxReplySize> reply_buffer;
+
+    EXPECT_CALL(*engine_, SendProtocolMessage)
+        .WillOnce(Return(score::cpp::make_unexpected(score::os::Error::createFromErrno(EPIPE))));
+
+    auto send_wait_reply_result = connection.SendWaitReply(send_buffer, reply_buffer);
+    EXPECT_FALSE(send_wait_reply_result);
+    EXPECT_EQ(send_wait_reply_result.error().GetOsDependentErrorCode(), EPIPE);
+
+    StopCurrentConnection(connection);
+}
+
+TEST_F(ClientConnectionTest, SendWaitReplyFailsWhenCannotQueueMessage)
+{
+    client_config_.max_queued_sends = 1;  // explicitly
+    client_config_.truly_async = true;    // make sure Send goes into queue
+    detail::ClientConnection connection(engine_, protocol_config_, client_config_);
+    MakeSuccessfulConnection(connection);
+
+    std::array<std::uint8_t, kMaxSendSize> send_buffer;
+    std::array<std::uint8_t, kMaxReplySize> reply_buffer;
+
+    CatchSendQueueCommand();
+
+    // occupy the queue slot
+    auto send_result = connection.Send(send_buffer);
+    EXPECT_TRUE(send_result);
+
+    // second send shall fail as we only have one slot in the send queue
+    auto send_wait_reply_result = connection.SendWaitReply(send_buffer, reply_buffer);
+    EXPECT_FALSE(send_wait_reply_result);
+    EXPECT_EQ(send_wait_reply_result.error().GetOsDependentErrorCode(), ENOMEM);
+
+    EXPECT_CALL(*engine_, SendProtocolMessage);
+    InvokeSendQueueCommand();
+
+    StopCurrentConnection(connection);
+}
+
+TEST_F(ClientConnectionTest, SendWaitReplyFailsWhenQueuedMessageCancels)
+{
+    client_config_.max_queued_sends = 2;
+    client_config_.truly_async = true;
+    detail::ClientConnection connection(engine_, protocol_config_, client_config_);
+    MakeSuccessfulConnection(connection);
+
+    std::promise<void> done;
+    // once for Send, then once for SendWaitReply
+    EXPECT_CALL(*engine_, SendProtocolMessage).Times(2);
+
+    std::array<std::uint8_t, kMaxSendSize> send_buffer;
+
+    CatchSendQueueCommand();
+
+    // queued, because of truly_async
+    auto send_result = connection.Send(send_buffer);
+    EXPECT_TRUE(send_result);
+
+    background_thread_ = std::thread([&connection]() {
+        std::array<std::uint8_t, kMaxSendSize> another_send_buffer;
+        std::array<std::uint8_t, kMaxReplySize> reply_buffer;
+        auto send_wait_reply_result = connection.SendWaitReply(another_send_buffer, reply_buffer);
+        EXPECT_FALSE(send_wait_reply_result);
+        EXPECT_EQ(send_wait_reply_result.error().GetOsDependentErrorCode(), EPIPE);
+    });
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    // unblock queue, it shall send both messages
+    InvokeSendQueueCommand();
+
+    // close connection without replying to SendWaitReply
+    StopCurrentConnection(connection);
+}
+
+TEST_F(ClientConnectionTest, QueuedSendsCancelIfConnectionClosed)
+{
+    client_config_.max_queued_sends = 4;
+    client_config_.truly_async = true;
+    detail::ClientConnection connection(engine_, protocol_config_, client_config_);
+    MakeSuccessfulConnection(connection);
+
+    std::promise<void> done;
+    // inside background thread, when SendWaitReply is queued for reply
+    EXPECT_CALL(*engine_, SendProtocolMessage).WillOnce([&done](auto&&...) {
+        done.set_value();
+        return score::cpp::blank{};
+    });
+
+    background_thread_ = std::thread([&connection]() {
+        std::array<std::uint8_t, kMaxSendSize> another_send_buffer;
+        std::array<std::uint8_t, kMaxReplySize> reply_buffer;
+        auto send_wait_reply_result = connection.SendWaitReply(another_send_buffer, reply_buffer);
+        EXPECT_FALSE(send_wait_reply_result);
+        EXPECT_EQ(send_wait_reply_result.error().GetOsDependentErrorCode(), EPIPE);
+    });
+    done.get_future().wait();
+
+    std::array<std::uint8_t, kMaxSendSize> send_buffer;
+
+    // queued, because of truly_async
+    auto send_result = connection.Send(send_buffer);
+    EXPECT_TRUE(send_result);
+
+    auto send_with_callback_result = connection.SendWithCallback(send_buffer, IClientConnection::ReplyCallback{});
+    EXPECT_TRUE(send_with_callback_result);
+
+    send_with_callback_result = connection.SendWithCallback(send_buffer, [](auto&& message_expected) {
+        EXPECT_FALSE(message_expected);
+        EXPECT_EQ(message_expected.error().GetOsDependentErrorCode(), EPIPE);
+    });
+    EXPECT_TRUE(send_with_callback_result);
+
+    StopCurrentConnection(connection);
 }
 
 }  // namespace
