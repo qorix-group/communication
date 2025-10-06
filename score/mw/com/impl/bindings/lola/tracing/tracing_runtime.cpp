@@ -262,8 +262,8 @@ analysis::tracing::ServiceInstanceElement TracingRuntime::ConvertToTracingServic
     const auto& service_type_deployments = configuration_.GetServiceTypes();
 
     // @todo: Replace the configuration unordered_maps with maps and use CompareId?
-    const auto instance_specifier =
-        InstanceSpecifier::Create(service_element_instance_identifier_view.instance_specifier).value();
+    std::string instance_specifier_to_create{service_element_instance_identifier_view.instance_specifier};
+    const auto instance_specifier = InstanceSpecifier::Create(std::move(instance_specifier_to_create)).value();
     // Suppress "AUTOSAR C++14 A15-4-2" rule finding. This rule states: "I a function is declared to be
     // noexcept, noexcept(true) or noexcept(<true condition>), then it shall not exit with an exception"
     // The instance specifier is loaded into the configuration during the initialization, so the container

@@ -116,7 +116,10 @@ ServiceInstanceDeployment::ServiceInstanceDeployment(const score::json::Object& 
           ServiceIdentifierType{GetValueFromJson<json::Object>(json_object, kServiceKey)},
           GetBindingInfoFromJson(json_object),
           GetQualityTypeFromJson(json_object, kAsilLevelKey),
-          InstanceSpecifier::Create(GetValueFromJson<std::string>(json_object, kInstanceSpecifierKey)).value())
+          InstanceSpecifier::Create(
+              std::string(GetValueFromJson<std::string>(json_object, kInstanceSpecifierKey).begin(),
+                          GetValueFromJson<std::string>(json_object, kInstanceSpecifierKey).end()))
+              .value())
 {
     const auto serialization_version = GetValueFromJson<std::uint32_t>(json_object, kSerializationVersionKey);
     if (serialization_version != serializationVersion)
