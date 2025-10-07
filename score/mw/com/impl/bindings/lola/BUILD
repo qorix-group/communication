@@ -617,6 +617,7 @@ cc_library(
     visibility = ["//score/mw/com/impl/bindings/lola:__subpackages__"],
     deps = [
         ":transaction_log_slot",
+        "@score-baselibs//score/containers:dynamic_array",
         "@score-baselibs//score/language/futurecpp",
         "@score-baselibs//score/memory/shared",
     ],
