@@ -42,10 +42,6 @@ cc_gtest_unit_test(
     name = "tracing_runtime_test",
     srcs = ["tracing_runtime_test.cpp"],
     features = COMPILER_WARNING_FEATURES,
-    target_compatible_with = select({
-        "@platforms//os:qnx": ["@score-baselibs//bazel/platforms/qnx_version:qnx7"],  # TODO: Ticket-214229 QNX8 incompatible
-        "//conditions:default": [],
-    }),
     visibility = [
         "//score/mw/com/impl:__subpackages__",
     ],

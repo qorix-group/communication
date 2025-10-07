@@ -853,10 +853,6 @@ cc_test(
         "aborts_upon_exception",
     ],
     tags = ["unit"],
-    target_compatible_with = select({
-        "@platforms//os:qnx": ["@score-baselibs//bazel/platforms/qnx_version:qnx7"],  # TODO: Ticket-214229 QNX8 incompatible
-        "//conditions:default": [],
-    }),
     deps = [
         ":skeleton",
         "//score/mw/com/impl/bindings/lola/test:skeleton_test_resources",

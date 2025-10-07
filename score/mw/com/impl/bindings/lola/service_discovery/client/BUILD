@@ -47,10 +47,6 @@ cc_gtest_unit_test(
         "service_discovery_client_worker_thread_test.cpp",
     ],
     features = COMPILER_WARNING_FEATURES,
-    target_compatible_with = select({
-        "@platforms//os:qnx": ["@score-baselibs//bazel/platforms/qnx_version:qnx7"],  # TODO: Ticket-214229 QNX8 incompatible
-        "//conditions:default": [],
-    }),
     visibility = [
         "//score/mw/com/impl/bindings/lola/service_discovery/client:__pkg__",
     ],

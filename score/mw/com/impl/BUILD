@@ -912,6 +912,7 @@ cc_test(
         "proxy_event_test.cpp",
         "proxy_field_test.cpp",
         "service_element_map_test.cpp",
+        "skeleton_base_test.cpp",
         "skeleton_binding_test.cpp",
         "skeleton_event_base_test.cpp",
         "skeleton_event_binding_test.cpp",
@@ -919,10 +920,7 @@ cc_test(
         "skeleton_field_base_test.cpp",
         "skeleton_field_test.cpp",
         "traits_test.cpp",
-    ] + select({
-        "@score-baselibs//bazel/platforms/qnx_version:qnx8": [],
-        "//conditions:default": ["skeleton_base_test.cpp"],  # TODO: Ticket-214229 QNX8 incompatible
-    }),
+    ],
     features = COMPILER_WARNING_FEATURES + [
         "aborts_upon_exception",
     ],
