@@ -37,28 +37,42 @@ namespace
  */
 bool IsShortNameValid(const std::string_view shortname) noexcept
 {
-    if (shortname.empty() || shortname.back() == '/')
+    if (shortname.empty() || (shortname.back() == '/'))
     {
         return false;
     }
 
     // Validate first character
     const char first_char = shortname[0];
-    if (!((static_cast<bool>(std::isalpha(static_cast<unsigned char>(first_char))) || first_char == '_') ||
-          first_char == '/'))
+    // Suppress "AUTOSAR C++14 M5-0-3" and  "AUTOSAR C++14 M5-0-4" rules, which state: "A cvalue expression shall
+    // not be implicitly converted to a different underlying type." and "An implicit integral conversion shall not
+    // change the signedness of the underlying type." respectively
+    // Rationale: This is tolerated as static_cast from int to bool will not change the signedness and the type
+    // convertion is intended
+    // coverity[autosar_cpp14_m5_0_3_violation]
+    // coverity[autosar_cpp14_m5_0_4_violation]
+    if (!((static_cast<bool>(std::isalpha(static_cast<unsigned char>(first_char))) || (first_char == '_')) ||
+          (first_char == '/')))
     {
         return false;
     }
     // Single pass validation
-    for (std::size_t char_index = 1; char_index < shortname.size(); ++char_index)
+    for (std::size_t char_index = 1U; char_index < shortname.size(); ++char_index)
     {
         const char current_char = shortname[char_index];
-        if (!((static_cast<bool>(std::isalnum(static_cast<unsigned char>(current_char))) || current_char == '_') ||
-              current_char == '/'))
+        // Suppress "AUTOSAR C++14 M5-0-3" and  "AUTOSAR C++14 M5-0-4" rules, which state: "A cvalue expression shall
+        // not be implicitly converted to a different underlying type." and "An implicit integral conversion shall not
+        // change the signedness of the underlying type." respectively
+        // Rationale: This is tolerated as static_cast from int to bool will not change the signedness and the type
+        // convertion is intended
+        // coverity[autosar_cpp14_m5_0_3_violation]
+        // coverity[autosar_cpp14_m5_0_4_violation]
+        if (!((static_cast<bool>(std::isalnum(static_cast<unsigned char>(current_char))) || (current_char == '_')) ||
+              (current_char == '/')))
         {
             return false;
         }
-        if (current_char == '/' && shortname[char_index - 1] == '/')
+        if ((current_char == '/') && (shortname[char_index - 1U] == '/'))
         {
             return false;
         }
