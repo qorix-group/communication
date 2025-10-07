@@ -296,5 +296,17 @@ INSTANTIATE_TEST_CASE_P(
         std::make_pair(LolaServiceInstanceDeployment{1U, {}, {}, true, kAllowedConsumers, kAllowedProviders2},
                        LolaServiceInstanceDeployment{1U, {}, {}, true, kAllowedConsumers, kAllowedProviders})));
 
+TEST(LolaServiceInstanceDeploymentLessThan, DeploymentsComparedBasedOnInstanceId)
+{
+    // Given 2 LolaServiceInstanceDeployments containing different values
+    const LolaServiceInstanceDeployment lhs{1U, {}, {}, true, kAllowedConsumers, kAllowedProviders};
+    const LolaServiceInstanceDeployment rhs{2U, {}, {}, true, kAllowedConsumers, kAllowedProviders};
+
+    // When comparing the two
+    // Then the result is based on the instance IDs
+    EXPECT_EQ(lhs < rhs, lhs.instance_id_ < rhs.instance_id_);
+    EXPECT_EQ(rhs < lhs, rhs.instance_id_ < lhs.instance_id_);
+}
+
 }  // namespace
 }  // namespace score::mw::com::impl

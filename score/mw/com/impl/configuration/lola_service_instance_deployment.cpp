@@ -116,6 +116,11 @@ bool operator==(const LolaServiceInstanceDeployment& lhs, const LolaServiceInsta
             (lhs.allowed_provider_ == rhs.allowed_provider_));
 }
 
+bool operator<(const LolaServiceInstanceDeployment& lhs, const LolaServiceInstanceDeployment& rhs) noexcept
+{
+    return lhs.instance_id_ < rhs.instance_id_;
+}
+
 // In this case the constructor delegation does not provide additional code structuring because of the score::cpp::optional
 // By adding a third private constructor additional complexity would be introduced
 //
