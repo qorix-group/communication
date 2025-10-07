@@ -29,9 +29,9 @@ namespace score::mw::com::impl::lola
 namespace
 {
 // TODO: avoid duplication with message_passing_service_instance.cpp
-constexpr auto mq_name_prefix{"LoLa_2_"};
-constexpr auto mq_name_qm_postfix{"_QM"};
-constexpr auto mq_name_asil_b_postfix{"_ASIL_B"};
+constexpr auto mq_name_prefix_mpcc("LoLa_2_");
+constexpr auto mq_name_qm_postfix_mpcc("_QM");
+constexpr auto mq_name_asil_b_postfix_mpcc("_ASIL_B");
 
 constexpr std::uint32_t kMaxSendSize{9U};
 
@@ -74,7 +74,7 @@ std::shared_ptr<score::message_passing::IClientConnection> MessagePassingClientC
 
     const bool fully_async = asil_level_ == ClientQualityType::kASIL_QMfromB;
     const score::message_passing::ServiceProtocolConfig protocol_config{service_identifier, kMaxSendSize, 0U, 0U};
-    const score::message_passing::IClientFactory::ClientConfig client_config{0, 20, false, fully_async};
+    const score::message_passing::IClientFactory::ClientConfig client_config{0U, 20U, false, fully_async};
 
     auto new_sender_unique_p = client_factory_.Create(protocol_config, client_config);
 
@@ -130,14 +130,14 @@ std::string MessagePassingClientCache::CreateMessagePassingName(const ClientQual
                                                                 const pid_t node_id) noexcept
 {
     std::stringstream identifier;
-    identifier << mq_name_prefix << node_id;
+    identifier << mq_name_prefix_mpcc << node_id;
     if (asil_level != ClientQualityType::kASIL_B)
     {
-        identifier << mq_name_qm_postfix;
+        identifier << mq_name_qm_postfix_mpcc;
     }
     else
     {
-        identifier << mq_name_asil_b_postfix;
+        identifier << mq_name_asil_b_postfix_mpcc;
     }
     return identifier.str();
 }

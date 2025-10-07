@@ -143,7 +143,14 @@ class MessagePassingServiceInstance
     /// \return pair containing number of node identifiers, which have been copied and a bool, whether further ids
     /// could
     ///         have been copied, if buffer would have been larger.
+
     template <typename MapType>
+    // Suppress "AUTOSAR C++14 A15-5-3" rule findings. This rule states: "The std::terminate() function shall not be
+    // called implicitly".
+    // This is a false positive: .at() could throw if the index is outside of the range of the container but it is
+    // checked before accessing the dest_buffer that the function will break as soon as the index is equal to the
+    // buffersize. So an access out of the range and consequently a call to std::terminate() is not possible.
+    // coverity[autosar_cpp14_a15_5_3_violation : FALSE]
     static std::pair<std::uint8_t, bool> CopyNodeIdentifiers(ElementFqId event_id,
                                                              MapType& src_map,
                                                              std::shared_mutex& src_map_mutex,
@@ -167,7 +174,8 @@ class MessagePassingServiceInstance
                     // Suppress "AUTOSAR C++14 M5-0-3" rule findings. This rule states: "A cvalue expression shall
                     // not be implicitly converted to a different underlying type"
                     // That return `pid_t` type as a result. Tolerated implicit conversion as underlying types are
-                    // the same coverity coverity[autosar_cpp14_m5_0_3_violation]
+                    // the same
+                    // coverity[autosar_cpp14_m5_0_3_violation : FALSE]
                     dest_buffer.at(num_nodeids_copied) = *iter;
                     num_nodeids_copied++;
                     if (num_nodeids_copied == dest_buffer.size())
@@ -184,6 +192,7 @@ class MessagePassingServiceInstance
         return {num_nodeids_copied, further_ids_avail};
     }
 
+    std::atomic<IMessagePassingService::HandlerRegistrationNoType> cur_registration_no_;
     MessagePassingClientCache client_cache_;
 
     // TODO: refactor for PMR/static
@@ -214,8 +223,6 @@ class MessagePassingServiceInstance
     EventUpdateRegistrationCountMapType event_update_remote_registrations_;
 
     std::shared_mutex event_update_remote_registrations_mutex_;
-
-    std::atomic<IMessagePassingService::HandlerRegistrationNoType> cur_registration_no_{0U};
 
     /// \brief thread pool for processing local event update notification.
     /// \detail local update notification leads to a user provided receive handler callout, whose

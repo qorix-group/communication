@@ -65,7 +65,7 @@ class MessagePassingService final : public IMessagePassingService
     MessagePassingService& operator=(const MessagePassingService&) = delete;
     MessagePassingService& operator=(MessagePassingService&&) = delete;
 
-    ~MessagePassingService() noexcept override;
+    ~MessagePassingService() noexcept override = default;
 
     /// \brief Notification, that the given _event_id_ with _asil_level_ has been updated.
     /// \details see IMessagePassingService::NotifyEvent
@@ -100,12 +100,17 @@ class MessagePassingService final : public IMessagePassingService
 
   private:
 // TODO: dependency injection?
+// Suppress "AUTOSAR C++14 A16-0-1" rule findings.
+// This is the standard way to determine if it runs on QNX or Unix
+// coverity[autosar_cpp14_a16_0_1_violation]
 #ifdef __QNX__
     std::optional<score::message_passing::QnxDispatchServerFactory> server_factory_;
     std::optional<score::message_passing::QnxDispatchClientFactory> client_factory_;
+// coverity[autosar_cpp14_a16_0_1_violation]
 #else
     std::optional<score::message_passing::UnixDomainServerFactory> server_factory_;
     std::optional<score::message_passing::UnixDomainClientFactory> client_factory_;
+// coverity[autosar_cpp14_a16_0_1_violation]
 #endif
 
     /// \brief thread pool for processing local event update notification.

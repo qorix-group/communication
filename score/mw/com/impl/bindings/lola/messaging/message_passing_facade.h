@@ -112,9 +112,9 @@ class MessagePassingFacade final : public IMessagePassingService
 
     /// \brief Re-registers an event update notifications for event _event_id_ in case target_node_id is a remote pid.
     /// \details see IMessagePassingService::ReregisterEventNotification
-    void ReregisterEventNotification(QualityType asil_level,
-                                     ElementFqId event_id,
-                                     pid_t target_node_id) noexcept override;
+    void ReregisterEventNotification(const QualityType asil_level,
+                                     const ElementFqId event_id,
+                                     const pid_t target_node_id) noexcept override;
 
     /// \brief Unregister an event update notification callback, which has been registered with
     ///        RegisterEventNotification()
@@ -126,7 +126,9 @@ class MessagePassingFacade final : public IMessagePassingService
 
     /// \brief Notifies target node about outdated_node_id being an old/outdated node id, not being used anymore.
     /// \details see IMessagePassingService::NotifyOutdatedNodeId
-    void NotifyOutdatedNodeId(QualityType asil_level, pid_t outdated_node_id, pid_t target_node_id) noexcept override;
+    void NotifyOutdatedNodeId(const QualityType asil_level,
+                              const pid_t outdated_node_id,
+                              const pid_t target_node_id) noexcept override;
 
   private:
     struct MessageReceiveCtrl

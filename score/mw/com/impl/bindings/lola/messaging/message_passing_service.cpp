@@ -29,12 +29,19 @@ constexpr auto kLocalThreadPoolName = "mw::com MessageReceiver";
 
 }  // namespace
 
+// Suppress autosar_cpp14_a15_5_3_violation
+// Rationale: Calling std::terminate() if any exceptions are thrown is expected as per safety requirements
+// coverity[autosar_cpp14_a15_5_3_violation]
 score::mw::com::impl::lola::MessagePassingService::MessagePassingService(
     const AsilSpecificCfg config_asil_qm,
     const score::cpp::optional<AsilSpecificCfg> config_asil_b) noexcept
     : score::mw::com::impl::lola::IMessagePassingService{},
       server_factory_{},
       client_factory_{},
+      // Suppress "AUTOSAR C++14 A15-4-2" rule findings. This rule states: "Throwing an exception in a
+      // "noexcept" function." In this case it is ok, because the system anyways forces the process to
+      // terminate if an exception is thrown.
+      // coverity[autosar_cpp14_a15_4_2_violation]
       local_event_thread_pool_{kNumberOfLocalThreads, kLocalThreadPoolName},
       qm_{},
       asil_b_{}
@@ -64,9 +71,6 @@ score::mw::com::impl::lola::MessagePassingService::MessagePassingService(
                                   local_event_thread_pool_);
     }
 }
-
-// NOLINTNEXTLINE(modernize-use-equals-default) false positive: the destructor is not trivial
-score::mw::com::impl::lola::MessagePassingService::~MessagePassingService() noexcept {}
 
 void score::mw::com::impl::lola::MessagePassingService::NotifyEvent(const QualityType asil_level,
                                                                   const ElementFqId event_id) noexcept
