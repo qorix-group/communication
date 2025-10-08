@@ -28,9 +28,9 @@ namespace
 
 using namespace ::testing;
 
-void stdout_handler(const score::cpp::handler_parameters& param)
+void stderr_handler(const score::cpp::handler_parameters& param)
 {
-    std::cout << "In " << param.file << ":" << param.line << " " << param.function << " condition " << param.condition
+    std::cerr << "In " << param.file << ":" << param.line << " " << param.function << " condition " << param.condition
               << " >> " << param.message << std::endl;
 }
 
@@ -39,12 +39,12 @@ std::chrono::seconds kFutureWaitTimeout{5};
 // param:
 // - false: client and server use different engines with different background threads
 // - true: client and server use share the engine and the background thread
-class ServerToClientTestFixtureQnx : public ::testing::Test, public testing::WithParamInterface<bool>
+class ServerToClientQnxFixture : public ::testing::Test, public testing::WithParamInterface<bool>
 {
   public:
     void SetUp() override
     {
-        score::cpp::set_assertion_handler(stdout_handler);
+        score::cpp::set_assertion_handler(stderr_handler);
 
         std::string test_prefix{"test_prefix_"};
         test_prefix += std::to_string(::getpid()) + "_";
@@ -334,7 +334,21 @@ class ServerToClientTestFixtureQnx : public ::testing::Test, public testing::Wit
     std::uint32_t retry_count_{0};
 };
 
-TEST_P(ServerToClientTestFixtureQnx, RefusingServerStartingFirst)
+TEST_F(ServerToClientQnxFixture, ConstructServerThenClientFactoryUsingSameEngine)
+{
+    WhenServerAndClientFactoriesConstructed(true, true);
+
+    EXPECT_EQ(server_factory_->GetEngine(), client_factory_->GetEngine());
+}
+
+TEST_F(ServerToClientQnxFixture, ConstructClientThenServerFactoryUsingSameEngine)
+{
+    WhenServerAndClientFactoriesConstructed(false, true);
+
+    EXPECT_EQ(server_factory_->GetEngine(), client_factory_->GetEngine());
+}
+
+TEST_P(ServerToClientQnxFixture, RefusingServerStartingFirst)
 {
     WhenServerAndClientFactoriesConstructed(true, GetParam());
     WhenServerCreated();
@@ -345,7 +359,7 @@ TEST_P(ServerToClientTestFixtureQnx, RefusingServerStartingFirst)
     WaitClientStoppedExpectStatusStopped();
 }
 
-TEST_P(ServerToClientTestFixtureQnx, RefusingServerStartingLater)
+TEST_P(ServerToClientQnxFixture, RefusingServerStartingLater)
 {
     WhenServerAndClientFactoriesConstructed(false, GetParam());
     WhenClientStarted();
@@ -358,7 +372,7 @@ TEST_P(ServerToClientTestFixtureQnx, RefusingServerStartingLater)
     WaitClientStoppedExpectStatusStopped();
 }
 
-TEST_P(ServerToClientTestFixtureQnx, RefusingServerStartingLaterClientDeleted)
+TEST_P(ServerToClientQnxFixture, RefusingServerStartingLaterClientDeleted)
 {
     WhenServerAndClientFactoriesConstructed(false, GetParam());
     WhenClientStarted(true);
@@ -371,7 +385,7 @@ TEST_P(ServerToClientTestFixtureQnx, RefusingServerStartingLaterClientDeleted)
     WaitClientStoppedExpectClientDeleted();
 }
 
-TEST_P(ServerToClientTestFixtureQnx, RefusingServerStartingLaterClientRestarting)
+TEST_P(ServerToClientQnxFixture, RefusingServerStartingLaterClientRestarting)
 {
     WhenServerAndClientFactoriesConstructed(false, GetParam());
     WhenClientStartedRestartingFromCallback(3);
@@ -385,7 +399,7 @@ TEST_P(ServerToClientTestFixtureQnx, RefusingServerStartingLaterClientRestarting
     EXPECT_EQ(retry_count_, 0);
 }
 
-TEST_P(ServerToClientTestFixtureQnx, EchoServerStartingLaterForcedStop)
+TEST_P(ServerToClientQnxFixture, EchoServerStartingLaterForcedStop)
 {
     WhenServerAndClientFactoriesConstructed(false, GetParam());
     WhenClientStarted();
@@ -402,7 +416,7 @@ TEST_P(ServerToClientTestFixtureQnx, EchoServerStartingLaterForcedStop)
     WaitClientStoppedExpectStatusStopped();
 }
 
-TEST_P(ServerToClientTestFixtureQnx, EchoServerSetup)
+TEST_P(ServerToClientQnxFixture, EchoServerSetup)
 {
     WithStandardEchoServerSetup();
 
@@ -412,7 +426,7 @@ TEST_P(ServerToClientTestFixtureQnx, EchoServerSetup)
     WaitClientStoppedExpectStatusStopped();
 }
 
-TEST_P(ServerToClientTestFixtureQnx, EchoServerClientRestart)
+TEST_P(ServerToClientQnxFixture, EchoServerClientRestart)
 {
     WithStandardEchoServerSetup();
 
@@ -431,7 +445,7 @@ TEST_P(ServerToClientTestFixtureQnx, EchoServerClientRestart)
 }
 
 // "same engine" does not work for in-process client-server communications (_RESMGR_FLAG_SELF) on a single shared thread
-INSTANTIATE_TEST_SUITE_P(QnxDispatch, ServerToClientTestFixtureQnx, testing::Values(false /*, true*/));
+INSTANTIATE_TEST_SUITE_P(QnxDispatch, ServerToClientQnxFixture, testing::Values(false /*, true*/));
 
 }  // namespace
 }  // namespace message_passing

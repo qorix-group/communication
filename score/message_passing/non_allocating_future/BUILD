@@ -32,8 +32,8 @@ cc_library(
 cc_gtest_unit_test(
     name = "non_allocating_future_test",
     srcs = [
-        "non_allocating_future_test_samples.cpp",
-        "non_allocating_future_test_unit.cpp",
+        "non_allocating_future_samples_test.cpp",
+        "non_allocating_future_unit_test.cpp",
     ],
     visibility = ["//visibility:public"],
     deps = [

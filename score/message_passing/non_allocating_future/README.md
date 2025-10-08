@@ -51,4 +51,4 @@ a value object that supports the `push_back()` method and then mark it as ready:
 message_passing, also does not support stop token use. Stop token support, if needed, can be manually implemented by the
 user; care shall be taken to avoid hanging references and deadlocks.
 
-The examples of usage of `NonAllocatingFuture` interface methods can be found in `non_allocating_future_test.cpp`.
+The examples of usage of `NonAllocatingFuture` interface methods can be found in `non_allocating_future_samples_test.cpp`.

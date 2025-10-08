@@ -28,7 +28,7 @@ namespace
 
 using namespace ::testing;
 
-class NonAllocatingFutureTestSamples : public ::testing::Test
+class NonAllocatingFutureSamplesFixture : public ::testing::Test
 {
   protected:
     void SetUp() override {}
@@ -39,7 +39,7 @@ class NonAllocatingFutureTestSamples : public ::testing::Test
     std::condition_variable condition_;
 };
 
-TEST_F(NonAllocatingFutureTestSamples, VoidFutureSequentialUse)
+TEST_F(NonAllocatingFutureSamplesFixture, VoidFutureSequentialUse)
 {
     std::int32_t counter{0};
     detail::NonAllocatingFuture future1{mutex_, condition_};
@@ -63,7 +63,7 @@ TEST_F(NonAllocatingFutureTestSamples, VoidFutureSequentialUse)
     t2.join();
 }
 
-TEST_F(NonAllocatingFutureTestSamples, VoidFutureConcurrentUse)
+TEST_F(NonAllocatingFutureSamplesFixture, VoidFutureConcurrentUse)
 {
     std::atomic<std::int32_t> counter{0};
     detail::NonAllocatingFuture future1{mutex_, condition_};
@@ -85,7 +85,7 @@ TEST_F(NonAllocatingFutureTestSamples, VoidFutureConcurrentUse)
     t2.join();
 }
 
-TEST_F(NonAllocatingFutureTestSamples, NonVoidFutureSequentialUse)
+TEST_F(NonAllocatingFutureSamplesFixture, NonVoidFutureSequentialUse)
 {
     std::int32_t counter{0};
     detail::NonAllocatingFuture future1{mutex_, condition_, counter};
@@ -111,7 +111,7 @@ TEST_F(NonAllocatingFutureTestSamples, NonVoidFutureSequentialUse)
     t2.join();
 }
 
-TEST_F(NonAllocatingFutureTestSamples, NonVoidFutureConcurrentUse)
+TEST_F(NonAllocatingFutureSamplesFixture, NonVoidFutureConcurrentUse)
 {
     std::int32_t counter1{0};
     std::int32_t counter2{0};
@@ -137,7 +137,7 @@ TEST_F(NonAllocatingFutureTestSamples, NonVoidFutureConcurrentUse)
     t2.join();
 }
 
-TEST_F(NonAllocatingFutureTestSamples, NonVoidMarkReady)
+TEST_F(NonAllocatingFutureSamplesFixture, NonVoidMarkReady)
 {
     std::vector<std::int32_t> vec;
     detail::NonAllocatingFuture future{mutex_, condition_, vec};
@@ -153,7 +153,7 @@ TEST_F(NonAllocatingFutureTestSamples, NonVoidMarkReady)
     t.join();
 }
 
-TEST_F(NonAllocatingFutureTestSamples, OptionalBySignal)
+TEST_F(NonAllocatingFutureSamplesFixture, OptionalBySignal)
 {
     // In this test, we use two instances of NonAllocatingFuture to send signals in both directions.
     // Some care shall be taken about the lifetimes of the objects we are using - in this case, this is easy.
