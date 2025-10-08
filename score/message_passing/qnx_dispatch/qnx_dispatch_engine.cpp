@@ -105,9 +105,15 @@ QnxDispatchEngine::QnxDispatchEngine(score::cpp::pmr::memory_resource* memory_re
 
     SetupResourceManagerCallbacks();
 
+    // Suppress "AUTOSAR C++14 A8-5-3" rule finding: "A variable of type auto shall not be initialized using {} or
+    // ={} braced initialization.".
+    // coverity[autosar_cpp14_a8_5_3_violation: FALSE] False positive: the variable is not declared with 'auto'.
     std::lock_guard acquire{thread_mutex_};  // postpone thread start till we assign thread_
     thread_ = std::thread([this]() noexcept {
         {
+            // Suppress "AUTOSAR C++14 A8-5-3" rule finding: "A variable of type auto shall not be initialized using {}
+            // or ={} braced initialization.".
+            // coverity[autosar_cpp14_a8_5_3_violation: FALSE] False positive: the variable is not declared with 'auto'.
             std::lock_guard release{thread_mutex_};
         }
         RunOnThread();
@@ -246,6 +252,9 @@ void QnxDispatchEngine::CleanUpOwner(const void* const owner) noexcept
     }
     else
     {
+        // Suppress "AUTOSAR C++14 A8-5-3" rule finding: "A variable of type auto shall not be initialized using {} or
+        // ={} braced initialization.".
+        // coverity[autosar_cpp14_a8_5_3_violation: FALSE] False positive: the variable is not declared with 'auto'.
         detail::NonAllocatingFuture future{thread_mutex_, thread_condition_};
         detail::TimedCommandQueue::Entry cleanup_command;
         timer_queue_.RegisterImmediateEntry(
@@ -391,6 +400,10 @@ score::cpp::expected_blank<score::os::Error> QnxDispatchEngine::StartServer(Reso
                                                                    const QnxResourcePath& path) noexcept
 {
     // QNX defect PR# 2561573: resmgr_attach/message_attach calls are not thread-safe for the same dispatch_pointer
+
+    // Suppress "AUTOSAR C++14 A8-5-3" rule finding: "A variable of type auto shall not be initialized using {} or ={}
+    // braced initialization.".
+    // coverity[autosar_cpp14_a8_5_3_violation: FALSE] False positive: the variable is not declared with 'auto'.
     std::lock_guard guard{attach_mutex_};
 
     const auto id_expected = os_resources_.dispatch->resmgr_attach(dispatch_pointer_,
@@ -419,6 +432,10 @@ void QnxDispatchEngine::StopServer(ResourceManagerServer& server) noexcept
     if (server.resmgr_id_ != -1)
     {
         // QNX defect PR# 2561573: resmgr_attach/message_attach calls are not thread-safe for the same dispatch_pointer
+
+        // Suppress "AUTOSAR C++14 A8-5-3" rule finding: "A variable of type auto shall not be initialized using {} or
+        // ={} braced initialization.".
+        // coverity[autosar_cpp14_a8_5_3_violation: FALSE] False positive: the variable is not declared with 'auto'.
         std::lock_guard guard{attach_mutex_};
         const auto detach_expected = os_resources_.dispatch->resmgr_detach(
             dispatch_pointer_, server.resmgr_id_, static_cast<std::uint32_t>(_RESMGR_DETACH_CLOSE));
