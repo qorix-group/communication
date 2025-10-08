@@ -33,7 +33,14 @@ auto ValueOrTerminate(const score::cpp::expected<T, score::os::Error> expected, 
 {
     if (!expected.has_value())
     {
-        std::cerr << "QnxDispatchEngine: " << error_text << ": " << expected.error().ToString() << std::endl;
+        std::cerr << "QnxDispatchEngine: " << error_text << ": "
+                  << expected.error().ToString()
+                  // Suppress AUTOSAR C++14 M8-4-4, rule finding: "A function identifier shall either be used to call
+                  // the function or it shall be preceded by &". Passing std::endl to std::cout object with the stream
+                  // operator follows the idiomatic way that both features in conjunction were designed in the C++
+                  // standard.
+                  // coverity[autosar_cpp14_m8_4_4_violation : FALSE]
+                  << std::endl;
         std::terminate();
     }
     return expected.value();
@@ -44,7 +51,15 @@ void IfUnexpectedTerminate(const score::cpp::expected<T, score::os::Error> expec
 {
     if (!expected.has_value())
     {
-        std::cerr << "QnxDispatchEngine: " << error_text << ": " << expected.error().ToString() << std::endl;
+
+        std::cerr << "QnxDispatchEngine: " << error_text << ": "
+                  << expected.error().ToString()
+                  // Suppress AUTOSAR C++14 M8-4-4, rule finding: "A function identifier shall either be used to call
+                  // the function or it shall be preceded by &". Passing std::endl to std::cout object with the stream
+                  // operator follows the idiomatic way that both features in conjunction were designed in the C++
+                  // standard.
+                  // coverity[autosar_cpp14_m8_4_4_violation : FALSE]
+                  << std::endl;
         std::terminate();
     }
 }
@@ -71,7 +86,7 @@ QnxDispatchEngine::QnxDispatchEngine(score::cpp::pmr::memory_resource* memory_re
       io_funcs_{}
 {
     dispatch_pointer_ =  // NOLINTNEXTLINE(score-banned-function) implementing FFI wrapper
-        ValueOrTerminate(os_resources_.dispatch->dispatch_create_channel(-1, 0), "Unable to allocate dispatch handle");
+        ValueOrTerminate(os_resources_.dispatch->dispatch_create_channel(-1, 0U), "Unable to allocate dispatch handle");
     IfUnexpectedTerminate(
         os_resources_.dispatch->pulse_attach(dispatch_pointer_, 0, kTimerPulseCode, &TimerPulseCallback, this),
         "Unable to attach timer pulse code");
@@ -103,7 +118,7 @@ QnxDispatchEngine::QnxDispatchEngine(score::cpp::pmr::memory_resource* memory_re
     resmgr_attr_.nparts_max = 1U;
     resmgr_attr_.msg_max_size = 2088U;
     IfUnexpectedTerminate(os_resources_.dispatch->resmgr_attach(
-                              dispatch_pointer_, &resmgr_attr_, nullptr, _FTYPE_ANY, 0, nullptr, nullptr, nullptr),
+                              dispatch_pointer_, &resmgr_attr_, nullptr, _FTYPE_ANY, 0U, nullptr, nullptr, nullptr),
                           "Unable to set up resource manager operations");
 
     // NOLINTNEXTLINE(score-banned-function) implementing FFI wrapper
@@ -298,8 +313,7 @@ score::cpp::expected_blank<score::os::Error> QnxDispatchEngine::SendProtocolMess
     io[1].iov_base = const_cast<std::uint8_t*>(message.data());
     io[1].iov_len = static_cast<std::size_t>(message.size());
     // NOLINTEND(cppcoreguidelines-pro-type-union-access) C API
-
-    auto result_expected = os_resources_.uio->writev(fd, io.data(), io.size());
+    auto result_expected = os_resources_.uio->writev(fd, io.data(), static_cast<std::int32_t>(io.size()));
     if (result_expected.has_value())
     {
         return {};
@@ -385,7 +399,7 @@ void QnxDispatchEngine::ProcessTimerQueue() noexcept
     const auto distance = std::chrono::duration_cast<std::chrono::nanoseconds>(then - Clock::now()).count() + 1;
     struct _itimer itimer{};
     itimer.nsec = static_cast<std::uint64_t>(distance);
-    itimer.interval_nsec = 0;
+    itimer.interval_nsec = 0U;
     score::cpp::ignore = os_resources_.timer->TimerSettime(timer_id_, 0, &itimer, nullptr);
 }
 
@@ -522,14 +536,17 @@ std::int32_t QnxDispatchEngine::io_write(resmgr_context_t* const ctp,
     // - "AUTOSAR C++14 A4-7-1": "An integer expression shall not lead to data loss.".
     // - "AUTOSAR C++14 A5-2-2": "Traditional C-style casts shall not be used.".
     // - "AUTOSAR C++14 A5-16-1": "The ternary conditional operator shall not be used as a sub-expression.".
+    // - "AUTOSAR C++14 M5-0-4": "An implicit integral conversion shall not change the signedness of the underlying
+    // type.".
     // - "AUTOSAR C++14 M5-0-21": "Bitwise operators shall only be applied to operands of unsigned underlying type.".
     // The findings relate to _IO_WRITE_GET_NBYTES macro which is a part of QNX API and cannot be modified.
     // coverity[autosar_cpp14_a4_7_1_violation]
     // coverity[autosar_cpp14_a5_2_2_violation]
     // coverity[autosar_cpp14_a5_16_1_violation]
+    // coverity[autosar_cpp14_m5_0_4_violation]
     // coverity[autosar_cpp14_m5_0_21_violation]
     const std::size_t nbytes = _IO_WRITE_GET_NBYTES(msg);  // LCOV_EXCL_BR_LINE library macro with benign conditional
-    if (nbytes < 1)
+    if (nbytes < 1U)
     {
         return EBADMSG;
     }
@@ -550,7 +567,7 @@ std::int32_t QnxDispatchEngine::io_write(resmgr_context_t* const ctp,
     const auto buffer = const_cast<const std::uint8_t*>(static_cast<std::uint8_t*>(static_cast<void*>(&msg[1])));
     const std::uint8_t code = buffer[0];
     const score::cpp::span<const std::uint8_t> message = {&buffer[1],
-                                                   static_cast<score::cpp::span<std::uint8_t>::size_type>(nbytes - 1)};
+                                                   static_cast<score::cpp::span<std::uint8_t>::size_type>(nbytes - 1U)};
     // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic) C API
 
     // TODO: close connection on false (once this functionality is demanded)
@@ -583,14 +600,17 @@ std::int32_t QnxDispatchEngine::io_read(resmgr_context_t* const ctp,
     // - "AUTOSAR C++14 A4-7-1": "An integer expression shall not lead to data loss.".
     // - "AUTOSAR C++14 A5-2-2": "Traditional C-style casts shall not be used.".
     // - "AUTOSAR C++14 A5-16-1": "The ternary conditional operator shall not be used as a sub-expression.".
+    // - "AUTOSAR C++14 M5-0-4": "An implicit integral conversion shall not change the signedness of the underlying
+    //    type.".
     // - "AUTOSAR C++14 M5-0-21": "Bitwise operators shall only be applied to operands of unsigned underlying type.".
     // The findings relate to _IO_READ_GET_NBYTES macro which is a part of QNX API and cannot be modified.
     // coverity[autosar_cpp14_a4_7_1_violation]
     // coverity[autosar_cpp14_a5_2_2_violation]
     // coverity[autosar_cpp14_a5_16_1_violation]
+    // coverity[autosar_cpp14_m5_0_4_violation]
     // coverity[autosar_cpp14_m5_0_21_violation]
-    size_t nbytes = _IO_READ_GET_NBYTES(msg);  // LCOV_EXCL_BR_LINE library macro with benign conditional
-    if (nbytes == 0)
+    const size_t nbytes = _IO_READ_GET_NBYTES(msg);  // LCOV_EXCL_BR_LINE library macro with benign conditional
+    if (nbytes == 0U)
     {
         _IO_SET_READ_NBYTES(ctp, 0);
         return _RESMGR_NPARTS(0);
@@ -618,7 +638,8 @@ std::int32_t QnxDispatchEngine::io_notify(resmgr_context_t* const ctp,
         trig |= static_cast<std::uint32_t>(_NOTIFY_COND_INPUT); /* we have some data available */
     }
     // NOLINTNEXTLINE(score-banned-function) implementing FFI wrapper
-    return iofunc->iofunc_notify(ctp, msg, connection.notify_.data(), static_cast<std::int32_t>(trig), nullptr, nullptr);
+    return iofunc->iofunc_notify(
+        ctp, msg, connection.notify_.data(), static_cast<std::int32_t>(trig), nullptr, nullptr);
 }
 
 std::int32_t QnxDispatchEngine::io_close_ocb(resmgr_context_t* const ctp,
