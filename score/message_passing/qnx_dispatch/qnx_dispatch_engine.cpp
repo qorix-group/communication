@@ -16,6 +16,7 @@
 #include "score/message_passing/qnx_dispatch/qnx_resource_path.h"
 
 #include <iostream>
+
 namespace score::message_passing
 {
 
@@ -159,7 +160,7 @@ int QnxDispatchEngine::EventPulseCallback(message_context_t* ctp,
     // corresponding to the enumerators of the enumeration.".
     // Passing the enum value unchanged through the OS API
     // coverity[autosar_cpp14_a7_2_1_violation]
-    const auto pulse_event = static_cast<std::uint8_t>(ctp->msg->pulse.value.sival_int);
+    const auto pulse_event = static_cast<std::int32_t>(ctp->msg->pulse.value.sival_int);
     // NOLINTEND(cppcoreguidelines-pro-type-union-access) C API
     // Suppress "AUTOSAR C++14 M5-2-8" rule finding: "An object with integer type or pointer to void type shall not be
     // converted to an object with pointer type".
@@ -329,7 +330,7 @@ void QnxDispatchEngine::SendPulseEvent(const PulseEvent pulse_event) noexcept
         side_channel_coid_, -1, kEventPulseCode, static_cast<std::int32_t>(pulse_event));
 }
 
-void QnxDispatchEngine::ProcessPulseEvent(const std::uint8_t pulse_event) noexcept
+void QnxDispatchEngine::ProcessPulseEvent(const std::int32_t pulse_event) noexcept
 {
     if (pulse_event == score::cpp::to_underlying(PulseEvent::TIMER))
     {
@@ -505,12 +506,16 @@ std::int32_t QnxDispatchEngine::io_write(resmgr_context_t* const ctp,
     }
 
     // check if we are requested to do just a plain write
-    if ((msg->i.xtype & _IO_XTYPE_MASK) != _IO_XTYPE_NONE)
+    if ((msg->i.xtype & static_cast<std::uint32_t>(_IO_XTYPE_MASK)) != static_cast<std::uint32_t>(_IO_XTYPE_NONE))
     {
         return ENOSYS;
     }
 
     // get the number of bytes we were asked to write, check that there are enough bytes in the message
+
+    // Suppress "AUTOSAR C++14 A4-7-1" rule finding: "An integer expression shall not lead to data loss.".
+    // The finding relates to _IO_WRITE_GET_NBYTES macro which is a part of QNX API and cannot be modified.
+    // coverity[autosar_cpp14_a4_7_1_violation]
     const std::size_t nbytes = _IO_WRITE_GET_NBYTES(msg);  // LCOV_EXCL_BR_LINE library macro with benign conditional
     if (nbytes < 1)
     {
@@ -520,8 +525,9 @@ std::int32_t QnxDispatchEngine::io_write(resmgr_context_t* const ctp,
     // check that the message doesn't ask us to access beyond the valid part of the message
     // this may happen either if we have not received the whole message (ctp->info.msglen < ctp->info.srcmsglen)
     // or if the sent message is malformed (nbytes field contains incorrect information)
-    const std::size_t nbytes_max = static_cast<std::size_t>(ctp->info.msglen) - ctp->offset - sizeof(io_write_t);
-    if (nbytes > nbytes_max)
+    const auto nbytes_max = static_cast<std::int64_t>(ctp->info.msglen) - static_cast<std::int64_t>(ctp->offset) -
+                            static_cast<std::int64_t>(sizeof(io_write_t));
+    if (nbytes > static_cast<std::size_t>(nbytes_max))
     {
         return EMSGSIZE;
     }
@@ -556,11 +562,14 @@ std::int32_t QnxDispatchEngine::io_read(resmgr_context_t* const ctp,
         return result.error();
     }
 
-    if ((msg->i.xtype & _IO_XTYPE_MASK) != _IO_XTYPE_NONE)
+    if ((msg->i.xtype & static_cast<std::uint32_t>(_IO_XTYPE_MASK)) != static_cast<std::uint32_t>(_IO_XTYPE_NONE))
     {
         return ENOSYS;
     }
 
+    // Suppress "AUTOSAR C++14 A4-7-1" rule finding: "An integer expression shall not lead to data loss.".
+    // The finding relates to _IO_READ_GET_NBYTES macro which is a part of QNX API and cannot be modified.
+    // coverity[autosar_cpp14_a4_7_1_violation]
     size_t nbytes = _IO_READ_GET_NBYTES(msg);  // LCOV_EXCL_BR_LINE library macro with benign conditional
     if (nbytes == 0)
     {

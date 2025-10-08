@@ -213,14 +213,14 @@ class QnxDispatchEngine final : public ISharedResourceEngine
     }
 
   private:
-    enum class PulseEvent : std::uint8_t
+    enum class PulseEvent : std::int32_t
     {
         QUIT,
         TIMER
     };
 
     void SendPulseEvent(const PulseEvent pulse_event) noexcept;
-    void ProcessPulseEvent(const std::uint8_t pulse_event) noexcept;
+    void ProcessPulseEvent(const std::int32_t pulse_event) noexcept;
     void ProcessCleanup(const void* const owner) noexcept;
     void RunOnThread() noexcept;
 
