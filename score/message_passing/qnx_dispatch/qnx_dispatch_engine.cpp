@@ -276,6 +276,10 @@ score::cpp::expected_blank<score::os::Error> QnxDispatchEngine::SendProtocolMess
     std::uint8_t code,
     const score::cpp::span<const std::uint8_t> message) noexcept
 {
+    // Suppress AUTOSAR C++14 Rule A0-1-1 rule finding: "A project shall not contain instances
+    // of non-volatile variables being given values that are not subsequently used."
+    // False positive: the variable is used immediately after its declaration.
+    // coverity[autosar_cpp14_a0_1_1_violation: FALSE]
     constexpr auto kVectorCount = 2UL;
     std::array<iov_t, kVectorCount> io{};
     // NOLINTBEGIN(cppcoreguidelines-pro-type-union-access) C API
