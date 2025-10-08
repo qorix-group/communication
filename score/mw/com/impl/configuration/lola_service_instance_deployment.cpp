@@ -96,6 +96,20 @@ auto areCompatible(const LolaServiceInstanceDeployment& lhs, const LolaServiceIn
 
 bool operator==(const LolaServiceInstanceDeployment& lhs, const LolaServiceInstanceDeployment& rhs) noexcept
 {
+    // Suppress "AUTOSAR C++14 A5-2-6" rule finding. This rule states: "The operands of a logical && or || shall be
+    // parenthesized if the operands contain binary operators.".
+    // If followed to the letter this warning would forbid the following use:
+    // 1. ((A==B) && (A==C) && (A==D))
+    // A compliant usage would require more  nested brackets
+    // 2. (((A==B) && (A==C)) && (A==D))
+    // or
+    // 3. ((A==B) && ((A==C) && (A==D)))
+    //
+    // However there is no actual problem with the type 1 use, as long as all logical operators are the same, i.e. &&
+    // and || operators are not mixed.
+    // Since this rule will be supreseeded by the Rule 8.0.1 in the new Misra c++23, which allwos they type 1 use, we
+    // deem it an acceptible deviation here.
+    // coverity[autosar_cpp14_a5_2_6_violation]
     return ((lhs.instance_id_ == rhs.instance_id_) && (lhs.shared_memory_size_ == rhs.shared_memory_size_) &&
             (lhs.events_ == rhs.events_) && (lhs.fields_ == rhs.fields_) &&
             (lhs.strict_permissions_ == rhs.strict_permissions_) && (lhs.allowed_consumer_ == rhs.allowed_consumer_) &&
