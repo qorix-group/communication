@@ -209,7 +209,7 @@ void QnxDispatchEngine::RegisterPosixEndpoint(PosixEndpointEntry& endpoint) noex
 
     if (posix_receive_buffer_.size() < endpoint.max_receive_size)
     {
-        posix_receive_buffer_.resize(endpoint.max_receive_size);
+        posix_receive_buffer_.resize(static_cast<std::size_t>(endpoint.max_receive_size));
     }
 
     score::cpp::ignore = os_resources_.dispatch->select_attach(
