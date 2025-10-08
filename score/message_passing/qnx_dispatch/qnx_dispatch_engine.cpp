@@ -29,7 +29,7 @@ constexpr std::int32_t kEventPulseCode = _PULSE_CODE_MINAVAIL + 1;
 template <typename T>
 // Suppress "AUTOSAR C++14 A9-5-1" rule finding: "Unions shall not be used.".
 // coverity[autosar_cpp14_a9_5_1_violation: FALSE]. False positive: no any union in the following line.
-T ValueOrTerminate(const score::cpp::expected<T, score::os::Error> expected, const std::string_view error_text)
+auto ValueOrTerminate(const score::cpp::expected<T, score::os::Error> expected, const std::string_view error_text) -> T
 {
     if (!expected.has_value())
     {
