@@ -85,7 +85,11 @@ QnxDispatchEngine::QnxDispatchEngine(score::cpp::pmr::memory_resource* memory_re
                          "Unable to create side channel");
 
     struct sigevent event{};
-    event.sigev_notify = SIGEV_PULSE;
+    // Suppress "AUTOSAR C++14 M5-0-21" rule finding: "Bitwise operators shall only be applied to operands of unsigned
+    // underlying type.". 'SIGEV_PULSE' is a macro of QNX API, which defines bitwise operation of two flags. This macro
+    // cannot be modified.
+    // coverity[autosar_cpp14_m5_0_21_violation]
+    event.sigev_notify = static_cast<decltype(event.sigev_notify)>(SIGEV_PULSE);
     event.sigev_coid = side_channel_coid_;
     event.sigev_priority = SIGEV_PULSE_PRIO_INHERIT;
     event.sigev_code = kTimerPulseCode;
@@ -208,12 +212,13 @@ void QnxDispatchEngine::RegisterPosixEndpoint(PosixEndpointEntry& endpoint) noex
         posix_receive_buffer_.resize(endpoint.max_receive_size);
     }
 
-    score::cpp::ignore = os_resources_.dispatch->select_attach(dispatch_pointer_,
-                                                        nullptr,
-                                                        endpoint.fd,
-                                                        SELECT_FLAG_READ | SELECT_FLAG_REARM,
-                                                        &EndpointFdSelectCallback,
-                                                        &endpoint);
+    score::cpp::ignore = os_resources_.dispatch->select_attach(
+        dispatch_pointer_,
+        nullptr,
+        endpoint.fd,
+        static_cast<std::uint32_t>(SELECT_FLAG_READ) | static_cast<std::uint32_t>(SELECT_FLAG_REARM),
+        &EndpointFdSelectCallback,
+        &endpoint);
     posix_endpoint_list_.push_back(endpoint);
 }
 
@@ -428,7 +433,7 @@ score::cpp::expected_blank<score::os::Error> QnxDispatchEngine::StartServer(Reso
     server.resmgr_id_ = id_expected.value();
 
     // pre-configure resmgr access rights data; attr member is from the extended_dev_attr_t base class
-    constexpr mode_t attrMode{S_IFNAM | 0666};
+    constexpr mode_t attrMode{static_cast<std::uint32_t>(S_IFNAM) | 0666U};
     os_resources_.iofunc->iofunc_attr_init(&server.attr, attrMode, nullptr, nullptr);
 
     return {};
@@ -517,10 +522,12 @@ std::int32_t QnxDispatchEngine::io_write(resmgr_context_t* const ctp,
     // - "AUTOSAR C++14 A4-7-1": "An integer expression shall not lead to data loss.".
     // - "AUTOSAR C++14 A5-2-2": "Traditional C-style casts shall not be used.".
     // - "AUTOSAR C++14 A5-16-1": "The ternary conditional operator shall not be used as a sub-expression.".
+    // - "AUTOSAR C++14 M5-0-21": "Bitwise operators shall only be applied to operands of unsigned underlying type.".
     // The findings relate to _IO_WRITE_GET_NBYTES macro which is a part of QNX API and cannot be modified.
     // coverity[autosar_cpp14_a4_7_1_violation]
     // coverity[autosar_cpp14_a5_2_2_violation]
     // coverity[autosar_cpp14_a5_16_1_violation]
+    // coverity[autosar_cpp14_m5_0_21_violation]
     const std::size_t nbytes = _IO_WRITE_GET_NBYTES(msg);  // LCOV_EXCL_BR_LINE library macro with benign conditional
     if (nbytes < 1)
     {
@@ -576,10 +583,12 @@ std::int32_t QnxDispatchEngine::io_read(resmgr_context_t* const ctp,
     // - "AUTOSAR C++14 A4-7-1": "An integer expression shall not lead to data loss.".
     // - "AUTOSAR C++14 A5-2-2": "Traditional C-style casts shall not be used.".
     // - "AUTOSAR C++14 A5-16-1": "The ternary conditional operator shall not be used as a sub-expression.".
+    // - "AUTOSAR C++14 M5-0-21": "Bitwise operators shall only be applied to operands of unsigned underlying type.".
     // The findings relate to _IO_READ_GET_NBYTES macro which is a part of QNX API and cannot be modified.
     // coverity[autosar_cpp14_a4_7_1_violation]
     // coverity[autosar_cpp14_a5_2_2_violation]
     // coverity[autosar_cpp14_a5_16_1_violation]
+    // coverity[autosar_cpp14_m5_0_21_violation]
     size_t nbytes = _IO_READ_GET_NBYTES(msg);  // LCOV_EXCL_BR_LINE library macro with benign conditional
     if (nbytes == 0)
     {
@@ -602,14 +611,14 @@ std::int32_t QnxDispatchEngine::io_notify(resmgr_context_t* const ctp,
     ResourceManagerConnection& connection = OcbToConnection(ocb);
 
     // 'trig' will tell iofunc_notify() which conditions are currently satisfied.
-    std::int32_t trig = _NOTIFY_COND_OUTPUT; /* clients can always give us data */
+    auto trig = static_cast<std::uint32_t>(_NOTIFY_COND_OUTPUT); /* clients can always give us data */
     if (connection.HasSomethingToRead())
     {
         // NOLINTNEXTLINE(hicpp-signed-bitwise): QNX API
-        trig |= _NOTIFY_COND_INPUT; /* we have some data available */
+        trig |= static_cast<std::uint32_t>(_NOTIFY_COND_INPUT); /* we have some data available */
     }
     // NOLINTNEXTLINE(score-banned-function) implementing FFI wrapper
-    return iofunc->iofunc_notify(ctp, msg, connection.notify_.data(), trig, nullptr, nullptr);
+    return iofunc->iofunc_notify(ctp, msg, connection.notify_.data(), static_cast<std::int32_t>(trig), nullptr, nullptr);
 }
 
 std::int32_t QnxDispatchEngine::io_close_ocb(resmgr_context_t* const ctp,
