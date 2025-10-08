@@ -513,11 +513,13 @@ std::int32_t QnxDispatchEngine::io_write(resmgr_context_t* const ctp,
 
     // get the number of bytes we were asked to write, check that there are enough bytes in the message
 
-    // Suppress "AUTOSAR C++14 A4-7-1" rule finding: "An integer expression shall not lead to data loss.".
-    // Suppress "AUTOSAR C++14 A5-16-1" rule finding: "The ternary conditional operator shall not be used as a
-    // sub-expression.".
-    // Finding relate to _IO_WRITE_GET_NBYTES macro which is a part of QNX API and cannot be modified.
+    // Suppress following rule findings:
+    // - "AUTOSAR C++14 A4-7-1": "An integer expression shall not lead to data loss.".
+    // - "AUTOSAR C++14 A5-2-2": "Traditional C-style casts shall not be used.".
+    // - "AUTOSAR C++14 A5-16-1": "The ternary conditional operator shall not be used as a sub-expression.".
+    // The findings relate to _IO_WRITE_GET_NBYTES macro which is a part of QNX API and cannot be modified.
     // coverity[autosar_cpp14_a4_7_1_violation]
+    // coverity[autosar_cpp14_a5_2_2_violation]
     // coverity[autosar_cpp14_a5_16_1_violation]
     const std::size_t nbytes = _IO_WRITE_GET_NBYTES(msg);  // LCOV_EXCL_BR_LINE library macro with benign conditional
     if (nbytes < 1)
@@ -570,11 +572,13 @@ std::int32_t QnxDispatchEngine::io_read(resmgr_context_t* const ctp,
         return ENOSYS;
     }
 
-    // Suppress "AUTOSAR C++14 A4-7-1" rule finding: "An integer expression shall not lead to data loss.".
-    // Suppress "AUTOSAR C++14 A5-16-1" rule finding: "The ternary conditional operator shall not be used as a
-    // sub-expression.". The findings relate to _IO_READ_GET_NBYTES macro which is a part of QNX API and cannot be
-    // modified.
+    // Suppress following rule findings:
+    // - "AUTOSAR C++14 A4-7-1": "An integer expression shall not lead to data loss.".
+    // - "AUTOSAR C++14 A5-2-2": "Traditional C-style casts shall not be used.".
+    // - "AUTOSAR C++14 A5-16-1": "The ternary conditional operator shall not be used as a sub-expression.".
+    // The findings relate to _IO_READ_GET_NBYTES macro which is a part of QNX API and cannot be modified.
     // coverity[autosar_cpp14_a4_7_1_violation]
+    // coverity[autosar_cpp14_a5_2_2_violation]
     // coverity[autosar_cpp14_a5_16_1_violation]
     size_t nbytes = _IO_READ_GET_NBYTES(msg);  // LCOV_EXCL_BR_LINE library macro with benign conditional
     if (nbytes == 0)
