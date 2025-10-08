@@ -26,6 +26,8 @@ constexpr std::int32_t kTimerPulseCode = _PULSE_CODE_MINAVAIL;
 constexpr std::int32_t kEventPulseCode = _PULSE_CODE_MINAVAIL + 1;
 
 template <typename T>
+// Suppress "AUTOSAR C++14 A9-5-1" rule finding: "Unions shall not be used.".
+// coverity[autosar_cpp14_a9_5_1_violation: FALSE]. False positive: no any union in the following line.
 T ValueOrTerminate(const score::cpp::expected<T, score::os::Error> expected, const std::string_view error_text)
 {
     if (!expected.has_value())
@@ -469,10 +471,13 @@ std::int32_t QnxDispatchEngine::io_open(resmgr_context_t* const ctp,
     return result;
 }
 
-score::cpp::expected_blank<std::int32_t> QnxDispatchEngine::AttachConnection(resmgr_context_t* const ctp,
-                                                                      io_open_t* const msg,
-                                                                      ResourceManagerServer& server,
-                                                                      ResourceManagerConnection& connection) noexcept
+// Suppress "AUTOSAR C++14 A9-5-1" rule finding: "Unions shall not be used.".
+score::cpp::expected_blank<std::int32_t> QnxDispatchEngine::AttachConnection(
+    resmgr_context_t* const ctp,
+    // coverity[autosar_cpp14_a9_5_1_violation] 'io_open_t' type is defined by the QNX API.
+    io_open_t* const msg,
+    ResourceManagerServer& server,
+    ResourceManagerConnection& connection) noexcept
 {
     QnxDispatchEngine& self = *server.engine_;
     auto& os_resources = self.GetOsResources();
