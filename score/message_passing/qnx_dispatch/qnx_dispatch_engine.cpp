@@ -338,8 +338,8 @@ score::cpp::expected<score::cpp::span<const std::uint8_t>, score::os::Error> Qnx
         return score::cpp::make_unexpected(score::os::Error::createFromErrno(EPIPE));
     }
     code = posix_receive_buffer_[0];
-    return score::cpp::span<const std::uint8_t>{&posix_receive_buffer_[1],
-                                         static_cast<score::cpp::span<const std::uint8_t>::size_type>(size - 1)};
+    const auto span_size = static_cast<score::cpp::span<const std::uint8_t>::size_type>(size) - 1U;
+    return score::cpp::span<const std::uint8_t>{&posix_receive_buffer_[1], span_size};
 }
 
 void QnxDispatchEngine::SendPulseEvent(const PulseEvent pulse_event) noexcept
