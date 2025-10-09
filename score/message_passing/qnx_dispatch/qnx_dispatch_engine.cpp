@@ -448,7 +448,15 @@ score::cpp::expected_blank<score::os::Error> QnxDispatchEngine::StartServer(Reso
     server.resmgr_id_ = id_expected.value();
 
     // pre-configure resmgr access rights data; attr member is from the extended_dev_attr_t base class
-    constexpr mode_t attrMode{static_cast<std::uint32_t>(S_IFNAM) | 0666U};
+
+    // Suppress "AUTOSAR C++14 M5-0-21" rule finding: "Bitwise operators shall only be applied
+    // to operands of unsigned underlying type.".
+    // All permission macros (S_IRUSR, S_IWUSR, etc.) are defined as unsigned constants.
+    // The bitwise OR operation is performed exclusively on unsigned values,
+    // and the result is assigned to an auto-deduced unsigned type
+    // coverity[autosar_cpp14_m5_0_21_violation]
+    constexpr auto perm_0666 = static_cast<std::uint32_t>(S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+    constexpr mode_t attrMode{static_cast<std::uint32_t>(S_IFNAM) | perm_0666};
     os_resources_.iofunc->iofunc_attr_init(&server.attr, attrMode, nullptr, nullptr);
 
     return {};
