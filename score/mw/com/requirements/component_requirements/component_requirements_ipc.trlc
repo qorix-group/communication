@@ -1036,7 +1036,7 @@ section "com" {
 
                     Note: A {{GenericProxy}} is created via the Create API based on {{HandleType}} containing its related deployment information.'''
                     safety = ScoreReq.Asil.B
-                    derived_from = [Communication.DeploymentConfigurationAtRuntime@1]
+                    derived_from = [Communication.CommunicationInterfaces@1]
                     version = 1
                 }
 
@@ -1046,7 +1046,7 @@ section "com" {
 
                     Note: This information is needed for the [GetSampleSize() API|ISSUE:14035184].'''
                     safety = ScoreReq.Asil.B
-                    derived_from = [Communication.EventType@1, Communication.ZeroCopy@1]
+                    derived_from = [Communication.EventType@1]
                     version = 1
                 }
 
@@ -1056,7 +1056,7 @@ section "com" {
 
                     No corresponding Event shall be inserted into the event map member of the {{GenericProxy}} instance.'''
                     safety = ScoreReq.Asil.B
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.EventType@1]
                     version = 1
                 }
 
@@ -1235,7 +1235,7 @@ section "com" {
 
                 Return value: the map of events the {{GenericProxy}} provides (See GenericProxy EventMap class).'''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.EventType@1]
                 version = 1
             }
 
@@ -1266,7 +1266,7 @@ section "com" {
             ScoreReq.CompReq GenericProxyEventMapClass {
                 description = '''{{GenericProxy}} class shall have a {{public}} nested class EventMap. The {{GenericProxyEvent}}s that shall be contained in {{EventMap}} are according to Event List Source.'''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.EventType@1]
                 version = 1
             }
 
@@ -1286,7 +1286,7 @@ section "com" {
 
                 * empty()'''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.EventType@1]
                 version = 1
             }
             }
@@ -1496,7 +1496,7 @@ section "com" {
 
                     Return value: returns the aligned size in bytes of the underlying event sample data type. I.e. in case the underlying data type is T, it shall return {{sizeof(T)}}.'''
                     safety = ScoreReq.Asil.B
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.EventType@1]
                     version = 1
                 }
 
@@ -1510,7 +1510,7 @@ section "com" {
 
                     Return value: {{GenericProxyEvent}}{{true}}{{false}}returns whether the representation of a sample event provided by the  instance has some (internal) serialization format ( or is 1:1 the binary representation of the underlying C++ data type of the event sample ('''
                     safety = ScoreReq.Asil.B
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.EventType@1]
                     version = 1
                 }
             }
@@ -1560,7 +1560,7 @@ section "com" {
 
                   * state was already in {{kSubscribed}}, but then the whole enclosing providing service instance has been stopped offering. This is the "auto-reconnect mode". As soon as the service instance is detected being offered again, the Subscribe() will get automatically dispatched to the provider again.'''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.ProducerConsumerPattern@1]
                 version = 1
             }
 
@@ -1580,7 +1580,7 @@ section "com" {
 
                 The type chosen for {{EventReceiveHandler}} by the {{mw::com}} provider shall allow construction from any callable, with the given signature.'''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.EventType@1]
                 version = 1
             }
 
@@ -1596,7 +1596,7 @@ section "com" {
 
                 The type chosen for {{SubscriptionStateChangeHandler}} by the {{mw::com}} provider shall allow construction from any callable, with the given signature.'''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.SupportForTimeBasedArchitecture@1, Communication.EventType@1]
                 version = 1
             }
 
@@ -1639,7 +1639,7 @@ section "com" {
                 {{ServiceHandleContainer}} must adhere to the following  C++ named requirements: `SequenceContainer <https://en.cppreference.com/w/cpp/named\_req/SequenceContainer>`\_
                 A std::vector for example fulfills these requirements.'''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.ServiceDiscovery@1]
                 version = 1
             }
 
@@ -1659,7 +1659,7 @@ section "com" {
 
                 {{kEventSingleThread}} represents processing mode Event-driven, sequential: The {{mw::com}}/{{LoLa}} activates the invoked service method when the invocation arrives. Consumer concurrent calls are allowed, but will not be processed concurrently on provider side, by instead executing them one after the other to avoid the need of synchronization mechanisms in the implementation providing the service method.'''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.Method@1]
                 version = 1
             }
 
@@ -1713,7 +1713,7 @@ section "com" {
 
                 Note. The dereference operator {{T& operator() const noexcept}} will only be defined when the template type {{T}} of the SamplePtr is not {{void}}.'''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.UseProgrammingLanguageInfrastructure@1, Communication.ZeroCopy@1]
                 version = 1
             }
 
@@ -1762,7 +1762,7 @@ section "com" {
 
                 };}}}'''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.ZeroCopy@1]
                 version = 1
             }
 
@@ -1806,7 +1806,7 @@ section "com" {
                     description = '''The {{InstanceSpecifier}}
                     class shall be copy-constructible as well as being copy-assignable.'''
                     safety = ScoreReq.Asil.B
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.DataLoss@1]
                     version = 1
                 }
 
@@ -1815,7 +1815,7 @@ section "com" {
                     description = '''The {{InstanceSpecifier}}
                     class shall be move-constructible as well as being move-assignable.'''
                     safety = ScoreReq.Asil.B
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.SupportForProgrammingLanguageIdioms@1, Communication.SupportForMultipleProgrammingLanguages@1]
                     version = 1
                 }
 
@@ -1881,7 +1881,7 @@ section "com" {
                 ScoreReq.CompReq InstanceSpecifierMultiBinding {
                     description = '''Each of the instances that an {{InstanceSpecifier}} corresponds to may be of a different binding. Multiple instances can also correspond to the same binding.'''
                     safety = ScoreReq.Asil.B
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.MultiBindingSupport@1]
                     version = 1
                 }
             }
@@ -2024,7 +2024,7 @@ section "com" {
 
                 The exact definition of {{FindServiceHandle}} is {{mw::com}} implementation specific.'''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.ServiceDiscovery@1]
                 version = 1
             }
 
@@ -2761,7 +2761,7 @@ section "com" {
 
             {{static}} (class level) methods/functions are generally not thread-safe (for the same class) unless specified otherwise.'''
             safety = ScoreReq.Asil.B
-            derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+            derived_from = [Communication.SafeCommunication@1]
             version = 1
         }
 
@@ -3507,7 +3507,7 @@ section "com" {
 
                 This includes that all previously registered handlers (e.g. event update handler) shall still be valid.'''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.SupportForTimeBasedArchitecture@1]
                 version = 1
             }
 
@@ -3517,7 +3517,7 @@ section "com" {
 
                 while the old POSIX PID, belonging to the execution of the same executable, is no longer valid.'''
                 safety = ScoreReq.Asil.QM
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.SupportForTimeBasedArchitecture@1]
                 version = 1
             }
 
