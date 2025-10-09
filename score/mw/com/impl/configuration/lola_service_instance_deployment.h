@@ -80,6 +80,8 @@ template <ServiceElementType service_element_type>
 const auto& GetServiceElementInstanceDeployment(const LolaServiceInstanceDeployment& lola_service_instance_deployment,
                                                 const std::string& event_name)
 {
+    static_assert(service_element_type != ServiceElementType::INVALID);
+
     const auto& service_element_instance_deployments = [&lola_service_instance_deployment]() -> const auto& {
         if constexpr (service_element_type == ServiceElementType::EVENT)
         {

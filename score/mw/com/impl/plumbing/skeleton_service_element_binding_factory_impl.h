@@ -82,6 +82,8 @@ auto CreateSkeletonServiceElement(const InstanceIdentifier& identifier,
                                   const std::string_view service_element_name) noexcept
     -> std::unique_ptr<SkeletonServiceElementBinding>
 {
+    static_assert(element_type != ServiceElementType::INVALID);
+
     const InstanceIdentifierView identifier_view{identifier};
 
     using ReturnType = std::unique_ptr<SkeletonServiceElementBinding>;
