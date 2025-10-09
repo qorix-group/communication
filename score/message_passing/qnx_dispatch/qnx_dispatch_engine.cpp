@@ -107,7 +107,8 @@ QnxDispatchEngine::QnxDispatchEngine(score::cpp::pmr::memory_resource* memory_re
     event.sigev_notify = static_cast<decltype(event.sigev_notify)>(SIGEV_PULSE);
     event.sigev_coid = side_channel_coid_;
     event.sigev_priority = SIGEV_PULSE_PRIO_INHERIT;
-    event.sigev_code = kTimerPulseCode;
+    static_assert(kTimerPulseCode <= std::numeric_limits<decltype(event.sigev_code)>::max());
+    event.sigev_code = static_cast<decltype(event.sigev_code)>(kTimerPulseCode);
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access) C API
     event.sigev_value.sival_int = 0;
     timer_id_ = ValueOrTerminate(os_resources_.timer->TimerCreate(CLOCK_MONOTONIC, &event), "Unable to create timer");
