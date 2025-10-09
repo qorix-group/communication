@@ -177,6 +177,10 @@ cc_test(
     timeout = "moderate",
     srcs = ["proxy_component_test.cpp"],
     features = COMPILER_WARNING_FEATURES + ["aborts_upon_exception"],
+    target_compatible_with = select({
+        "@platforms//os:qnx": ["@score-baselibs//bazel/platforms/qnx_version:qnx7"],  # TODO: Ticket-214229 QNX8 incompatible
+        "//conditions:default": [],
+    }),
     visibility = [
         "//score/mw/com/impl/bindings/lola:__subpackages__",
     ],
