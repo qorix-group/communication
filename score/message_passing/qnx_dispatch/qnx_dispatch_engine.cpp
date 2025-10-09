@@ -143,9 +143,15 @@ QnxDispatchEngine::QnxDispatchEngine(score::cpp::pmr::memory_resource* memory_re
     });
 }
 
+// Note 'C++14 A8-4-10':
+// Suppress AUTOSAR C++14 A8-4-10 rule findigs: "A parameter shall be passed by reference if it can't be NULL."
+// Justification: raw pointers are used in method signatures to maintain compatibility with the QNX API,
+// which provides parameters as raw pointers.
+
 int QnxDispatchEngine::EndpointFdSelectCallback(select_context_t* /*ctp*/,
                                                 int /*fd*/,
                                                 unsigned /*flags*/,
+                                                // coverity[autosar_cpp14_a8_4_10_violation]: see "Note 'C++14 A8-4-10'"
                                                 void* handle) noexcept
 {
     // Suppress "AUTOSAR C++14 M5-2-8" rule finding: "An object with integer type or pointer to void type shall not be
@@ -160,6 +166,7 @@ int QnxDispatchEngine::EndpointFdSelectCallback(select_context_t* /*ctp*/,
 int QnxDispatchEngine::TimerPulseCallback(message_context_t* /*ctp*/,
                                           int /*code*/,
                                           unsigned /*flags*/,
+                                          // coverity[autosar_cpp14_a8_4_10_violation]: see "Note 'C++14 A8-4-10'"
                                           void* handle) noexcept
 {
     // Suppress "AUTOSAR C++14 M5-2-8" rule finding: "An object with integer type or pointer to void type shall not be
@@ -170,9 +177,11 @@ int QnxDispatchEngine::TimerPulseCallback(message_context_t* /*ctp*/,
     return 0;
 }
 
+// coverity[autosar_cpp14_a8_4_10_violation]: see "Note 'C++14 A8-4-10'"
 int QnxDispatchEngine::EventPulseCallback(message_context_t* ctp,
                                           int /*code*/,
                                           unsigned /*flags*/,
+                                          // coverity[autosar_cpp14_a8_4_10_violation]: see "Note 'C++14 A8-4-10'"
                                           void* handle) noexcept
 {
     // NOLINTBEGIN(cppcoreguidelines-pro-type-union-access) C API
@@ -483,6 +492,7 @@ void QnxDispatchEngine::StopServer(ResourceManagerServer& server) noexcept
 std::int32_t QnxDispatchEngine::io_open(resmgr_context_t* const ctp,
                                         // coverity[autosar_cpp14_a9_5_1_violation]
                                         io_open_t* const msg,
+                                        // coverity[autosar_cpp14_a8_4_10_violation]: see "Note 'C++14 A8-4-10'"
                                         RESMGR_HANDLE_T* const handle,
                                         void* const /*extra*/) noexcept
 {
@@ -518,8 +528,10 @@ score::cpp::expected_blank<std::int32_t> QnxDispatchEngine::AttachConnection(
     return iofunc->iofunc_ocb_attach(ctp, msg, &connection, &server.attr, nullptr);
 }
 
+// coverity[autosar_cpp14_a8_4_10_violation]: see "Note 'C++14 A8-4-10'"
 std::int32_t QnxDispatchEngine::io_write(resmgr_context_t* const ctp,
                                          // coverity[autosar_cpp14_a9_5_1_violation]
+                                         // coverity[autosar_cpp14_a8_4_10_violation]: see "Note 'C++14 A8-4-10'"
                                          io_write_t* const msg,
                                          RESMGR_OCB_T* const ocb) noexcept
 {
@@ -592,8 +604,10 @@ std::int32_t QnxDispatchEngine::io_write(resmgr_context_t* const ctp,
     return EOK;
 }
 
+// coverity[autosar_cpp14_a8_4_10_violation]: see "Note 'C++14 A8-4-10'"
 std::int32_t QnxDispatchEngine::io_read(resmgr_context_t* const ctp,
                                         // coverity[autosar_cpp14_a9_5_1_violation]
+                                        // coverity[autosar_cpp14_a8_4_10_violation]: see "Note 'C++14 A8-4-10'"
                                         io_read_t* const msg,
                                         RESMGR_OCB_T* const ocb) noexcept
 {
@@ -638,6 +652,7 @@ std::int32_t QnxDispatchEngine::io_read(resmgr_context_t* const ctp,
 std::int32_t QnxDispatchEngine::io_notify(resmgr_context_t* const ctp,
                                           // coverity[autosar_cpp14_a9_5_1_violation]
                                           io_notify_t* const msg,
+                                          // coverity[autosar_cpp14_a8_4_10_violation]: see "Note 'C++14 A8-4-10'"
                                           RESMGR_OCB_T* const ocb) noexcept
 {
     QnxDispatchEngine& self = *OcbToServer(ocb).engine_;
@@ -659,6 +674,7 @@ std::int32_t QnxDispatchEngine::io_notify(resmgr_context_t* const ctp,
 
 std::int32_t QnxDispatchEngine::io_close_ocb(resmgr_context_t* const ctp,
                                              void* const /*reserved*/,
+                                             // coverity[autosar_cpp14_a8_4_10_violation]: see "Note 'C++14 A8-4-10'"
                                              RESMGR_OCB_T* const ocb) noexcept
 {
     QnxDispatchEngine& self = *OcbToServer(ocb).engine_;
