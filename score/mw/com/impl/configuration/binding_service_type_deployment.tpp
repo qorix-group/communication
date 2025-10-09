@@ -20,6 +20,8 @@
 
 #include "score/mw/log/logging.h"
 
+#include <score/assert.hpp>
+
 #include <exception>
 #include <iomanip>
 #include <limits>
@@ -155,17 +157,24 @@ auto GetServiceElementId(
     const BindingServiceTypeDeployment<EventIdType, FieldIdType, ServiceIdType>& binding_service_type_deployment,
     const std::string& service_element_name)
 {
+    static_assert(service_element_type != ServiceElementType::INVALID);
+
     const auto& service_element_type_deployments = [&binding_service_type_deployment]() -> const auto& {
         if constexpr (service_element_type == ServiceElementType::EVENT)
         {
             return binding_service_type_deployment.events_;
         }
-        if constexpr (service_element_type == ServiceElementType::FIELD)
+        else if constexpr (service_element_type == ServiceElementType::FIELD)
         {
             return binding_service_type_deployment.fields_;
         }
-        score::mw::log::LogFatal() << "Invalid service element type. Could not get service element ID. Terminating";
-        std::terminate();
+        // LCOV_EXCL_START: Defensive programming: This state service_element_type must be an EVENT or FIELD (we have a
+        // static_assert at the start of this function) so this branch can never be reached.
+        else
+        {
+            SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD(0);
+        }
+        // LCOV_EXCL_STOP
     }();
 
     const auto service_element_id_it = service_element_type_deployments.find(service_element_name);

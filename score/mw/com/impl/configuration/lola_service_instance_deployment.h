@@ -22,6 +22,7 @@
 
 #include "score/mw/log/logging.h"
 
+#include <score/assert.hpp>
 #include <score/optional.hpp>
 
 #include <cstdint>
@@ -87,13 +88,17 @@ const auto& GetServiceElementInstanceDeployment(const LolaServiceInstanceDeploym
         {
             return lola_service_instance_deployment.events_;
         }
-        if constexpr (service_element_type == ServiceElementType::FIELD)
+        else if constexpr (service_element_type == ServiceElementType::FIELD)
         {
             return lola_service_instance_deployment.fields_;
         }
-        score::mw::log::LogFatal()
-            << "Invalid service element type. Could not get service element instance deployment. Terminating";
-        std::terminate();
+        // LCOV_EXCL_START: Defensive programming: This state will be unreachable since service_element_type must be an
+        // EVENT or FIELD (we have a static_assert at the start of this function).
+        else
+        {
+            SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD(0);
+        }
+        // LCOV_EXCL_STOP
     }();
 
     const auto service_element_instance_deployment_it = service_element_instance_deployments.find(event_name);
