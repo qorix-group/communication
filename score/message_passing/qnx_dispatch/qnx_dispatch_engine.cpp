@@ -571,10 +571,16 @@ std::int32_t QnxDispatchEngine::io_write(resmgr_context_t* const ctp,
     }
 
     // the message payload starts right after the io_write_t message header
+
+    // Suppress "AUTOSAR C++14 M5-0-15" rule findings: "Array indexing shall be the only form of pointer arithmetic.".
+    // Rationale: Pointer arithmetic used to access payload after io_write_t header, layout is guaranteed by QNX API.
+
     // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic) C API
+    // coverity[autosar_cpp14_m5_0_15_violation] see Rationale above
     // coverity[autosar_cpp14_m5_2_8_violation] handling raw data from C-style API payload
     const auto buffer = const_cast<const std::uint8_t*>(static_cast<std::uint8_t*>(static_cast<void*>(&msg[1])));
     const std::uint8_t code = buffer[0];
+    // coverity[autosar_cpp14_m5_0_15_violation] see Rationale above
     const score::cpp::span<const std::uint8_t> message = {&buffer[1],
                                                    static_cast<score::cpp::span<std::uint8_t>::size_type>(nbytes - 1U)};
     // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic) C API
