@@ -28,7 +28,7 @@ constexpr std::int32_t kEventPulseCode = _PULSE_CODE_MINAVAIL + 1;
 
 template <typename T>
 // Suppress "AUTOSAR C++14 A9-5-1" rule finding: "Unions shall not be used.".
-// coverity[autosar_cpp14_a9_5_1_violation: FALSE]. False positive: no any union in the following line.
+// coverity[autosar_cpp14_a9_5_1_violation: FALSE]. False positive: no any union in the following line. (Ticket-219101)
 auto ValueOrTerminate(const score::cpp::expected<T, score::os::Error> expected, const std::string_view error_text) -> T
 {
     if (!expected.has_value())
@@ -39,7 +39,7 @@ auto ValueOrTerminate(const score::cpp::expected<T, score::os::Error> expected, 
                   // the function or it shall be preceded by &". Passing std::endl to std::cout object with the stream
                   // operator follows the idiomatic way that both features in conjunction were designed in the C++
                   // standard.
-                  // coverity[autosar_cpp14_m8_4_4_violation : FALSE]
+                  // coverity[autosar_cpp14_m8_4_4_violation : FALSE] Ticket-219101
                   << std::endl;
         std::terminate();
     }
@@ -51,14 +51,13 @@ void IfUnexpectedTerminate(const score::cpp::expected<T, score::os::Error> expec
 {
     if (!expected.has_value())
     {
-
         std::cerr << "QnxDispatchEngine: " << error_text << ": "
                   << expected.error().ToString()
                   // Suppress AUTOSAR C++14 M8-4-4, rule finding: "A function identifier shall either be used to call
                   // the function or it shall be preceded by &". Passing std::endl to std::cout object with the stream
                   // operator follows the idiomatic way that both features in conjunction were designed in the C++
                   // standard.
-                  // coverity[autosar_cpp14_m8_4_4_violation : FALSE]
+                  // coverity[autosar_cpp14_m8_4_4_violation : FALSE] Ticket-219101
                   << std::endl;
         std::terminate();
     }
@@ -129,13 +128,13 @@ QnxDispatchEngine::QnxDispatchEngine(score::cpp::pmr::memory_resource* memory_re
     SetupResourceManagerCallbacks();
 
     // Suppress "AUTOSAR C++14 A8-5-3" rule finding: "A variable of type auto shall not be initialized using {} or
-    // ={} braced initialization.".
+    // ={} braced initialization.". (Ticket-219101)
     // coverity[autosar_cpp14_a8_5_3_violation: FALSE] False positive: the variable is not declared with 'auto'.
     std::lock_guard acquire{thread_mutex_};  // postpone thread start till we assign thread_
     thread_ = std::thread([this]() noexcept {
         {
             // Suppress "AUTOSAR C++14 A8-5-3" rule finding: "A variable of type auto shall not be initialized using {}
-            // or ={} braced initialization.".
+            // or ={} braced initialization.". (Ticket-219101)
             // coverity[autosar_cpp14_a8_5_3_violation: FALSE] False positive: the variable is not declared with 'auto'.
             std::lock_guard release{thread_mutex_};
         }
@@ -286,8 +285,8 @@ void QnxDispatchEngine::CleanUpOwner(const void* const owner) noexcept
     else
     {
         // Suppress "AUTOSAR C++14 A8-5-3" rule finding: "A variable of type auto shall not be initialized using {} or
-        // ={} braced initialization.".
-        // coverity[autosar_cpp14_a8_5_3_violation: FALSE] False positive: the variable is not declared with 'auto'.
+        // ={} braced initialization.". (Ticket-219101)
+        // coverity[autosar_cpp14_a8_5_3_violation: FALSE] False positive: the variable is not declared with 'auto'
         detail::NonAllocatingFuture future{thread_mutex_, thread_condition_};
         detail::TimedCommandQueue::Entry cleanup_command;
         timer_queue_.RegisterImmediateEntry(
@@ -310,7 +309,7 @@ score::cpp::expected_blank<score::os::Error> QnxDispatchEngine::SendProtocolMess
     // Suppress AUTOSAR C++14 Rule A0-1-1 rule finding: "A project shall not contain instances
     // of non-volatile variables being given values that are not subsequently used."
     // False positive: the variable is used immediately after its declaration.
-    // coverity[autosar_cpp14_a0_1_1_violation: FALSE]
+    // coverity[autosar_cpp14_a0_1_1_violation: FALSE] Ticket-219101
     constexpr auto kVectorCount = 2UL;
     std::array<iov_t, kVectorCount> io{};
     // NOLINTBEGIN(cppcoreguidelines-pro-type-union-access) C API
