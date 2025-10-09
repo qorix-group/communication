@@ -178,7 +178,12 @@ auto GetServiceElementId(
     }();
 
     const auto service_element_id_it = service_element_type_deployments.find(service_element_name);
+    // LCOV_EXCL_BR_START False positive: The tool is reporting that the true decision is never taken. We have tests in
+    // lola_service_instance_deployment_test.cpp (GettingEventIdThatDoesNotExistInDeploymentTerminates and
+    // GettingFieldIdThatDoesNotExistInDeploymentTerminates) which test the true branch of this condition. This is a bug
+    // with the tool to be fixed in (Ticket-219132). This suppression should be removed when the tool is fixed.
     if (service_element_id_it == service_element_type_deployments.cend())
+    // LCOV_EXCL_BR_STOP
     {
         score::mw::log::LogFatal() << service_element_type << "name \"" << service_element_name
                                  << "\" does not exist in BindingServiceTypeDeployment. Terminating.";
