@@ -191,16 +191,20 @@ std::set<std::string_view> GetElementNamesOfServiceType(const std::string_view s
                     score::cpp::ignore = result.insert(event.first);
                 }
             }
+            // LCOV_EXCL_BR_LINE (Defensive programming: GetElementNamesOfServiceType is always called with either
+            // ServiceElementType::EVENT or ServiceElementType::FIELD. Entering the false branch of this check is
+            // therefore unreachable.
             else if (element_type == ServiceElementType::FIELD)
+            // LCOV_EXCL_BR_STOP
             {
+
                 for (const auto& field : lola_service_deployment.fields_)
                 {
                     score::cpp::ignore = result.insert(field.first);
                 }
             }
-            // LCOV_EXCL_START (Defensive programming: GetElementNamesOfServiceType is always called with either
-            // ServiceElementType::EVENT or ServiceElementType::FIELD. This check is thus unreachable and is only here
-            // to protect us from future programming mistakes.
+            // LCOV_EXCL_START (Defensive programming: See comment directly above. This branch is only included to
+            // protect us from future programming mistakes)
             else
             {
                 score::mw::log::LogFatal("lola")
