@@ -49,12 +49,21 @@ class QnxDispatchEngine final : public ISharedResourceEngine
   public:
     struct OsResources
     {
+        // Suppress "AUTOSAR C++14 M11-0-1" rule findings. This rule states: "Member data in non-POD class types shall
+        // be private.". We need these data elements to be organized into a coherent organized data structure.
+        // coverity[autosar_cpp14_m11_0_1_violation]
         score::cpp::pmr::unique_ptr<score::os::Channel> channel{};
+        // coverity[autosar_cpp14_m11_0_1_violation]
         score::cpp::pmr::unique_ptr<score::os::Dispatch> dispatch{};
+        // coverity[autosar_cpp14_m11_0_1_violation]
         score::cpp::pmr::unique_ptr<score::os::Fcntl> fcntl{};
+        // coverity[autosar_cpp14_m11_0_1_violation]
         score::cpp::pmr::unique_ptr<score::os::IoFunc> iofunc{};
+        // coverity[autosar_cpp14_m11_0_1_violation]
         score::cpp::pmr::unique_ptr<score::os::qnx::Timer> timer{};
+        // coverity[autosar_cpp14_m11_0_1_violation]
         score::cpp::pmr::unique_ptr<score::os::SysUio> uio{};
+        // coverity[autosar_cpp14_m11_0_1_violation]
         score::cpp::pmr::unique_ptr<score::os::Unistd> unistd{};
     };
 
@@ -96,7 +105,10 @@ class QnxDispatchEngine final : public ISharedResourceEngine
         // TODO: isolate resmgr stuff
         virtual std::int32_t ProcessConnect(resmgr_context_t* const ctp, io_open_t* const msg) noexcept = 0;
 
+        // coverity[autosar_cpp14_m11_0_1_violation] QnxDispatchServer requires access to engine
         std::shared_ptr<QnxDispatchEngine> engine_;
+
+      private:
         std::int32_t resmgr_id_;
     };
 
@@ -109,8 +121,8 @@ class QnxDispatchEngine final : public ISharedResourceEngine
             // Suppress following rule findings:
             //  - "AUTOSAR C++14 A4-10-1": "Only nullptr literal shall be used as the null-pointer-constant".
             //  - "AUTOSAR C++14 M5-0-10" If the bitwise operators ~and << are applied to an operand with an underlying
-            //      type of unsigned char or unsigned short, the result shall be immediately cast to the underlying type of
-            //      the operand.
+            //      type of unsigned char or unsigned short, the result shall be immediately cast to the underlying type
+            //      of the operand.
             //  - "AUTOSAR C++14 M5-0-15": "Array indexing shall be the only form of pointer arithmetic".
             //  - "AUTOSAR C++14 M5-0-21": "Bitwise operators shall only be applied to operands of unsigned underlying
             //      type."
@@ -141,6 +153,9 @@ class QnxDispatchEngine final : public ISharedResourceEngine
         }
 
       protected:
+        // Suppress "AUTOSAR C++14 M11-0-1" rule finding: "Member data in non-POD class types shall be private.".
+        // QnxDispatchServer::ServerConnection requires access to notification data
+        // coverity[autosar_cpp14_m11_0_1_violation]
         std::array<iofunc_notify_t, 3> notify_;
 
       private:
