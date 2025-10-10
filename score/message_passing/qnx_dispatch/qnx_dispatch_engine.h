@@ -106,13 +106,25 @@ class QnxDispatchEngine final : public ISharedResourceEngine
       public:
         ResourceManagerConnection() noexcept : iofunc_ocb_t{}, notify_{}
         {
-            // Suppress "AUTOSAR C++14 M5-0-15" rule finding: "Array indexing shall be the only form of pointer
-            // arithmetic".
-            // Suppress "AUTOSAR C++14 A4-10-1" rule finding: "Only nullptr literal shall be used as the
-            // null-pointer-constant.
-            // OS API
-            // coverity[autosar_cpp14_m5_0_15_violation]
+            // Suppress following rule findings:
+            //  - "AUTOSAR C++14 A4-10-1": "Only nullptr literal shall be used as the null-pointer-constant".
+            //  - "AUTOSAR C++14 M5-0-10" If the bitwise operators ~and << are applied to an operand with an underlying
+            //      type of unsigned char or unsigned short, the result shall be immediately cast to the underlying type of
+            //      the operand.
+            //  - "AUTOSAR C++14 M5-0-15": "Array indexing shall be the only form of pointer arithmetic".
+            //  - "AUTOSAR C++14 M5-0-21": "Bitwise operators shall only be applied to operands of unsigned underlying
+            //      type."
+            //  - "AUTOSAR C++14 M5-0-4": "An implicit integral conversion shall not change the signedness of the
+            //      underlying type."
+            //  - "AUTOSAR C++14 M6-2-1": "Assignment operators shall not be used in sub-expressions.".
+            // Justification: The findings relate to IOFUNC_NOTIFY_INIT macro which is a part of QNX API and cannot be
+            // modified.
             // coverity[autosar_cpp14_a4_10_1_violation]
+            // coverity[autosar_cpp14_m5_0_4_violation]
+            // coverity[autosar_cpp14_m5_0_10_violation]
+            // coverity[autosar_cpp14_m5_0_15_violation]
+            // coverity[autosar_cpp14_m5_0_21_violation]
+            // coverity[autosar_cpp14_m6_2_1_violation]
             IOFUNC_NOTIFY_INIT(notify_.data());
         }
 
