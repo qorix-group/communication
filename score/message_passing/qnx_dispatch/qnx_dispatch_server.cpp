@@ -252,6 +252,7 @@ QnxDispatchServer::QnxDispatchServer(std::shared_ptr<QnxDispatchEngine> engine,
       listener_command_{},
       listener_endpoint_{}
 {
+    score::cpp::ignore = max_request_size_;  // currently unused
 }
 
 QnxDispatchServer::~QnxDispatchServer() noexcept
