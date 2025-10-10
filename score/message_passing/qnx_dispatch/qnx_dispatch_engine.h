@@ -248,6 +248,10 @@ class QnxDispatchEngine final : public ISharedResourceEngine
         return static_cast<ResourceManagerServer&>(*handle);
     }
 
+    // Suppress AUTOSAR C++14 A8-4-10 rule findigs: "A parameter shall be passed by reference if it can't be NULL."
+    // Justification: raw pointers are used in method signatures to maintain compatibility with the QNX API,
+    // which provides parameters as raw pointers.
+    // coverity[autosar_cpp14_a8_4_10_violation]
     static ResourceManagerServer& OcbToServer(RESMGR_OCB_T* const ocb)
     {
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast) by API design
