@@ -23,13 +23,7 @@
 #include <cstdint>
 #include <string_view>
 
-namespace score
-{
-namespace mw
-{
-namespace com
-{
-namespace message_passing
+namespace score::mw::com::message_passing
 {
 
 class ResmgrSenderTraits
@@ -98,9 +92,6 @@ class ResmgrSenderTraits
     static bool IsOsResourcesValid(const FileDescriptorResourcesType& os_resources) noexcept;
 };
 
-}  // namespace message_passing
-}  // namespace com
-}  // namespace mw
-}  // namespace score
+}  // namespace score::mw::com::message_passing
 
 #endif  // SCORE_MW_COM_MESSAGE_PASSING_RESMGR_SENDER_TRAITS_H

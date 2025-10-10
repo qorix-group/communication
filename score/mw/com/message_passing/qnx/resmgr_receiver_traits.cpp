@@ -18,13 +18,7 @@
 #include <score/assert.hpp>
 #include <algorithm>
 
-namespace score
-{
-namespace mw
-{
-namespace com
-{
-namespace message_passing
+namespace score::mw::com::message_passing
 {
 
 namespace
@@ -491,7 +485,4 @@ bool ResmgrReceiverTraits::IsOsResourcesValid(const FileDescriptorResourcesType&
             ((os_resources.unistd != nullptr) && (os_resources.iofunc != nullptr)));
 }
 
-}  // namespace message_passing
-}  // namespace com
-}  // namespace mw
-}  // namespace score
+}  // namespace score::mw::com::message_passing

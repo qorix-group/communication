@@ -24,13 +24,7 @@
 
 #include "score/os/unistd.h"
 
-namespace score
-{
-namespace mw
-{
-namespace com
-{
-namespace message_passing
+namespace score::mw::com::message_passing
 {
 namespace
 {
@@ -133,7 +127,4 @@ TEST_F(ResmgrFactoryFixture, Receivers)
 }
 
 }  // namespace
-}  // namespace message_passing
-}  // namespace com
-}  // namespace mw
-}  // namespace score
+}  // namespace score::mw::com::message_passing

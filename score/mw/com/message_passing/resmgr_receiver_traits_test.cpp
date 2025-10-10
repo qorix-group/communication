@@ -23,13 +23,7 @@
 
 #include <gtest/gtest.h>
 
-namespace score
-{
-namespace mw
-{
-namespace com
-{
-namespace message_passing
+namespace score::mw::com::message_passing
 {
 namespace
 {
@@ -63,10 +57,10 @@ class ResmgrReceiverFixtureBase : public ::testing::Test
 
         EXPECT_CALL(*raw_iofunc_mock_, iofunc_func_init(_RESMGR_CONNECT_NFUNCS, _, _RESMGR_IO_NFUNCS, _))
             .Times(AnyNumber())
-            .WillRepeatedly([this](const std::uint32_t,
-                                   resmgr_connect_funcs_t* const connect_funcs,
-                                   const std::uint32_t,
-                                   resmgr_io_funcs_t* const) {
+            .WillRepeatedly([](const std::uint32_t,
+                               resmgr_connect_funcs_t* const connect_funcs,
+                               const std::uint32_t,
+                               resmgr_io_funcs_t* const) {
                 connect_funcs->open = open_default;
             });
         EXPECT_CALL(*raw_iofunc_mock_, iofunc_attr_init(_, kAttrMode, kNoAttr, kNoClientInfo)).Times(AnyNumber());
@@ -162,15 +156,15 @@ class ResmgrReceiverFixtureBase : public ::testing::Test
             });
         EXPECT_CALL(*raw_channel_mock_, ConnectClientInfo(kScoid, _, 0))
             .Times(AtMost(1))
-            .WillOnce([this, client_uid](
-                          std::int32_t, _client_info* info, std::int32_t) -> score::cpp::expected_blank<score::os::Error> {
-                if (client_uid == kUidFailInfo)
-                {
-                    return score::cpp::make_unexpected(score::os::Error::createFromErrno(EINVAL));
-                }
-                info->cred.euid = client_uid;
-                return {};
-            });
+            .WillOnce(
+                [client_uid](std::int32_t, _client_info* info, std::int32_t) -> score::cpp::expected_blank<score::os::Error> {
+                    if (client_uid == kUidFailInfo)
+                    {
+                        return score::cpp::make_unexpected(score::os::Error::createFromErrno(EINVAL));
+                    }
+                    info->cred.euid = client_uid;
+                    return {};
+                });
     }
 
     void ExpectWriteRequests(std::size_t size)
@@ -602,7 +596,4 @@ TEST_F(ResmgrReceiverFixtureWithUids, ReceiveConnectFailInfo)
 }
 
 }  // namespace
-}  // namespace message_passing
-}  // namespace com
-}  // namespace mw
-}  // namespace score
+}  // namespace score::mw::com::message_passing
