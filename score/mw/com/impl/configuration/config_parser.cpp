@@ -118,7 +118,8 @@ auto ParseInstanceSpecifier(const score::json::Any& json) -> InstanceSpecifier
     if (instanceSpecifierJson != json.As<score::json::Object>().value().get().cend())
     {
         const auto& string_view = instanceSpecifierJson->second.As<std::string>()->get();
-        const auto instance_specifier_result = InstanceSpecifier::Create(string_view);
+        const auto instance_specifier_result =
+            InstanceSpecifier::Create(std::string{string_view.data(), string_view.size()});
         if (!instance_specifier_result.has_value())
         {
             score::mw::log::LogFatal("lola") << "Invalid InstanceSpecifier.";

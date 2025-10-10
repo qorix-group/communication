@@ -200,7 +200,7 @@ std::size_t FindNumberOfTracingSlots(
 
         for (const auto& instance_specifier : instance_specifier_view_set)
         {
-            const auto instance_specifier_result = InstanceSpecifier::Create(instance_specifier);
+            const auto instance_specifier_result = InstanceSpecifier::Create(std::string{instance_specifier});
             if (!instance_specifier_result.has_value())
             {
                 score::mw::log::LogFatal() << "Lola: Could not create instance specifier. Terminating.";
