@@ -181,6 +181,11 @@ std::int32_t QnxDispatchServer::ServerConnection::ProcessReadRequest(resmgr_cont
         // if a NOTIFY message instance, return it to notify pool
         notify_pool_.push_front(send_message);
     }
+
+    // Suppress AUTOSAR C++14 M5-0-10 violation in QNX system macro
+    // Rationale: _RESMGR_NOREPLY is a QNX system constant that may involve bitwise operations
+    // on unsigned types during macro expansion. Cannot modify system headers.
+    // coverity[autosar_cpp14_m5_0_10_violation]
     return _RESMGR_NOREPLY;
 }
 
