@@ -67,7 +67,7 @@ ClientConnection::ClientConnection(std::shared_ptr<ISharedResourceEngine> engine
     // TODO: separate max_queued_sends, max_async_replies, and maybe queued SendWaitReply
     for (auto& send_command : send_storage_)
     {
-        send_command.message.reserve(max_send_size_);
+        send_command.message.reserve(static_cast<std::size_t>(max_send_size_));
     }
     send_pool_.assign(send_storage_.begin(), send_storage_.end());
 }
