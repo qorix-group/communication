@@ -68,7 +68,7 @@ class ClientConnection final : public IClientConnection
     void TryConnect() noexcept;
     bool TryQueueMessage(score::cpp::span<const std::uint8_t> message, ReplyCallback callback) noexcept;
     StopReason ProcessInputEvent() noexcept;
-    void ProcessSendQueueUnderLock() noexcept;
+    void ProcessSendQueueUnderLock(std::unique_lock<std::mutex>& lock) noexcept;
     void ArmSendQueueUnderLock() noexcept;
 
     bool TrySetStopReason(const StopReason stop_reason) noexcept;

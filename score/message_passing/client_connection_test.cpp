@@ -14,6 +14,7 @@
 
 #include "score/message_passing/client_connection.h"
 
+#include "score/message_passing/client_server_communication.h"
 #include "score/message_passing/mock/shared_resource_engine_mock.h"
 
 #include <future>
@@ -194,10 +195,12 @@ class ClientConnectionTest : public ::testing::Test
         on_callback_thread_ = false;
     }
 
-    void MakeSuccessfulConnection(detail::ClientConnection& connection)
+    void MakeSuccessfulConnection(detail::ClientConnection& connection,
+                                  IClientConnection::StateCallback state_callback = {},
+                                  IClientConnection::NotifyCallback notify_callback = {})
     {
         CatchImmediateConnectCommand();
-        connection.Start(IClientConnection::StateCallback(), IClientConnection::NotifyCallback());
+        connection.Start(std::move(state_callback), std::move(notify_callback));
         EXPECT_EQ(connection.GetState(), State::kStarting);
 
         AtTryOpenCall_Return(kValidFd);
@@ -264,6 +267,27 @@ TEST_F(ClientConnectionTest, ConstructedStopDoesNothing)
     connection.Stop();
     EXPECT_EQ(connection.GetState(), State::kStopped);
     EXPECT_EQ(connection.GetStopReason(), StopReason::kInit);
+}
+
+TEST_F(ClientConnectionTest, TryingToConnectOnceStoppingWhileConnecting)
+{
+    detail::ClientConnection connection(engine_, protocol_config_, client_config_);
+
+    CatchImmediateConnectCommand();
+    connection.Start(IClientConnection::StateCallback(), IClientConnection::NotifyCallback());
+    EXPECT_EQ(connection.GetState(), State::kStarting);
+
+    EXPECT_CALL(*engine_, TryOpenClientConnection(std::string_view{service_identifier_}))
+        .WillOnce([&connection](auto&&) {
+            connection.Stop();
+            return score::cpp::make_unexpected(score::os::Error::createFromErrno(EIO));  // this error code would be ignored
+        });
+
+    ExpectCleanUpOwner(connection);
+    InvokeConnectCommand();
+
+    EXPECT_EQ(connection.GetState(), State::kStopped);
+    EXPECT_EQ(connection.GetStopReason(), StopReason::kUserRequested);
 }
 
 TEST_F(ClientConnectionTest, TryingToConnectOnceStoppingOnHardError)
@@ -536,6 +560,35 @@ TEST_F(ClientConnectionTest, SendWaitReplyFailsWhenCannotSendMessageDirectly)
     StopCurrentConnection(connection);
 }
 
+TEST_F(ClientConnectionTest, SendWaitReplyFailsDirectlyButUnblocksQueue)
+{
+    client_config_.truly_async = true;
+    detail::ClientConnection connection(engine_, protocol_config_, client_config_);
+    MakeSuccessfulConnection(connection);
+
+    std::array<std::uint8_t, kMaxSendSize> send_buffer;
+    std::array<std::uint8_t, kMaxReplySize> reply_buffer;
+
+    EXPECT_CALL(*engine_, SendProtocolMessage).WillOnce([&](auto&&...) {
+        // as truly_async, this one will go into the queue
+        auto send_result = connection.Send(send_buffer);
+        EXPECT_TRUE(send_result);
+
+        return score::cpp::make_unexpected(score::os::Error::createFromErrno(EPIPE));
+    });
+
+    CatchSendQueueCommand();
+
+    auto send_wait_reply_result = connection.SendWaitReply(send_buffer, reply_buffer);
+    EXPECT_FALSE(send_wait_reply_result);
+    EXPECT_EQ(send_wait_reply_result.error().GetOsDependentErrorCode(), EPIPE);
+
+    EXPECT_CALL(*engine_, SendProtocolMessage);  // will be called from unblocked queue
+    InvokeSendQueueCommand();
+
+    StopCurrentConnection(connection);
+}
+
 TEST_F(ClientConnectionTest, SendWaitReplyFailsWhenCannotQueueMessage)
 {
     client_config_.max_queued_sends = 1;  // explicitly
@@ -598,6 +651,113 @@ TEST_F(ClientConnectionTest, SendWaitReplyFailsWhenQueuedMessageCancels)
     StopCurrentConnection(connection);
 }
 
+TEST_F(ClientConnectionTest, SendWaitReplyFailsWhenReceiveTooLong)
+{
+    detail::ClientConnection connection(engine_, protocol_config_, client_config_);
+    MakeSuccessfulConnection(connection);
+
+    std::array<std::uint8_t, kMaxSendSize> send_buffer;
+    std::array<std::uint8_t, kMaxReplySize> reply_buffer;
+
+    EXPECT_CALL(*engine_, SendProtocolMessage).WillOnce([&](auto&&...) {
+        std::array<std::uint8_t, kMaxReplySize + 1> long_reply_buffer;
+        AtProtocolReceive_Return(score::cpp::to_underlying(detail::ServerToClient::REPLY), long_reply_buffer);
+        InvokeEndpointInput();
+        return score::cpp::blank{};
+    });
+
+    auto send_wait_reply_result = connection.SendWaitReply(send_buffer, reply_buffer);
+    EXPECT_FALSE(send_wait_reply_result);
+    EXPECT_EQ(send_wait_reply_result.error().GetOsDependentErrorCode(), ENOMEM);
+
+    StopCurrentConnection(connection);
+}
+
+TEST_F(ClientConnectionTest, SendWithCallbackFailsWhenCannotSendMessageDirectly)
+{
+    detail::ClientConnection connection(engine_, protocol_config_, client_config_);
+    MakeSuccessfulConnection(connection);
+
+    std::array<std::uint8_t, kMaxSendSize> send_buffer;
+
+    EXPECT_CALL(*engine_, SendProtocolMessage)
+        .WillOnce(Return(score::cpp::make_unexpected(score::os::Error::createFromErrno(EPIPE))));
+
+    auto send_with_callback_result = connection.SendWithCallback(send_buffer, IClientConnection::ReplyCallback{});
+    EXPECT_FALSE(send_with_callback_result);
+    EXPECT_EQ(send_with_callback_result.error().GetOsDependentErrorCode(), EPIPE);
+
+    StopCurrentConnection(connection);
+}
+
+TEST_F(ClientConnectionTest, SendWithCallbackFailsWhenCannotQueueMessage)
+{
+    // without truly_async, the first SendWithCallback is not queued and does not need async reply slots
+    client_config_.max_async_replies = 0;
+    client_config_.max_queued_sends = 0;
+    detail::ClientConnection connection(engine_, protocol_config_, client_config_);
+    MakeSuccessfulConnection(connection);
+
+    std::array<std::uint8_t, kMaxSendSize> send_buffer;
+
+    EXPECT_CALL(*engine_, SendProtocolMessage);
+
+    // first send shall succeed
+    auto send_with_callback_result = connection.SendWithCallback(send_buffer, [](auto&&) {});
+    EXPECT_TRUE(send_with_callback_result);
+
+    // second send shall fail as we only have one slot in the send queue
+    send_with_callback_result = connection.SendWithCallback(send_buffer, [](auto&&) {});
+    EXPECT_FALSE(send_with_callback_result);
+    EXPECT_EQ(send_with_callback_result.error().GetOsDependentErrorCode(), ENOMEM);
+
+    StopCurrentConnection(connection);
+}
+
+TEST_F(ClientConnectionTest, SendWithCallbackFailsWhenCannotQueueMessageTrulyAsync)
+{
+    client_config_.truly_async = true;
+    client_config_.max_async_replies = 0;
+    client_config_.max_queued_sends = 0;
+    detail::ClientConnection connection(engine_, protocol_config_, client_config_);
+    MakeSuccessfulConnection(connection);
+
+    std::array<std::uint8_t, kMaxSendSize> send_buffer;
+
+    // first send shall fail
+    auto send_with_callback_result = connection.SendWithCallback(send_buffer, [](auto&&) {});
+    EXPECT_EQ(send_with_callback_result.error().GetOsDependentErrorCode(), ENOMEM);
+
+    StopCurrentConnection(connection);
+}
+
+TEST_F(ClientConnectionTest, SendWithCallbackReportsFailureWhenQueuedSendFailsTrulyAsync)
+{
+    client_config_.truly_async = true;
+    client_config_.max_async_replies = 1;
+    client_config_.max_queued_sends = 0;
+    detail::ClientConnection connection(engine_, protocol_config_, client_config_);
+    MakeSuccessfulConnection(connection);
+
+    std::array<std::uint8_t, kMaxSendSize> send_buffer;
+
+    CatchSendQueueCommand();
+
+    // the send itself shall succeed
+    auto send_with_callback_result = connection.SendWithCallback(send_buffer, [](auto&& message_expected) {
+        EXPECT_FALSE(message_expected);
+        EXPECT_EQ(message_expected.error().GetOsDependentErrorCode(), EPIPE);
+    });
+    EXPECT_TRUE(send_with_callback_result);
+
+    EXPECT_CALL(*engine_, SendProtocolMessage)
+        .WillOnce(Return(score::cpp::make_unexpected(score::os::Error::createFromErrno(EPIPE))));
+
+    InvokeSendQueueCommand();
+
+    StopCurrentConnection(connection);
+}
+
 TEST_F(ClientConnectionTest, QueuedSendsCancelIfConnectionClosed)
 {
     client_config_.max_queued_sends = 4;
@@ -635,6 +795,76 @@ TEST_F(ClientConnectionTest, QueuedSendsCancelIfConnectionClosed)
         EXPECT_EQ(message_expected.error().GetOsDependentErrorCode(), EPIPE);
     });
     EXPECT_TRUE(send_with_callback_result);
+
+    StopCurrentConnection(connection);
+}
+
+TEST_F(ClientConnectionTest, ConnectedStopsIfReceivesIoError)
+{
+    detail::ClientConnection connection(engine_, protocol_config_, client_config_);
+    MakeSuccessfulConnection(connection);
+
+    AtProtocolReceive_Return(0, score::cpp::make_unexpected(score::os::Error::createFromErrno(EIO)));
+    AtPosixEndpointUnregistration_InvokeDisconnect();
+    ExpectCleanUpOwner(connection);
+    ExpectCloseFd();
+    InvokeEndpointInput();
+    EXPECT_EQ(connection.GetState(), State::kStopped);
+    EXPECT_EQ(connection.GetStopReason(), StopReason::kIoError);
+}
+
+TEST_F(ClientConnectionTest, ConnectedStopsIfReceivesInvalidCode)
+{
+    detail::ClientConnection connection(engine_, protocol_config_, client_config_);
+    MakeSuccessfulConnection(connection);
+
+    AtProtocolReceive_Return(score::cpp::to_underlying(detail::ServerToClient::NOTIFY) + 1, {});
+    AtPosixEndpointUnregistration_InvokeDisconnect();
+    ExpectCleanUpOwner(connection);
+    ExpectCloseFd();
+    InvokeEndpointInput();
+    EXPECT_EQ(connection.GetState(), State::kStopped);
+    EXPECT_EQ(connection.GetStopReason(), StopReason::kIoError);
+}
+
+TEST_F(ClientConnectionTest, ConnectedStopsIfReceivesReplyWithoutSend)
+{
+    detail::ClientConnection connection(engine_, protocol_config_, client_config_);
+    MakeSuccessfulConnection(connection);
+
+    AtProtocolReceive_Return(score::cpp::to_underlying(detail::ServerToClient::REPLY), {});
+    AtPosixEndpointUnregistration_InvokeDisconnect();
+    ExpectCleanUpOwner(connection);
+    ExpectCloseFd();
+    InvokeEndpointInput();
+    EXPECT_EQ(connection.GetState(), State::kStopped);
+    EXPECT_EQ(connection.GetStopReason(), StopReason::kIoError);
+}
+
+TEST_F(ClientConnectionTest, ConnectedContinuesIfReceivesNotifyWithoutCallback)
+{
+    detail::ClientConnection connection(engine_, protocol_config_, client_config_);
+    MakeSuccessfulConnection(connection);
+
+    AtProtocolReceive_Return(score::cpp::to_underlying(detail::ServerToClient::NOTIFY), {});
+    InvokeEndpointInput();
+    EXPECT_EQ(connection.GetState(), State::kReady);
+
+    StopCurrentConnection(connection);
+}
+
+TEST_F(ClientConnectionTest, ConnectedReceivesNotifyInCallback)
+{
+    detail::ClientConnection connection(engine_, protocol_config_, client_config_);
+    std::uint32_t call_counter{0U};
+    MakeSuccessfulConnection(connection, IClientConnection::StateCallback{}, [&call_counter](auto&&) noexcept {
+        ++call_counter;
+    });
+
+    AtProtocolReceive_Return(score::cpp::to_underlying(detail::ServerToClient::NOTIFY), {});
+    InvokeEndpointInput();
+    EXPECT_EQ(connection.GetState(), State::kReady);
+    EXPECT_EQ(call_counter, 1U);
 
     StopCurrentConnection(connection);
 }

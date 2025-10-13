@@ -446,7 +446,7 @@ IClientConnection::StopReason ClientConnection::ProcessInputEvent() noexcept
             {
                 ReplyCallback callback = std::move(*waiting_for_reply_);
                 waiting_for_reply_.reset();
-                ProcessSendQueueUnderLock();
+                ProcessSendQueueUnderLock(lock);
                 lock.unlock();
                 callback(message);
             }
@@ -486,13 +486,13 @@ void ClientConnection::ArmSendQueueUnderLock() noexcept
         async_send_command_,
         ISharedResourceEngine::TimePoint{},
         [this](auto) noexcept {
-            std::lock_guard<std::mutex> lock(send_mutex_);
-            ProcessSendQueueUnderLock();
+            std::unique_lock<std::mutex> lock(send_mutex_);
+            ProcessSendQueueUnderLock(lock);
         },
         this);
 }
 
-void ClientConnection::ProcessSendQueueUnderLock() noexcept
+void ClientConnection::ProcessSendQueueUnderLock(std::unique_lock<std::mutex>& lock) noexcept
 {
     while (!send_queue_.empty())
     {
@@ -502,12 +502,24 @@ void ClientConnection::ProcessSendQueueUnderLock() noexcept
         if (!send.callback.empty())
         {
             waiting_for_reply_ = std::move(send.callback);
-            // NOLINTNEXTLINE(score-no-unnamed-temporary-objects) TODO:
-            engine_->SendProtocolMessage(client_fd_, score::cpp::to_underlying(ClientToServer::REQUEST), send.message);
-            break;
+            const auto expected =
+                engine_->SendProtocolMessage(client_fd_, score::cpp::to_underlying(ClientToServer::REQUEST), send.message);
+            if (expected.has_value())
+            {
+                break;
+            }
+            auto callback = std::move(*waiting_for_reply_);
+            lock.unlock();
+            callback(score::cpp::make_unexpected(expected.error()));
+            lock.lock();
+            waiting_for_reply_.reset();
         }
-        // NOLINTNEXTLINE(score-no-unnamed-temporary-objects) TODO:
-        engine_->SendProtocolMessage(client_fd_, score::cpp::to_underlying(ClientToServer::SEND), send.message);
+        else
+        {
+            // nowhere to return error
+            score::cpp::ignore =
+                engine_->SendProtocolMessage(client_fd_, score::cpp::to_underlying(ClientToServer::SEND), send.message);
+        }
     }
 }
 
