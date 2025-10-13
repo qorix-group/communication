@@ -118,6 +118,7 @@ bool QnxDispatchServer::ServerConnection::ProcessInput(const std::uint8_t code,
     auto& server = GetQnxDispatchServer();
     auto& user_data = *user_data_;
     using HandlerPointerT = score::cpp::pmr::unique_ptr<IConnectionHandler>;
+
     switch (code)
     {
         case score::cpp::to_underlying(ClientToServer::REQUEST):
@@ -136,7 +137,6 @@ bool QnxDispatchServer::ServerConnection::ProcessInput(const std::uint8_t code,
             // unrecognised message; drop connection
             return false;
     }
-    return true;
 }
 
 bool QnxDispatchServer::ServerConnection::HasSomethingToRead() noexcept
