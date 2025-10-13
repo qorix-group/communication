@@ -55,10 +55,10 @@ class QnxDispatchServer final : public IServer, private QnxDispatchEngine::Resou
 
         ~ServerConnection() noexcept;
 
-        ServerConnection(const ServerConnection&) = delete;
-        ServerConnection(ServerConnection&&) = delete;
-        ServerConnection& operator=(const ServerConnection&) = delete;
-        ServerConnection& operator=(ServerConnection&&) = delete;
+        ServerConnection(const ServerConnection&) noexcept = delete;
+        ServerConnection(ServerConnection&&) noexcept = delete;
+        ServerConnection& operator=(const ServerConnection&) noexcept = delete;
+        ServerConnection& operator=(ServerConnection&&) noexcept = delete;
 
       private:
         QnxDispatchServer& GetQnxDispatchServer() noexcept
