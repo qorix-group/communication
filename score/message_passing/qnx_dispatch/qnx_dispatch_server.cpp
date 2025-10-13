@@ -16,6 +16,7 @@
 #include "score/message_passing/qnx_dispatch/qnx_dispatch_engine.h"
 
 #include <score/utility.hpp>
+#include <cerrno>
 
 namespace score::message_passing::detail
 {
@@ -143,6 +144,10 @@ bool QnxDispatchServer::ServerConnection::HasSomethingToRead() noexcept
     return !send_queue_.empty();
 }
 
+// Suppress AUTOSAR C++14 A8-4-10 violation for QNX resource manager API
+// Rationale: ProcessReadRequest must conform to QNX resmgr callback signature.
+// QNX API requires pointer parameter - cannot use reference due to C API constraints.
+// coverity[autosar_cpp14_a8_4_10_violation]
 std::int32_t QnxDispatchServer::ServerConnection::ProcessReadRequest(resmgr_context_t* const ctp) noexcept
 {
     if (send_queue_.empty())
@@ -257,6 +262,10 @@ void QnxDispatchServer::StopListening() noexcept
 // coverity[autosar_cpp14_a9_5_1_violation]
 std::int32_t QnxDispatchServer::ProcessConnect(resmgr_context_t* const ctp, io_open_t* const msg) noexcept
 {
+    if((msg == nullptr) || (ctp == nullptr))
+    {
+        return EINVAL;
+    }
     auto& os_resources = engine_->GetOsResources();
     auto& channel = os_resources.channel;
 
