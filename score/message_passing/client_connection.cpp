@@ -369,7 +369,7 @@ void ClientConnection::TryConnect() noexcept
     {
         auto error = fd_expected.error();
         auto os_code = error.GetOsDependentErrorCode();
-        if (os_code != EAGAIN && os_code != ECONNREFUSED && os_code != ENOENT)
+        if (((os_code != EAGAIN) && (os_code != ECONNREFUSED)) && (os_code != ENOENT))
         {
             StopReason stop_reason = os_code == EACCES ? StopReason::kPermission : StopReason::kIoError;
             if (TrySetStopReason(stop_reason))
