@@ -13,7 +13,6 @@
 #ifndef SCORE_MW_COM_IMPL_BINDINGS_LOLA_SUBSCRIPTION_STATE_MACHINE_STATES_H
 #define SCORE_MW_COM_IMPL_BINDINGS_LOLA_SUBSCRIPTION_STATE_MACHINE_STATES_H
 
-#include <cstdint>
 #include <string>
 
 namespace score::mw::com::impl::lola
