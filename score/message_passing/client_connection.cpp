@@ -332,7 +332,13 @@ void ClientConnection::DoRestart() noexcept
     stop_reason_ = StopReason::kNone;
     ProcessStateChange(State::kStarting);
 
-    std::cerr << "ClientConnection::DoRestart " << engine_->IsOnCallbackThread() << " " << identifier_ << " "
+    // Suppress AUTOSAR C++14 M8-4-4, rule finding: "A function identifier shall either be used to call the
+    // function or it shall be preceded by &".
+    // We deviate from this rule (which is also gone in Misra C++23).
+    // Passing std::endl to std::cerr is the idiomatic way to print an error in C++.
+    std::cerr << "ClientConnection::DoRestart " << engine_->IsOnCallbackThread() << " " << identifier_
+              << " "
+              // coverity[autosar_cpp14_m8_4_4_violation]
               << std::endl;
 
     connect_retry_ms_ = kConnectRetryMsStart;
@@ -352,6 +358,11 @@ void ClientConnection::TryConnect() noexcept
                    ((state_ == State::kStopping) && (stop_reason_ == StopReason::kUserRequested)));
     SCORE_LANGUAGE_FUTURECPP_ASSERT_DBG(IsInCallback());
 
+    // Suppress AUTOSAR C++14 M8-4-4, rule finding: "A function identifier shall either be used to call the
+    // function or it shall be preceded by &".
+    // We deviate from this rule (which is also gone in Misra C++23).
+    // Passing std::endl to std::cerr is the idiomatic way to print an error in C++.
+    // coverity[autosar_cpp14_m8_4_4_violation]
     std::cerr << "TryOpenClientConnection " << identifier_ << std::endl;
     auto fd_expected = engine_->TryOpenClientConnection(identifier_);
     if (!fd_expected.has_value())
@@ -555,6 +566,11 @@ void ClientConnection::ProcessStateChangeToStopped() noexcept
 
 void ClientConnection::ProcessStateChange(const State state) noexcept
 {
+    // Suppress AUTOSAR C++14 M8-4-4, rule finding: "A function identifier shall either be used to call the
+    // function or it shall be preceded by &".
+    // We deviate from this rule (which is also gone in Misra C++23).
+    // Passing std::endl to std::cerr is the idiomatic way to print an error in C++.
+    // coverity[autosar_cpp14_m8_4_4_violation]
     std::cerr << "ProcessStateChange " << static_cast<std::uint32_t>(score::cpp::to_underlying(state)) << std::endl;
     if (state != State::kStopped)
     {
