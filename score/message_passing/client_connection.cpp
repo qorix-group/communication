@@ -425,6 +425,9 @@ IClientConnection::StopReason ClientConnection::ProcessInputEvent() noexcept
         return os_code == EPIPE ? StopReason::kClosedByPeer : StopReason::kIoError;
     }
     auto message = message_expected.value();
+    // This switch statement is considered not well-formed due to early exits, i.e. return statements.
+    // New Misra rule 9.4.2 allows terminating switch statements with a return statement
+    // coverity[autosar_cpp14_m6_4_3_violation]
     switch (code)
     {
         case score::cpp::to_underlying(ServerToClient::REPLY):
@@ -442,18 +445,23 @@ IClientConnection::StopReason ClientConnection::ProcessInputEvent() noexcept
             {
                 return StopReason::kIoError;
             }
+            break;
         }
-        break;
         case score::cpp::to_underlying(ServerToClient::NOTIFY):
+        {
             if (!notify_callback_.empty())
             {
                 notify_callback_(message);
             }
             break;
-
+        }
+        // New Misra rule 9.4.2 allows terminating switch statements with a return statement
+        // coverity[autosar_cpp14_m6_4_5_violation]
         default:
+        {
             // unrecognised message; drop connection
             return StopReason::kIoError;
+        }
     }
     return StopReason::kNone;
 }
