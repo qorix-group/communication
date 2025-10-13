@@ -17,6 +17,8 @@
 
 #include <score/utility.hpp>
 
+#include <cstddef>
+#include <cstdint>
 #include <iostream>
 #include <thread>
 
@@ -51,7 +53,8 @@ ClientConnection::ClientConnection(std::shared_ptr<ISharedResourceEngine> engine
       connect_retry_ms_{kConnectRetryMsStart},
       send_mutex_{},
       send_condition_{},
-      send_storage_{client_config.max_queued_sends + client_config.max_async_replies,
+      send_storage_{static_cast<std::size_t>(client_config.max_queued_sends) +
+                        static_cast<std::size_t>(client_config.max_async_replies),
                     score::cpp::pmr::polymorphic_allocator<>(engine_->GetMemoryResource())},
       send_pool_{},
       send_queue_{},
@@ -380,11 +383,17 @@ void ClientConnection::TryConnect() noexcept
             return;
         }
         std::int32_t retry_delay = connect_retry_ms_;
-        connect_retry_ms_ += (connect_retry_ms_ + kConnectRetryT - 1) / kConnectRetryT;
-        if (connect_retry_ms_ > kConnectRetryMsMax)
+
+        const auto retry_increase_ms =
+            (static_cast<std::int64_t>(connect_retry_ms_) + static_cast<std::int64_t>(kConnectRetryT) - 1) /
+            static_cast<std::int64_t>(kConnectRetryT);
+        if ((retry_increase_ms <= kConnectRetryMsMax) && (connect_retry_ms_ <= kConnectRetryMsMax - retry_increase_ms))
         {
-            connect_retry_ms_ = kConnectRetryMsMax;
+            // At this point checks guarantee no data loss
+            // coverity[autosar_cpp14_a4_7_1_violation]
+            connect_retry_ms_ += static_cast<std::int32_t>(retry_increase_ms);
         }
+
         engine_->EnqueueCommand(
             connection_timer_,
             engine_->FromNow(std::chrono::milliseconds(retry_delay)),
