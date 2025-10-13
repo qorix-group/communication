@@ -42,42 +42,37 @@ bool IsShortNameValid(const std::string_view shortname) noexcept
         return false;
     }
 
+    auto validate_chars = [](auto it_begin, auto it_end, const bool first_char) -> bool {
+        const auto found_invalid_chars = std::find_if_not(it_begin, it_end, [first_char](const auto curent_char) {
+            const auto u_ch = static_cast<unsigned char>(curent_char);
+            // Suppress "AUTOSAR C++14 M5-0-3" and  "AUTOSAR C++14 M5-0-4" rules, which state: "A cvalue expression
+            // shall not be implicitly converted to a different underlying type." and "An implicit integral conversion
+            // shall not change the signedness of the underlying type." respectively Rationale: This is tolerated as
+            // static_cast from int to bool will not change the signedness and the type convertion is intended
+            // coverity[autosar_cpp14_m5_0_3_violation]
+            // coverity[autosar_cpp14_m5_0_4_violation]
+            const auto is_alpha_or_num = first_char ? std::isalpha(u_ch) : std::isalnum(u_ch);
+            // coverity[autosar_cpp14_a5_2_6_violation: FALSE] False positive: each operand is parenthesized
+            return ((static_cast<bool>(is_alpha_or_num)) || (curent_char == '_') || (curent_char == '/'));
+        });
+        return found_invalid_chars == it_end;
+    };
     // Validate first character
-    const char first_char = shortname[0];
-    // Suppress "AUTOSAR C++14 M5-0-3" and  "AUTOSAR C++14 M5-0-4" rules, which state: "A cvalue expression shall
-    // not be implicitly converted to a different underlying type." and "An implicit integral conversion shall not
-    // change the signedness of the underlying type." respectively
-    // Rationale: This is tolerated as static_cast from int to bool will not change the signedness and the type
-    // convertion is intended
-    // coverity[autosar_cpp14_m5_0_3_violation]
-    // coverity[autosar_cpp14_m5_0_4_violation]
-    if (!((static_cast<bool>(std::isalpha(static_cast<unsigned char>(first_char))) || (first_char == '_')) ||
-          (first_char == '/')))
+    if (!validate_chars(shortname.begin(), std::next(shortname.begin()), true))
     {
         return false;
     }
     // Single pass validation
-    for (std::size_t char_index = 1U; char_index < shortname.size(); ++char_index)
+    if (!validate_chars(std::next(shortname.begin()), shortname.end(), false))
     {
-        const char current_char = shortname[char_index];
-        // Suppress "AUTOSAR C++14 M5-0-3" and  "AUTOSAR C++14 M5-0-4" rules, which state: "A cvalue expression shall
-        // not be implicitly converted to a different underlying type." and "An implicit integral conversion shall not
-        // change the signedness of the underlying type." respectively
-        // Rationale: This is tolerated as static_cast from int to bool will not change the signedness and the type
-        // convertion is intended
-        // coverity[autosar_cpp14_m5_0_3_violation]
-        // coverity[autosar_cpp14_m5_0_4_violation]
-        if (!((static_cast<bool>(std::isalnum(static_cast<unsigned char>(current_char))) || (current_char == '_')) ||
-              (current_char == '/')))
-        {
-            return false;
-        }
-        if ((current_char == '/') && (shortname[char_index - 1U] == '/'))
-        {
-            return false;
-        }
+        return false;
     }
 
+    constexpr auto invalid_char_seq = "//";
+    if (shortname.find(invalid_char_seq, 0U) != std::string_view::npos)
+    {
+        return false;
+    }
     return true;
 }
 
