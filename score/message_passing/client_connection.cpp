@@ -91,7 +91,7 @@ ClientConnection::~ClientConnection() noexcept
     }
     else
     {
-        Stop();
+        ClientConnection::Stop();
         while (state_ != State::kStopped)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
