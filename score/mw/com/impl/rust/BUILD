@@ -108,3 +108,35 @@ rust_library(
         ":skeleton_bridge_rs",
     ],
 )
+
+rust_library(
+    name = "com-api",
+    srcs = ["com-api/com_api.rs"],
+    visibility = [
+        "//visibility:public",  # platform_only
+    ],
+)
+
+rust_library(
+    name = "com-api-runtime",
+    srcs = ["com-api-runtime/runtime.rs"],
+    visibility = [
+        "//visibility:public",  # platform_only
+    ],
+    deps = [
+        ":com-api",
+        "@crate_index//:futures",
+    ],
+)
+
+rust_library(
+    name = "com-api-gen",
+    srcs = ["com-api-gen/com_api_gen.rs"],
+    visibility = [
+        "//visibility:public",  # platform_only
+    ],
+    deps = [
+        ":com-api",
+        ":com-api-runtime",
+    ],
+)
