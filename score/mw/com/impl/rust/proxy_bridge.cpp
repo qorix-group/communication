@@ -10,6 +10,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
+#include "score/mw/com/impl/rust/proxy_bridge.h"
+
 #include "score/mw/com/impl/plumbing/sample_ptr.h"
 #include "score/mw/com/impl/proxy_event.h"
 #include "score/mw/com/impl/runtime.h"
@@ -19,11 +21,8 @@
 #include <score/assert.hpp>
 #include <cstdint>
 
-struct FatPtr
+namespace score::mw::com::impl::rust
 {
-    const void* vtbl;
-    void* data;
-};
 
 extern "C" {
 
@@ -31,52 +30,19 @@ void mw_com_impl_call_dyn_fnmut(const FatPtr* boxed_fnmut) noexcept;
 void mw_com_impl_delete_boxed_fnmut(const FatPtr* boxed_fnmut) noexcept;
 }
 
-template <typename R, typename... Args>
-class RustFnMutCallable;
-
 template <>
-class RustFnMutCallable<void> final
+class RustBoxedCallable<void>
 {
   public:
-    /// Constructs a new callable from a Rust fat ptr that was created from a Box<dyn FnMut()>.
-    ///
-    /// Any other type will lead to UB as the used Rust callback functions will assume this and transmute into that type
-    // to call the callback on Rust side.
-    explicit RustFnMutCallable(const FatPtr& dyn_fnmut) noexcept : ptr_{dyn_fnmut}
+    static void invoke(FatPtr ptr_) noexcept
     {
-        SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(dyn_fnmut.data != nullptr,
-                               "Failed creating a RustFnMutCallable due to an invalid pointer");
-    }
-
-    RustFnMutCallable(const RustFnMutCallable&) = delete;
-    RustFnMutCallable(RustFnMutCallable&& other) noexcept : ptr_{other.ptr_}
-    {
-        other.ptr_.data = nullptr;
-    }
-
-    RustFnMutCallable& operator=(const RustFnMutCallable&) = delete;
-    RustFnMutCallable& operator=(RustFnMutCallable&& other) noexcept
-    {
-        std::swap(ptr_, other.ptr_);
-        return *this;
-    }
-
-    ~RustFnMutCallable() noexcept
-    {
-        if (ptr_.data != nullptr)
-        {
-            mw_com_impl_delete_boxed_fnmut(&ptr_);
-        }
-    }
-
-    void operator()() noexcept
-    {
-        SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(ptr_.data != nullptr, "Tried to call a Rust FnMut callable without a valid pointer");
         mw_com_impl_call_dyn_fnmut(&ptr_);
     }
 
-  private:
-    FatPtr ptr_;
+    static void dispose(FatPtr ptr_) noexcept
+    {
+        mw_com_impl_delete_boxed_fnmut(&ptr_);
+    }
 };
 
 extern "C" {
@@ -86,7 +52,7 @@ extern "C" {
     const std::uint32_t instance_specifier_length) noexcept
 {
     if (auto result =
-            ::score::mw::com::InstanceSpecifier::Create(std::string_view{instance_specifier, instance_specifier_length});
+            ::score::mw::com::InstanceSpecifier::Create(std::string{instance_specifier, instance_specifier_length});
         result.has_value())
     {
         return new ::score::mw::com::InstanceSpecifier{std::move(result).value()};
@@ -167,7 +133,7 @@ void mw_com_impl_proxy_event_set_receive_handler(::score::mw::com::impl::ProxyEv
 {
     SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(boxed_handler != nullptr,
                            "Call to mw_com_impl_proxy_event_set_receive_handler with a nullptr for the handler");
-    proxy_event->SetReceiveHandler(RustFnMutCallable<void>{*boxed_handler});
+    proxy_event->SetReceiveHandler(RustFnMutCallable<RustBoxedCallable>{*boxed_handler});
 }
 
 void mw_com_impl_proxy_event_unset_receive_handler(::score::mw::com::impl::ProxyEventBase* proxy_event)
@@ -175,3 +141,4 @@ void mw_com_impl_proxy_event_unset_receive_handler(::score::mw::com::impl::Proxy
     proxy_event->UnsetReceiveHandler();
 }
 }
+}  // namespace score::mw::com::impl::rust

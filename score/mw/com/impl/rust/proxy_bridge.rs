@@ -10,10 +10,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-use std::ffi::CString;
-use std::fmt::{self, Debug, Formatter};
-use std::marker::PhantomData;
-use std::mem::{drop, ManuallyDrop};
 ///! This module provides boilerplate for a generated bridge between the Rust and C++ code for the
 ///! proxy side of a service.
 ///!
@@ -24,6 +20,12 @@ use std::mem::{drop, ManuallyDrop};
 ///! `ProxyOps` for the user-defined type. The implementation typically will call the respective
 ///! generated FFI functions to operate on the typed objects like the event itself or the sample
 ///! pointer. See the documentation of the respective traits for more details.
+
+use std::collections::VecDeque;
+use std::ffi::CString;
+use std::fmt::{self, Debug, Formatter};
+use std::marker::PhantomData;
+use std::mem::{drop, ManuallyDrop};
 use std::ops::{Deref, Index};
 use std::path::Path;
 use std::pin::Pin;
@@ -157,7 +159,7 @@ mod ffi {
 /// will be an FnMut dynamic fat pointer. If this isn't true (or if the pointer is invalid), this
 /// will invoke undefined behavior.
 #[no_mangle]
-unsafe extern "C" fn mw_com_impl_call_dyn_fnmut(ptr: *mut ffi::FatPtr) {
+unsafe extern "C" fn mw_com_impl_call_dyn_fnmut(ptr: *const ffi::FatPtr) {
     let dyn_fnmut: *mut (dyn FnMut() + Send + 'static) = (*ptr).into();
     (*dyn_fnmut)();
 }
@@ -179,6 +181,7 @@ unsafe extern "C" fn mw_com_impl_delete_boxed_fnmut(ptr: *mut ffi::FatPtr) {
 // generated code.
 pub use ffi::NativeInstanceSpecifier;
 
+pub use ffi::FatPtr;
 pub use ffi::HandleType;
 pub use ffi::ProxyEvent as NativeProxyEvent;
 pub use ffi::ProxyWrapperClass;
@@ -300,23 +303,21 @@ pub trait EventOps: Sized {
     ///
     /// This method is only safe to be called when the given pointer is pointing to a valid event of
     /// the type `Self`.
-    unsafe fn get_new_sample(
+    unsafe fn get_new_samples(
         proxy_event: *mut NativeProxyEvent<Self>,
-    ) -> Option<sample_ptr_rs::SamplePtr<Self>>;
+        callback: impl FnMut(*mut sample_ptr_rs::SamplePtr<Self>),
+    ) -> usize;
 }
 
 /// # Safety
 ///
 /// This function must be called with a pointer to a valid event of the type `T`. The event behind
 /// the pointer must not have been deleted already.
-unsafe fn native_get_new_sample<'a, T: EventOps>(
+unsafe fn native_get_new_samples<'a, T: EventOps>(
     native: *mut ffi::ProxyEvent<T>,
-) -> Option<crate::SamplePtr<'a, T>> {
-    let sample_ptr = <T as EventOps>::get_new_sample(native);
-    sample_ptr.map(|sample_ptr| crate::SamplePtr {
-        sample_ptr: ManuallyDrop::new(sample_ptr),
-        _event: PhantomData,
-    })
+    callback: impl FnMut(*mut sample_ptr_rs::SamplePtr<T>),
+) -> usize {
+    unsafe { <T as EventOps>::get_new_samples(native, callback) }
 }
 
 /// # Safety
@@ -406,6 +407,7 @@ impl<T: EventOps, P> ProxyEvent<T, P> {
                     native: self.native,
                     proxy: self.proxy,
                     event_name: self.event_name,
+                    max_num_events: max_num_events as usize,
                 })
             } else {
                 Err(("Unable to subscribe", self))
@@ -419,6 +421,7 @@ pub struct SubscribedProxyEvent<T, P> {
     native: *mut ffi::ProxyEvent<T>,
     proxy: P,
     event_name: &'static str,
+    max_num_events: usize,
 }
 
 // SAFETY: There is no connection of any data to a particular thread, also not on C++ side.
@@ -430,6 +433,27 @@ impl<T, P> Debug for SubscribedProxyEvent<T, P> {
         f.debug_struct("SubscribedProxyEvent")
             .field("event_name", &self.event_name)
             .finish()
+    }
+}
+
+pub struct SampleContainer<'a, const N: usize, T: EventOps> {
+    samples: arrayvec::ArrayVec<SamplePtr<'a, T>, N>,
+}
+
+impl<'a, const N: usize, T: EventOps> Deref for SampleContainer<'a, N, T> {
+    type Target = [SamplePtr<'a, T>];
+
+    fn deref(&self) -> &Self::Target {
+        self.samples.deref()
+    }
+}
+
+impl<'a, const N: usize, T: EventOps> IntoIterator for SampleContainer<'a, N, T> {
+    type Item = SamplePtr<'a, T>;
+    type IntoIter = std::iter::Rev<arrayvec::IntoIter<Self::Item, N>>;
+
+    fn into_iter(mut self) -> Self::IntoIter {
+        self.samples.into_iter().rev()
     }
 }
 
@@ -450,11 +474,28 @@ impl<T: EventOps, P: Clone> SubscribedProxyEvent<T, P> {
     /// Retrieve a sample from the event.
     ///
     /// If there is no new sample available, this function will return `None`.
-    pub fn get_new_sample(&self) -> Option<crate::SamplePtr<T>> {
+    pub fn get_new_sample(&self) -> Option<crate::SamplePtr<'_, T>> {
+        self.get_new_samples::<1>().into_iter().next()
+    }
+
+    pub fn get_new_samples<const N: usize>(&self) -> SampleContainer<'_, N, T> {
+        let mut samples = arrayvec::ArrayVec::<crate::SamplePtr<T>, N>::new();
+        let callback = |raw_sample: *mut sample_ptr_rs::SamplePtr<T>| {
+            let raw_sample = unsafe { raw_sample.read() };
+            if !samples.is_full() {
+                let sample = crate::SamplePtr {
+                    sample_ptr: ManuallyDrop::new(raw_sample),
+                    _event: PhantomData,
+                };
+                samples.push(sample);
+            }
+        };
         // SAFETY: This call is safe since the pointer is unmodified from what we get from C++.
         // Since this is the same pointer that we received during initialization (which is, by its
         // signature) of the same type, we're allowed to use it here safely.
-        unsafe { native_get_new_sample(self.native) }
+        let get_num_samples = unsafe { native_get_new_samples(self.native, callback) };
+        assert_eq!(get_num_samples, samples.len());
+        SampleContainer { samples }
     }
 
     /// Set a callable that is called whenever there is new data incoming.
@@ -488,7 +529,7 @@ impl<T: EventOps, P: Clone> SubscribedProxyEvent<T, P> {
         }
     }
 
-    pub fn as_stream(&mut self) -> Result<ProxyEventStream<T, P>, &'static str> {
+    pub fn as_stream(&mut self) -> Result<ProxyEventStream<'_, T, P>, &'static str> {
         let waker_storage: Arc<AtomicWaker> = Arc::default();
 
         let callback_waker = Arc::clone(&waker_storage);
@@ -500,9 +541,11 @@ impl<T: EventOps, P: Clone> SubscribedProxyEvent<T, P> {
             native_set_receive_handler(self.native, waker_callback);
         }
 
+        let sample_cache = VecDeque::with_capacity(self.max_num_events);
         Ok(ProxyEventStream {
             event: self,
             waker_storage,
+            sample_cache,
         })
     }
 }
@@ -519,19 +562,41 @@ impl<T, P> Drop for SubscribedProxyEvent<T, P> {
 pub struct ProxyEventStream<'a, T: EventOps, P> {
     event: &'a mut SubscribedProxyEvent<T, P>,
     waker_storage: Arc<AtomicWaker>,
+    sample_cache: VecDeque<sample_ptr_rs::SamplePtr<T>>,
+}
+
+impl<'a, T: EventOps, P> ProxyEventStream<'a, T, P> {
+    fn get_next_sample(&mut self) -> Option<SamplePtr<'a, T>> {
+        self.sample_cache.pop_front().map(|sample|
+            SamplePtr {
+                sample_ptr: ManuallyDrop::new(sample),
+                _event: PhantomData,
+            })
+    }
 }
 
 impl<'a, T: EventOps, P> Stream for ProxyEventStream<'a, T, P> {
     type Item = SamplePtr<'a, T>;
 
-    fn poll_next(self: Pin<&mut Self>, ctx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
-        self.waker_storage.register(ctx.waker());
-        // SAFETY: This call is safe since the pointer is unmodified from what we get from C++.
-        // Since this is the same pointer that we received during initialization (which is, by its
-        // signature) of the same type, we're allowed to use it here safely.
-        let sample_ptr = unsafe { native_get_new_sample(self.event.native) };
-        match sample_ptr {
-            Some(sample_ptr) => Poll::Ready(Some(sample_ptr)),
+    fn poll_next(mut self: Pin<&mut Self>, ctx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+        if self.sample_cache.is_empty() {
+            let native_event = self.event.native;
+            self.waker_storage.register(ctx.waker());
+            let callback = |raw_sample: *mut sample_ptr_rs::SamplePtr<T>| {
+                // SAFETY: Since the pointer is provided by C++ side and is guaranteed to be valid,
+                // reading from it is safe.
+                let raw_sample = unsafe { raw_sample.read() };
+                self.sample_cache.push_back(raw_sample);
+            };
+            // SAFETY: This call is safe since the pointer is unmodified from what we get from C++.
+            // Since this is the same pointer that we received during initialization (which is, by its
+            // signature) of the same type, we're allowed to use it here safely.
+            let get_num_samples = unsafe { native_get_new_samples(native_event, callback) };
+            assert_eq!(get_num_samples, self.sample_cache.len());
+        }
+
+        match self.get_next_sample() {
+            Some(sample) => Poll::Ready(Some(sample)),
             None => Poll::Pending,
         }
     }

@@ -111,3 +111,7 @@ pub struct SamplePtr<T> {
     _binding_sample_ptr: BindingVariant<T>,
     _sample_reference_guard: SampleReferenceGuard,
 }
+
+// SAFETY: There is no connection of any data to a particular thread, also not on C++ side.
+// Therefore, it is safe to send this struct to another thread.
+unsafe impl<T> Send for SamplePtr<T> {}

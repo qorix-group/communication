@@ -22,6 +22,7 @@ rust_library(
 cc_library(
     name = "proxy_bridge_cpp",
     srcs = ["proxy_bridge.cpp"],
+    hdrs = ["proxy_bridge.h"],
     features = COMPILER_WARNING_FEATURES,
     deps = [
         "//score/mw/com:runtime",
@@ -42,6 +43,7 @@ cc_library(
         "//visibility:public",  # platform_only
     ],
     deps = [
+        ":proxy_bridge_cpp",
         "//score/mw/com:types",
         "//score/mw/com/impl",
         "//score/mw/com/impl/plumbing:sample_ptr",
@@ -69,6 +71,7 @@ rust_library(
     deps = [
         ":proxy_bridge_cpp",
         "//score/mw/com/impl/plumbing:sample_ptr_rs",
+        "@crate_index//:arrayvec",
         "@crate_index//:futures",
     ],
 )
@@ -87,6 +90,9 @@ rust_library(
 rust_library(
     name = "macros",
     srcs = ["macros.rs"],
+    proc_macro_deps = [
+        "@crate_index//:paste",
+    ],
     deps = [
         ":common",
         ":proxy_bridge_rs",

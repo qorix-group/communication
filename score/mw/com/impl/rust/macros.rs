@@ -21,6 +21,8 @@ pub mod proxy_bridge {
     pub use sample_ptr_rs::SamplePtr;
 }
 
+pub use paste::paste;
+
 #[doc(hidden)]
 pub mod skeleton_bridge {
     pub use skeleton_bridge_rs::*;
@@ -41,11 +43,11 @@ macro_rules! import_type {
                 pub unsafe fn get(
                     sample_ptr: *const $crate::proxy_bridge::SamplePtr<$ctype>,
                 ) -> *const $ctype;
-                #[link_name=concat!("mw_com_gen_ProxyEvent_", stringify!($uid), "_get_new_sample")]
-                pub unsafe fn get_new_sample(
+                #[link_name=concat!("mw_com_gen_ProxyEvent_", stringify!($uid), "_get_new_samples")]
+                pub unsafe fn get_new_samples(
                     proxy_event: *mut $crate::proxy_bridge::NativeProxyEvent<$ctype>,
-                    sample_out: *mut $crate::proxy_bridge::SamplePtr<$ctype>,
-                ) -> bool;
+                    callback: *const $crate::proxy_bridge::FatPtr,
+                ) -> u32;
                 #[link_name=concat!("mw_com_gen_SamplePtr_", stringify!($uid), "_delete")]
                 pub unsafe fn delete(sample_ptr: *mut $crate::proxy_bridge::SamplePtr<$ctype>);
                 #[link_name=concat!("mw_com_gen_", stringify!($uid), "_get_size")]
@@ -69,16 +71,14 @@ macro_rules! import_type {
                 }
             }
 
-            unsafe fn get_new_sample(
+            unsafe fn get_new_samples(
                 proxy_event: *mut $crate::proxy_bridge::NativeProxyEvent<Self>,
-            ) -> Option<$crate::proxy_bridge::SamplePtr<Self>> {
-                let mut sample_ptr = std::mem::MaybeUninit::uninit();
+                mut callback: impl FnMut(*mut $crate::proxy_bridge::SamplePtr<Self>),
+            ) -> usize {
+                let dyn_callback: &mut dyn FnMut(*mut $crate::proxy_bridge::SamplePtr<Self>) = &mut callback;
                 unsafe {
-                    if $uid::get_new_sample(proxy_event, sample_ptr.as_mut_ptr()) {
-                        Some(sample_ptr.assume_init())
-                    } else {
-                        None
-                    }
+                    let fat_ptr: $crate::proxy_bridge::FatPtr = std::mem::transmute(dyn_callback);
+                    $uid::get_new_samples(proxy_event, &fat_ptr) as usize
                 }
             }
         }
@@ -100,6 +100,16 @@ macro_rules! import_type {
                 } else {
                     Err(())
                 }
+            }
+        }
+
+        $crate::paste! {
+            #[no_mangle]
+            extern "C" fn [<mw_com_impl_call_dyn_ref_fnmut_sample_ $uid>](
+                ptr: *const $crate::proxy_bridge::FatPtr,
+                sample_ptr: *mut $crate::proxy_bridge::SamplePtr<$ctype>) {
+                let callable: &mut dyn FnMut(_) = unsafe { std::mem::transmute(*ptr) };
+                callable(sample_ptr);
             }
         }
     };
