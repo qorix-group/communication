@@ -256,7 +256,10 @@ QnxDispatchServer::QnxDispatchServer(std::shared_ptr<QnxDispatchEngine> engine,
 
 QnxDispatchServer::~QnxDispatchServer() noexcept
 {
-    StopListening();
+    // MISRA C++ 2008 Rule 12-1-1 Compliant: Direct base class call
+    // Rationale: Calling base class Stop() directly avoids virtual dispatch
+    // and dynamic type usage during destruction
+    QnxDispatchEngine::ResourceManagerServer::Stop();
 }
 
 // NOLINTNEXTLINE(google-default-arguments) TODO:
