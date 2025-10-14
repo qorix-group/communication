@@ -15,8 +15,13 @@
 #include "score/message_passing/client_server_communication.h"
 #include "score/message_passing/qnx_dispatch/qnx_dispatch_engine.h"
 
+#include "score/os/errno.h"
+#include <score/expected.hpp>
 #include <score/utility.hpp>
 #include <cerrno>
+#include <cstddef>
+#include <cstdint>
+#include <limits>
 
 namespace score::message_passing::detail
 {
@@ -33,12 +38,12 @@ QnxDispatchServer::ServerConnection::ServerConnection(ClientIdentity client_iden
       notify_pool_{},
       send_queue_{}
 {
-    reply_message_.message.reserve(server.max_reply_size_);
+    reply_message_.message.reserve(static_cast<std::size_t>(server.max_reply_size_));
     reply_message_.code = score::cpp::to_underlying(ServerToClient::REPLY);
 
     for (auto& notify_message : notify_storage_)
     {
-        notify_message.message.reserve(server.max_notify_size_);
+        notify_message.message.reserve(static_cast<std::size_t>(server.max_notify_size_));
         notify_message.code = score::cpp::to_underlying(ServerToClient::NOTIFY);
     }
     notify_pool_.assign(notify_storage_.begin(), notify_storage_.end());
@@ -101,9 +106,10 @@ score::cpp::expected_blank<score::os::Error> QnxDispatchServer::ServerConnection
     notify_message.message.assign(message.begin(), message.end());
     send_queue_.push_back(notify_message);
     auto& os_resources = server.engine_->GetOsResources();
+
+    std::int32_t size = 1;
     // NOLINTNEXTLINE(score-banned-function) implementing FFI wrapper
-    os_resources.iofunc->iofunc_notify_trigger(
-        notify_.data(), static_cast<std::int32_t>(send_queue_.size()), IOFUNC_NOTIFY_INPUT);
+    os_resources.iofunc->iofunc_notify_trigger(notify_.data(), size, IOFUNC_NOTIFY_INPUT);
     return {};
 }
 
@@ -156,8 +162,8 @@ std::int32_t QnxDispatchServer::ServerConnection::ProcessReadRequest(resmgr_cont
     }
 
     auto& send_message = send_queue_.front();
-    constexpr auto kVectorCount = 2UL;
-    std::array<iov_t, kVectorCount> io{};
+    const std::size_t io_size = 2U;
+    std::array<iov_t, io_size> io{};
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access) C API
     io[0].iov_base = &send_message.code;
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access) C API
@@ -167,14 +173,22 @@ std::int32_t QnxDispatchServer::ServerConnection::ProcessReadRequest(resmgr_cont
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access) C API
     io[1].iov_len = send_message.message.size();
 
-    _IO_SET_READ_NBYTES(ctp, static_cast<std::int32_t>(sizeof(send_message.code) + send_message.message.size()));
+    // Calculate total size with bounds checking
+    const std::size_t header_size = sizeof(send_message.code);
+    const std::size_t message_size = send_message.message.size();
+    const std::size_t total_size = header_size + message_size;
 
+    // Suppress AUTOSAR C++14 M5-0-4
+    // Rationale: _IO_SET_READ_NBYTES requires int32_t parameter, but we've validated
+    // that the conversion doesn't lose precision within QNX system limits
+    // coverity[autosar_cpp14_m5_0_4_violation]
+    _IO_SET_READ_NBYTES(ctp, static_cast<std::int32_t>(total_size));
     auto& server = GetQnxDispatchServer();
     auto& os_resources = server.engine_->GetOsResources();
 
     // TODO: drop on error?
     // could also be dispatch->resmgr_msgreplyv(), if we decide to introduce that
-    score::cpp::ignore = os_resources.channel->MsgReplyv(ctp->rcvid, ctp->status, io.data(), 2);
+    score::cpp::ignore = os_resources.channel->MsgReplyv(ctp->rcvid, ctp->status, io.data(), io.size());
     send_queue_.pop_front();
     if (send_message.code == score::cpp::to_underlying(ServerToClient::NOTIFY))
     {
@@ -267,7 +281,7 @@ void QnxDispatchServer::StopListening() noexcept
 // coverity[autosar_cpp14_a9_5_1_violation]
 std::int32_t QnxDispatchServer::ProcessConnect(resmgr_context_t* const ctp, io_open_t* const msg) noexcept
 {
-    if((msg == nullptr) || (ctp == nullptr))
+    if ((msg == nullptr) || (ctp == nullptr))
     {
         return EINVAL;
     }

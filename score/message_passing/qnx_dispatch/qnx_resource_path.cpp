@@ -14,6 +14,7 @@
 
 #include <score/assert.hpp>
 #include <score/utility.hpp>
+#include <cstddef>
 
 namespace score
 {
@@ -30,7 +31,8 @@ QnxResourcePath::QnxResourcePath(const std::string_view identifier) noexcept
     // coverity[autosar_cpp14_m5_0_15_violation]
     : buffer_{GetQnxPrefix().cbegin(), GetQnxPrefix().cend()}
 {
-    SCORE_LANGUAGE_FUTURECPP_PRECONDITION((identifier.size() > 0) && (identifier.size() <= kMaxIdentifierLen));
+    SCORE_LANGUAGE_FUTURECPP_PRECONDITION((identifier.size() > 0U) && (identifier.size() <= kMaxIdentifierLen));
+
     auto identifier_begin = identifier.cbegin();
     if (*identifier_begin == '/')
     {
