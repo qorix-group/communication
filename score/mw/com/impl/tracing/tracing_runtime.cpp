@@ -439,6 +439,60 @@ void TracingRuntime::UnregisterShmObject(
     }
 }
 
+// coverity[autosar_cpp14_a15_4_2_violation: FALSE] see justification of autosar_cpp14_a15_5_3_violation for Trace()
+// coverity[autosar_cpp14_a15_5_3_violation: FALSE] see justification of autosar_cpp14_a15_5_3_violation for Trace()
+Result<analysis::tracing::ShmObjectHandle> TracingRuntime::GetRegisteredShmObject(
+    ITracingRuntimeBinding& runtime_binding,
+    const ServiceElementInstanceIdentifierView service_element_instance_identifier) noexcept
+{
+    auto shm_object_handle = runtime_binding.GetShmObjectHandle(service_element_instance_identifier);
+    if (shm_object_handle.has_value())
+    {
+        return std::move(shm_object_handle.value());
+    }
+
+    auto cached_file_descriptor =
+        runtime_binding.GetCachedFileDescriptorForReregisteringShmObject(service_element_instance_identifier);
+
+    if (!cached_file_descriptor.has_value())
+    {
+        // We also have no cached file descriptor for the shm-object! This means this shm-object/the trace call
+        // related to it shall be ignored
+        return MakeUnexpected(TraceErrorCode::TraceErrorDisableTracePointInstance);
+    }
+
+    // Try to re-register with cached_file_descriptor
+    const memory::shared::ISharedMemoryResource::FileDescriptor shm_object_fd = cached_file_descriptor.value().first;
+    void* const shm_memory_start_address = cached_file_descriptor.value().second;
+    const auto register_shm_result =
+        analysis::tracing::GenericTraceAPI::RegisterShmObject(runtime_binding.GetTraceClientId(), shm_object_fd);
+    if (!register_shm_result.has_value())
+    {
+        if (IsTerminalFatalError(register_shm_result.error()))
+        {
+            score::mw::log::LogWarn("lola")
+                << "TracingRuntime: Disabling Tracing because of kTerminalFatal Error: " << register_shm_result.error();
+            atomic_state_.is_tracing_enabled = false;
+            return MakeUnexpected(TraceErrorCode::TraceErrorDisableAllTracePoints);
+        }
+        // register failed, we won't try any further
+        runtime_binding.ClearCachedFileDescriptorForReregisteringShmObject(service_element_instance_identifier);
+        score::mw::log::LogError("lola")
+            << "TracingRuntime::Trace: Re-registration of ShmObject for ServiceElementInstanceIdentifier "
+            << service_element_instance_identifier
+            << " failed. Any Trace-Call related to this ShmObject will now be ignored!";
+        // we didn't get a shm-object-handle (no valid registration) and even re-registration
+        // failed, so we skip this TRACE call according to  SCR-18172392, which requires only on register-retry.
+        return MakeUnexpected(TraceErrorCode::TraceErrorDisableTracePointInstance);
+    }
+    shm_object_handle = register_shm_result.value();
+    // we re-registered successfully at GenericTraceAPI -> now also register to the binding specific runtime.
+    runtime_binding.RegisterShmObject(
+        service_element_instance_identifier, shm_object_handle.value(), shm_memory_start_address);
+
+    return std::move(shm_object_handle.value());
+}
+
 // Suppress "AUTOSAR C++14 A15-5-3" rule findings. This rule states: "The std::terminate() function shall not be called
 // implicitly". This is a false positive, all results which are accessed with '.value()' that could implicitly call
 // 'std::terminate()' (in case it doesn't have value) has a check in advance using '.has_value()', so no way for
@@ -460,48 +514,14 @@ ResultBlank TracingRuntime::Trace(const BindingType binding_type,
     }
     auto& runtime_binding = GetTracingRuntimeBinding(binding_type);
 
-    auto shm_object_handle = runtime_binding.GetShmObjectHandle(service_element_instance_identifier);
+    auto shm_object_handle = GetRegisteredShmObject(runtime_binding, service_element_instance_identifier);
     if (!shm_object_handle.has_value())
     {
-        auto cached_file_descriptor =
-            runtime_binding.GetCachedFileDescriptorForReregisteringShmObject(service_element_instance_identifier);
-
-        if (!cached_file_descriptor.has_value())
-        {
-            // We also have no cached file descriptor for the shm-object! This means this shm-object/the trace call
-            // related to it shall be ignored
-            return MakeUnexpected(TraceErrorCode::TraceErrorDisableTracePointInstance);
-        }
-
-        // Try to re-register with cached_file_descriptor
-        const memory::shared::ISharedMemoryResource::FileDescriptor shm_object_fd =
-            cached_file_descriptor.value().first;
-        void* const shm_memory_start_address = cached_file_descriptor.value().second;
-        const auto register_shm_result =
-            analysis::tracing::GenericTraceAPI::RegisterShmObject(runtime_binding.GetTraceClientId(), shm_object_fd);
-        if (!register_shm_result.has_value())
-        {
-            if (IsTerminalFatalError(register_shm_result.error()))
-            {
-                score::mw::log::LogWarn("lola") << "TracingRuntime: Disabling Tracing because of kTerminalFatal Error: "
-                                              << register_shm_result.error();
-                atomic_state_.is_tracing_enabled = false;
-                return MakeUnexpected(TraceErrorCode::TraceErrorDisableAllTracePoints);
-            }
-            // register failed, we won't try any further
-            runtime_binding.ClearCachedFileDescriptorForReregisteringShmObject(service_element_instance_identifier);
-            score::mw::log::LogError("lola")
-                << "TracingRuntime::Trace: Re-registration of ShmObject for ServiceElementInstanceIdentifier "
-                << service_element_instance_identifier
-                << " failed. Any Trace-Call related to this ShmObject will now be ignored!";
-            // we didn't get a shm-object-handle (no valid registration) and even re-registration
-            // failed, so we skip this TRACE call according to  SCR-18172392, which requires only on register-retry.
-            return MakeUnexpected(TraceErrorCode::TraceErrorDisableTracePointInstance);
-        }
-        shm_object_handle = register_shm_result.value();
-        // we re-registered successfully at GenericTraceAPI -> now also register to the binding specific runtime.
-        runtime_binding.RegisterShmObject(
-            service_element_instance_identifier, shm_object_handle.value(), shm_memory_start_address);
+        // Suppress "AUTOSAR C++14 A7-2-1" rule finding. This rule states: "An expression with enum underlying type
+        // shall only have values corresponding to the enumerators of the enumeration.".
+        // The underlying error code can be only of GetRegisteredShmObject type
+        // coverity[autosar_cpp14_a7_2_1_violation]
+        return MakeUnexpected(static_cast<TraceErrorCode>(*shm_object_handle.error()));
     }
 
     const auto shm_region_start = runtime_binding.GetShmRegionStartAddress(service_element_instance_identifier);

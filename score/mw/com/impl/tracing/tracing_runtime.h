@@ -171,6 +171,10 @@ class TracingRuntime : public ITracingRuntime
                                        const analysis::tracing::TraceResult& trace_call_result,
                                        ITracingRuntimeBinding& tracing_runtime_binding) noexcept;
 
+    Result<analysis::tracing::ShmObjectHandle> GetRegisteredShmObject(
+        ITracingRuntimeBinding& runtime_binding,
+        const ServiceElementInstanceIdentifierView service_element_instance_identifier) noexcept;
+
     std::unordered_map<BindingType, ITracingRuntimeBinding*> tracing_runtime_bindings_;
 
     /// \brief Threshold for switching from LogInfo to LogDebug level during consecutive failures
