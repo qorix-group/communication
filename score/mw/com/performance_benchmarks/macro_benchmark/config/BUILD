@@ -10,6 +10,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
+
 load("//bazel/tools:json_schema_validator.bzl", "validate_json_schema_test")
 
 filegroup(
