@@ -33,6 +33,7 @@ py_library(
 py_binary(
     name = "parsed_source_files_for_source_code_linker",
     srcs = ["source_code_linker_main.py"],
+    imports = ["."],
     main = "source_code_linker_main.py",
     visibility = ["//visibility:public"],
     deps = [":source_code_linker_lib"],
