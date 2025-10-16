@@ -130,16 +130,16 @@ bool QnxDispatchServer::ServerConnection::ProcessInput(const std::uint8_t code,
     {
         case score::cpp::to_underlying(ClientToServer::REQUEST):
             result = (std::holds_alternative<HandlerPointerT>(user_data)
-                        ? std::get<HandlerPointerT>(user_data)->OnMessageSentWithReply(*this, message)
-                        : server.sent_with_reply_callback_(*this, message))
-                .has_value();
+                          ? std::get<HandlerPointerT>(user_data)->OnMessageSentWithReply(*this, message)
+                          : server.sent_with_reply_callback_(*this, message))
+                         .has_value();
             break;
 
         case score::cpp::to_underlying(ClientToServer::SEND):
             result = (std::holds_alternative<HandlerPointerT>(user_data)
-                        ? std::get<HandlerPointerT>(user_data)->OnMessageSent(*this, message)
-                        : server.sent_callback_(*this, message))
-                .has_value();
+                          ? std::get<HandlerPointerT>(user_data)->OnMessageSent(*this, message)
+                          : server.sent_callback_(*this, message))
+                         .has_value();
             break;
 
         default:
