@@ -55,7 +55,7 @@ bool RunService(const ServiceConfig& config, score::cpp::stop_token test_stop_to
 
     using score::mw::com::test::TestDataSkeleton;
 
-    auto instance_specifier_result = InstanceSpecifier::Create(kLoLaBenchmarkInstanceSpecifier);
+    auto instance_specifier_result = InstanceSpecifier::Create(std::string{kLoLaBenchmarkInstanceSpecifier});
     if (!instance_specifier_result.has_value())
     {
         log::LogError(kLogContext) << "instance specifier could not be created.";

@@ -309,7 +309,7 @@ bool PollForEvent(TestDataProxy& lola_proxy,
 bool RunClient(const ClientConfig& config, score::cpp::stop_token test_stop_token)
 {
 
-    auto instance_specifier = InstanceSpecifier::Create(kLoLaBenchmarkInstanceSpecifier).value();
+    auto instance_specifier = InstanceSpecifier::Create(std::string{kLoLaBenchmarkInstanceSpecifier}).value();
     score::mw::log::LogInfo(kLogContext) << "Starting a Client thread";
 
     std::optional<TestDataProxy::HandleType> find_service_handle_result;
