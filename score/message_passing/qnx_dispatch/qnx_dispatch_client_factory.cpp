@@ -30,8 +30,7 @@ QnxDispatchClientFactory::QnxDispatchClientFactory(const std::shared_ptr<QnxDisp
 {
 }
 
-// NOLINTNEXTLINE(modernize-use-equals-default) false positive: the destructor is not trivial
-QnxDispatchClientFactory::~QnxDispatchClientFactory() noexcept {}
+QnxDispatchClientFactory::~QnxDispatchClientFactory() noexcept = default;
 
 score::cpp::pmr::unique_ptr<IClientConnection> QnxDispatchClientFactory::Create(const ServiceProtocolConfig& protocol_config,
                                                                          const ClientConfig& client_config) noexcept

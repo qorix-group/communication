@@ -30,8 +30,7 @@ QnxDispatchServerFactory::QnxDispatchServerFactory(const std::shared_ptr<QnxDisp
 {
 }
 
-// NOLINTNEXTLINE(modernize-use-equals-default) false positive: the destructor is not trivial
-QnxDispatchServerFactory::~QnxDispatchServerFactory() noexcept {}
+QnxDispatchServerFactory::~QnxDispatchServerFactory() noexcept = default;
 
 score::cpp::pmr::unique_ptr<IServer> QnxDispatchServerFactory::Create(const ServiceProtocolConfig& protocol_config,
                                                                const ServerConfig& server_config) noexcept
