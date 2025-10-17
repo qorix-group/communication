@@ -17,7 +17,7 @@
 
 #include "score/mw/com/impl/handle_type.h"
 #include "score/mw/com/impl/instance_identifier.h"
-#include "score/mw/com/impl/mocking/test_type_factories.h"
+#include "score/mw/com/impl/mocking/test_type_utilities.h"
 #include "score/mw/com/mocking/i_runtime.h"
 
 #include <cstdint>
