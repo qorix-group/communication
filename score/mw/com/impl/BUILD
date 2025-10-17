@@ -122,6 +122,26 @@ cc_library(
 )
 
 cc_library(
+    name = "proxy_method",
+    srcs = ["proxy_method.cpp"],
+    hdrs = ["proxy_method.h"],
+    features = COMPILER_WARNING_FEATURES,
+    tags = ["FFI"],
+    visibility = [
+        "//score/mw/com:__subpackages__",
+    ],
+    deps = [
+        ":error",
+        ":method_signature_element_ptr",
+        "//score/mw/com/impl/util:type_erased_storage",
+        "@score_baselibs//score/containers:dynamic_array",
+        "@score_baselibs//score/language/futurecpp",
+        "@score_baselibs//score/mw/log",
+        "@score_baselibs//score/result",
+    ],
+)
+
+cc_library(
     name = "skeleton_event",
     srcs = ["skeleton_event.cpp"],
     hdrs = ["skeleton_event.h"],
@@ -450,6 +470,27 @@ cc_library(
         "//score/mw/com/impl/plumbing:sample_ptr",
         "//score/mw/com/impl/tracing:i_tracing_runtime",
         "@score_baselibs//score/language/futurecpp",
+        "@score_baselibs//score/result",
+    ],
+)
+
+cc_library(
+    name = "proxy_method_binding",
+    srcs = [
+        "proxy_method_binding.cpp",
+    ],
+    hdrs = [
+        "proxy_method_binding.h",
+    ],
+    features = COMPILER_WARNING_FEATURES,
+    tags = ["FFI"],
+    visibility = [
+        "//score/mw/com/impl/bindings/lola:__pkg__",
+        "//score/mw/com/impl/bindings/mock_binding:__pkg__",
+        "//score/mw/com/impl/plumbing:__subpackages__",
+    ],
+    deps = [
+        "//score/mw/com/impl/util:type_erased_storage",
         "@score_baselibs//score/result",
     ],
 )
