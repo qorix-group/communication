@@ -74,16 +74,6 @@ ClientConnection::ClientConnection(std::shared_ptr<ISharedResourceEngine> engine
 
 ClientConnection::~ClientConnection() noexcept
 {
-    // TODO: we will need to decide if the second approach (force-stopping instead of asserting on being stopped)
-    // is more viable. If it is, we will need to update the design docs.
-#if 0
-    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD(state_ == State::kStopped);
-    {
-        // if we are not called from the state callback, wait until it finishes
-        std::lock_guard<std::recursive_mutex> guard{callback_context_->finalize_mutex};
-    }
-    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD(state_ == State::kStopped);
-#else
     if (state_ == State::kStopped)
     {
         // if we are not called from the state callback, wait until it finishes
@@ -98,7 +88,6 @@ ClientConnection::~ClientConnection() noexcept
         }
         std::lock_guard<std::recursive_mutex> guard{callback_context_->finalize_mutex};
     }
-#endif
     send_pool_.clear();
 }
 
@@ -509,6 +498,9 @@ void ClientConnection::ProcessSendQueueUnderLock(std::unique_lock<std::mutex>& l
                 break;
             }
             auto callback = std::move(*waiting_for_reply_);
+            // We are not releasing waiting_for_reply_ yet. This makes our life easier if the callback and/or some
+            // competing thread wants to queue another message - they will just add it to the send_queue_ and we will
+            // process it in the next iteration.
             lock.unlock();
             callback(score::cpp::make_unexpected(expected.error()));
             lock.lock();

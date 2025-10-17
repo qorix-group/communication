@@ -565,7 +565,7 @@ std::int32_t QnxDispatchEngine::io_write(resmgr_context_t* const ctp,
     // coverity[autosar_cpp14_a5_16_1_violation]
     // coverity[autosar_cpp14_m5_0_4_violation]
     // coverity[autosar_cpp14_m5_0_21_violation]
-    const std::size_t nbytes = _IO_WRITE_GET_NBYTES(msg);  // LCOV_EXCL_BR_LINE library macro with benign conditional
+    const std::size_t nbytes = _IO_WRITE_GET_NBYTES(msg);
     if (nbytes < 1U)
     {
         return EBADMSG;
@@ -637,7 +637,7 @@ std::int32_t QnxDispatchEngine::io_read(resmgr_context_t* const ctp,
     // coverity[autosar_cpp14_a5_16_1_violation]
     // coverity[autosar_cpp14_m5_0_4_violation]
     // coverity[autosar_cpp14_m5_0_21_violation]
-    const size_t nbytes = _IO_READ_GET_NBYTES(msg);  // LCOV_EXCL_BR_LINE library macro with benign conditional
+    const size_t nbytes = _IO_READ_GET_NBYTES(msg);
     if (nbytes == 0U)
     {
         _IO_SET_READ_NBYTES(ctp, 0);

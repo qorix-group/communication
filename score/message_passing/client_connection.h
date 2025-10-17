@@ -68,6 +68,9 @@ class ClientConnection final : public IClientConnection
     void TryConnect() noexcept;
     bool TryQueueMessage(score::cpp::span<const std::uint8_t> message, ReplyCallback callback) noexcept;
     StopReason ProcessInputEvent() noexcept;
+
+    // The lock shall be already taken.
+    // The function may release it, call a user callback, and then lock it again.
     void ProcessSendQueueUnderLock(std::unique_lock<std::mutex>& lock) noexcept;
     void ArmSendQueueUnderLock() noexcept;
 
