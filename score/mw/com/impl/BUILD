@@ -109,6 +109,19 @@ cc_library(
 )
 
 cc_library(
+    name = "method_signature_element_ptr",
+    srcs = ["method_signature_element_ptr.cpp"],
+    hdrs = ["method_signature_element_ptr.h"],
+    features = COMPILER_WARNING_FEATURES,
+    tags = ["FFI"],
+    visibility = [
+        "//score/mw/com:__subpackages__",
+    ],
+    deps = [
+    ],
+)
+
+cc_library(
     name = "skeleton_event",
     srcs = ["skeleton_event.cpp"],
     hdrs = ["skeleton_event.h"],
@@ -856,6 +869,14 @@ cc_gtest_unit_test(
     deps = [
         ":sample_reference_tracker",
         "@score_baselibs//score/language/futurecpp",
+    ],
+)
+
+cc_gtest_unit_test(
+    name = "method_signature_element_ptr_test",
+    srcs = ["method_signature_element_ptr_test.cpp"],
+    deps = [
+        ":method_signature_element_ptr",
     ],
 )
 
