@@ -20,20 +20,20 @@
 namespace score::mw::com::impl
 {
 
-class SkeletonMock
+class ISkeleton
 {
   public:
-    SkeletonMock() = default;
-    virtual ~SkeletonMock() = default;
+    ISkeleton() = default;
+    virtual ~ISkeleton() = default;
 
     virtual ResultBlank OfferService() = 0;
     virtual void StopOfferService() = 0;
 
   protected:
-    SkeletonMock(const SkeletonMock&) = default;
-    SkeletonMock(SkeletonMock&&) noexcept = default;
-    SkeletonMock& operator=(SkeletonMock&&) & noexcept = default;
-    SkeletonMock& operator=(const SkeletonMock&) & = default;
+    ISkeleton(const ISkeleton&) = default;
+    ISkeleton(ISkeleton&&) noexcept = default;
+    ISkeleton& operator=(ISkeleton&&) & noexcept = default;
+    ISkeleton& operator=(const ISkeleton&) & = default;
 };
 
 }  // namespace score::mw::com::impl
