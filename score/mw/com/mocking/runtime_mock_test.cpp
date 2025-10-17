@@ -12,7 +12,7 @@
  ********************************************************************************/
 #include "score/mw/com/impl/com_error.h"
 #include "score/mw/com/impl/mocking/test_type_factories.h"
-#include "score/mw/com/mocking/runtime_mock_impl.h"
+#include "score/mw/com/mocking/runtime_mock.h"
 #include "score/mw/com/mocking/test_type_factories.h"
 #include "score/mw/com/runtime.h"
 #include "score/mw/com/runtime_configuration.h"
@@ -46,7 +46,7 @@ class RuntimeMockFixture : public ::testing::Test
     InstanceIdentifierContainer dummy_instance_identifier_container_{impl::MakeFakeInstanceIdentifier(1U),
                                                                      impl::MakeFakeInstanceIdentifier(1U)};
 
-    RuntimeMockImpl runtime_mock_{};
+    RuntimeMock runtime_mock_{};
 };
 
 TEST_F(RuntimeMockFixture, ResolveInstanceIdsDispatchesToMockAfterInjectingMock)

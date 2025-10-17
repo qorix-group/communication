@@ -21,14 +21,14 @@ namespace detail
 
 /// @brief Function which is a friend of RuntimeMockHolder in mw/com/runtime.h. It allows injecting a mock into the
 /// RuntimeMockHolder.
-void InjectRuntimeMock(RuntimeMock& runtime_mock)
+void InjectRuntimeMock(IRuntime& runtime_mock)
 {
     RuntimeMockHolder::InjectRuntimeMockImpl(runtime_mock);
 }
 
 }  // namespace detail
 
-void InjectRuntimeMockImpl(RuntimeMock& runtime_mock)
+void InjectRuntimeMockImpl(IRuntime& runtime_mock)
 {
     detail::InjectRuntimeMock(runtime_mock);
 }

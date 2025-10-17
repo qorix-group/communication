@@ -10,4 +10,4 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#include "score/mw/com/mocking/runtime_mock_impl.h"
+#include "score/mw/com/mocking/i_runtime.h"

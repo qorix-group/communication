@@ -28,7 +28,7 @@ namespace score::mw::com::runtime
 namespace detail
 {
 
-RuntimeMock* RuntimeMockHolder::runtime_mock_{nullptr};
+IRuntime* RuntimeMockHolder::runtime_mock_{nullptr};
 
 }
 

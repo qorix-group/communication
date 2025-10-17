@@ -10,40 +10,24 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#ifndef SCORE_MW_COM_MOCKING_RUNTIME_MOCK_H
-#define SCORE_MW_COM_MOCKING_RUNTIME_MOCK_H
+#ifndef SCORE_MW_COM_MOCKING_RUNTIME_MOCK_IMPL_H
+#define SCORE_MW_COM_MOCKING_RUNTIME_MOCK_IMPL_H
 
-#include "score/mw/com/runtime_configuration.h"
+#include "score/mw/com/mocking/i_runtime.h"
 
-#include "score/mw/com/types.h"
-
-#include "score/memory/string_literal.h"
-#include "score/result/result.h"
-
-#include <score/span.hpp>
-
-#include <cstdint>
+#include <gmock/gmock.h>
 
 namespace score::mw::com::runtime
 {
 
-class RuntimeMock
+class RuntimeMock : public IRuntime
 {
   public:
-    RuntimeMock() = default;
-    virtual ~RuntimeMock() = default;
-
-    virtual score::Result<InstanceIdentifierContainer> ResolveInstanceIDs(const InstanceSpecifier model_name) = 0;
-    virtual void InitializeRuntime(const std::int32_t argc, score::cpp::span<const score::StringLiteral> argv) = 0;
-    virtual void InitializeRuntime(const runtime::RuntimeConfiguration& runtime_configuration) = 0;
-
-  protected:
-    RuntimeMock(const RuntimeMock&) = default;
-    RuntimeMock(RuntimeMock&&) noexcept = default;
-    RuntimeMock& operator=(RuntimeMock&&) & noexcept = default;
-    RuntimeMock& operator=(const RuntimeMock&) & = default;
+    MOCK_METHOD(score::Result<InstanceIdentifierContainer>, ResolveInstanceIDs, (const InstanceSpecifier), (override));
+    MOCK_METHOD(void, InitializeRuntime, (const std::int32_t, score::cpp::span<const score::StringLiteral>), (override));
+    MOCK_METHOD(void, InitializeRuntime, (const runtime::RuntimeConfiguration&), (override));
 };
 
 }  // namespace score::mw::com::runtime
 
-#endif  // SCORE_MW_COM_MOCKING_RUNTIME_MOCK_H
+#endif  // SCORE_MW_COM_MOCKING_RUNTIME_MOCK_IMPL_H
