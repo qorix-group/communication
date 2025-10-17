@@ -10,8 +10,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#ifndef SCORE_MW_COM_IMPL_MOCKING_SKELETON_FIELD_MOCK_IMPL_H
-#define SCORE_MW_COM_IMPL_MOCKING_SKELETON_FIELD_MOCK_IMPL_H
+#ifndef SCORE_MW_COM_IMPL_MOCKING_SKELETON_FIELD_MOCK_H
+#define SCORE_MW_COM_IMPL_MOCKING_SKELETON_FIELD_MOCK_H
 
 #include "score/mw/com/impl/mocking/i_skeleton_field.h"
 
@@ -31,4 +31,4 @@ class SkeletonFieldMock : public ISkeletonField<SampleType>
 
 }  // namespace score::mw::com::impl
 
-#endif  // SCORE_MW_COM_IMPL_MOCKING_SKELETON_FIELD_MOCK_IMPL_H
+#endif  // SCORE_MW_COM_IMPL_MOCKING_SKELETON_FIELD_MOCK_H
