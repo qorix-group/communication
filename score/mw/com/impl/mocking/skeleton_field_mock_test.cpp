@@ -12,7 +12,7 @@
  ********************************************************************************/
 #include "score/result/result.h"
 #include "score/mw/com/impl/com_error.h"
-#include "score/mw/com/impl/mocking/skeleton_field_mock_impl.h"
+#include "score/mw/com/impl/mocking/skeleton_field_mock.h"
 #include "score/mw/com/impl/mocking/test_type_utilities.h"
 #include "score/mw/com/impl/skeleton_field.h"
 
@@ -39,7 +39,7 @@ class SkeletonFieldMockFixture : public ::testing::Test
         unit_.InjectMock(skeleton_field_mock_);
     }
 
-    SkeletonFieldMockImpl<TestSampleType> skeleton_field_mock_{};
+    SkeletonFieldMock<TestSampleType> skeleton_field_mock_{};
     SkeletonBase skeleton_base_{nullptr, MakeFakeInstanceIdentifier(1U)};
     SkeletonField<TestSampleType> unit_{skeleton_base_, kDummyFieldName, nullptr};
 };

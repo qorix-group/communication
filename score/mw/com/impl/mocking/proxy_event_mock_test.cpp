@@ -12,8 +12,8 @@
  ********************************************************************************/
 #include "score/mw/com/impl/com_error.h"
 #include "score/mw/com/impl/handle_type.h"
-#include "score/mw/com/impl/mocking/proxy_event_mock_impl.h"
-#include "score/mw/com/impl/mocking/proxy_field_mock_impl.h"
+#include "score/mw/com/impl/mocking/proxy_event_mock.h"
+#include "score/mw/com/impl/mocking/proxy_field_mock.h"
 #include "score/mw/com/impl/mocking/test_type_utilities.h"
 #include "score/mw/com/impl/proxy_event.h"
 #include "score/mw/com/impl/proxy_field.h"
@@ -43,14 +43,14 @@ class ProxyServiceElementMockFixture : public ::testing::Test
 {
   public:
     using ProxyServiceElement = typename T::ProxyServiceElement;
-    using ProxyServiceElementMockImpl = typename T::ProxyServiceElementMockImpl;
+    using ProxyServiceElementMock = typename T::ProxyServiceElementMock;
 
     ProxyServiceElementMockFixture()
     {
         unit_.InjectMock(proxy_service_element_mock_);
     }
 
-    ProxyServiceElementMockImpl proxy_service_element_mock_{};
+    ProxyServiceElementMock proxy_service_element_mock_{};
     ProxyBase proxy_base_{nullptr, MakeFakeHandle(1U)};
     ProxyServiceElement unit_{proxy_base_, nullptr, kDummyServiceElementName};
 };
@@ -58,13 +58,13 @@ class ProxyServiceElementMockFixture : public ::testing::Test
 struct ProxyEventStruct
 {
     using ProxyServiceElement = ProxyEvent<TestSampleType>;
-    using ProxyServiceElementMockImpl = ProxyEventMockImpl<TestSampleType>;
+    using ProxyServiceElementMock = ProxyEventMock<TestSampleType>;
 };
 
 struct ProxyFieldStruct
 {
     using ProxyServiceElement = ProxyField<TestSampleType>;
-    using ProxyServiceElementMockImpl = ProxyFieldMockImpl<TestSampleType>;
+    using ProxyServiceElementMock = ProxyFieldMock<TestSampleType>;
 };
 
 using MyTypes = ::testing::Types<ProxyEventStruct, ProxyFieldStruct>;

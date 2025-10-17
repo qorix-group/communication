@@ -10,25 +10,23 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#ifndef SCORE_MW_COM_IMPL_MOCKING_SKELETON_FIELD_MOCK_IMPL_H
-#define SCORE_MW_COM_IMPL_MOCKING_SKELETON_FIELD_MOCK_IMPL_H
+#ifndef SCORE_MW_COM_IMPL_MOCKING_SKELETON_MOCK_IMPL_H
+#define SCORE_MW_COM_IMPL_MOCKING_SKELETON_MOCK_IMPL_H
 
-#include "score/mw/com/impl/mocking/i_skeleton_field.h"
+#include "score/mw/com/impl/mocking/i_skeleton.h"
 
 #include <gmock/gmock.h>
 
 namespace score::mw::com::impl
 {
 
-template <typename SampleType>
-class SkeletonFieldMockImpl : public ISkeletonField<SampleType>
+class SkeletonMock : public ISkeleton
 {
   public:
-    MOCK_METHOD(ResultBlank, Update, (const SampleType&), (override));
-    MOCK_METHOD(ResultBlank, Update, (SampleAllocateePtr<SampleType>), (override));
-    MOCK_METHOD(Result<SampleAllocateePtr<SampleType>>, Allocate, (), (override));
+    MOCK_METHOD(ResultBlank, OfferService, (), (override));
+    MOCK_METHOD(void, StopOfferService, (), (override));
 };
 
 }  // namespace score::mw::com::impl
 
-#endif  // SCORE_MW_COM_IMPL_MOCKING_SKELETON_FIELD_MOCK_IMPL_H
+#endif  // SCORE_MW_COM_IMPL_MOCKING_SKELETON_MOCK_IMPL_H
