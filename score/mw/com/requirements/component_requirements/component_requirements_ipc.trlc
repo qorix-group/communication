@@ -2808,7 +2808,7 @@ section "com" {
                 ScoreReq.CompReq EventLevelConfigSwitchDocumentation {
                     description = '''The documentation of the Event Level Config Switch in the schema definition, shall inform, that setting the {{numberOfIpcTracingSlots}} parameter to a value greater than 0, will enable {{IPC tracing}}. This involves internal allocation of additional slots on top of the user configured {{numberOfSampleSlots}}. In total leading to {{numberOfIpcTracingSlots + numberOfSampleSlots }}allocations.'''
                     safety = ScoreReq.Asil.QM
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.SupportForTracing@1, Communication.EventType@1]
                     version = 1
                 }
 
@@ -2816,7 +2816,7 @@ section "com" {
                 ScoreReq.CompReq FieldLevelConfigSwitchDocumentation {
                     description = '''The documentation of the Field Level Config Switch {{numberOfIpcTracingSlots}}{{IPC tracing}}additional{{numberOfSampleSlots}}{{numberOfIpcTracingSlots + numberOfSampleSlots }}in the schema definition, shall inform, that setting the  parameter to a value greater than 0, will enable  This involves internal allocation of  slots on top of the user configured  In total leading to allocations.'''
                     safety = ScoreReq.Asil.QM
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.SupportForTracing@1]
                     version = 1
                 }
 
@@ -2824,7 +2824,7 @@ section "com" {
                 ScoreReq.CompReq DocumentationOfSupportedTracePointTypes {
                     description = '''The currently supported trace-point types by {{mw::com}}/{{LoLa}} shall be documented within the git repository location, where {{mw::com}}/{{LoLa}} user documentation is located.'''
                     safety = ScoreReq.Asil.QM
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.SupportForTracing@1]
                     version = 1
                 }
 
@@ -2834,7 +2834,7 @@ section "com" {
 
                     Note: The default name of this configuration file is {{mw\_com\_config.json}}'''
                     safety = ScoreReq.Asil.QM
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.SupportForTracing@1]
                     version = 1
                 }
 
@@ -2842,7 +2842,7 @@ section "com" {
                 ScoreReq.CompReq BehaviourInAbsenceOfConfigSwitch {
                     description = '''If no such configuration property (see Application Level Config Switch) exists within the configuration file, {{IPC Tracing}} for {{mw::com}}/{{LoLa }}shall be turned off for this application.'''
                     safety = ScoreReq.Asil.QM
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.SupportForTracing@1]
                     version = 1
                 }
 
@@ -2850,7 +2850,7 @@ section "com" {
                 ScoreReq.CompReq ApplicationLevelPropertyInstanceIdentifier {
                     description = '''The configuration file of a {{mw::com}}/{{LoLa}} application shall provide a mandatory configuration property {{application instance identifier}} for {{IPC Tracing}}. It is mandatory only if {{IPC Tracing}} property (as per Application Level Config Switch) is present in the configuration file.'''
                     safety = ScoreReq.Asil.QM
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.SupportForTracing@1]
                     version = 1
                 }
 
@@ -2858,7 +2858,7 @@ section "com" {
                 ScoreReq.CompReq TraceFilterConfigPath {
                     description = '''The configuration file of a {{mw::com}}/{{LoLa }}application shall provide a configuration property to define the path/location of the trace-point filter configuration to be used.'''
                     safety = ScoreReq.Asil.QM
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.SupportForTracing@1]
                     version = 1
                 }
 
@@ -2866,7 +2866,7 @@ section "com" {
                 ScoreReq.CompReq DefaultTraceFilterConfigPath {
                     description = '''If {{IPC Tracing}} is turned on (Application Level Config Switch) and no path/location of the trace-point filter configuration is defined, a default location {{./etc/mw\_com\_trace\_filter.json}} is assumed, where this path is relative to the application-process current working directory.'''
                     safety = ScoreReq.Asil.QM
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.SupportForTracing@1]
                     version = 1
                 }
 
@@ -2878,7 +2878,7 @@ section "com" {
 
                     Note: The schema is located in the same GIT repo as the {{mw::com}}/{{LoLa}} implementation. An {{mw::com}}/{{LoLa}} implementation in a specific branch, shall support always the schema from the same branch.'''
                     safety = ScoreReq.Asil.QM
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.SupportForTracing@1]
                     version = 1
                 }
 
@@ -2888,7 +2888,7 @@ section "com" {
 
                     A value of {{0}} implicitly means, that {{IPC Tracing }}shall be disabled for the given event instance.'''
                     safety = ScoreReq.Asil.QM
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.SupportForTracing@1]
                     version = 1
                 }
 
@@ -2896,7 +2896,7 @@ section "com" {
                 ScoreReq.CompReq DefaultEventLevelConfigSwitch {
                     description = '''If the configuration property Event Level Config Switch is not configured for an event instance, its default value shall be {{0}}.'''
                     safety = ScoreReq.Asil.QM
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.SupportForTracing@1]
                     version = 1
                 }
 
@@ -2908,7 +2908,7 @@ section "com" {
 
                     A value of {{0}} implicitly means, that {{IPC Tracing}} shall be disabled for the given field instance.'''
                     safety = ScoreReq.Asil.QM
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.SupportForTracing@1]
                     version = 1
                 }
 
@@ -2916,7 +2916,7 @@ section "com" {
                 ScoreReq.CompReq DefaultFieldLevelConfigSwitch {
                     description = '''If the configuration property Field Level Config Switch is not configured for a field instance, its default value shall be {{0}}.'''
                     safety = ScoreReq.Asil.QM
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.SupportForTracing@1]
                     version = 1
                 }
 
@@ -2924,7 +2924,7 @@ section "com" {
                 ScoreReq.CompReq ProcessingTraceFilterConfig {
                     description = '''If the trace filter configuration file (see Trace Filter Config Path) could not be successfully opened or parsed (according to the underlying schema specified in Format of Trace Filter Config), then a corresponding error log message shall be created and {{IPC Tracing}} shall be turned off.'''
                     safety = ScoreReq.Asil.QM
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.SupportForTracing@1]
                     version = 1
                 }
 
@@ -2932,7 +2932,7 @@ section "com" {
                 ScoreReq.CompReq SchemaValidationFailure {
                     description = '''If a schema-violation of the schema for the trace filter confifg (see Format of Trace Filter Config) is detected during processing/parsing of the trace filter config, an error log message shall be created and {{IPC Tracing}} shall be turned off.'''
                     safety = ScoreReq.Asil.QM
-                    derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                    derived_from = [Communication.SupportForTracing@1]
                     version = 1
                 }
 
@@ -3457,7 +3457,7 @@ section "com" {
 
                 The respective adaptive AUTOSAR Requirements an be found here: Multi-Target-Build'''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.DeploymentConfigurationAtRuntime@1]
                 version = 1
             }
 
@@ -3473,7 +3473,7 @@ section "com" {
                 * changes to one or more attributes of meta classes derived from ServiceInterfaceDeployment, ServiceMethodDeployment, ServiceFieldDeployment, and
                  ServiceEventDeployment (e.g., changing the value of SomeipEventDeployment.separationTime)'''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.DeploymentConfigurationAtRuntime@1]
                 version = 1
             }
 
@@ -3488,7 +3488,7 @@ section "com" {
                 * changes to one or more attributes of meta class derived from ProvidedApServiceInstance and/or RequiredApServiceInstance (e.g., changing the value of the SomeipProvidedEventGroup.multicastThreshold
                  or the SomeipSdServerServiceInstanceConfig.serviceOfferTimeToLive).'''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.DeploymentConfigurationAtRuntime@1]
                 version = 1
             }
         }
@@ -3535,7 +3535,7 @@ section "com" {
 
                 This shall be true for all proxies within an application.'''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.SupportForTimeBasedArchitecture@1, Communication.ServiceDiscovery@1]
                 version = 1
             }
 
@@ -3543,7 +3543,7 @@ section "com" {
             ScoreReq.CompReq DefinitionOfResourceNeeds {
                 description = '''A service instance provider side is configured to support a given number of proxy instances with defined sample-counts in their event/field subscriptions. Therefore it reserves given resources to fulfill the communication setup demanded by this configuration'''
                 safety = ScoreReq.Asil.QM
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.ProducerConsumerPattern@1]
                 version = 1
             }
 
@@ -3567,7 +3567,7 @@ section "com" {
             ScoreReq.CompReq KeepUserProvidedDataValidAfterSkeletonRestart {
                 description = '''After an application restarts, a skeleton shall be able to be created without .altering or invalidating user-provided data'''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.SafeCommunication@1]
                 version = 1
             }
 
@@ -3575,7 +3575,7 @@ section "com" {
             ScoreReq.CompReq RecoverSubscriptionStateAfterSkeletonRestart {
                 description = '''After restarting a {{Skeleton}}, the previously subscribed events/fields shall still be subscribed, including their max-sample counts.'''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.ProducerConsumerPattern@1, Communication.EventType@1]
                 version = 1
             }
 
@@ -3583,7 +3583,7 @@ section "com" {
             ScoreReq.CompReq RecoverSubscriptionCapacityAfterSkeletonRestart {
                 description = '''After restarting a {{Skeleton}}, it shall have the same capacity for new subscribers like it had before the restart.'''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.ProducerConsumerPattern@1, Communication.EventType@1]
                 version = 1
             }
 
@@ -3591,7 +3591,7 @@ section "com" {
             ScoreReq.CompReq RecoverAllocatableSamplesAfterSkeletonRestart {
                 description = '''After restarting a {{Skeleton}}, it shall be able to allocate the configured amount of {{SampleAllocateePtr}} as before the restart.'''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.ZeroCopy@1]
                 version = 1
             }
 
@@ -3601,7 +3601,7 @@ section "com" {
 
                 Note: Possible handlers are: {{EventUpdateNotificationHandler}}, {{SubscriptionStateChangeHandler}}'''
                 safety = ScoreReq.Asil.B
-                derived_from = [Communication.SupportForTimeBasedArchitecture@2]
+                derived_from = [Communication.ProducerConsumerPattern@1, Communication.EventType@1]
                 version = 1
             }
         }
