@@ -133,6 +133,8 @@ cc_library(
     deps = [
         ":error",
         ":method_signature_element_ptr",
+        ":proxy_base",
+        ":proxy_method_binding",
         "//score/mw/com/impl/util:type_erased_storage",
         "@score_baselibs//score/containers:dynamic_array",
         "@score_baselibs//score/language/futurecpp",
@@ -918,6 +920,15 @@ cc_gtest_unit_test(
     srcs = ["method_signature_element_ptr_test.cpp"],
     deps = [
         ":method_signature_element_ptr",
+    ],
+)
+
+cc_gtest_unit_test(
+    name = "proxy_method_test",
+    srcs = ["proxy_method_test.cpp"],
+    deps = [
+        ":proxy_method",
+        "//score/mw/com/impl/bindings/mock_binding",
     ],
 )
 
