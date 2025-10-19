@@ -334,8 +334,9 @@ auto FlagFileCrawler::AddWatchToInotifyInstance(const EnrichedInstanceIdentifier
     }
 
     const auto search_path = std::move(directory_creation_result).value();
-    const auto watch_descriptor = inotify_instance_.AddWatch(
-        search_path.Native(), os::Inotify::EventMask::kInCreate | os::Inotify::EventMask::kInDelete);
+    const auto event_mask = os::Inotify::EventMask::kInCreate | os::Inotify::EventMask::kInDelete;
+
+    const auto watch_descriptor = inotify_instance_.AddWatch(search_path.Native(), event_mask);
     if (!(watch_descriptor.has_value()))
     {
         mw::log::LogError("lola") << "Could not add watch for" << search_path << ":"
@@ -363,7 +364,9 @@ auto FlagFileCrawler::AddWatchToInotifyInstance(const EnrichedInstanceIdentifier
         }
         return score::MakeUnexpected(ComErrc::kBindingFailure, "Could not add watch for service id");
     }
-
+    mw::log::LogDebug("lola") << "Successfully added inotify watch: path=" << search_path.Native()
+                              << ", descriptor=" << watch_descriptor.value().GetUnderlying()
+                              << ", mask=" << static_cast<int>(event_mask);
     return watch_descriptor.value();
 }
 
