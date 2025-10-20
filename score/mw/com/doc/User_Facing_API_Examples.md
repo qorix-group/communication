@@ -2,7 +2,7 @@
 
 > [!NOTE]
 > This document is still a work in progress, thus not all `mw::com` APIs are documented here.
-> However all providedthe information is up to date.
+> However all provided information is up to date.
 
 This document contains examples of each mw::com user facing API.
 
