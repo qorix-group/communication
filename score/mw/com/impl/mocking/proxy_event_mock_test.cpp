@@ -32,44 +32,44 @@ namespace
 
 using TestSampleType = std::uint32_t;
 
-auto kDummyServiceElementName = "MyDummyServiceElement";
+auto kDummyEventFieldName = "MyDummyEventField";
 
 const std::size_t kDummyMaxSampleCount{5U};
 const std::size_t kDummyAvailableSamples{6U};
 
 template <typename T>
-class ProxyServiceElementMockFixture : public ::testing::Test
+class ProxyEventFieldMockFixture : public ::testing::Test
 {
   public:
-    using ProxyServiceElement = typename T::ProxyServiceElement;
-    using ProxyServiceElementMock = typename T::ProxyServiceElementMock;
+    using ProxyEventField = typename T::ProxyEventField;
+    using ProxyEventFieldMock = typename T::ProxyEventFieldMock;
 
-    ProxyServiceElementMockFixture()
+    ProxyEventFieldMockFixture()
     {
         unit_.InjectMock(proxy_service_element_mock_);
     }
 
-    ProxyServiceElementMock proxy_service_element_mock_{};
+    ProxyEventFieldMock proxy_service_element_mock_{};
     ProxyBase proxy_base_{nullptr, MakeFakeHandle(1U)};
-    ProxyServiceElement unit_{proxy_base_, nullptr, kDummyServiceElementName};
+    ProxyEventField unit_{proxy_base_, nullptr, kDummyEventFieldName};
 };
 
 struct ProxyEventStruct
 {
-    using ProxyServiceElement = ProxyEvent<TestSampleType>;
-    using ProxyServiceElementMock = ProxyEventMock<TestSampleType>;
+    using ProxyEventField = ProxyEvent<TestSampleType>;
+    using ProxyEventFieldMock = ProxyEventMock<TestSampleType>;
 };
 
 struct ProxyFieldStruct
 {
-    using ProxyServiceElement = ProxyField<TestSampleType>;
-    using ProxyServiceElementMock = ProxyEventMock<TestSampleType>;
+    using ProxyEventField = ProxyField<TestSampleType>;
+    using ProxyEventFieldMock = ProxyEventMock<TestSampleType>;
 };
 
 using MyTypes = ::testing::Types<ProxyEventStruct, ProxyFieldStruct>;
-TYPED_TEST_SUITE(ProxyServiceElementMockFixture, MyTypes, );
+TYPED_TEST_SUITE(ProxyEventFieldMockFixture, MyTypes, );
 
-TYPED_TEST(ProxyServiceElementMockFixture, SubscribeDispatchesToMockAfterInjectingMock)
+TYPED_TEST(ProxyEventFieldMockFixture, SubscribeDispatchesToMockAfterInjectingMock)
 {
     // Given a ProxyEvent constructed with an empty binding and an injected mock
 
@@ -83,7 +83,7 @@ TYPED_TEST(ProxyServiceElementMockFixture, SubscribeDispatchesToMockAfterInjecti
     ASSERT_TRUE(result.has_value());
 }
 
-TYPED_TEST(ProxyServiceElementMockFixture, SubscribeReturnsErrorWhenMockReturnsError)
+TYPED_TEST(ProxyEventFieldMockFixture, SubscribeReturnsErrorWhenMockReturnsError)
 {
     // Given a ProxyEvent constructed with an empty binding and an injected mock
 
@@ -100,7 +100,7 @@ TYPED_TEST(ProxyServiceElementMockFixture, SubscribeReturnsErrorWhenMockReturnsE
     EXPECT_EQ(result.error(), error_code);
 }
 
-TYPED_TEST(ProxyServiceElementMockFixture, UnsubscribeDispatchesToMockAfterInjectingMock)
+TYPED_TEST(ProxyEventFieldMockFixture, UnsubscribeDispatchesToMockAfterInjectingMock)
 {
     // Given a ProxyEvent constructed with an empty binding and an injected mock
 
@@ -111,7 +111,7 @@ TYPED_TEST(ProxyServiceElementMockFixture, UnsubscribeDispatchesToMockAfterInjec
     this->unit_.Unsubscribe();
 }
 
-TYPED_TEST(ProxyServiceElementMockFixture, GetSubscriptionStateDispatchesToMockAfterInjectingMock)
+TYPED_TEST(ProxyEventFieldMockFixture, GetSubscriptionStateDispatchesToMockAfterInjectingMock)
 {
     // Given a ProxyEvent constructed with an empty binding and an injected mock
 
@@ -126,7 +126,7 @@ TYPED_TEST(ProxyServiceElementMockFixture, GetSubscriptionStateDispatchesToMockA
     EXPECT_EQ(result, subscription_state);
 }
 
-TYPED_TEST(ProxyServiceElementMockFixture, GetFreeSampleCountDispatchesToMockAfterInjectingMock)
+TYPED_TEST(ProxyEventFieldMockFixture, GetFreeSampleCountDispatchesToMockAfterInjectingMock)
 {
     // Given a ProxyEvent constructed with an empty binding and an injected mock
 
@@ -141,7 +141,7 @@ TYPED_TEST(ProxyServiceElementMockFixture, GetFreeSampleCountDispatchesToMockAft
     EXPECT_EQ(result, free_sample_count);
 }
 
-TYPED_TEST(ProxyServiceElementMockFixture, GetNumNewSamplesAvailableDispatchesToMockAfterInjectingMock)
+TYPED_TEST(ProxyEventFieldMockFixture, GetNumNewSamplesAvailableDispatchesToMockAfterInjectingMock)
 {
     // Given a ProxyEvent constructed with an empty binding and an injected mock
 
@@ -158,7 +158,7 @@ TYPED_TEST(ProxyServiceElementMockFixture, GetNumNewSamplesAvailableDispatchesTo
     EXPECT_EQ(result.value(), kDummyAvailableSamples);
 }
 
-TYPED_TEST(ProxyServiceElementMockFixture, GetNumNewSamplesAvailableReturnsErrorWhenMockReturnsError)
+TYPED_TEST(ProxyEventFieldMockFixture, GetNumNewSamplesAvailableReturnsErrorWhenMockReturnsError)
 {
     // Given a ProxyEvent constructed with an empty binding and an injected mock
 
@@ -175,7 +175,7 @@ TYPED_TEST(ProxyServiceElementMockFixture, GetNumNewSamplesAvailableReturnsError
     EXPECT_EQ(result.error(), error_code);
 }
 
-TYPED_TEST(ProxyServiceElementMockFixture, SetReceiveHandlerDispatchesToMockAfterInjectingMock)
+TYPED_TEST(ProxyEventFieldMockFixture, SetReceiveHandlerDispatchesToMockAfterInjectingMock)
 {
     // Given a ProxyEvent constructed with an empty binding and an injected mock
 
@@ -190,7 +190,7 @@ TYPED_TEST(ProxyServiceElementMockFixture, SetReceiveHandlerDispatchesToMockAfte
     ASSERT_TRUE(result.has_value());
 }
 
-TYPED_TEST(ProxyServiceElementMockFixture, SetReceiveHandlerReturnsErrorWhenMockReturnsError)
+TYPED_TEST(ProxyEventFieldMockFixture, SetReceiveHandlerReturnsErrorWhenMockReturnsError)
 {
     // Given a ProxyEvent constructed with an empty binding and an injected mock
 
@@ -207,7 +207,7 @@ TYPED_TEST(ProxyServiceElementMockFixture, SetReceiveHandlerReturnsErrorWhenMock
     EXPECT_EQ(result.error(), error_code);
 }
 
-TYPED_TEST(ProxyServiceElementMockFixture, UnsetReceiveHandlerDispatchesToMockAfterInjectingMock)
+TYPED_TEST(ProxyEventFieldMockFixture, UnsetReceiveHandlerDispatchesToMockAfterInjectingMock)
 {
     // Given a ProxyEvent constructed with an empty binding and an injected mock
 
@@ -222,7 +222,7 @@ TYPED_TEST(ProxyServiceElementMockFixture, UnsetReceiveHandlerDispatchesToMockAf
     ASSERT_TRUE(result.has_value());
 }
 
-TYPED_TEST(ProxyServiceElementMockFixture, UnsetReceiveHandlerReturnsErrorWhenMockReturnsError)
+TYPED_TEST(ProxyEventFieldMockFixture, UnsetReceiveHandlerReturnsErrorWhenMockReturnsError)
 {
     // Given a ProxyEvent constructed with an empty binding and an injected mock
 
@@ -239,7 +239,7 @@ TYPED_TEST(ProxyServiceElementMockFixture, UnsetReceiveHandlerReturnsErrorWhenMo
     EXPECT_EQ(result.error(), error_code);
 }
 
-TYPED_TEST(ProxyServiceElementMockFixture, GetNewSamplesDispatchesToMockAfterInjectingMock)
+TYPED_TEST(ProxyEventFieldMockFixture, GetNewSamplesDispatchesToMockAfterInjectingMock)
 {
     // Given a ProxyEvent constructed with an empty binding and an injected mock
 
@@ -256,7 +256,7 @@ TYPED_TEST(ProxyServiceElementMockFixture, GetNewSamplesDispatchesToMockAfterInj
     EXPECT_EQ(result.value(), number_of_receiver_calls);
 }
 
-TYPED_TEST(ProxyServiceElementMockFixture, GetNewSamplesReturnsErrorWhenMockReturnsError)
+TYPED_TEST(ProxyEventFieldMockFixture, GetNewSamplesReturnsErrorWhenMockReturnsError)
 {
     // Given a ProxyEvent constructed with an empty binding and an injected mock
 
