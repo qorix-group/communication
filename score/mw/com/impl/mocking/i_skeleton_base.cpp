@@ -10,4 +10,4 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#include "score/mw/com/impl/mocking/i_skeleton.h"
+#include "score/mw/com/impl/mocking/i_skeleton_base.h"
