@@ -67,38 +67,6 @@ cc_library(
 )
 
 cc_library(
-    name = "i_proxy_field",
-    srcs = ["i_proxy_field.cpp"],
-    hdrs = ["i_proxy_field.h"],
-    features = COMPILER_WARNING_FEATURES,
-    visibility = [
-        "//score/mw/com/impl:__subpackages__",
-    ],
-    deps = [
-        "//score/mw/com/impl:event_receive_handler",
-        "//score/mw/com/impl:subscription_state",
-        "//score/mw/com/impl/plumbing:sample_ptr",
-        "@score-baselibs//score/language/futurecpp",
-        "@score-baselibs//score/result",
-    ],
-)
-
-cc_library(
-    name = "proxy_field_mock",
-    testonly = True,
-    srcs = ["proxy_field_mock.cpp"],
-    hdrs = ["proxy_field_mock.h"],
-    features = COMPILER_WARNING_FEATURES,
-    visibility = [
-        "//score/mw/com/impl:__subpackages__",
-    ],
-    deps = [
-        ":i_proxy_field",
-        "@googletest//:gtest",
-    ],
-)
-
-cc_library(
     name = "i_skeleton_base",
     srcs = ["i_skeleton_base.cpp"],
     hdrs = ["i_skeleton_base.h"],
@@ -220,7 +188,6 @@ cc_library(
     ],
     deps = [
         ":proxy_event_mock",
-        ":proxy_field_mock",
         ":test_type_utilities",
         "//score/mw/com/impl:traits",
         "//score/mw/com/impl/test:binding_factory_resources",
@@ -272,17 +239,10 @@ cc_gtest_unit_test(
     srcs = ["proxy_event_mock_test.cpp"],
     deps = [
         ":proxy_event_mock",
-        ":proxy_field_mock",
         ":test_type_utilities",
         "//score/mw/com/impl:proxy_event",
         "//score/mw/com/impl:proxy_field",
     ],
-)
-
-cc_gtest_unit_test(
-    name = "proxy_field_mock_test",
-    srcs = ["proxy_field_mock_test.cpp"],
-    deps = [],
 )
 
 cc_gtest_unit_test(
@@ -303,7 +263,6 @@ cc_gtest_unit_test(
     srcs = ["proxy_wrapper_class_test_view_test.cpp"],
     deps = [
         ":proxy_event_mock",
-        ":proxy_field_mock",
         ":proxy_wrapper_class_test_view",
         "//score/mw/com:test_types",
     ],
@@ -317,7 +276,6 @@ cc_unit_test_suites_for_host_and_qnx(
         ":skeleton_base_mock_test",
         ":test_type_utilities_test",
         ":proxy_event_mock_test",
-        ":proxy_field_mock_test",
         ":proxy_wrapper_class_test_view_test",
         ":skeleton_wrapper_class_test_view_test",
     ],
