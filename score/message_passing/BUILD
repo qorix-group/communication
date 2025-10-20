@@ -264,8 +264,10 @@ cc_gtest_unit_test(
     name = "qnx_dispatch_test",
     srcs = [
         "qnx_dispatch_engine_test.cpp",
+        "qnx_dispatch_mocked_server_test.cpp",
         "qnx_dispatch_server_test.cpp",
         "qnx_dispatch_server_to_client_test.cpp",
+        "resource_manager_fixture_base.h",
     ],
     target_compatible_with = ["@platforms//os:qnx"],
     deps = [

@@ -49,11 +49,12 @@ class ServerToClientQnxFixture : public ::testing::Test, public testing::WithPar
         std::string test_prefix{"test_prefix_"};
         test_prefix += std::to_string(::getpid()) + "_";
         service_identifier_ = test_prefix + "1";
-        protocol_config_ = ServiceProtocolConfig{service_identifier_, 1024, 1024, 1024};
-        client_config_ = IClientFactory::ClientConfig{1, 1, false, true};
+        protocol_config_ = ServiceProtocolConfig{service_identifier_, 6U, 6U, 6U};
+        client_config_ = IClientFactory::ClientConfig{1U, 1U, false, true};
+        server_config_ = IServerFactory::ServerConfig{0U, 0U, 1U};
 
-        server_connections_started_ = 0;
-        server_connections_finished_ = 0;
+        server_connections_started_ = 0U;
+        server_connections_finished_ = 0U;
 
         SetupClientPromises();
     }
@@ -136,13 +137,16 @@ class ServerToClientQnxFixture : public ::testing::Test, public testing::WithPar
 
     void WhenEchoServerStartsListening()
     {
-        auto connect_callback = [this](IServerConnection& connection) -> void* {
+        auto connect_callback = [this](IServerConnection& connection) -> std::uintptr_t {
             std::cout << "EchoConnectCallback " << &connection << std::endl;
             ++server_connections_started_;
-            return nullptr;
+            const pid_t client_pid = connection.GetClientIdentity().pid;
+            return static_cast<std::uintptr_t>(client_pid);
         };
         auto disconnect_callback = [this](IServerConnection& connection) {
-            std::cout << "EchoDisconnectCallback " << &connection << std::endl;
+            const auto client_pid = static_cast<pid_t>(std::get<std::uintptr_t>(connection.GetUserData()));
+
+            std::cout << "EchoDisconnectCallback " << &connection << " " << client_pid << std::endl;
             ++server_connections_finished_;
         };
         auto sent_callback = [](IServerConnection& connection, score::cpp::span<const std::uint8_t> message) -> score::cpp::blank {
@@ -159,6 +163,51 @@ class ServerToClientQnxFixture : public ::testing::Test, public testing::WithPar
         ASSERT_TRUE(
             server_->StartListening(connect_callback, disconnect_callback, sent_callback, sent_with_reply_callback)
                 .has_value());
+    }
+
+    void WhenFaultyEchoServerStartsListening()
+    {
+        class FaultyConnection : public IConnectionHandler
+        {
+          public:
+            FaultyConnection(ServerToClientQnxFixture& fixture) : IConnectionHandler{}, fixture_{fixture} {}
+
+          private:
+            score::cpp::expected_blank<score::os::Error> OnMessageSent(IServerConnection& connection,
+                                                              score::cpp::span<const std::uint8_t> message) noexcept override
+            {
+                std::cout << "FaultyEchoSentCallback " << &connection << std::endl;
+                EXPECT_FALSE(connection.Notify(fixture_.faulty_message));  // fails: too big
+                EXPECT_TRUE(connection.Notify(message));                   // OK
+                EXPECT_FALSE(connection.Notify(message));                  // fails: slot taken
+                return {};
+            }
+            score::cpp::expected_blank<score::os::Error> OnMessageSentWithReply(
+                IServerConnection& connection,
+                score::cpp::span<const std::uint8_t> message) noexcept override
+            {
+                std::cout << "FaultyEchoSentWithReplyCallback " << &connection << std::endl;
+                EXPECT_FALSE(connection.Reply(fixture_.faulty_message));  // fails: too big
+                EXPECT_TRUE(connection.Reply(message));                   // OK
+
+                connection.RequestDisconnect();  // does nothing (yet), but we need to cover it
+                return {};
+            }
+
+            void OnDisconnect(IServerConnection& connection) noexcept override
+            {
+                std::cout << "FaultyEchoDisconnectCallback " << &connection << std::endl;
+                ++fixture_.server_connections_finished_;
+            }
+
+            ServerToClientQnxFixture& fixture_;
+        };
+        auto connect_callback = [this](IServerConnection& connection) -> score::cpp::pmr::unique_ptr<IConnectionHandler> {
+            std::cout << "FaultyEchoConnectCallback " << &connection << std::endl;
+            ++server_connections_started_;
+            return score::cpp::pmr::make_unique<FaultyConnection>(score::cpp::pmr::get_default_resource(), *this);
+        };
+        ASSERT_TRUE(server_->StartListening(connect_callback, {}, {}, {}).has_value());
     }
 
     void WhenClientStarted(bool delete_on_stop = false)
@@ -192,8 +241,15 @@ class ServerToClientQnxFixture : public ::testing::Test, public testing::WithPar
             }
         };
 
+        const auto notify_callback = [this](auto message) {
+            if (!client_notify_callback_.empty())
+            {
+                client_notify_callback_(message);
+            }
+        };
+
         std::lock_guard<std::mutex> guard(client_mutex_);
-        client_->Start(state_callback, IClientConnection::NotifyCallback{});
+        client_->Start(state_callback, notify_callback);
     }
 
     void WhenClientStartedRestartingFromCallback(std::uint32_t retry_count)
@@ -216,7 +272,7 @@ class ServerToClientQnxFixture : public ::testing::Test, public testing::WithPar
             {
                 std::cout << "StateCallback Stopped " << static_cast<std::int32_t>(client_->GetStopReason())
                           << std::endl;
-                if (retry_count_ > 0)
+                if (retry_count_ > 0U)
                 {
                     --retry_count_;
                     client_->Restart();
@@ -282,10 +338,23 @@ class ServerToClientQnxFixture : public ::testing::Test, public testing::WithPar
         WaitClientConnected();
     }
 
+    void WithFaultyEchoServerSetup()
+    {
+        WhenServerAndClientFactoriesConstructed(false, GetParam());
+        WhenClientStarted();
+
+        ExpectClientStillConnecting();
+
+        WhenServerCreated();
+        WhenFaultyEchoServerStartsListening();
+
+        WaitClientConnected();
+    }
+
     void WhenClientSendsMessageItReceivesEchoReply()
     {
-        std::array<std::uint8_t, 6> message = {1, 2, 3, 4, 5, 6};
-        std::array<std::uint8_t, 256> reply_buffer = {};
+        std::array<std::uint8_t, 6U> message = {1U, 2U, 3U, 4U, 5U, 6U};
+        std::array<std::uint8_t, 6U> reply_buffer = {};
         {
             std::promise<bool> promise;
             auto reply_callback =
@@ -311,6 +380,16 @@ class ServerToClientQnxFixture : public ::testing::Test, public testing::WithPar
             EXPECT_EQ(reply_buffer.data(), reply.data());
             EXPECT_EQ(message.size(), reply.size());
         }
+        {
+            std::promise<bool> promise;
+            client_notify_callback_ = [&promise, &message](score::cpp::span<const std::uint8_t> notify_message) {
+                promise.set_value(message.size() == static_cast<std::size_t>(notify_message.size()));
+            };
+            auto send_expected = client_->Send(message);
+            auto future = promise.get_future();
+            ASSERT_EQ(future.wait_for(kFutureWaitTimeout), std::future_status::ready);
+            EXPECT_TRUE(future.get());
+        }
     }
 
     Promises promises_;
@@ -327,11 +406,14 @@ class ServerToClientQnxFixture : public ::testing::Test, public testing::WithPar
     std::uint32_t server_connections_started_;
     std::uint32_t server_connections_finished_;
 
+    IClientConnection::NotifyCallback client_notify_callback_{};
+    std::array<std::uint8_t, 8U> faulty_message = {1U, 2U, 3U, 4U, 5U, 6U, 7U, 8U};
+
     std::string service_identifier_;
     ServiceProtocolConfig protocol_config_;
 
     bool delete_on_stop_{false};
-    std::uint32_t retry_count_{0};
+    std::uint32_t retry_count_{0U};
 };
 
 TEST_F(ServerToClientQnxFixture, ConstructServerThenClientFactoryUsingSameEngine)
@@ -396,7 +478,7 @@ TEST_P(ServerToClientQnxFixture, RefusingServerStartingLaterClientRestarting)
     WhenRefusingServerStartsListening();
 
     WaitClientStoppedExpectStatusStopped();
-    EXPECT_EQ(retry_count_, 0);
+    EXPECT_EQ(retry_count_, 0U);
 }
 
 TEST_P(ServerToClientQnxFixture, EchoServerStartingLaterForcedStop)
@@ -419,6 +501,16 @@ TEST_P(ServerToClientQnxFixture, EchoServerStartingLaterForcedStop)
 TEST_P(ServerToClientQnxFixture, EchoServerSetup)
 {
     WithStandardEchoServerSetup();
+
+    WhenClientSendsMessageItReceivesEchoReply();
+
+    client_->Stop();
+    WaitClientStoppedExpectStatusStopped();
+}
+
+TEST_P(ServerToClientQnxFixture, FaultyEchoServerSetup)
+{
+    WithFaultyEchoServerSetup();
 
     WhenClientSendsMessageItReceivesEchoReply();
 

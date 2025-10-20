@@ -231,9 +231,10 @@ void QnxDispatchEngine::RegisterPosixEndpoint(PosixEndpointEntry& endpoint) noex
 {
     SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD(IsOnCallbackThread());
 
-    if (posix_receive_buffer_.size() < endpoint.max_receive_size)
+    const auto needed_buffer_size = static_cast<std::size_t>(endpoint.max_receive_size) + 1U;
+    if (posix_receive_buffer_.size() < needed_buffer_size)
     {
-        posix_receive_buffer_.resize(static_cast<std::size_t>(endpoint.max_receive_size));
+        posix_receive_buffer_.resize(needed_buffer_size);
     }
 
     score::cpp::ignore = os_resources_.dispatch->select_attach(

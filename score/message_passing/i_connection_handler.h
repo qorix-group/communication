@@ -30,6 +30,7 @@ class IServerConnection;
 class IConnectionHandler
 {
   public:
+    IConnectionHandler() = default;
     virtual ~IConnectionHandler() = default;
 
     IConnectionHandler(const IConnectionHandler&) = delete;

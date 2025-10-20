@@ -118,7 +118,7 @@ void QnxDispatchServer::ServerConnection::RequestDisconnect() noexcept
     // TODO: implement as ionotify for zero-read (once this functionality is demanded)
 }
 
-// Suppress AUTOSAR C++14 A15-5-3 violation for variant access
+// Suppress AUTOSAR C++14 A15-5-3 violation for variant access in ProcessInput
 // Rationale: std::get<HandlerPointerT>(user_data) is preceded by std::holds_alternative check,
 // guaranteeing the variant contains the correct type. No std::bad_variant_access can be thrown.
 // The exception handling rule is satisfied as no actual exception can occur in this context.
@@ -326,16 +326,13 @@ void QnxDispatchServer::StopListening() noexcept
 
 // Suppress "AUTOSAR C++14 A9-5-1", The rule states: "Unions shall not be used."
 // QNX union.
+// Suppress AUTOSAR C++14 A8-4-10 violation for QNX resource manager API
+// Rationale: ProcessReadRequest must conform to QNX resmgr callback signature.
+// QNX API requires pointer parameter - cannot use reference due to C API constraints.
 // coverity[autosar_cpp14_a9_5_1_violation]
+// coverity[autosar_cpp14_a8_4_10_violation]
 std::int32_t QnxDispatchServer::ProcessConnect(resmgr_context_t* const ctp, io_open_t* const msg) noexcept
 {
-    // Suppress "AUTOSAR C++14 A9-5-1", The rule states: "Unions shall not be used."
-    // QNX union.
-    // coverity[autosar_cpp14_a9_5_1_violation]
-    if ((msg == nullptr) || (ctp == nullptr))
-    {
-        return EINVAL;
-    }
     auto& os_resources = engine_->GetOsResources();
     auto& channel = os_resources.channel;
 
