@@ -171,6 +171,8 @@ SkeletonEvent<SampleDataType>::SkeletonEvent(SkeletonEvent&& other) noexcept
     // Since the address of this event has changed, we need update the address stored in the parent skeleton.
     SkeletonBaseView base_skeleton_view{skeleton_base_.get()};
     base_skeleton_view.UpdateEvent(event_name_, *this);
+
+    other.skeleton_event_mock_ = nullptr;
 }
 
 template <typename SampleDataType>
@@ -190,6 +192,7 @@ auto SkeletonEvent<SampleDataType>::operator=(SkeletonEvent&& other) & noexcept 
         base_skeleton_view.UpdateEvent(event_name_, *this);
 
         skeleton_event_mock_ = std::move(other.skeleton_event_mock_);
+        other.skeleton_event_mock_ = nullptr;
     }
     return *this;
 }
