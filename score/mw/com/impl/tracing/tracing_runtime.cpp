@@ -559,7 +559,7 @@ ResultBlank TracingRuntime::Trace(const BindingType binding_type,
     else
     {
         // Reset debouncing state when a slot becomes available
-        debounce_counter_ = 0;
+        debounce_counter_ = 0U;
         first_debounce_ = true;
     }
 

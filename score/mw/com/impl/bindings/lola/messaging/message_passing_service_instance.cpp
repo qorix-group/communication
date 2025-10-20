@@ -96,6 +96,9 @@ score::mw::com::impl::lola::MessagePassingServiceInstance::MessagePassingService
     auto disconnect_callback = [](score::message_passing::IServerConnection& /*connection*/) noexcept {
         // TODO: outdated node id?
     };
+    // Suppress autosar_cpp14_a15_5_3_violation: False Positive
+    // Rationale: Passing an argument by reference cannot throw
+    // coverity[autosar_cpp14_a15_5_3_violation : FALSE]
     auto received_send_message_callback = [this](score::message_passing::IServerConnection& connection,
                                                  const score::cpp::span<const std::uint8_t> message) noexcept -> score::cpp::blank {
         SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(std::holds_alternative<std::uintptr_t>(connection.GetUserData()),
@@ -113,6 +116,9 @@ score::mw::com::impl::lola::MessagePassingServiceInstance::MessagePassingService
     };
 
     auto received_send_message_with_reply_callback =
+        // Suppress autosar_cpp14_a15_5_3_violation: False Positive
+        // Rationale: Passing an argument by reference cannot throw
+        // coverity[autosar_cpp14_a15_5_3_violation : FALSE]
         [](score::message_passing::IServerConnection& connection,
            score::cpp::span<const std::uint8_t> /*message*/) noexcept -> score::cpp::blank {
         SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(std::holds_alternative<std::uintptr_t>(connection.GetUserData()),

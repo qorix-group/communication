@@ -124,9 +124,9 @@ score::mw::com::impl::lola::MessagePassingFacade::RegisterEventNotification(
     return notify_event_handler_->RegisterEventNotification(asil_level, event_id, std::move(callback), target_node_id);
 }
 
-void score::mw::com::impl::lola::MessagePassingFacade::ReregisterEventNotification(QualityType asil_level,
-                                                                                 ElementFqId event_id,
-                                                                                 pid_t target_node_id) noexcept
+void score::mw::com::impl::lola::MessagePassingFacade::ReregisterEventNotification(const QualityType asil_level,
+                                                                                 const ElementFqId event_id,
+                                                                                 const pid_t target_node_id) noexcept
 {
     notify_event_handler_->ReregisterEventNotification(asil_level, event_id, target_node_id);
 }
@@ -140,9 +140,9 @@ void score::mw::com::impl::lola::MessagePassingFacade::UnregisterEventNotificati
     notify_event_handler_->UnregisterEventNotification(asil_level, event_id, registration_no, target_node_id);
 }
 
-void score::mw::com::impl::lola::MessagePassingFacade::NotifyOutdatedNodeId(QualityType asil_level,
-                                                                          pid_t outdated_node_id,
-                                                                          pid_t target_node_id) noexcept
+void score::mw::com::impl::lola::MessagePassingFacade::NotifyOutdatedNodeId(const QualityType asil_level,
+                                                                          const pid_t outdated_node_id,
+                                                                          const pid_t target_node_id) noexcept
 {
     notify_event_handler_->NotifyOutdatedNodeId(asil_level, outdated_node_id, target_node_id);
 }
