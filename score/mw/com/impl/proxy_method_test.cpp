@@ -63,9 +63,13 @@ TEST(ProxyMethodTest, Allocate)
     // locations in the buffer
     auto& pointer1 = std::get<0>(method_in_arg_ptr_tuple.value());
     EXPECT_EQ(pointer1.GetQueuePosition(), 0);
+    // Expect, that the 2nd argument pointer is after the 1st argument pointer in the buffer (detailed position is not
+    // checked here as this is done/verified in TypeErasedStorage tests)
     EXPECT_EQ(reinterpret_cast<std::byte*>(pointer1.get()), &(method_in_args_buffer[0]));
     auto& pointer2 = std::get<1>(method_in_arg_ptr_tuple.value());
     EXPECT_EQ(pointer2.GetQueuePosition(), 0);
+    // Expect, that the 3rd argument pointer is after the 1st argument pointer in the buffer (detailed position is not
+    // checked here as this is done/verified in TypeErasedStorage tests)
     EXPECT_GT(reinterpret_cast<std::byte*>(pointer2.get()), reinterpret_cast<std::byte*>(pointer1.get()));
     auto& pointer3 = std::get<2>(method_in_arg_ptr_tuple.value());
     EXPECT_EQ(pointer3.GetQueuePosition(), 0);
@@ -118,7 +122,7 @@ TEST(ProxyMethodDeathTest, Allocate_BindingError)
     EXPECT_DEATH(allocate_with_binding_error(), ".*");
 }
 
-TEST(ProxyMethodTest, CallOperator_WithCopy)
+TEST(ProxyMethodTest, CallOperator_VoidReturn_WithCopy)
 {
     auto proxy_method_binding_mock = std::make_unique<mock_binding::ProxyMethod>();
     auto* proxy_method_binding_mock_ptr = proxy_method_binding_mock.get();
@@ -137,8 +141,81 @@ TEST(ProxyMethodTest, CallOperator_WithCopy)
     double arg2 = 3.14;
     char arg3 = 'a';
     auto call_result = unit(arg1, arg2, arg3);
+    // expect, that no error is returned
     EXPECT_TRUE(call_result.has_value());
 }
 
+TEST(ProxyMethodTest, CallOperator_NonVoidReturn_WithCopy)
+{
+    auto proxy_method_binding_mock = std::make_unique<mock_binding::ProxyMethod>();
+    auto* proxy_method_binding_mock_ptr = proxy_method_binding_mock.get();
+    alignas(8) std::array<std::byte, 1024> method_in_args_buffer{};
+
+    // Given a ProxyMethod with a return type of int and three arguments: int, double, char
+    auto unit = ProxyMethod<int(int, double, char)>{kEmptyProxy, std::move(proxy_method_binding_mock), kMethodName};
+
+    // Expect that AllocateInArgs is called once for queue position 0 on the binding mock and returns a pointer to our
+    // buffer
+    EXPECT_CALL(*proxy_method_binding_mock_ptr, AllocateInArgs(0))
+        .WillOnce(Return(score::Result<void*>{method_in_args_buffer.data()}));
+
+    // when call operator is called on the ProxyMethod
+    int arg1 = 42;
+    double arg2 = 3.14;
+    char arg3 = 'a';
+    auto call_result = unit(arg1, arg2, arg3);
+    // expect, that no error is returned
+    EXPECT_TRUE(call_result.has_value());
+}
+
+TEST(ProxyMethodTest, CallOperator_VoidReturn_WithCopyTemporary)
+{
+    auto proxy_method_binding_mock = std::make_unique<mock_binding::ProxyMethod>();
+    auto* proxy_method_binding_mock_ptr = proxy_method_binding_mock.get();
+    alignas(8) std::array<std::byte, 1024> method_in_args_buffer{};
+
+    // Given a ProxyMethod with a return type of void and one argument: int
+    auto unit = ProxyMethod<void(int)>{kEmptyProxy, std::move(proxy_method_binding_mock), kMethodName};
+
+    // Expect that AllocateInArgs is called once for queue position 0 on the binding mock and returns a pointer to our
+    // buffer
+    EXPECT_CALL(*proxy_method_binding_mock_ptr, AllocateInArgs(0))
+        .WillOnce(Return(score::Result<void*>{method_in_args_buffer.data()}));
+
+    // when call operator is called on the ProxyMethod
+    int arg1 = 42;
+
+    auto call_result = unit(std::move(arg1));
+    // expect, that no error is returned
+    EXPECT_TRUE(call_result.has_value());
+}
+
+TEST(ProxyMethodTest, CallOperator_NonVoidReturn_ZeroCopy)
+{
+    auto proxy_method_binding_mock = std::make_unique<mock_binding::ProxyMethod>();
+    auto* proxy_method_binding_mock_ptr = proxy_method_binding_mock.get();
+    alignas(8) std::array<std::byte, 1024> method_in_args_buffer{};
+
+    // Given a ProxyMethod with a return type of int and three arguments: int, double, char
+    auto unit = ProxyMethod<int(int, double, char)>{kEmptyProxy, std::move(proxy_method_binding_mock), kMethodName};
+
+    // Expect that AllocateInArgs is called once for queue position 0 on the binding mock and returns a pointer to our
+    // buffer
+    EXPECT_CALL(*proxy_method_binding_mock_ptr, AllocateInArgs(0))
+        .WillOnce(Return(score::Result<void*>{method_in_args_buffer.data()}));
+
+    // when Allocate is called on the ProxyMethod
+    auto method_in_arg_ptr_tuple = unit.Allocate();
+
+    auto [method_in_arg_ptr_0, method_in_arg_ptr_1, method_in_arg_ptr_2] = std::move(method_in_arg_ptr_tuple.value());
+    *method_in_arg_ptr_0 = 42;
+    *method_in_arg_ptr_1 = 3.14;
+    *method_in_arg_ptr_2 = 'a';
+
+    auto call_result =
+        unit(std::move(method_in_arg_ptr_0), std::move(method_in_arg_ptr_1), std::move(method_in_arg_ptr_2));
+    // expect, that no error is returned
+    EXPECT_TRUE(call_result.has_value());
+}
 }  // namespace
 }  // namespace score::mw::com::impl

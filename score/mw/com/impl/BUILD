@@ -1050,6 +1050,7 @@ cc_unit_test_suites_for_host_and_qnx(
         ":service_discovery_test",
         ":unit_test",
         ":runtime_test",
+        ":method_signature_element_ptr_test",
         ":unit_test_runtime_single_exec",
     ],
     test_suites_from_sub_packages = [
