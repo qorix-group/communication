@@ -13,6 +13,9 @@
 #ifndef SCORE_MW_COM_IMPL_BINDINGS_LOLA_ELEMENT_FQ_ID_H
 #define SCORE_MW_COM_IMPL_BINDINGS_LOLA_ELEMENT_FQ_ID_H
 
+#include "score/mw/com/impl/configuration/lola_event_id.h"
+#include "score/mw/com/impl/configuration/lola_service_id.h"
+#include "score/mw/com/impl/configuration/lola_service_instance_id.h"
 #include "score/mw/com/impl/service_element_type.h"
 
 #include <cstdint>
@@ -43,17 +46,21 @@ namespace com::impl::lola
 class ElementFqId
 {
   public:
+    using ServiceId = LolaServiceId;
+    using ElementId = LolaEventId;
+    using InstanceId = LolaServiceInstanceId::InstanceId;
+
     /// \brief default ctor initializing all members to their related max value.
     /// \details constructs an "invalid" ElementFqId.
     ElementFqId() noexcept;
-    ElementFqId(const std::uint16_t service_id,
-                const std::uint16_t element_id,
-                const std::uint16_t instance_id,
+    ElementFqId(const ServiceId service_id,
+                const ElementId element_id,
+                const InstanceId instance_id,
                 const std::uint8_t element_type) noexcept;
 
-    ElementFqId(const std::uint16_t service_id,
-                const std::uint16_t element_id,
-                const std::uint16_t instance_id,
+    ElementFqId(const ServiceId service_id,
+                const ElementId element_id,
+                const InstanceId instance_id,
                 const ServiceElementType element_type) noexcept;
 
     std::string ToString() const noexcept;

@@ -23,16 +23,16 @@ namespace score::mw::com::impl::lola
 {
 
 ElementFqId::ElementFqId() noexcept
-    : ElementFqId{std::numeric_limits<std::uint16_t>::max(),
-                  std::numeric_limits<std::uint16_t>::max(),
-                  std::numeric_limits<std::uint16_t>::max(),
+    : ElementFqId{std::numeric_limits<ServiceId>::max(),
+                  std::numeric_limits<ElementId>::max(),
+                  std::numeric_limits<InstanceId>::max(),
                   ServiceElementType::INVALID}
 {
 }
 
-ElementFqId::ElementFqId(const std::uint16_t service_id,
-                         const std::uint16_t element_id,
-                         const std::uint16_t instance_id,
+ElementFqId::ElementFqId(const ServiceId service_id,
+                         const ElementId element_id,
+                         const InstanceId instance_id,
                          const std::uint8_t element_type) noexcept
     // Suppress "AUTOSAR C++14 A7-2-1" rule: "An expression with enum underlying type shall only have values
     // corresponding to the enumerators of the enumeration.".
@@ -48,9 +48,9 @@ ElementFqId::ElementFqId(const std::uint16_t service_id,
     }
 }
 
-ElementFqId::ElementFqId(const std::uint16_t service_id,
-                         const std::uint16_t element_id,
-                         const std::uint16_t instance_id,
+ElementFqId::ElementFqId(const ServiceId service_id,
+                         const ElementId element_id,
+                         const InstanceId instance_id,
                          const ServiceElementType element_type) noexcept
     : service_id_{service_id}, element_id_{element_id}, instance_id_{instance_id}, element_type_{element_type}
 {

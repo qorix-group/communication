@@ -364,6 +364,7 @@ cc_library(
     ],
     deps = [
         "//score/mw/com/impl:service_element_type",
+        "//score/mw/com/impl/configuration",
         "@score_baselibs//score/mw/log",
     ],
 )
