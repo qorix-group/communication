@@ -29,6 +29,9 @@
 namespace score::mw::com::impl
 {
 
+namespace detail
+{
+
 // Suppress "AUTOSAR C++14 A11-0-2" rule finding.
 // This rule states: "A type defined as struct shall: (1) provide only public data members, (2)
 // not provide any special member functions or methods, (3) not be a base of
@@ -46,9 +49,6 @@ struct MemoryBufferAccessor
     std::size_t offset;
 };
 
-namespace detail
-{
-
 /// \brief Aggregates new argument type into given TypeErasedDataTypeInfo.
 /// \details Existing TypeErasedDataTypeInfo is virtually a "struct", which has a given size/alignment. This template
 /// func semantically adds the given argument type as a new member, taking into account any needed padding and then
@@ -61,6 +61,64 @@ constexpr void AggregateArgType(TypeErasedDataTypeInfo& info)
     auto padding = (info.size % alignof(Arg)) == 0 ? 0 : alignof(Arg) - (info.size % alignof(Arg));
     info.size += sizeof(Arg) + padding;
     info.alignment = std::max(info.alignment, alignof(Arg));
+}
+
+/// \brief Returns pointer to argument value at current buffer position.
+/// \details Casts the current buffer position (with eventually added padding bytes if needed) to a pointer to Arg type
+/// and returns it. Updates the buffer,offset_ to point after the argument
+/// \tparam Arg type of argument
+/// \param buffer buffer containing argument value at the current offset
+/// \return pointer to argument of given type.
+template <typename Arg>
+auto DeserializeArg(MemoryBufferAccessor& buffer) -> Arg*
+{
+    auto src_ptr = static_cast<void*>(score::memory::shared::AddOffsetToPointer(buffer.buffer.data(), buffer.offset));
+    auto src_ptr_as_int = score::memory::shared::CastPointerToInteger(src_ptr);
+
+    auto padding = (src_ptr_as_int % alignof(Arg)) == 0 ? 0 : alignof(Arg) - (src_ptr_as_int % alignof(Arg));
+    buffer.offset += (padding + sizeof(Arg));
+    return static_cast<Arg*>(score::memory::shared::AddOffsetToPointer(src_ptr, padding));
+}
+
+template <typename... Args>
+auto Deserialize(MemoryBufferAccessor& src_buffer) -> std::tuple<typename std::add_pointer<Args>::type...>
+{
+    auto tuple_with_args = std::tuple<typename std::add_pointer<Args>::type...>();
+    std::apply(
+        [&src_buffer](auto&&... args) noexcept {
+            ((args =
+                  DeserializeArg<typename std::remove_pointer_t<std::remove_reference_t<decltype(args)>>>(src_buffer)),
+             ...);
+        },
+        tuple_with_args);
+    return tuple_with_args;
+}
+
+/// \brief template to serialize argument value into given buffer.
+/// \details This is the base case for #SerializeArgs(MemoryBuffer&, T, Args...). Further details see there.
+/// \tparam T current argument type
+/// \param target_buffer where to serialize to.
+/// \param arg argument value to serialize.
+template <typename T>
+void SerializeArgs(MemoryBufferAccessor& target_buffer, T arg)
+{
+    auto dest_ptr =
+        static_cast<void*>(score::memory::shared::AddOffsetToPointer(target_buffer.buffer.data(), target_buffer.offset));
+    const std::size_t buffer_space_before_align = target_buffer.buffer.size() - target_buffer.offset;
+    std::size_t buffer_space_after_align = buffer_space_before_align;
+    dest_ptr = std::align(alignof(T), sizeof(T), dest_ptr, buffer_space_after_align);
+    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(dest_ptr, "Buffer too small");
+    std::memcpy(dest_ptr, &arg, sizeof(T));
+
+    const auto additional_buffer_used = buffer_space_before_align - buffer_space_after_align;
+    target_buffer.offset += sizeof(T) + additional_buffer_used;
+}
+
+template <typename T, typename... Args>
+void SerializeArgs(MemoryBufferAccessor& target_buffer, T arg, Args... args)
+{
+    SerializeArgs(target_buffer, arg);
+    SerializeArgs(target_buffer, args...);
 }
 
 }  // namespace detail
@@ -109,26 +167,6 @@ constexpr TypeErasedDataTypeInfo CreateTypeErasedDataTypeInfoFromValues(Args...)
     return CreateTypeErasedDataTypeInfoFromTypes<Args...>();
 }
 
-/// \brief template to serialize argument value into given buffer.
-/// \details This is the base case for #SerializeArgs(MemoryBuffer&, T, Args...). Further details see there.
-/// \tparam T current argument type
-/// \param target_buffer where to serialize to.
-/// \param arg argument value to serialize.
-template <typename T>
-void SerializeArgs(MemoryBufferAccessor& target_buffer, T arg)
-{
-    auto dest_ptr =
-        static_cast<void*>(score::memory::shared::AddOffsetToPointer(target_buffer.buffer.data(), target_buffer.offset));
-    const std::size_t buffer_space_before_align = target_buffer.buffer.size() - target_buffer.offset;
-    std::size_t buffer_space_after_align = buffer_space_before_align;
-    dest_ptr = std::align(alignof(T), sizeof(T), dest_ptr, buffer_space_after_align);
-    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(dest_ptr, "Buffer too small");
-    std::memcpy(dest_ptr, &arg, sizeof(T));
-
-    const auto additional_buffer_used = buffer_space_before_align - buffer_space_after_align;
-    target_buffer.offset += sizeof(T) + additional_buffer_used;
-}
-
 /// \brief Variadic template to serialize argument values into given buffer.
 /// \details Typical usage of this func template is to serialize strongly typed arguments into a type erased storage
 /// (the target_buffer). So the regular steps are: 1st call one of the CreateTypeErasedDataTypeInfoFromXXX() functions
@@ -148,34 +186,10 @@ void SerializeArgs(MemoryBufferAccessor& target_buffer, T arg)
 /// \param args Remaining argument values.
 /// \remarks Will assert/terminate, if buffer isn't sized large enough.
 template <typename T, typename... Args>
-void SerializeArgs(MemoryBufferAccessor& target_buffer, T arg, Args... args)
-{
-    SerializeArgs(target_buffer, arg);
-    SerializeArgs(target_buffer, args...);
-}
-
-template <typename T, typename... Args>
 void SerializeArgs(score::cpp::span<std::byte> target_buffer, T arg, Args... args)
 {
-    MemoryBufferAccessor memory_buffer_accessor{target_buffer};
-    SerializeArgs(memory_buffer_accessor, arg, args...);
-}
-
-/// \brief Returns pointer to argument value at current buffer position.
-/// \details Casts the current buffer position (with eventually added padding bytes if needed) to a pointer to Arg type
-/// and returns it. Updates the buffer,offset_ to point after the argument
-/// \tparam Arg type of argument
-/// \param buffer buffer containing argument value at the current offset
-/// \return pointer to argument of given type.
-template <typename Arg>
-auto DeserializeArg(MemoryBufferAccessor& buffer) -> Arg*
-{
-    auto src_ptr = static_cast<void*>(score::memory::shared::AddOffsetToPointer(buffer.buffer.data(), buffer.offset));
-    auto src_ptr_as_int = score::memory::shared::CastPointerToInteger(src_ptr);
-
-    auto padding = (src_ptr_as_int % alignof(Arg)) == 0 ? 0 : alignof(Arg) - (src_ptr_as_int % alignof(Arg));
-    buffer.offset += (padding + sizeof(Arg));
-    return static_cast<Arg*>(score::memory::shared::AddOffsetToPointer(src_ptr, padding));
+    detail::MemoryBufferAccessor memory_buffer_accessor{target_buffer};
+    detail::SerializeArgs(memory_buffer_accessor, arg, args...);
 }
 
 /// \brief Takes a type-erased storage of the given argument types in the form of a memory buffer and returns pointers
@@ -186,24 +200,10 @@ auto DeserializeArg(MemoryBufferAccessor& buffer) -> Arg*
 /// \param src_buffer memory buffer containing the "type erased" storage.
 /// \return Tuple of pointers to the arguments.
 template <typename... Args>
-auto Deserialize(MemoryBufferAccessor& src_buffer) -> std::tuple<typename std::add_pointer<Args>::type...>
-{
-    auto tuple_with_args = std::tuple<typename std::add_pointer<Args>::type...>();
-    std::apply(
-        [&src_buffer](auto&&... args) noexcept {
-            ((args =
-                  DeserializeArg<typename std::remove_pointer_t<std::remove_reference_t<decltype(args)>>>(src_buffer)),
-             ...);
-        },
-        tuple_with_args);
-    return tuple_with_args;
-}
-
-template <typename... Args>
 auto Deserialize(score::cpp::span<std::byte> src_buffer) -> std::tuple<typename std::add_pointer<Args>::type...>
 {
-    MemoryBufferAccessor memory_buffer_accessor{src_buffer};
-    return Deserialize<Args...>(memory_buffer_accessor);
+    detail::MemoryBufferAccessor memory_buffer_accessor{src_buffer};
+    return detail::Deserialize<Args...>(memory_buffer_accessor);
 }
 
 }  // namespace score::mw::com::impl
