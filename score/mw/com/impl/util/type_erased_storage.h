@@ -13,7 +13,10 @@
 #ifndef SCORE_MW_COM_IMPL_UTIL_TYPE_ERASED_STORAGE_H
 #define SCORE_MW_COM_IMPL_UTIL_TYPE_ERASED_STORAGE_H
 
+#include "score/mw/com/impl/util/type_erased_data_type_info.h"
+
 #include "score/memory/shared/pointer_arithmetic_util.h"
+
 #include <score/assert.hpp>
 
 #include <algorithm>
@@ -24,18 +27,6 @@
 
 namespace score::mw::com::impl
 {
-
-struct TypeErasedDataTypeInfo
-{
-    // Suppress "AUTOSAR C++14 M11-0-1" rule findings. This rule states: "Member data in non-POD class types
-    // shall be private.". This struct is a POD class!
-    // coverity[autosar_cpp14_m11_0_1_violation]
-    std::size_t size{};
-    // coverity[autosar_cpp14_m11_0_1_violation]
-    std::size_t alignment{};
-};
-
-bool operator==(const TypeErasedDataTypeInfo& lhs, const TypeErasedDataTypeInfo& rhs) noexcept;
 
 // Suppress "AUTOSAR C++14 A11-0-2" rule finding.
 // This rule states: "A type defined as struct shall: (1) provide only public data members, (2)
@@ -204,4 +195,4 @@ auto Deserialize(MemoryBufferAccessor& src_buffer) -> std::tuple<typename std::a
 
 }  // namespace score::mw::com::impl
 
-#endif
+#endif  // SCORE_MW_COM_IMPL_UTIL_TYPE_ERASED_STORAGE_H

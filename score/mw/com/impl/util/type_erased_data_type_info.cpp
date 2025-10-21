@@ -10,4 +10,14 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#include "score/mw/com/impl/util/type_erased_storage.h"
+#include "score/mw/com/impl/util/type_erased_data_type_info.h"
+
+namespace score::mw::com::impl
+{
+
+bool operator==(const TypeErasedDataTypeInfo& lhs, const TypeErasedDataTypeInfo& rhs) noexcept
+{
+    return ((lhs.size == rhs.size) && (lhs.alignment == rhs.alignment));
+}
+
+}  // namespace score::mw::com::impl
