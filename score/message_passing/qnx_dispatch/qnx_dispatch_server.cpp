@@ -118,6 +118,11 @@ void QnxDispatchServer::ServerConnection::RequestDisconnect() noexcept
     // TODO: implement as ionotify for zero-read (once this functionality is demanded)
 }
 
+// Suppress AUTOSAR C++14 A15-5-3 violation for variant access in destructor
+// Rationale: std::get<HandlerPointerT>(user_data) is preceded by std::holds_alternative check,
+// guaranteeing the variant contains the correct type. No std::bad_variant_access can be thrown.
+// The exception handling rule is satisfied as no actual exception can occur in this context.
+// coverity[autosar_cpp14_a15_5_3_violation]
 bool QnxDispatchServer::ServerConnection::ProcessInput(const std::uint8_t code,
                                                        const score::cpp::span<const std::uint8_t> message) noexcept
 {
@@ -129,18 +134,34 @@ bool QnxDispatchServer::ServerConnection::ProcessInput(const std::uint8_t code,
     switch (code)
     {
         case score::cpp::to_underlying(ClientToServer::REQUEST):
-            result = (std::holds_alternative<HandlerPointerT>(user_data)
-                          ? std::get<HandlerPointerT>(user_data)->OnMessageSentWithReply(*this, message)
-                          : server.sent_with_reply_callback_(*this, message))
-                         .has_value();
+        {
+            score::cpp::expected_blank<score::os::Error> response_result;
+            if (std::holds_alternative<HandlerPointerT>(user_data))
+            {
+                response_result = std::get<HandlerPointerT>(user_data)->OnMessageSentWithReply(*this, message);
+            }
+            else
+            {
+                response_result = server.sent_with_reply_callback_(*this, message);
+            }
+            result = response_result.has_value();
             break;
+        }
 
         case score::cpp::to_underlying(ClientToServer::SEND):
-            result = (std::holds_alternative<HandlerPointerT>(user_data)
-                          ? std::get<HandlerPointerT>(user_data)->OnMessageSent(*this, message)
-                          : server.sent_callback_(*this, message))
-                         .has_value();
+        {
+            score::cpp::expected_blank<score::os::Error> send_result;
+            if (std::holds_alternative<HandlerPointerT>(user_data))
+            {
+                send_result = std::get<HandlerPointerT>(user_data)->OnMessageSent(*this, message);
+            }
+            else
+            {
+                send_result = server.sent_callback_(*this, message);
+            }
+            result = send_result.has_value();
             break;
+        }
 
         default:
             // unrecognised message; drop connection
@@ -168,7 +189,7 @@ std::int32_t QnxDispatchServer::ServerConnection::ProcessReadRequest(resmgr_cont
     }
 
     auto& send_message = send_queue_.front();
-    const std::size_t io_size = 2U;
+    constexpr std::size_t io_size = 2U;
     std::array<iov_t, io_size> io{};
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access) C API
     io[0].iov_base = &send_message.code;
@@ -180,14 +201,21 @@ std::int32_t QnxDispatchServer::ServerConnection::ProcessReadRequest(resmgr_cont
     io[1].iov_len = send_message.message.size();
 
     // Calculate total size with bounds checking
-    const std::size_t header_size = sizeof(send_message.code);
+    constexpr std::size_t header_size = sizeof(send_message.code);
     const std::size_t message_size = send_message.message.size();
+    // Suppress AUTOSAR C++14 A4-7-1 violation for message size calculation
+    // Rationale: Message sizes are validated at construction and user input validation.
+    // header_size is compile-time constant (sizeof(uint8_t) = 1).
+    // message_size is bounded by max_reply_size_ or max_notify_size_ limits.
+    // if user specifies too large message size, std::terminate is called beforehand.
+    // coverity[autosar_cpp14_a4_7_1_violation]
     const std::size_t total_size = header_size + message_size;
 
     // Suppress AUTOSAR C++14 M5-0-4
     // Rationale: _IO_SET_READ_NBYTES requires int32_t parameter, but we've validated
-    // that the conversion doesn't lose precision within QNX system limits
+    // user input(max_reply_size or max_notify_size). It will doesn't lose precision.
     // coverity[autosar_cpp14_m5_0_4_violation]
+    // coverity[autosar_cpp14_a4_7_1_violation]
     _IO_SET_READ_NBYTES(ctp, static_cast<std::int32_t>(total_size));
     auto& server = GetQnxDispatchServer();
     auto& os_resources = server.engine_->GetOsResources();
@@ -202,10 +230,11 @@ std::int32_t QnxDispatchServer::ServerConnection::ProcessReadRequest(resmgr_cont
         notify_pool_.push_front(send_message);
     }
 
-    // Suppress AUTOSAR C++14 M5-0-10 violation in QNX system macro
-    // Rationale: _RESMGR_NOREPLY is a QNX system constant that may involve bitwise operations
-    // on unsigned types during macro expansion. Cannot modify system headers.
+    // Suppress AUTOSAR C++14 M5-0-10, A5-2-2 violation in QNX system macro
+    // Rationale: _RESMGR_NOREPLY is from QNX system headers.
+    // Cannot modify QNX headers.
     // coverity[autosar_cpp14_m5_0_10_violation]
+    // coverity[autosar_cpp14_a5_2_2_violation]
     return _RESMGR_NOREPLY;
 }
 
@@ -214,6 +243,11 @@ void QnxDispatchServer::ServerConnection::ProcessDisconnect() noexcept
     self_.reset();
 }
 
+// Suppress AUTOSAR C++14 A15-5-1 violation for variant access in destructor
+// Rationale: std::get<HandlerPointerT>(user_data) is preceded by std::holds_alternative check,
+// guaranteeing the variant contains the correct type. No std::bad_variant_access can be thrown.
+// The exception handling rule is satisfied as no actual exception can occur in this context.
+// coverity[autosar_cpp14_a15_5_1_violation]
 QnxDispatchServer::ServerConnection::~ServerConnection() noexcept
 {
     auto& server = GetQnxDispatchServer();
@@ -291,6 +325,9 @@ void QnxDispatchServer::StopListening() noexcept
 // coverity[autosar_cpp14_a9_5_1_violation]
 std::int32_t QnxDispatchServer::ProcessConnect(resmgr_context_t* const ctp, io_open_t* const msg) noexcept
 {
+    // Suppress "AUTOSAR C++14 A9-5-1", The rule states: "Unions shall not be used."
+    // QNX union.
+    // coverity[autosar_cpp14_a9_5_1_violation]
     if ((msg == nullptr) || (ctp == nullptr))
     {
         return EINVAL;
