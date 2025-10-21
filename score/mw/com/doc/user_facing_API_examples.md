@@ -1,10 +1,73 @@
 # User Facing API Example
 
-> [!NOTE]
-> This document is still a work in progress, thus not all `mw::com` APIs are documented here.
-> However all provided information is up to date.
-
 This document contains examples of each mw::com user facing API.
+
+## API Reference Table
+
+| API |
+|-----|
+| **Error Handling** |
+| [`ComErrc`](#example-1-using-comerrc-for-instanceidentifier-creation-error-handling) |
+| [`ComErrorDomain.MessageFor()`](#example-2-using-comerrordommessagefor-for-error-messages) |
+| **Runtime & Configuration** |
+| [`ResolveInstanceIDs()`](#example-1-using-resolveinstanceids-for-instance-identifier-resolution) |
+| [`InitializeRuntime(argc, argv)`](#command-line-arguments-overload) |
+| [`InitializeRuntime(RuntimeConfiguration)`](#runtimeconfiguration-overload) |
+| [`RuntimeConfiguration(argc, argv)`](#example-3-using-runtimeconfiguration-for-configuration-management) |
+| [`RuntimeConfiguration(Path)`](#example-3-using-runtimeconfiguration-for-configuration-management) |
+| [`RuntimeConfiguration::GetConfigurationPath()`](#example-3-using-runtimeconfiguration-for-configuration-management) |
+| **Data Types** |
+| [`InstanceIdentifier::Create()`](#example-1-using-instanceidentifier-for-service-instance-management) |
+| [`InstanceIdentifier::ToString()`](#example-1-using-instanceidentifier-for-service-instance-management) |
+| [`InstanceSpecifier::Create()`](#example-2-using-instancespecifier-for-application-port-identification) |
+| [`InstanceSpecifier::ToString()`](#example-2-using-instancespecifier-for-application-port-identification) |
+| [`FindServiceHandle`](#example-3-using-findservicehandle-for-service-discovery-management) |
+| [`FindServiceHandler`](#example-4-using-findservicehandler-for-service-discovery-callbacks) |
+| [`MethodCallProcessingMode`](#example-5-using-methodcallprocessingmode-for-service-implementation-control) |
+| [`SubscriptionState`](#example-6-using-subscriptionstate-for-event-subscription-management) |
+| [`SamplePtr`](#example-7-using-sampleptr-for-receiving-event-data) |
+| [`SampleAllocateePtr`](#example-8-using-sampleallocateeptr-for-sending-event-data) |
+| [`EventReceiveHandler`](#example-9-using-eventreceivehandler-for-event-notifications) |
+| [`AsProxy`](#example-10-using-asproxy-for-interface-type-interpretation) |
+| [`AsSkeleton`](#example-11-using-asskeleton-for-interface-type-interpretation) |
+| [`GenericProxy`](#example-12-using-genericproxy-for-type-erased-data-access) |
+| **Proxy** |
+| [`ProxyWrapper::Create()`](#example-1-create---creating-proxy-from-service-handle) |
+| [`ProxyWrapper::FindService()`](#example-2-findservice---synchronous-service-discovery-polling-mode) |
+| [`ProxyWrapper::StartFindService()`](#example-3-startfindservice---asynchronous-service-discovery) |
+| [`ProxyWrapper::StopFindService()`](#example-4-stopfindservice---cancel-service-discovery) |
+| [`ProxyWrapper::GetHandle()`](#example-5-gethandle---get-service-instance-handle) |
+| **Proxy Event** |
+| [`ProxyEvent::Subscribe()`](#example-6-subscribe---subscribe-to-service-event) |
+| [`ProxyEvent::GetNewSamples()`](#example-7-getnewsamples---retrieve-event-samples) |
+| [`ProxyEvent::SetReceiveHandler()`](#example-8-setreceivehandler---register-event-notification-handler) |
+| [`ProxyEvent::GetSubscriptionState()`](#example-9-getsubscriptionstate---check-subscription-status) |
+| [`ProxyEvent::GetFreeSampleCount()`](#example-10-getfreesamplecount---check-available-sample-buffer-space) |
+| [`ProxyEvent::GetNumNewSamplesAvailable()`](#example-11-getnumnewsamplesavailable---check-pending-sample-count) |
+| [`ProxyEvent::UnsetReceiveHandler()`](#example-12-unsetreceivehandler---remove-event-handler) |
+| [`ProxyEvent::IsBindingValid()`](#example-13-isbindingvalid---check-event-binding-health) |
+| [`ProxyEvent::Unsubscribe()`](#example-14-unsubscribe---cancel-event-subscription) |
+| **Proxy Field** |
+| [`ProxyField::Subscribe()`](#example-15-subscribe---subscribe-to-field-changes) |
+| [`ProxyField::GetSubscriptionState()`](#example-16-getsubscriptionstate---check-field-subscription-status) |
+| [`ProxyField::GetFreeSampleCount()`](#example-17-getfreesamplecount---check-available-field-buffer-space) |
+| [`ProxyField::GetNumNewSamplesAvailable()`](#example-18-getnumnewsamplesavailable---check-pending-field-changes) |
+| [`ProxyField::GetNewSamples()`](#example-19-getnewsamples---retrieve-field-change-samples) |
+| [`ProxyField::SetReceiveHandler()`](#example-20-setreceivehandler---register-field-change-handler) |
+| [`ProxyField::UnsetReceiveHandler()`](#example-21-unsetreceivehandler---remove-field-change-handler) |
+| [`ProxyField::Unsubscribe()`](#example-22-unsubscribe---cancel-field-change-subscription) |
+| **Skeleton** |
+| [`SkeletonWrapper::Create()`](#example-1-create---creating-skeleton-instance) |
+| [`SkeletonWrapper::OfferService()`](#example-2-offerservice---make-service-available-to-clients) |
+| [`SkeletonWrapper::StopOfferService()`](#example-3-stopofferservice---stop-service-availability) |
+| **Skeleton Event** |
+| [`SkeletonEvent::Send()`](#example-4-send---send-event-data-to-subscribers) |
+| [`SkeletonEvent::Allocate()`](#example-5-allocate---allocate-memory-for-event-data) |
+| **Skeleton Field** |
+| [`SkeletonField::Update()`](#example-6-update---update-field-value-and-notify-subscribers) |
+| [`SkeletonField::Allocate()`](#example-7-allocate---allocate-memory-for-zero-copy-field-update) |
+
+---
 
 ## `Error_Com` API Examples:
 
@@ -110,7 +173,10 @@ if (instance_spec_result.has_value()) {
 ### Example 2: Using `InitializeRuntime()` for Runtime Setup
 
 `InitializeRuntime()` sets up the mw::com system before any other mw::com functions can be used.
-This function must be called once at the start of your application and supports multiple initialization methods.
+This function can be called once at the start of your application and supports multiple initialization methods. However, the call can also be omitted. The runtime will then be lazy initialized at the time when it is first needed. And the program will expect a configuration file called mw_com_config.json inside the etc subfolder of the working directory of the running process.
+
+> [!Warning]
+> Relying on Lazy initialization might cause unpredictably long runtime for the first LoLa API call that relies on the runtime.
 
 #### Command Line Arguments Overload
 
@@ -777,5 +843,885 @@ void AccessServiceGeneric(score::mw::com::impl::HandleType service_handle) {
 - Useful for debugging, monitoring, and generic service introspection
 
 </details>
+
+---
+
+## `Proxy` APIs - Client-Side Service Communication
+
+The Proxy side APIs enable client applications to discover, connect to, and interact with services in the mw::com framework.
+Proxies provide access to remote service events and fields.
+
+### Proxy
+
+A proxy class can be constructed from an Interface Template through the `AsProxy` template (see [`AsProxy`](#example-10-using-asproxy-for-interface-type-interpretation)).
+
+#### Example 1: `Create()` - Creating Proxy from Service Handle
+
+`Create()` instantiates a proxy using a service handle obtained from `FindService()` or `StartFindService()`.
+
+<details>
+<summary> Examples: </summary>
+
+```cpp
+#include "generated_service_proxy.h"
+#include <thread>
+#include <chrono>
+
+// Step 1: Find service using polling
+auto spec = score::mw::com::InstanceSpecifier::Create("my/service/path");
+if (spec.has_value()) {
+    std::optional<MyServiceProxy::HandleType> service_handle;
+
+    // Poll until service is found
+    while (!service_handle.has_value()) {
+        auto handles = MyServiceProxy::FindService(spec.value());
+
+        if (handles.has_value() && !handles.value().empty()) {
+            service_handle = handles.value()[0];
+            break;
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    // Step 2: Create proxy using the handle
+    auto proxy_result = MyServiceProxy::Create(service_handle.value());
+    if (proxy_result.has_value()) {
+        auto proxy = std::move(proxy_result.value());
+        // Use proxy to interact with service
+    }
+}
+```
+
+**Production Example Reference**: `score/mw/com/performance_benchmarks/macro_benchmark/lola_benchmarking_client.cpp:334`
+
+**Key Points**:
+- Requires `HandleType` obtained from `FindService()` or `StartFindService()`
+- Returns `Result<ProxyWrapper>` - check with `has_value()` before use
+- Proxy lifetime controls connection to service - destroyed proxy releases resources
+- Handle contains binding information (InstanceIdentifier, serviceId, binding type)
+- Handle caches discovery results
+
+</details>
+
+---
+
+#### Example 2: `FindService()` - Synchronous Service Discovery (Polling Mode)
+
+`FindService()` looks up currently available service instances and returns immediately.
+It does NOT wait for services to appear.
+
+<details>
+<summary> Examples: </summary>
+
+```cpp
+#include "score/mw/com/impl/proxy_base.h"
+#include <thread>
+#include <chrono>
+
+// Poll for service using InstanceSpecifier
+auto spec = score::mw::com::InstanceSpecifier::Create("my/service/path");
+if (spec.has_value()) {
+    std::optional<MyServiceProxy::HandleType> service_handle;
+
+    // Polling loop - repeatedly check until service is found
+    while (!service_handle.has_value()) {
+        auto handles = MyServiceProxy::FindService(spec.value());
+
+        if (handles.has_value() && !handles.value().empty()) {
+            service_handle = handles.value()[0];
+            break;
+        }
+
+        // Wait before next poll attempt
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    // Create proxy once service is found
+    auto proxy = MyServiceProxy::Create(service_handle.value());
+}
+```
+
+**Production Example Reference**: `score/mw/com/performance_benchmarks/macro_benchmark/lola_benchmarking_client.cpp:91`
+
+**Key Points**:
+- Returns immediately with current state - does NOT block waiting for services
+- Returns `ServiceHandleContainer` with available instances or empty container
+- Can be used in polling loop to check for service availability
+
+</details>
+
+---
+
+#### Example 3: `StartFindService()` - Asynchronous Service Discovery
+
+`StartFindService()` initiates asynchronous service discovery with callback notifications for service availability changes.
+
+<details>
+<summary> Examples: </summary>
+
+```cpp
+#include "score/mw/com/impl/proxy_base.h"
+
+// Asynchronous service discovery with callback using InstanceSpecifier
+auto spec = score::mw::com::InstanceSpecifier::Create("my/service/path");
+if (spec.has_value()) {
+    auto callback = [](ServiceHandleContainer<MyServiceProxy::HandleType> handles,
+                       FindServiceHandle find_handle) {
+        for (const auto& handle : handles) {
+            // Create proxy using HandleType from callback
+            auto proxy_result = MyServiceProxy::Create(handle);
+            if (proxy_result.has_value()) {
+                // Process discovered service
+            }
+        }
+    };
+
+    auto find_handle = MyServiceProxy::StartFindService(callback, spec.value());
+    // Callback invoked when services are found
+}
+```
+
+**Key Points**:
+- Non-blocking operation - returns immediately
+- Callback receives `ServiceHandleContainer<HandleType>` with discovered service handles
+- Each handle passed to `Create()` to instantiate proxy
+- Returns `FindServiceHandle` for later cancellation
+- Use `StopFindService()` to cancel discovery
+
+</details>
+
+---
+
+#### Example 4: `StopFindService()` - Cancel Service Discovery
+
+`StopFindService()` cancels an active asynchronous service discovery operation using the handle from `StartFindService()`.
+
+<details>
+<summary> Examples: </summary>
+
+```cpp
+// Stop active service discovery
+auto find_handle = MyServiceProxy::StartFindService(callback, spec);
+if (find_handle.has_value()) {
+    // Later, cancel discovery
+    auto stop_result = MyServiceProxy::StopFindService(find_handle.value());
+}
+```
+
+**Key Points**:
+- Requires valid `FindServiceHandle` from `StartFindService()`
+- Stops callback notifications
+- Safe to call even if discovery already completed
+- Returns `ResultBlank` - check for errors
+
+</details>
+
+---
+
+#### Example 5: `GetHandle()` - Get Service Instance Handle
+
+`GetHandle()` returns the handle that was used to instantiate this proxy.
+
+<details>
+<summary> Examples: </summary>
+
+```cpp
+#include <thread>
+#include <chrono>
+
+// First, find and create proxy using handle
+auto spec = score::mw::com::InstanceSpecifier::Create("my/service/path");
+if (spec.has_value()) {
+    std::optional<MyServiceProxy::HandleType> service_handle;
+
+    // Poll until service is found
+    while (!service_handle.has_value()) {
+        auto handles = MyServiceProxy::FindService(spec.value());
+
+        if (handles.has_value() && !handles.value().empty()) {
+            service_handle = handles.value()[0];
+            break;
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    // Create proxy using HandleType from FindService
+    auto proxy_result = MyServiceProxy::Create(service_handle.value());
+
+    if (proxy_result.has_value()) {
+        auto proxy = std::move(proxy_result.value());
+
+        // Get the service handle that was used to create this proxy
+        const auto& handle = proxy.GetHandle();
+        auto instance_id = handle.GetInstanceIdentifier();
+        // Use instance_id for logging or tracking
+    }
+}
+```
+
+**Key Points**:
+- Returns reference to `HandleType` (contains InstanceIdentifier)
+- Handle identifies the specific service instance
+- Can extract InstanceIdentifier from handle
+
+</details>
+
+---
+
+#### Example 6: `Subscribe()` - Subscribe to Service Event
+
+`Subscribe()` establishes event subscription with maximum sample buffer size.
+Must be called before `GetNewSamples()` can retrieve event data.
+
+<details>
+<summary> Examples: </summary>
+
+```cpp
+#include "generated_service_proxy.h"
+#include <thread>
+#include <chrono>
+
+// First, find and create proxy using handle
+auto spec = score::mw::com::InstanceSpecifier::Create("my/service/path");
+if (spec.has_value()) {
+    std::optional<MyServiceProxy::HandleType> service_handle;
+
+    // Poll until service is found
+    while (!service_handle.has_value()) {
+        auto handles = MyServiceProxy::FindService(spec.value());
+
+        if (handles.has_value() && !handles.value().empty()) {
+            service_handle = handles.value()[0];
+            break;
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    // Create proxy using the handle
+    auto proxy_result = MyServiceProxy::Create(service_handle.value());
+
+    if (proxy_result.has_value()) {
+        auto proxy = std::move(proxy_result.value());
+
+        // Subscribe to event with buffer for 10 samples
+        auto result = proxy.my_event.Subscribe(10);
+
+        if (result.has_value()) {
+            // Successfully subscribed - can now receive events
+        }
+    }
+}
+```
+
+**Key Points**:
+- Takes only `max_sample_count` parameter
+- Returns `ResultBlank` - check with `has_value()` before use
+- Must subscribe before calling `GetNewSamples()`
+
+</details>
+
+---
+
+#### Example 7: `GetNewSamples()` - Retrieve Event Samples
+
+`GetNewSamples()` retrieves pending event samples through a callback for each available sample.
+Requires active subscription via `Subscribe()` before use.
+
+<details>
+<summary> Examples: </summary>
+
+```cpp
+// Subscribe to event first
+proxy->my_event.Subscribe(10);
+
+// Retrieve new samples with callback
+auto result = proxy->my_event.GetNewSamples(
+    [](score::mw::com::SamplePtr<const MyDataType> sample) {
+        if (sample) {
+            // Process sample data
+            ProcessData(*sample);
+        }
+    },
+    5  // Maximum 5 samples per call
+);
+
+if (result.has_value()) {
+    // result.value() contains number of samples retrieved
+}
+```
+
+**Production Example Reference**: `ecu/ipnext/domains/ref_applications/80_lola/client/src/ref_app_lola_client.cpp`
+
+**Key Points**:
+- Must call `Subscribe()` before `GetNewSamples()`
+- Callback invoked once per sample
+- `SamplePtr` is smart pointer managing sample lifetime
+- Second parameter limits samples retrieved per call
+- Returns `Result<size_t>` with number of samples processed
+
+</details>
+
+---
+
+#### Example 8: `SetReceiveHandler()` - Register Event Notification Handler
+
+`SetReceiveHandler()` registers a callback that's invoked when new event samples arrive.
+
+<details>
+<summary> Examples: </summary>
+
+```cpp
+// Register handler for automatic event notification
+proxy->my_event.SetReceiveHandler([]() {
+    // Called when new samples available
+    // Retrieve samples using GetNewSamples()
+});
+```
+
+**Key Points**:
+- Handler called asynchronously when samples arrive
+- Must still call `GetNewSamples()` to retrieve data
+- Handler executes in mw::com internal thread
+- Keep handler lightweight - offload work to application threads
+
+</details>
+
+---
+
+#### Example 9: `GetSubscriptionState()` - Check Subscription Status
+
+`GetSubscriptionState()` returns current subscription state for the event.
+Primarily used for logging, monitoring subscription progress, or debugging subscription issues.
+
+<details>
+<summary> Examples: </summary>
+
+```cpp
+#include "score/mw/com/types.h"
+#include <chrono>
+#include <thread>
+
+// Example: Logging subscription states for monitoring/debugging
+proxy.my_event.Subscribe(10);
+
+// Log current subscription state
+auto state = proxy.my_event.GetSubscriptionState();
+switch (state) {
+    case score::mw::com::SubscriptionState::kSubscribed:
+        LOG_INFO("Event is subscribed - receiving data");
+        break;
+    case score::mw::com::SubscriptionState::kNotSubscribed:
+        LOG_WARN("Event is not subscribed");
+        break;
+    case score::mw::com::SubscriptionState::kSubscriptionPending:
+        LOG_INFO("Subscription is pending - waiting for confirmation");
+        break;
+}
+```
+
+**Production Example Reference**: `score/mw/com/test/field_initial_value/client.cpp:57`
+
+**Key Points**:
+- `kSubscribed`: Event is active and receiving samples
+- `kNotSubscribed`: Must call `Subscribe()` first
+- `kSubscriptionPending`: Subscription in progress
+- Primarily used for logging/monitoring
+
+</details>
+
+---
+
+#### Example 10: `GetFreeSampleCount()` - Check Available Sample Buffer Space
+
+`GetFreeSampleCount()` returns the number of samples that can still be received by the application.
+If this returns 0, you must drop at least one `SamplePtr` before calling `GetNewSamples()` again.
+
+<details>
+<summary> Examples: </summary>
+
+```cpp
+// Check available buffer space before retrieving samples
+auto free_count = proxy->my_event.GetFreeSampleCount();
+if (free_count > 0) {
+    auto samples = proxy->my_event.GetNewSamples(callback, free_count);
+}
+```
+
+**Key Points**:
+- Returns number of samples that can still be buffered
+- Value is 0 when maximum buffer capacity is reached
+- Drop `SamplePtr` references to free buffer space
+- Unspecified if event is not subscribed
+
+</details>
+
+---
+
+#### Example 11: `GetNumNewSamplesAvailable()` - Check Pending Sample Count
+
+`GetNumNewSamplesAvailable()` returns the number of new samples currently available for retrieval.
+
+> [!Note]
+> This API is just as expensive to call as `GetNewSamples` and has no added value for most users. It should be avoided.
+
+---
+
+#### Example 12: `UnsetReceiveHandler()` - Remove Event Handler
+
+`UnsetReceiveHandler()` removes a previously registered receive handler set via `SetReceiveHandler()`.
+Stops automatic callback invocations when new samples arrive.
+
+<details>
+<summary> Examples: </summary>
+
+```cpp
+// Remove registered receive handler
+auto result = proxy->my_event.UnsetReceiveHandler();
+if (result.has_value()) {
+    auto samples = proxy->my_event.GetNewSamples(callback, 10);
+}
+```
+
+**Key Points**:
+- Removes handler registered with `SetReceiveHandler()`
+- Safe to call even if no handler registered
+- Returns `ResultBlank` - check for errors
+
+</details>
+
+---
+
+#### Example 13: `IsBindingValid()` - Check Event Binding Health
+
+`IsBindingValid()` checks if the event has a valid connection to the underlying communication binding.
+
+<details>
+<summary> Examples: </summary>
+
+```cpp
+// Check if event binding is valid before use
+if (proxy->my_event.IsBindingValid()) {
+    // Binding is valid - safe to use event operations
+    auto result = proxy->my_event.Subscribe(10);
+} else {
+    // Binding is invalid - likely construction or move error
+    LOG_ERROR("Event binding is invalid - cannot use event operations");
+}
+```
+
+**Key Points**:
+- Returns `true` if internal binding pointer is valid (not nullptr)
+- Returns `false` indicates critical internal error
+- Typically caused by failed move operation or incorrect construction
+- Low-level diagnostic API - rarely needed in normal application code
+- Check before using event operations if construction is uncertain
+
+</details>
+
+---
+
+#### Example 14: `Unsubscribe()` - Cancel Event Subscription
+
+`Unsubscribe()` cancels active event subscription and stops receiving new samples.
+
+<details>
+<summary> Examples: </summary>
+
+```cpp
+// Unsubscribe from event
+proxy->my_event.Unsubscribe();
+// Event no longer receives samples
+```
+
+**Key Points**:
+- Stops receiving new event samples
+- Clears buffered samples
+- Removes any registered receive handler
+- Safe to call even if not subscribed
+- After unsubscribe, event behaves as newly constructed
+- Synchronizes with running receive handlers before returning
+
+</details>
+
+---
+
+#### Example 15: `Subscribe()` - Subscribe to Field Changes
+
+see [#example-6-subscribe---subscribe-to-service-event](#example-6-subscribe---subscribe-to-service-event)
+
+---
+
+#### Example 16: `GetSubscriptionState()` - Check Field Subscription Status
+
+see [#example-9-getsubscriptionstate---check-subscription-status](#example-9-getsubscriptionstate---check-subscription-status)
+
+---
+
+#### Example 17: `GetFreeSampleCount()` - Check Available Field Buffer Space
+
+see [#example-10-getfreesamplecount---check-available-sample-buffer-space](#example-10-getfreesamplecount---check-available-sample-buffer-space)
+
+---
+
+#### Example 18: `GetNumNewSamplesAvailable()` - Check Pending Field Changes
+
+see [#example-11-getnumnewsamplesavailable---check-pending-sample-count](#example-11-getnumnewsamplesavailable---check-pending-sample-count)
+
+---
+
+#### Example 19: `GetNewSamples()` - Retrieve Field Change Samples
+
+see [#example-7-getnewsamples---retrieve-event-samples](#example-7-getnewsamples---retrieve-event-samples)
+
+---
+
+#### Example 20: `SetReceiveHandler()` - Register Field Change Handler
+
+see [#example-8-setreceivehandler---register-event-notification-handler](#example-8-setreceivehandler---register-event-notification-handler)
+
+---
+
+#### Example 21: `UnsetReceiveHandler()` - Remove Field Change Handler
+
+see [#example-12-unsetreceivehandler---remove-event-handler](#example-12-unsetreceivehandler---remove-event-handler)
+
+---
+
+#### Example 22: `Unsubscribe()` - Cancel Field Change Subscription
+
+see [#example-14-unsubscribe---cancel-event-subscription](#example-14-unsubscribe---cancel-event-subscription)
+
+> [!NOTE]
+> **ProxyField `Get()` and `Set()` methods** are currently under development and will be added in a future update.
+
+---
+
+> [!NOTE]
+> **ProxyMethod API documentation** for remote procedure call (RPC) functionality is currently under development and will be added in a future update.
+
+---
+
+### Production Example of Usage of Proxy API: [score/mw/com/performance_benchmarks/macro_benchmark/lola_benchmarking_client.cpp](../performance_benchmarks/macro_benchmark/lola_benchmarking_client.cpp)
+
+---
+
+## `Skeleton` APIs - Server-Side Service Implementation
+
+The Skeleton side APIs enable service provider applications to implement and offer services in the mw::com framework.
+Skeletons publish events and manage fields calls from clients.
+
+### Skeleton
+
+A skeleton class can be constructed from an Interface Template through the `AsSkeleton` template (see [`AsSkeleton`](#example-11-using-asskeleton-for-interface-type-interpretation)).
+
+#### Example 1: `Create()` - Creating Skeleton Instance
+
+`Create()` instantiates a skeleton for implementing a service instance.
+Returns a `Result` containing the skeleton instance or an error if creation fails.
+
+<details>
+<summary> Examples: </summary>
+
+```cpp
+#include "generated_service_skeleton.h"  // Generated from service interface
+
+// Create skeleton with explicit processing mode
+auto spec = score::mw::com::InstanceSpecifier::Create("my/service/path");
+if (spec.has_value()) {
+    auto skeleton_result = MyServiceSkeleton::Create(spec.value());
+    if (skeleton_result.has_value()) {
+        auto skeleton = std::move(skeleton_result.value());
+        // Skeleton created - can now offer service
+
+    }
+}
+```
+
+**Key Points**:
+- Requires valid `InstanceSpecifier` from configuration
+- Returns `Result<SkeletonWrapper>` - check with `has_value()`
+- Skeleton lifetime determines service availability
+
+</details>
+
+---
+
+#### Example 2: `OfferService()` - Make Service Available to Clients
+
+`OfferService()` makes the service instance available for discovery and connection by proxy clients.
+Must be called after skeleton creation to enable client communication.
+
+<details>
+<summary> Examples: </summary>
+
+```cpp
+#include "generated_service_skeleton.h"
+
+// Create skeleton instance
+auto spec = score::mw::com::InstanceSpecifier::Create("my/service/path");
+auto skeleton_result = MyServiceSkeleton::Create(spec.value());
+
+if (skeleton_result.has_value()) {
+    auto skeleton = std::move(skeleton_result.value());
+
+    // Offer the service - makes it discoverable by proxies
+    auto offer_result = skeleton.OfferService();
+
+    if (offer_result.has_value()) {
+        // Service is now offered successfully
+        // Proxies can discover and connect to this service
+
+        // Skeleton can now send events and update fields
+        // skeleton.my_event.Send(data);
+        // skeleton.my_field.Update(value);
+    } else {
+        // Handle error - service could not be offered
+        auto error = offer_result.error();
+    }
+}
+```
+
+**Key Points**:
+- Call after skeleton creation to enable service discovery
+- Returns `ResultBlank` - check with `has_value()` for success
+- Service remains offered until `StopOfferService()` or skeleton destruction
+- After offering, you can send events and update fields
+- Proxies cannot discover the service after `OfferService()` succeeds
+
+</details>
+
+---
+
+#### Example 3: `StopOfferService()` - Stop Service Availability
+
+`StopOfferService()` stops offering the service, making it unavailable for client discovery.
+
+<details>
+<summary> Examples: </summary>
+
+```cpp
+#include "generated_service_skeleton.h"
+
+void ManageServiceLifecycle() {
+    auto spec = score::mw::com::InstanceSpecifier::Create("my/service/path");
+    auto skeleton_result = MyServiceSkeleton::Create(spec.value());
+
+    if (skeleton_result.has_value()) {
+        auto skeleton = std::move(skeleton_result.value());
+
+        // Offer service
+        skeleton.OfferService();
+
+        // Service is active - process events, update fields
+        // ... application logic ...
+
+        // Later, when shutting down or suspending service
+        skeleton.StopOfferService();
+
+        // Service is no longer discoverable by new clients
+        // Existing connections may be terminated
+    }
+}
+```
+
+**Key Points**:
+- Void return type - always succeeds
+- Makes service unavailable for new client discovery
+- Automatically called when skeleton is destroyed
+- Skeleton can be re-offered by calling `OfferService()` again
+
+</details>
+
+---
+
+#### Example 4: `Send()` - Send Event Data to Subscribers
+
+`Send()` transmits event data to all subscribed proxy clients.
+Supports two overloads: one for direct data sending (copy-based) and another for zero-copy using pre-allocated memory.
+
+<details>
+<summary> Examples: </summary>
+
+```cpp
+#include "generated_service_skeleton.h"
+
+// Create and offer skeleton
+auto spec = score::mw::com::InstanceSpecifier::Create("my/service/path");
+auto skeleton_result = MyServiceSkeleton::Create(spec.value());
+
+if (skeleton_result.has_value()) {
+    auto skeleton = std::move(skeleton_result.value());
+    skeleton.OfferService();
+
+    // Method 1: Copy-based sending - simple approach
+    MyDataType event_data;
+    event_data.field1 = 42;
+    event_data.field2 = "Hello";
+
+    auto send_result = skeleton.my_event.Send(event_data);
+    if (send_result.has_value()) {
+        // Event sent successfully - data copied internally
+    }
+
+    // Method 2: Zero-copy sending - for performance-critical scenarios
+    auto allocate_result = skeleton.my_event.Allocate();
+    if (allocate_result.has_value()) {
+        auto sample = std::move(allocate_result.value());
+
+        // Fill the allocated memory
+        sample->field1 = 100;
+        sample->field2 = "Zero-Copy";
+
+        // Send using zero-copy (memory ownership transferred)
+        auto send_result = skeleton.my_event.Send(std::move(sample));
+        if (send_result.has_value()) {
+            // Event sent successfully without copying data
+            // sample is now invalid (moved)
+        }
+    }
+}
+```
+
+**Key Points**:
+- Copy-based accepts `const EventType&` and zero-copy accepts `SampleAllocateePtr<EventType>`
+- Zero-copy requires `Allocate()` first and uses less memory bandwidth
+- Must call `OfferService()` before sending
+- Returns `ResultBlank` - check with `has_value()`
+
+</details>
+
+---
+
+#### Example 5: `Allocate()` - Allocate Memory for Event Data
+
+`Allocate()` pre-allocates memory for event data before sending.
+Use this method for zero-copy transmission in shared memory scenarios.
+
+<details>
+<summary> Examples: </summary>
+
+```cpp
+#include "generated_service_skeleton.h"
+
+void SendEventWithZeroCopy() {
+    auto skeleton = MyServiceSkeleton::Create(spec.value()).value();
+    skeleton.OfferService();
+
+    // Allocate memory for the event data
+    auto allocate_result = skeleton.my_event.Allocate();
+
+    if (allocate_result.has_value()) {
+        auto sample = std::move(allocate_result.value());
+
+        // sample is a SampleAllocateePtr<MyDataType>
+        // Fill the data using pointer operators
+        sample->field1 = 100;
+        sample->field2 = "Zero-Copy Data";
+
+        // Send the pre-allocated data
+        skeleton.my_event.Send(std::move(sample));
+    } else {
+        // Handle allocation failure
+        auto error = allocate_result.error();
+    }
+}
+```
+
+**Key Points**:
+- Returns `Result<SampleAllocateePtr<EventType>>` - check with `has_value()`
+- Allocates memory from shared memory pools for zero-copy transmission
+- Must be called after `OfferService()` - shared memory not yet set up before offering
+- Memory ownership transferred to `Send()` when transmitted
+
+</details>
+
+---
+
+#### Example 6: `Update()` - Update Field Value and Notify Subscribers
+
+`Update()` sets a new field value and notifies all subscribed proxy clients of the change.
+Supports two overloads: one for direct value update (copy-based) and another for zero-copy using pre-allocated memory.
+
+<details>
+<summary> Examples: </summary>
+
+```cpp
+#include "generated_service_skeleton.h"
+
+// Create skeleton
+auto spec = score::mw::com::InstanceSpecifier::Create("my/service/path");
+auto skeleton_result = MyServiceSkeleton::Create(spec.value());
+
+if (skeleton_result.has_value()) {
+    auto skeleton = std::move(skeleton_result.value());
+
+    // Set initial field value BEFORE offering service
+    MyFieldType initial_value;
+    initial_value.temperature = 20.0;
+    initial_value.pressure = 100.0;
+
+    auto set_result = skeleton.my_field.Update(initial_value);
+    if (!set_result.has_value()) {
+        // Handle error - initial value must be set
+        return;
+    }
+
+    // Offer service
+    skeleton.OfferService();
+
+    // Method 1: Copy-based update - simple approach
+    MyFieldType new_value;
+    new_value.temperature = 25.5;
+    new_value.pressure = 101.3;
+
+    auto update_result = skeleton.my_field.Update(new_value);
+    if (update_result.has_value()) {
+        // Field updated successfully - data copied internally
+    }
+
+    // Method 2: Zero-copy update - for performance-critical scenarios
+    auto allocate_result = skeleton.my_field.Allocate();
+    if (allocate_result.has_value()) {
+        auto sample = std::move(allocate_result.value());
+
+        // Fill the allocated memory
+        sample->temperature = 30.0;
+        sample->pressure = 105.0;
+
+        // Update field using zero-copy (memory ownership transferred)
+        auto update_result = skeleton.my_field.Update(std::move(sample));
+        if (update_result.has_value()) {
+            // Field updated successfully without copying data
+            // sample is now invalid (moved)
+        }
+    }
+}
+```
+
+**Key Points**:
+- Initial field value must be set before `OfferService()` is called
+- Copy-based accepts `const FieldType&` and zero-copy accepts `SampleAllocateePtr<FieldType>`
+- Zero-copy requires `Allocate()` first and uses less memory bandwidth
+- Returns `ResultBlank` - check with `has_value()`
+
+</details>
+
+---
+
+#### Example 7: `Allocate()` - Allocate Memory for Zero-Copy Field Update
+
+see [#example-5-allocate---allocate-memory-for-event-data](#example-5-allocate---allocate-memory-for-event-data)
+
+---
+
+> [!NOTE]
+> **SkeletonMethod API documentation** for implementing remote procedure call (RPC) handlers is currently under development and will be added in a future update.
+
+---
+
+### Production Example of Usage of Skeleton API: [score/mw/com/performance_benchmarks/macro_benchmark/lola_benchmarking_service.cpp](../performance_benchmarks/macro_benchmark/lola_benchmarking_service.cpp)
 
 ---
