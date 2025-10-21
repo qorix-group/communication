@@ -18,6 +18,7 @@
 #include "score/memory/shared/pointer_arithmetic_util.h"
 
 #include <score/assert.hpp>
+#include <score/span.hpp>
 
 #include <algorithm>
 #include <cstdlib>
@@ -36,15 +37,13 @@ namespace score::mw::com::impl
 // coverity[autosar_cpp14_a11_0_2_violation]
 struct MemoryBufferAccessor
 {
-    MemoryBufferAccessor(std::byte* buffer, std::size_t size) : start{buffer}, offset{0U}, buffer_size{size} {}
+    MemoryBufferAccessor(score::cpp::span<std::byte> input_buffer) : buffer{input_buffer}, offset{0U} {}
     // Suppress "AUTOSAR C++14 M11-0-1" rule findings. This rule states: "Member data in non-POD class types
     // shall be private.". This struct is a POD class!
     // coverity[autosar_cpp14_m11_0_1_violation]
-    std::byte* start;
+    score::cpp::span<std::byte> buffer;
     // coverity[autosar_cpp14_m11_0_1_violation]
     std::size_t offset;
-    // coverity[autosar_cpp14_m11_0_1_violation]
-    std::size_t buffer_size;
 };
 
 namespace detail
@@ -119,8 +118,8 @@ template <typename T>
 void SerializeArgs(MemoryBufferAccessor& target_buffer, T arg)
 {
     auto dest_ptr =
-        static_cast<void*>(score::memory::shared::AddOffsetToPointer(target_buffer.start, target_buffer.offset));
-    const std::size_t buffer_space_before_align = target_buffer.buffer_size - target_buffer.offset;
+        static_cast<void*>(score::memory::shared::AddOffsetToPointer(target_buffer.buffer.data(), target_buffer.offset));
+    const std::size_t buffer_space_before_align = target_buffer.buffer.size() - target_buffer.offset;
     std::size_t buffer_space_after_align = buffer_space_before_align;
     dest_ptr = std::align(alignof(T), sizeof(T), dest_ptr, buffer_space_after_align);
     SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(dest_ptr, "Buffer too small");
@@ -155,6 +154,13 @@ void SerializeArgs(MemoryBufferAccessor& target_buffer, T arg, Args... args)
     SerializeArgs(target_buffer, args...);
 }
 
+template <typename T, typename... Args>
+void SerializeArgs(score::cpp::span<std::byte> target_buffer, T arg, Args... args)
+{
+    MemoryBufferAccessor memory_buffer_accessor{target_buffer};
+    SerializeArgs(memory_buffer_accessor, arg, args...);
+}
+
 /// \brief Returns pointer to argument value at current buffer position.
 /// \details Casts the current buffer position (with eventually added padding bytes if needed) to a pointer to Arg type
 /// and returns it. Updates the buffer,offset_ to point after the argument
@@ -164,7 +170,7 @@ void SerializeArgs(MemoryBufferAccessor& target_buffer, T arg, Args... args)
 template <typename Arg>
 auto DeserializeArg(MemoryBufferAccessor& buffer) -> Arg*
 {
-    auto src_ptr = static_cast<void*>(score::memory::shared::AddOffsetToPointer(buffer.start, buffer.offset));
+    auto src_ptr = static_cast<void*>(score::memory::shared::AddOffsetToPointer(buffer.buffer.data(), buffer.offset));
     auto src_ptr_as_int = score::memory::shared::CastPointerToInteger(src_ptr);
 
     auto padding = (src_ptr_as_int % alignof(Arg)) == 0 ? 0 : alignof(Arg) - (src_ptr_as_int % alignof(Arg));
@@ -191,6 +197,13 @@ auto Deserialize(MemoryBufferAccessor& src_buffer) -> std::tuple<typename std::a
         },
         tuple_with_args);
     return tuple_with_args;
+}
+
+template <typename... Args>
+auto Deserialize(score::cpp::span<std::byte> src_buffer) -> std::tuple<typename std::add_pointer<Args>::type...>
+{
+    MemoryBufferAccessor memory_buffer_accessor{src_buffer};
+    return Deserialize<Args...>(memory_buffer_accessor);
 }
 
 }  // namespace score::mw::com::impl

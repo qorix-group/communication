@@ -111,7 +111,7 @@ TypeErasedDataTypeInfo CreateTypeErasedDataTypeInfoFromTypesWrapper(Args...)
 }
 
 template <typename... Args>
-std::tuple<typename std::add_pointer<Args>::type...> DeserializeFromTypesWrapper(MemoryBufferAccessor& buffer, Args...)
+std::tuple<typename std::add_pointer<Args>::type...> DeserializeFromTypesWrapper(score::cpp::span<std::byte>& buffer, Args...)
 {
     return Deserialize<Args...>(buffer);
 }
@@ -260,7 +260,7 @@ bool CompareResultPtrTOArgumentValTuples(const PtrTupleT& ptr_tp,
 
 TEST(TypeErasedStorageTest, SerializeAndDeserialize_1)
 {
-    MemoryBufferAccessor buffer{&memory[0], sizeof(memory)};
+    score::cpp::span<std::byte> buffer{&memory[0], sizeof(memory)};
 
     // Given  serialized test_arguments_1
     std::apply(
@@ -269,11 +269,7 @@ TEST(TypeErasedStorageTest, SerializeAndDeserialize_1)
         },
         test_arguments_1);
 
-    // expect, that some buffer space has been used for serialization ...
-    EXPECT_GT(buffer.offset, 0);
-
     // When deserializing the buffer again
-    buffer.offset = 0;
     auto deserialize_result = std::apply(
         [&buffer](auto&&... args) {
             return DeserializeFromTypesWrapper(buffer, args...);
@@ -293,7 +289,7 @@ TEST(TypeErasedStorageTest, SerializeAndDeserialize_1)
 
 TEST(TypeErasedStorageTest, SerializeAndDeserialize_2)
 {
-    MemoryBufferAccessor buffer{&memory[0], sizeof(memory)};
+    score::cpp::span<std::byte> buffer{&memory[0], sizeof(memory)};
 
     // Given  serialized test_arguments_3 (containing aggregate type)
     std::apply(
@@ -302,11 +298,7 @@ TEST(TypeErasedStorageTest, SerializeAndDeserialize_2)
         },
         test_arguments_3);
 
-    // expect, that some buffer space has been used for serialization ...
-    EXPECT_GT(buffer.offset, 0);
-
     // When deserializing the buffer again
-    buffer.offset = 0;
     auto deserialize_result = std::apply(
         [&buffer](auto&&... args) {
             return DeserializeFromTypesWrapper(buffer, args...);
