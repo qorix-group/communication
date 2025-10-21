@@ -31,7 +31,8 @@ enum class ServiceElementType : std::uint8_t
 {
     INVALID = 0,
     EVENT,
-    FIELD
+    FIELD,
+    METHOD
 };
 
 ::score::mw::log::LogStream& operator<<(::score::mw::log::LogStream& log_stream,

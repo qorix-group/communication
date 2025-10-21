@@ -73,6 +73,20 @@ TEST(ServiceElementTypeTest, OperatorStreamOutputsFieldWhenTypeIsField)
     EXPECT_THAT(output, ::testing::HasSubstr("FIELD"));
 }
 
+TEST(ServiceElementTypeTest, OperatorStreamOutputsMethodWhenTypeIsMethod)
+{
+    // Given a ServiceElementType set to METHOD
+    ServiceElementType service_element_type = ServiceElementType::METHOD;
+    testing::internal::CaptureStdout();
+
+    // When streaming the ServiceElementType to a log
+    score::mw::log::LogFatal("test") << service_element_type;
+    std::string output = testing::internal::GetCapturedStdout();
+
+    // Then the output should contain the formatted ServiceElementType
+    EXPECT_THAT(output, ::testing::HasSubstr("METHOD"));
+}
+
 TEST(ServiceElementTypeTest, OperatorStreamOutputsUnknownWhenTypeIsUnrecognized)
 {
     // Given a ServiceElementType set to UNKNOWN

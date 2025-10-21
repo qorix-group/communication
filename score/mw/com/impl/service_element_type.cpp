@@ -36,6 +36,9 @@ namespace score::mw::com::impl
         case ServiceElementType::FIELD:
             log_stream << "FIELD";
             break;
+        case ServiceElementType::METHOD:
+            log_stream << "METHOD";
+            break;
         default:
             log_stream << "UNKNOWN";
             break;
