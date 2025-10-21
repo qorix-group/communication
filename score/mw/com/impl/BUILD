@@ -974,6 +974,7 @@ cc_unit_test_suites_for_host_and_qnx(
         "//score/mw/com/impl/configuration:unit_test_suite",
         "//score/mw/com/impl/plumbing:unit_test_suite",
         "//score/mw/com/impl/tracing:unit_test_suite",
+        "//score/mw/com/impl/util:unit_test_suite",
     ],
     visibility = ["//score/mw/com:__pkg__"],
 )

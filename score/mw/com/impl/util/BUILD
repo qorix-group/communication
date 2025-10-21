@@ -10,8 +10,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
-
-load("@score_baselibs//:bazel/unit_tests.bzl", "cc_gtest_unit_test")
+load("@score_baselibs//:bazel/unit_tests.bzl", "cc_gtest_unit_test", "cc_unit_test_suites_for_host_and_qnx")
 load("//score/mw:common_features.bzl", "COMPILER_WARNING_FEATURES")
 
 cc_library(
@@ -76,4 +75,16 @@ cc_gtest_unit_test(
         ":type_erased_storage",
         "@score_baselibs//score/mw/log",
     ],
+)
+
+cc_unit_test_suites_for_host_and_qnx(
+    name = "unit_test_suite",
+    cc_unit_tests = [
+        ":copyable_atomic_test",
+        ":arithmetic_utils_test",
+        ":type_erased_storage_test",
+    ],
+    test_suites_from_sub_packages = [
+    ],
+    visibility = ["//score/mw/com:__pkg__"],
 )
