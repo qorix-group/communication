@@ -78,6 +78,67 @@ class ProxyMethod
         "You tried to use an unsupported signature type.");
 };
 
+/// \brief Partial specialization of ProxyMethod for function signatures with no arguments.
+/// \details This specialization exists to handle the special case of zero-argument methods, as some internal logic
+/// needs to be adapted for this case.
+template <typename ReturnType>
+class ProxyMethod<ReturnType()>
+{
+  public:
+    ProxyMethod(ProxyBase& /* proxy_base */,
+                std::unique_ptr<ProxyMethodBinding> proxy_method_binding,
+                std::string_view method_name) noexcept
+        : method_name_{method_name},
+          is_return_type_ptr_active_{kCallQueueSize, false},
+          binding_{std::move(proxy_method_binding)}
+    {
+    }
+
+    /// \brief A ProxyMethod shall not be copyable. (Exactly like impl::ProxyBase and impl:ProxyEventBase)
+    ProxyMethod(const ProxyMethod&) = delete;
+    ProxyMethod& operator=(const ProxyMethod&) = delete;
+
+    /// \brief A ProxyMethod shall be moveable. (Exactly like impl::ProxyBase and impl:ProxyEventBase)
+    ProxyMethod(ProxyMethod&&) = default;
+    ProxyMethod& operator=(ProxyMethod&&) = default;
+
+    /// \brief This is the copying call-operator of ProxyMethod for a non-void ReturnType.
+    /// \details This call-operator variant takes the argument values as references. It then internally calls Allocate()
+    /// to get the needed storage for the arguments and return value and copies the arguments into the allocated
+    /// storage.
+    template <typename Dummy = detail::enable_if_non_void_return<ReturnType>>
+    score::Result<MethodReturnTypePtr<ReturnType>> operator()();
+
+    /// \brief This is the copying call-operator of ProxyMethod for a void ReturnType.
+    /// \details This call-operator variant takes the argument values as references.
+    template <typename Dummy = detail::enable_if_void_return<ReturnType>>
+    score::ResultBlank operator()();
+
+  private:
+    score::Result<std::size_t> AllocateNextAvailableQueueSlot();
+
+    /// \brief Compile-time initialized TypeErasedDataTypeInfo for the return type of this ProxyMethod.
+    /// \details This is the only information about the return type of this Proxy Method, which is available at
+    /// runtime. It is handed down to the binding layer, which then does the type agnostic transport.
+    /// \remark If the return type is void, this is std::nullopt.
+    static constexpr std::optional<TypeErasedDataTypeInfo> type_erased_return_type_ =
+        detail::InitTypeErasedReturnType<ReturnType>();
+
+    /// \brief Size of the call-queue is currently fixed to 1! As soon as we are going to support larger call-queues,
+    /// the call-queue-size shall be taken from configuration and handed over to ProxyMethod ctor.
+    static constexpr containers::DynamicArray<int>::size_type kCallQueueSize = 1U;
+
+    std::string_view method_name_;
+
+    /// \brief Dynamic array: one entry per call-queue position.
+    /// \details This array contains bool flags, which indicate, if the return value pointer
+    /// passed to the zero-copy call-operator is active (true) or not (false).
+    /// The optionals are needed, since ProxyMethods without return value don't have a return type pointer.
+    containers::DynamicArray<std::optional<bool>> is_return_type_ptr_active_;
+
+    std::unique_ptr<ProxyMethodBinding> binding_;
+};
+
 template <typename ReturnType, typename... ArgTypes>
 class ProxyMethod<ReturnType(ArgTypes...)> final
 {
@@ -191,6 +252,69 @@ class ProxyMethod<ReturnType(ArgTypes...)> final
 
     std::unique_ptr<ProxyMethodBinding> binding_;
 };
+
+/// ---------------- Implementation of ProxyMethod class template specialization with empty arguments ----------------
+
+template <typename ReturnType>
+template <typename Dummy = detail::enable_if_non_void_return<ReturnType>>
+score::Result<MethodReturnTypePtr<ReturnType>> ProxyMethod<ReturnType()>::operator()()
+{
+    auto queue_position_result = AllocateNextAvailableQueueSlot();
+    if (!queue_position_result.has_value())
+    {
+        return Unexpected(queue_position_result.error());
+    }
+
+    const auto queue_position = queue_position_result.value();
+    auto allocated_return_type_storage = binding_->AllocateReturnType(queue_position);
+    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(allocated_return_type_storage.has_value(),
+                           "ProxyMethod::operator(): AllocateReturnType failed unexpectedly.");
+    // \todo (Ticket-221600): Clarify stop_token usage
+    auto call_result = binding_->DoCall(queue_position, score::cpp::stop_token{});
+    if (!call_result.has_value())
+    {
+        return Unexpected(call_result.error());
+    }
+
+    return MethodReturnTypePtr<ReturnType>{
+        *(reinterpret_cast<ReturnType*>(allocated_return_type_storage.value().data())),
+        is_return_type_ptr_active_[queue_position].value(),
+        queue_position};
+}
+
+template <typename ReturnType>
+template <typename Dummy = detail::enable_if_void_return<ReturnType>>
+score::ResultBlank ProxyMethod<ReturnType()>::operator()()
+{
+    auto queue_position = AllocateNextAvailableQueueSlot();
+    if (!queue_position.has_value())
+    {
+        return Unexpected(queue_position.error());
+    }
+    // \todo (Ticket-221600): Clarify stop_token usage
+    auto call_result = binding_->DoCall(queue_position.value(), score::cpp::stop_token{});
+    if (!call_result.has_value())
+    {
+        return Unexpected(call_result.error());
+    }
+
+    return {};
+}
+
+template <typename ReturnType>
+score::Result<std::size_t> ProxyMethod<ReturnType()>::AllocateNextAvailableQueueSlot()
+{
+    for (std::size_t i = 0U; i < is_return_type_ptr_active_.size(); ++i)
+    {
+        if (!is_return_type_ptr_active_[i].has_value() || !is_return_type_ptr_active_[i].value())
+        {
+            return i;
+        }
+    }
+    return score::MakeUnexpected(ComErrc::kCallQueueFull);
+}
+
+/// ---------------- Implementation of ProxyMethod class template with arguments ----------------
 
 template <typename ReturnType, typename... ArgTypes>
 template <typename Dummy = detail::enable_if_in_args_exist<ArgTypes...>>
