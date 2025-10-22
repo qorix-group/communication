@@ -361,7 +361,8 @@ Proxy::Proxy(std::shared_ptr<memory::shared::ManagedMemoryResource> control,
           },
           EnrichedInstanceIdentifier{handle_})},
       service_instance_usage_marker_file_{std::move(service_instance_usage_marker_file)},
-      service_instance_usage_flock_mutex_and_lock_{std::move(service_instance_usage_flock_mutex_and_lock)}
+      service_instance_usage_flock_mutex_and_lock_{std::move(service_instance_usage_flock_mutex_and_lock)},
+      proxy_methods_{}
 {
 }
 
@@ -482,6 +483,12 @@ pid_t Proxy::GetSourcePid() const noexcept
     SCORE_LANGUAGE_FUTURECPP_PRECONDITION_PRD_MESSAGE(data_ != nullptr, "Proxy::GetSourcePid: Managed memory data pointer is Null");
     auto& service_data_storage = detail_proxy::GetServiceDataStorage(*data_);
     return service_data_storage.skeleton_pid_;
+}
+
+void Proxy::RegisterMethod(const ElementFqId::ElementId method_id, ProxyMethod& proxy_method) noexcept
+{
+    const auto [_, was_inserted] = proxy_methods_.insert({method_id, proxy_method});
+    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(was_inserted, "Method IDs must be unique!");
 }
 
 }  // namespace score::mw::com::impl::lola

@@ -17,6 +17,7 @@
 #include "score/mw/com/impl/bindings/lola/event_control.h"
 #include "score/mw/com/impl/bindings/lola/event_data_storage.h"
 #include "score/mw/com/impl/bindings/lola/event_meta_info.h"
+#include "score/mw/com/impl/bindings/lola/proxy_method.h"
 #include "score/mw/com/impl/bindings/lola/service_data_storage.h"
 #include "score/mw/com/impl/handle_type.h"
 #include "score/mw/com/impl/proxy_binding.h"
@@ -35,6 +36,7 @@
 #include <mutex>
 #include <optional>
 #include <string_view>
+#include <unordered_map>
 
 namespace score::mw::com::impl::lola
 {
@@ -160,6 +162,8 @@ class Proxy : public ProxyBinding
     /// \return
     pid_t GetSourcePid() const noexcept;
 
+    void RegisterMethod(const ElementFqId::ElementId method_id, ProxyMethod& proxy_method) noexcept;
+
   private:
     void ServiceAvailabilityChangeHandler(const bool is_service_available) noexcept;
 
@@ -180,6 +184,7 @@ class Proxy : public ProxyBinding
     std::optional<memory::shared::LockFile> service_instance_usage_marker_file_;
     std::unique_ptr<score::memory::shared::FlockMutexAndLock<score::memory::shared::SharedFlockMutex>>
         service_instance_usage_flock_mutex_and_lock_;
+    std::unordered_map<ElementFqId::ElementId, std::reference_wrapper<ProxyMethod>> proxy_methods_;
 };
 
 template <typename EventSampleType>
