@@ -178,6 +178,10 @@ cc_test(
     timeout = "moderate",
     srcs = ["proxy_component_test.cpp"],
     features = COMPILER_WARNING_FEATURES + ["aborts_upon_exception"],
+    tags = [
+        "exclusive",  # Sandboxing is not properly working with LoLa message passing 2.0 (Ticket-217341)
+        "unit",
+    ],
     target_compatible_with = select({
         "@platforms//os:qnx": ["@score_baselibs//bazel/platforms/qnx_version:qnx7"],  # TODO: Ticket-214229 QNX8 incompatible
         "//conditions:default": [],
