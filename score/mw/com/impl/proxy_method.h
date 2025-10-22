@@ -92,6 +92,14 @@ class ProxyMethod<ReturnType(ArgTypes...)> final
     {
     }
 
+    /// \brief A ProxyMethod shall not be copyable. (Exactly like impl::ProxyBase and impl:ProxyEventBase)
+    ProxyMethod(const ProxyMethod&) = delete;
+    ProxyMethod& operator=(const ProxyMethod&) = delete;
+
+    /// \brief A ProxyMethod shall be moveable. (Exactly like impl::ProxyBase and impl:ProxyEventBase)
+    ProxyMethod(ProxyMethod&&) = default;
+    ProxyMethod& operator=(ProxyMethod&&) = default;
+
     /// \brief Allocates the necessary storage for the argument values and the return value of a method call.
     /// \return On success, a tuple of MethodInArgPtr for each argument type is returned. On failure, an error code is
     /// returned.
@@ -194,11 +202,11 @@ score::Result<std::tuple<impl::MethodInArgPtr<ArgTypes>...>> ProxyMethod<ReturnT
         return Unexpected(available_queue_slot.error());
     }
     const int queue_index = available_queue_slot.value();
-    auto allocatedInArgsStorage = binding_->AllocateInArgs(queue_index);
-    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(allocatedInArgsStorage.has_value(),
+    auto allocated_in_args_storage = binding_->AllocateInArgs(queue_index);
+    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(allocated_in_args_storage.has_value(),
                            "ProxyMethod::Allocate: AllocateInArgs failed unexpectedly.");
-    MemoryBufferAccessor in_args_buffer_accessor{static_cast<std::byte*>((allocatedInArgsStorage.value())),
-                                                 type_erased_in_args_.value().size};
+    MemoryBufferAccessor in_args_buffer_accessor{(allocated_in_args_storage.value().data()),
+                                                 allocated_in_args_storage.value().size()};
     const auto deserialized_arg_pointers = Deserialize<ArgTypes...>(in_args_buffer_accessor);
     auto method_in_arg_ptr_tuple = CreateMethodInArgPtrTuple(
         deserialized_arg_pointers, queue_index, std::make_index_sequence<sizeof...(ArgTypes)>());
@@ -243,9 +251,10 @@ score::Result<MethodReturnTypePtr<ReturnType>> ProxyMethod<ReturnType(ArgTypes..
         return Unexpected(call_result.error());
     }
 
-    return MethodReturnTypePtr<ReturnType>{*(static_cast<ReturnType*>(allocated_return_type_storage.value())),
-                                           is_return_type_ptr_active_[queue_position].value(),
-                                           queue_position};
+    return MethodReturnTypePtr<ReturnType>{
+        *(reinterpret_cast<ReturnType*>(allocated_return_type_storage.value().data())),
+        is_return_type_ptr_active_[queue_position].value(),
+        queue_position};
 }
 
 template <typename ReturnType, typename... ArgTypes>

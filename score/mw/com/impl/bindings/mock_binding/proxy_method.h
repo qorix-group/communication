@@ -33,8 +33,8 @@ class ProxyMethod : public ProxyMethodBinding
     ProxyMethod() : ProxyMethodBinding{TypeErasedDataTypeInfo{}, TypeErasedDataTypeInfo{}} {}
     ~ProxyMethod() override = default;
 
-    MOCK_METHOD(score::Result<void*>, AllocateInArgs, (std::size_t), (override));
-    MOCK_METHOD(score::Result<void*>, AllocateReturnType, (std::size_t), (override));
+    MOCK_METHOD(score::Result<score::cpp::span<std::byte>>, AllocateInArgs, (std::size_t), (override));
+    MOCK_METHOD(score::Result<score::cpp::span<std::byte>>, AllocateReturnType, (std::size_t), (override));
     MOCK_METHOD(ResultBlank, DoCall, (std::size_t, score::cpp::stop_token), (override));
 };
 

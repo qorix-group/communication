@@ -54,7 +54,8 @@ TEST(ProxyMethodTest, Allocate)
     // Expect that AllocateInArgs is called once for queue position 0 on the binding mock and returns a pointer to our
     // buffer
     EXPECT_CALL(*proxy_method_binding_mock_ptr, AllocateInArgs(0))
-        .WillOnce(Return(score::Result<void*>{method_in_args_buffer.data()}));
+        .WillOnce(Return(
+            score::Result<score::cpp::span<std::byte>>{score::cpp::span{method_in_args_buffer.data(), method_in_args_buffer.size()}}));
 
     // when Allocate is called on the ProxyMethod
     auto method_in_arg_ptr_tuple = unit.Allocate();
@@ -87,7 +88,8 @@ TEST(ProxyMethodTest, Allocate_QueueFullError)
     // Expect that AllocateInArgs is called once for queue position 0 on the binding mock and returns a pointer to our
     // buffer
     EXPECT_CALL(*proxy_method_binding_mock_ptr, AllocateInArgs(0))
-        .WillOnce(Return(score::Result<void*>{method_in_args_buffer.data()}));
+        .WillOnce(Return(
+            score::Result<score::cpp::span<std::byte>>{score::cpp::span{method_in_args_buffer.data(), method_in_args_buffer.size()}}));
 
     // when Allocate is called on the ProxyMethod
     auto method_in_arg_ptr_tuple = unit.Allocate();
@@ -134,7 +136,8 @@ TEST(ProxyMethodTest, CallOperator_VoidReturn_WithCopy)
     // Expect that AllocateInArgs is called once for queue position 0 on the binding mock and returns a pointer to our
     // buffer
     EXPECT_CALL(*proxy_method_binding_mock_ptr, AllocateInArgs(0))
-        .WillOnce(Return(score::Result<void*>{method_in_args_buffer.data()}));
+        .WillOnce(Return(
+            score::Result<score::cpp::span<std::byte>>{score::cpp::span{method_in_args_buffer.data(), method_in_args_buffer.size()}}));
 
     // when call operator is called on the ProxyMethod
     int arg1 = 42;
@@ -157,7 +160,8 @@ TEST(ProxyMethodTest, CallOperator_NonVoidReturn_WithCopy)
     // Expect that AllocateInArgs is called once for queue position 0 on the binding mock and returns a pointer to our
     // buffer
     EXPECT_CALL(*proxy_method_binding_mock_ptr, AllocateInArgs(0))
-        .WillOnce(Return(score::Result<void*>{method_in_args_buffer.data()}));
+        .WillOnce(Return(
+            score::Result<score::cpp::span<std::byte>>{score::cpp::span{method_in_args_buffer.data(), method_in_args_buffer.size()}}));
 
     // when call operator is called on the ProxyMethod
     int arg1 = 42;
@@ -180,7 +184,8 @@ TEST(ProxyMethodTest, CallOperator_VoidReturn_WithCopyTemporary)
     // Expect that AllocateInArgs is called once for queue position 0 on the binding mock and returns a pointer to our
     // buffer
     EXPECT_CALL(*proxy_method_binding_mock_ptr, AllocateInArgs(0))
-        .WillOnce(Return(score::Result<void*>{method_in_args_buffer.data()}));
+        .WillOnce(Return(
+            score::Result<score::cpp::span<std::byte>>{score::cpp::span{method_in_args_buffer.data(), method_in_args_buffer.size()}}));
 
     // when call operator is called on the ProxyMethod
     int arg1 = 42;
@@ -202,7 +207,8 @@ TEST(ProxyMethodTest, CallOperator_NonVoidReturn_ZeroCopy)
     // Expect that AllocateInArgs is called once for queue position 0 on the binding mock and returns a pointer to our
     // buffer
     EXPECT_CALL(*proxy_method_binding_mock_ptr, AllocateInArgs(0))
-        .WillOnce(Return(score::Result<void*>{method_in_args_buffer.data()}));
+        .WillOnce(Return(
+            score::Result<score::cpp::span<std::byte>>{score::cpp::span{method_in_args_buffer.data(), method_in_args_buffer.size()}}));
 
     // when Allocate is called on the ProxyMethod
     auto method_in_arg_ptr_tuple = unit.Allocate();
