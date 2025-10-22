@@ -11,7 +11,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
 
-load("@score_baselibs//:bazel/unit_tests.bzl", "cc_gtest_unit_test", "cc_unit_test_suites_for_host_and_qnx")
+load("@score_baselibs//:bazel/unit_tests.bzl", "cc_gtest_unit_test", "cc_unit_test", "cc_unit_test_suites_for_host_and_qnx")
 load("//score/mw:common_features.bzl", "COMPILER_WARNING_FEATURES")
 
 cc_library(
@@ -44,6 +44,77 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "i_type_erased_call_queue",
+    srcs = ["i_type_erased_call_queue.cpp"],
+    hdrs = ["i_type_erased_call_queue.h"],
+    features = COMPILER_WARNING_FEATURES,
+    tags = ["FFI"],
+    visibility = ["//score/mw/com/impl/bindings/lola:__pkg__"],
+    deps = [
+        "@score_baselibs//score/language/futurecpp",
+    ],
+)
+
+cc_library(
+    name = "type_erased_call_queue",
+    srcs = [
+        "type_erased_call_queue.cpp",
+    ],
+    hdrs = [
+        "type_erased_call_queue.h",
+    ],
+    features = COMPILER_WARNING_FEATURES,
+    implementation_deps = [
+        "@score_baselibs//score/memory/shared:pointer_arithmetic_util",
+    ],
+    tags = ["FFI"],
+    visibility = ["//score/mw/com/impl/bindings/lola:__pkg__"],
+    deps = [
+        ":i_type_erased_call_queue",
+        "@score_baselibs//score/language/futurecpp",
+        "@score_baselibs//score/memory:data_type_size_info",
+        "@score_baselibs//score/memory/shared:memory_resource_proxy",
+        "@score_baselibs//score/memory/shared:offset_ptr",
+    ],
+)
+
+cc_library(
+    name = "type_erased_call_queue_mock",
+    testonly = True,
+    srcs = ["type_erased_call_queue_mock.cpp"],
+    hdrs = ["type_erased_call_queue_mock.h"],
+    features = COMPILER_WARNING_FEATURES,
+    visibility = ["//score/mw/com/impl/bindings/lola:__pkg__"],
+    deps = [
+        ":i_type_erased_call_queue",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_unit_test(
+    name = "type_erased_call_queue_test",
+    srcs = [
+        "type_erased_call_queue_test.cpp",
+    ],
+    features = COMPILER_WARNING_FEATURES + [
+        # These tests catch exceptions instead of using gtest EXPECT_DEATH so we disable aborts_upon_exception.
+        "-aborts_upon_exception",
+    ],
+    deps = [
+        ":type_erased_call_queue",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "@score_baselibs//score/language/futurecpp:futurecpp_test_support",
+        "@score_baselibs//score/language/safecpp/coverage_termination_handler",
+        "@score_baselibs//score/memory:data_type_size_info",
+        "@score_baselibs//score/memory/shared:memory_resource_proxy",
+        "@score_baselibs//score/memory/shared:pointer_arithmetic_util",
+        "@score_baselibs//score/memory/shared/fake:fake_memory_resources",
+        "@score_baselibs//score/mw/log",
+    ],
+)
+
 cc_gtest_unit_test(
     name = "proxy_instance_identifier_test",
     srcs = ["proxy_instance_identifier_test.cpp"],
@@ -65,6 +136,7 @@ cc_unit_test_suites_for_host_and_qnx(
     cc_unit_tests = [
         ":proxy_instance_identifier_test",
         ":skeleton_instance_identifier_test",
+        ":type_erased_call_queue_test",
     ],
     visibility = [
         "//score/mw/com/impl/bindings/lola:__pkg__",
