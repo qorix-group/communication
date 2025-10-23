@@ -179,6 +179,14 @@ cc_library(
 )
 
 cc_library(
+    name = "lola_method_id",
+    srcs = ["lola_method_id.cpp"],
+    hdrs = ["lola_method_id.h"],
+    features = COMPILER_WARNING_FEATURES,
+    tags = ["FFI"],
+)
+
+cc_library(
     name = "lola_service_id",
     srcs = ["lola_service_id.cpp"],
     hdrs = ["lola_service_id.h"],
@@ -399,6 +407,8 @@ cc_library(
         ":configuration_local",
         ":lola_event_id",
         ":lola_event_instance_deployment",
+        ":lola_field_id",
+        ":lola_method_id",
         ":lola_service_instance_deployment",
         ":lola_service_type_deployment",
         ":service_identifier_type",
