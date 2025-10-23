@@ -13,7 +13,7 @@
 #ifndef SCORE_MW_COM_MOCKING_TEST_TYPE_FACTORIES_H
 #define SCORE_MW_COM_MOCKING_TEST_TYPE_FACTORIES_H
 
-#include "score/mw/com/mocking/runtime_mock.h"
+#include "score/mw/com/mocking/i_runtime.h"
 
 /// @brief test_type_factories contains all of the factory functions that are required for creating fakes related to
 /// mw::com::runtime which are required for mocking.
@@ -23,7 +23,7 @@
 namespace score::mw::com::runtime
 {
 
-void InjectRuntimeMockImpl(RuntimeMock& runtime_mock);
+void InjectRuntimeMockImpl(IRuntime& runtime_mock);
 
 }  // namespace score::mw::com::runtime
 

@@ -56,7 +56,7 @@ cc_library(
         ":runtime_configuration",
         ":types",
         "//score/mw/com/impl:runtime",
-        "//score/mw/com/mocking:runtime_mock",
+        "//score/mw/com/mocking:i_runtime",
     ],
 )
 
@@ -104,7 +104,7 @@ cc_library(
         ":types",
         "//score/mw/com/impl",
         "//score/mw/com/impl/mocking:test_type_factories",
-        "//score/mw/com/mocking:runtime_mock",
+        "//score/mw/com/mocking:i_runtime",
         "//score/mw/com/mocking:test_type_factories",
     ],
 )

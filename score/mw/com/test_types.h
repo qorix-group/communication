@@ -18,7 +18,7 @@
 #include "score/mw/com/impl/handle_type.h"
 #include "score/mw/com/impl/instance_identifier.h"
 #include "score/mw/com/impl/mocking/test_type_factories.h"
-#include "score/mw/com/mocking/runtime_mock.h"
+#include "score/mw/com/mocking/i_runtime.h"
 
 #include <cstdint>
 #include <memory>
@@ -32,7 +32,7 @@ namespace score::mw::com
 namespace runtime
 {
 
-void InjectRuntimeMock(RuntimeMock& runtime_mock);
+void InjectRuntimeMock(IRuntime& runtime_mock);
 
 }
 
