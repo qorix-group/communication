@@ -19,8 +19,6 @@
 #include "score/mw/com/impl/skeleton_binding.h"
 #include "score/mw/com/impl/skeleton_event_binding.h"
 
-#include "score/mw/com/impl/mocking/skeleton_mock.h"
-
 #include "score/result/result.h"
 
 #include "score/mw/log/logging.h"
@@ -94,11 +92,6 @@ class SkeletonBase
     /// \requirement SWS_CM_00111
     void StopOfferService() noexcept;
 
-    void InjectMock(SkeletonMock& skeleton_mock)
-    {
-        skeleton_mock_ = &skeleton_mock;
-    }
-
   protected:
     bool AreBindingsValid() const noexcept;
 
@@ -118,10 +111,8 @@ class SkeletonBase
     SkeletonFields fields_;
     InstanceIdentifier instance_id_;
 
-    SkeletonMock* skeleton_mock_;
-
-    /// \brief Perform required clean up operations when a SkeletonBase object is destroyed or overwritten (by the
-    /// move assignment operator)
+    /// \brief Perform required clean up operations when a SkeletonBase object is destroyed or overwritten (by the move
+    /// assignment operator)
     void Cleanup();
 
     [[nodiscard]] score::ResultBlank OfferServiceEvents() const noexcept;
@@ -160,18 +151,18 @@ class SkeletonBaseView
     }
 
     // Suppress "AUTOSAR C++14 A15-5-3" rule findings. This rule states: "The std::terminate() function shall not be
-    // called implicitly". std::terminate() is implicitly called from std::map::at in case the container doesn't
-    // have the mapped element. This function is called by the move constructor and as we register the event name in
-    // the events_ container during SkeletonEvent construction so we are sure that the event_name already exists, so
-    // no way for throwing std::out_of_range which leds to std::terminate().
+    // called implicitly". std::terminate() is implicitly called from std::map::at in case the container doesn't have
+    // the mapped element. This function is called by the move constructor and as we register the event name in the
+    // events_ container during SkeletonEvent construction so we are sure that the event_name already exists, so no way
+    // for throwing std::out_of_range which leds to std::terminate().
     // coverity[autosar_cpp14_a15_5_3_violation : FALSE]
     void UpdateEvent(const std::string_view event_name, SkeletonEventBase& event) noexcept
     {
         // Suppress "AUTOSAR C++14 A15-4-2" rule finding. This rule states: "If a function is declared to be
         // noexcept, noexcept(true) or noexcept(<true condition>), then it shall not exit with an exception"
         // This function is indirectly called by the move constructor and as we register the event name in the
-        // events_ container during SkeletonEvent construction so we are sure the event name already exists, so no
-        // way for throwing std::out_of_range which leds to std::terminate().
+        // events_ container during SkeletonEvent construction so we are sure the event name already exists, so no way
+        // for throwing std::out_of_range which leds to std::terminate().
         // coverity[autosar_cpp14_a15_4_2_violation] : FALSE]
         skeleton_base_.events_.at(event_name) = event;
     }

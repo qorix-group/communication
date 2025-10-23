@@ -196,20 +196,9 @@ cc_gtest_unit_test(
     ],
 )
 
-cc_gtest_unit_test(
-    name = "skeleton_mock_test",
-    srcs = ["skeleton_mock_test.cpp"],
-    deps = [
-        ":skeleton_mock_impl",
-        ":test_type_factories",
-        "//score/mw/com/impl:skeleton_base",
-    ],
-)
-
 cc_unit_test_suites_for_host_and_qnx(
     name = "unit_test_suite",
     cc_unit_tests = [
-        ":skeleton_mock_test",
         ":test_type_factories_test",
     ],
     test_suites_from_sub_packages = [],

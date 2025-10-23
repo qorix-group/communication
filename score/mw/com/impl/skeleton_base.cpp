@@ -84,12 +84,7 @@ SkeletonBinding::SkeletonFieldBindings GetSkeletonFieldBindingsMap(const Skeleto
 SkeletonBase::SkeletonBase(std::unique_ptr<SkeletonBinding> skeleton_binding,
                            const InstanceIdentifier instance_id,
                            MethodCallProcessingMode)
-    : binding_{std::move(skeleton_binding)},
-      events_{},
-      fields_{},
-      instance_id_{instance_id},
-      skeleton_mock_{nullptr},
-      service_offered_flag_{}
+    : binding_{std::move(skeleton_binding)}, events_{}, fields_{}, instance_id_{instance_id}, service_offered_flag_{}
 {
 }
 
@@ -100,12 +95,6 @@ SkeletonBase::~SkeletonBase()
 
 void SkeletonBase::Cleanup()
 {
-    // If the skeleton is mocked, then we shouldn't perform any actual cleanup.
-    if (skeleton_mock_ != nullptr)
-    {
-        return;
-    }
-
     // The SkeletonBase is responsible for calling PrepareStopOffer on the skeleton binding when the SkeletonBase is
     // destroyed. The SkeletonEventBase is responsible for calling PrepareStopOffer on the SkeletonEvent binding as the
     // SkeletonEventBases are owned by the child class of SkeletonBase and will therefore be fully destroyed before
@@ -125,7 +114,6 @@ SkeletonBase::SkeletonBase(SkeletonBase&& other) noexcept
       events_{std::move(other.events_)},
       fields_{std::move(other.fields_)},
       instance_id_{std::move(other.instance_id_)},
-      skeleton_mock_{std::move(other.skeleton_mock_)},
       service_offered_flag_{std::move(other.service_offered_flag_)}
 {
     // Since the address of this skeleton has changed, we need update the address stored in each of the events and
@@ -155,7 +143,6 @@ SkeletonBase& SkeletonBase::operator=(SkeletonBase&& other) noexcept
         events_ = std::move(other.events_);
         fields_ = std::move(other.fields_);
         instance_id_ = std::move(other.instance_id_);
-        skeleton_mock_ = std::move(other.skeleton_mock_);
         service_offered_flag_ = std::move(other.service_offered_flag_);
 
         // Since the address of this skeleton has changed, we need update the address stored in each of the events and
@@ -215,11 +202,6 @@ score::ResultBlank SkeletonBase::OfferServiceFields() const noexcept
 
 auto SkeletonBase::OfferService() noexcept -> ResultBlank
 {
-    if (skeleton_mock_ != nullptr)
-    {
-        return skeleton_mock_->OfferService();
-    }
-
     if (binding_ != nullptr)
     {
         auto event_bindings = GetSkeletonEventBindingsMap(events_);
@@ -272,11 +254,6 @@ auto SkeletonBase::OfferService() noexcept -> ResultBlank
 
 auto SkeletonBase::StopOfferService() noexcept -> void
 {
-    if (skeleton_mock_ != nullptr)
-    {
-        skeleton_mock_->StopOfferService();
-    }
-
     if (binding_ != nullptr && service_offered_flag_.IsSet())
     {
         StopOfferServiceInServiceDiscovery(instance_id_);
