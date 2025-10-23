@@ -48,7 +48,7 @@ auto PopFront(Queue& queue) -> typename Queue::value_type
 {
     auto front_element = std::move(queue.front());
     queue.pop();
-    return front_element;
+    return std::move(front_element);
 }
 
 template <typename Key, typename MapOfQueues>
@@ -68,7 +68,8 @@ auto ExtractCreationResultFrom(const Key& key, MapOfQueues& map_of_queues)
         std::terminate();
     }
 
-    return PopFront(creation_results_queue);
+    auto creation_result = PopFront(creation_results_queue);
+    return std::move(creation_result);
 }
 
 }  // namespace detail
