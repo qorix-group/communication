@@ -155,7 +155,7 @@ class RuntimeMockGuard
         impl::Runtime::InjectMock(nullptr);
     }
 
-    impl::RuntimeMock mock_;
+    ::testing::NiceMock<impl::RuntimeMock> mock_;
 };
 
 class SharedMemoryFactoryGuard
@@ -170,7 +170,7 @@ class SharedMemoryFactoryGuard
         memory::shared::SharedMemoryFactory::InjectMock(nullptr);
     }
 
-    memory::shared::SharedMemoryFactoryMock mock_;
+    ::testing::NiceMock<memory::shared::SharedMemoryFactoryMock> mock_;
 };
 
 class ProxyMockedMemoryFixture : public ::testing::Test
@@ -206,11 +206,11 @@ class ProxyMockedMemoryFixture : public ::testing::Test
 
     RuntimeMockGuard runtime_mock_{};
 
-    os::MockGuard<os::FcntlMock> fcntl_mock_{};
-    os::MockGuard<os::UnistdMock> unistd_mock_{};
+    os::MockGuard<::testing::NiceMock<os::FcntlMock>> fcntl_mock_{};
+    os::MockGuard<::testing::NiceMock<os::UnistdMock>> unistd_mock_{};
     SharedMemoryFactoryGuard shared_memory_factory_mock_guard_{};
 
-    ServiceDiscoveryMock service_discovery_mock_{};
+    ::testing::NiceMock<ServiceDiscoveryMock> service_discovery_mock_{};
 
     FakeMockedServiceData fake_data_{kDummyPid};
     EventControl* event_control_{nullptr};
@@ -218,7 +218,7 @@ class ProxyMockedMemoryFixture : public ::testing::Test
     RollbackSynchronization rollback_synchronization_{};
 
     std::shared_ptr<MessagePassingServiceMock> mock_service_{std::make_shared<MessagePassingServiceMock>()};
-    LolaRuntimeMock<std::shared_ptr> binding_runtime_{false, mock_service_};
+    ::testing::NiceMock<LolaRuntimeMock<std::shared_ptr>> binding_runtime_{false, mock_service_};
 
     std::unique_ptr<Proxy> proxy_{nullptr};
 };

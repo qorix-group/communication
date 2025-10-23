@@ -39,8 +39,8 @@ struct FakeMockedServiceData
 
     ServiceDataControl* data_control{nullptr};
     ServiceDataStorage* data_storage{nullptr};
-    std::shared_ptr<memory::shared::SharedMemoryResourceHeapAllocatorMock> control_memory{nullptr};
-    std::shared_ptr<memory::shared::SharedMemoryResourceHeapAllocatorMock> data_memory{nullptr};
+    std::shared_ptr<::testing::NiceMock<memory::shared::SharedMemoryResourceHeapAllocatorMock>> control_memory{nullptr};
+    std::shared_ptr<::testing::NiceMock<memory::shared::SharedMemoryResourceHeapAllocatorMock>> data_memory{nullptr};
 
     /// Add a new event to the event structures inside the shared memory regions.
     ///
