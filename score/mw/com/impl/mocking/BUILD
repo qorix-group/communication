@@ -209,6 +209,25 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "proxy_wrapper_class_test_view",
+    testonly = True,
+    srcs = ["proxy_wrapper_class_test_view.cpp"],
+    hdrs = ["proxy_wrapper_class_test_view.h"],
+    features = COMPILER_WARNING_FEATURES,
+    visibility = [
+        "//score/mw/com:__subpackages__",
+    ],
+    deps = [
+        ":proxy_event_mock_impl",
+        ":proxy_field_mock_impl",
+        ":test_type_factories",
+        "//score/mw/com/impl:traits",
+        "//score/mw/com/impl/test:binding_factory_resources",
+        "@score_baselibs//score/result",
+    ],
+)
+
 cc_gtest_unit_test(
     name = "test_type_factories_test",
     srcs = ["test_type_factories_test.cpp"],
@@ -279,6 +298,17 @@ cc_gtest_unit_test(
     ],
 )
 
+cc_gtest_unit_test(
+    name = "proxy_wrapper_class_test_view_test",
+    srcs = ["proxy_wrapper_class_test_view_test.cpp"],
+    deps = [
+        ":proxy_event_mock_impl",
+        ":proxy_field_mock_impl",
+        ":proxy_wrapper_class_test_view",
+        "//score/mw/com:test_types",
+    ],
+)
+
 cc_unit_test_suites_for_host_and_qnx(
     name = "unit_test_suite",
     cc_unit_tests = [
@@ -288,6 +318,7 @@ cc_unit_test_suites_for_host_and_qnx(
         ":test_type_factories_test",
         ":proxy_event_mock_test",
         ":proxy_field_mock_test",
+        ":proxy_wrapper_class_test_view_test",
         ":skeleton_wrapper_class_test_view_test",
     ],
     test_suites_from_sub_packages = [],
