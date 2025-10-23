@@ -18,7 +18,7 @@
 #include "score/mw/com/impl/mocking/skeleton_event_mock_impl.h"
 #include "score/mw/com/impl/mocking/skeleton_field_mock_impl.h"
 #include "score/mw/com/impl/mocking/skeleton_mock_impl.h"
-#include "score/mw/com/impl/mocking/test_type_factories.h"
+#include "score/mw/com/impl/mocking/test_type_utilities.h"
 
 #include "score/result/result.h"
 

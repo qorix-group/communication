@@ -17,7 +17,7 @@
 
 #include "score/mw/com/impl/mocking/proxy_event_mock_impl.h"
 #include "score/mw/com/impl/mocking/proxy_field_mock_impl.h"
-#include "score/mw/com/impl/mocking/test_type_factories.h"
+#include "score/mw/com/impl/mocking/test_type_utilities.h"
 #include "score/mw/com/impl/proxy_event.h"
 #include "score/mw/com/impl/proxy_field.h"
 #include "score/mw/com/impl/test/binding_factory_resources.h"

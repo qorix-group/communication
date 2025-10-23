@@ -11,9 +11,9 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 #include "score/mw/com/impl/com_error.h"
-#include "score/mw/com/impl/mocking/test_type_factories.h"
+#include "score/mw/com/impl/mocking/test_type_utilities.h"
 #include "score/mw/com/mocking/runtime_mock.h"
-#include "score/mw/com/mocking/test_type_factories.h"
+#include "score/mw/com/mocking/test_type_utilities.h"
 #include "score/mw/com/runtime.h"
 #include "score/mw/com/runtime_configuration.h"
 
