@@ -87,6 +87,8 @@ TEST_F(ConfigParserFixture, ParseExampleJson)
     EXPECT_EQ(deployments.asilLevel_, QualityType::kASIL_B);
     EXPECT_EQ(secondDeploymentInfo.instance_id_.value(), LolaServiceInstanceId{1234U});
     EXPECT_EQ(*secondDeploymentInfo.shared_memory_size_, 10000);
+    EXPECT_EQ(*secondDeploymentInfo.control_asil_b_memory_size_, 20000);
+    EXPECT_EQ(*secondDeploymentInfo.control_qm_memory_size_, 30000);
 
     ASSERT_EQ(secondDeploymentInfo.allowed_consumer_.size(), 2);
     ASSERT_EQ(secondDeploymentInfo.allowed_consumer_.at(QualityType::kASIL_QM).size(), 2);
@@ -3271,6 +3273,8 @@ score::json::Any generate_config_json(const std::string& instance_specifier,
                     "asil-level": "QM",
                     "binding": "SHM",
                     "shm-size": 10000,
+                    "control-asil-b-shm-size": 20000,
+                    "control-qm-shm-size": 30000,
                     "events": [
                     ],
                     "fields": [
@@ -3716,6 +3720,8 @@ TEST(ConfigParserDeathTest, UnknownShmSizeCalcModeKeyWillDie)
                     "asil-level": "B",
                     "binding": "SHM",
                     "shm-size": 10000,
+                    "control-asil-b-shm-size": 20000,
+                    "control-qm-shm-size": 30000,
                     "events": [
                         {
                             "eventName": "CurrentPressureFrontLeft"
@@ -3783,6 +3789,8 @@ TEST(ConfigParserDeathTest, KnownShmSizeCalcModeKeyWillNotDie)
                     "asil-level": "B",
                     "binding": "SHM",
                     "shm-size": 10000,
+                    "control-asil-b-shm-size": 20000,
+                    "control-qm-shm-size": 30000,
                     "events": [
                         {
                             "eventName": "CurrentPressureFrontLeft"
@@ -3902,6 +3910,8 @@ TEST(ConfigParserDeathTest, EmptyInstanceSpecifierWillDie)
                     "asil-level": "QM",
                     "binding": "SHM",
                     "shm-size": 10000,
+                    "control-asil-b-shm-size": 20000,
+                    "control-qm-shm-size": 30000,
                     "events": [
                         {
                             "eventName": "CurrentPressureFrontLeft"
@@ -3960,6 +3970,8 @@ TEST(ConfigParserDeathTest, KnownInstanceSpecifierWillNotDie)
                     "asil-level": "QM",
                     "binding": "SHM",
                     "shm-size": 10000,
+                    "control-asil-b-shm-size": 20000,
+                    "control-qm-shm-size": 30000,
                     "events": [
                         {
                             "eventName": "CurrentPressureFrontLeft"
@@ -4018,6 +4030,8 @@ TEST(ConfigParserDeathTest, InvalidServiceInstanceSpecifierWillDie)
                     "asil-level": "QM",
                     "binding": "SHM",
                     "shm-size": 10000,
+                    "control-asil-b-shm-size": 20000,
+                    "control-qm-shm-size": 30000,
                     "events": [
                         {
                             "eventName": "CurrentPressureFrontLeft"
@@ -4064,6 +4078,8 @@ TEST_F(ConfigParserFixtureDeathTest, NoServiceTypeFieldsOrEventsWillDie)
                     "asil-level": "QM",
                     "binding": "SHM",
                     "shm-size": 10000,
+                    "control-asil-b-shm-size": 20000,
+                    "control-qm-shm-size": 30000,
                     "events": [
                         {
                             "eventName": "CurrentPressureFrontLeft"
@@ -4123,6 +4139,8 @@ TEST_F(ConfigParserFixtureDeathTest, WithServiceTypeFieldsOrEventsWillNotDie)
                     "asil-level": "QM",
                     "binding": "SHM",
                     "shm-size": 10000,
+                    "control-asil-b-shm-size": 20000,
+                    "control-qm-shm-size": 30000,
                     "events": [
                         {
                             "eventName": "CurrentPressureFrontLeft"

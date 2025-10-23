@@ -188,6 +188,8 @@ The array characteristics you can see from this snippet from the example config 
                     "asil-level": "B",
                     "binding": "SHM",
                     "shm-size": 10000,
+                    "control-asil-b-shm-size": 20000,
+                    "control-qm-shm-size": 30000,
                     "events": [
                         {
                             "eventName": "CurrentPressureFrontLeft",
@@ -317,6 +319,18 @@ dependent properties.
 - `shm-size`: This is a `SHM` `binding` specific optional setting, how big (in bytes) the shared-memory object for DATA
   shall be sized. Normally this is not used as `mw::com` calculates the sizes for DATA and also for CONTROL
   shared-memory objects with some heuristics, configured in the  [global section](#shm-size-calc-mode).
+  Using this property is not encouraged. It is rather a fallback, in case the preferred size calculation fails or in
+  case the temporary heap-memory allocation done by the size calculation, needs to be avoided.
+- `control-asil-b-shm-size`: This is a `SHM` `binding` specific optional setting, how big (in bytes) the shared-memory
+  object for ASIL-B CONTROL shall be sized.
+  Normally this is not used as `mw::com` calculates the sizes for DATA and also for CONTROL shared-memory objects with
+  some heuristics, configured in the  [global section](#shm-size-calc-mode).
+  Using this property is not encouraged. It is rather a fallback, in case the preferred size calculation fails or in
+  case the temporary heap-memory allocation done by the size calculation, needs to be avoided.
+- `control-qm-shm-size`: This is a `SHM` `binding` specific optional setting, how big (in bytes) the shared-memory
+  object for QM CONTROL shall be sized.
+  Normally this is not used as `mw::com` calculates the sizes for DATA and also for CONTROL shared-memory objects with
+  some heuristics, configured in the  [global section](#shm-size-calc-mode).
   Using this property is not encouraged. It is rather a fallback, in case the preferred size calculation fails or in
   case the temporary heap-memory allocation done by the size calculation, needs to be avoided.
 
@@ -532,6 +546,8 @@ is being used, whether a property is mandatory or optional or irrelevant, the fo
 | _serviceInstances.instances.asil-level_                                                                                      | required      | required   |                                                                                                                                                                                       |
 | _serviceInstances.instances.binding_                                                                                         | required      | required   |                                                                                                                                                                                       |
 | _serviceInstances.instances.shm-size_                                                                                        | optional      | -          | no value means, the skeleton calculates the shmem size on its own.                                                                                                                    |
+| _serviceInstances.instances.control-asil-b-shm-size_                                                                         | optional      | -          | no value means, the skeleton calculates the shmem size on its own.                                                                                                                    |
+| _serviceInstances.instances.control-qm-shm-size_                                                                             | optional      | -          | no value means, the skeleton calculates the shmem size on its own.                                                                                                                    |
 | _serviceInstances.instances.allowedConsumer_                                                                                 | optional      | -          | if no _allowedConsumers_ are given at skeleton side, its shared-memory objects/messaging endpoints are created with no additional ACLs, so only basic ugo-access pattern is in place. |
 | _serviceInstances.instances.allowedProvider_                                                                                 | -             | optional   | if no _allowedProviders_ are given at proxy side, we simply don't care/check, who is the provider.                                                                                    |
 | _serviceInstances.instances.events.eventName_<br>_serviceInstances.instances.fields.fieldName_                               | required      | required   |                                                                                                                                                                                       |

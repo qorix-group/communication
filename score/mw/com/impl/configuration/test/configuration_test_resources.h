@@ -58,7 +58,9 @@ LolaFieldInstanceDeployment MakeLolaFieldInstanceDeployment(
 
 LolaServiceInstanceDeployment MakeLolaServiceInstanceDeployment(
     const score::cpp::optional<LolaServiceInstanceId> instance_id = 21U,
-    const score::cpp::optional<std::size_t> shared_memory_size = 2000U) noexcept;
+    const score::cpp::optional<std::size_t> shared_memory_size = 2000U,
+    const score::cpp::optional<std::size_t> control_asil_b_memory_size = 3000U,
+    const score::cpp::optional<std::size_t> control_qm_memory_size = 4000U) noexcept;
 
 SomeIpServiceInstanceDeployment MakeSomeIpServiceInstanceDeployment(
     const score::cpp::optional<SomeIpServiceInstanceId> instance_id = 22U) noexcept;

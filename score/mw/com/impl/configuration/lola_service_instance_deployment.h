@@ -59,6 +59,10 @@ class LolaServiceInstanceDeployment
     // coverity[autosar_cpp14_m11_0_1_violation]
     score::cpp::optional<std::size_t> shared_memory_size_;
     // coverity[autosar_cpp14_m11_0_1_violation]
+    score::cpp::optional<std::size_t> control_asil_b_memory_size_;
+    // coverity[autosar_cpp14_m11_0_1_violation]
+    score::cpp::optional<std::size_t> control_qm_memory_size_;
+    // coverity[autosar_cpp14_m11_0_1_violation]
     EventInstanceMapping events_;  // key = event name
     // coverity[autosar_cpp14_m11_0_1_violation]
     FieldInstanceMapping fields_;  // key = field name

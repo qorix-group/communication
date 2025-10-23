@@ -40,6 +40,8 @@
                     "asil-level": "B",
                     "binding": "SHM",
                     "shm-size": 10000,
+                    "control-asil-b-shm-size": 20000,
+                    "control-qm-shm-size": 30000,
                     "events": [
                         {
                             "eventName": "CurrentPressureFrontLeft",

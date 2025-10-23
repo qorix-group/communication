@@ -55,6 +55,27 @@ TEST(LolaServiceInstanceDeployment, InstanceIsOptional)
     ASSERT_FALSE(unit.instance_id_.has_value());
 }
 
+TEST(LolaServiceInstanceDeployment, SharedMemorySizeIsOptional)
+{
+    LolaServiceInstanceDeployment unit{};
+
+    ASSERT_FALSE(unit.shared_memory_size_.has_value());
+}
+
+TEST(LolaServiceInstanceDeployment, ControlAsilBMemorySizeIsOptional)
+{
+    LolaServiceInstanceDeployment unit{};
+
+    ASSERT_FALSE(unit.control_asil_b_memory_size_.has_value());
+}
+
+TEST(LolaServiceInstanceDeployment, ControlQmMemorySizeIsOptional)
+{
+    LolaServiceInstanceDeployment unit{};
+
+    ASSERT_FALSE(unit.control_qm_memory_size_.has_value());
+}
+
 TEST(LolaServiceInstanceDeployment, SameServiceIdBothInstancesAnyIsCompatible)
 {
     EXPECT_TRUE(areCompatible(LolaServiceInstanceDeployment{LolaServiceInstanceId{43U}},
@@ -137,7 +158,7 @@ TEST_F(LolaServiceInstanceDeploymentFixture, CanCreateFromSerializedObjectWithSe
 
 TEST_F(LolaServiceInstanceDeploymentFixture, CanCreateFromSerializedObjectWithoutOptionals)
 {
-    const LolaServiceInstanceDeployment unit{MakeLolaServiceInstanceDeployment({}, {})};
+    const LolaServiceInstanceDeployment unit{MakeLolaServiceInstanceDeployment({}, {}, {}, {})};
 
     const auto serialized_unit{unit.Serialize()};
 

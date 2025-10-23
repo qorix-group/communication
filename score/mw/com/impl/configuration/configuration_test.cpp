@@ -165,6 +165,8 @@ TEST_F(ConfigurationFixture, ConfigIsCorrectlyParsedFromFile)
     const std::string instance_field_name{"CurrentTemperatureFrontLeft"};
     const LolaServiceInstanceId instance_id{1234};
     const std::size_t shared_memory_size{10000};
+    const std::size_t control_asil_b_memory_size{20000};
+    const std::size_t control_qm_memory_size{30000};
     const std::uint16_t event_max_samples{50};
     const std::uint8_t event_max_subscribers{5};
     const std::uint16_t field_max_samples{60};
@@ -190,6 +192,8 @@ TEST_F(ConfigurationFixture, ConfigIsCorrectlyParsedFromFile)
     binding_info.allowed_consumer_ = allowed_consumers;
     binding_info.allowed_provider_ = allowed_providers;
     binding_info.shared_memory_size_ = shared_memory_size;
+    binding_info.control_asil_b_memory_size_ = control_asil_b_memory_size;
+    binding_info.control_qm_memory_size_ = control_qm_memory_size;
     const QualityType asil_level{QualityType::kASIL_B};
 
     ServiceInstanceDeployment manual_service_instance(
@@ -219,6 +223,10 @@ TEST_F(ConfigurationFixture, ConfigIsCorrectlyParsedFromFile)
               generated_lola_service_instance_deployment->instance_id_);
     EXPECT_EQ(manual_lola_service_instance_deployment->shared_memory_size_,
               generated_lola_service_instance_deployment->shared_memory_size_);
+    EXPECT_EQ(manual_lola_service_instance_deployment->control_asil_b_memory_size_,
+              generated_lola_service_instance_deployment->control_asil_b_memory_size_);
+    EXPECT_EQ(manual_lola_service_instance_deployment->control_qm_memory_size_,
+              generated_lola_service_instance_deployment->control_qm_memory_size_);
     EXPECT_EQ(manual_lola_service_instance_deployment->allowed_consumer_,
               generated_lola_service_instance_deployment->allowed_consumer_);
     EXPECT_EQ(manual_lola_service_instance_deployment->allowed_provider_,

@@ -73,6 +73,8 @@ constexpr auto kFieldMaxSubscribersKey = "maxSubscribers"sv;
 constexpr auto kFieldEnforceMaxSamplesKey = "enforceMaxSamples"sv;
 constexpr auto kFieldMaxConcurrentAllocationsKey = "maxConcurrentAllocations"sv;
 constexpr auto kLolaShmSizeKey = "shm-size"sv;
+constexpr auto kLolaControlAsilBShmSizeKey = "control-asil-b-shm-size"sv;
+constexpr auto kLolaControlQmShmSizeKey = "control-qm-shm-size"sv;
 constexpr auto kGlobalPropertiesKey = "global"sv;
 constexpr auto kAllowedConsumerKey = "allowedConsumer"sv;
 constexpr auto kAllowedProviderKey = "allowedProvider"sv;
@@ -540,6 +542,20 @@ auto ParseLolaServiceInstanceDeployment(const score::json::Any& json) -> LolaSer
     if (found_shm_size != json.As<score::json::Object>().value().get().cend())
     {
         service.shared_memory_size_ = found_shm_size->second.As<std::uint64_t>().value();
+    }
+
+    const auto& found_control_asil_b_shm_size =
+        json.As<score::json::Object>().value().get().find(kLolaControlAsilBShmSizeKey.data());
+    if (found_control_asil_b_shm_size != json.As<score::json::Object>().value().get().cend())
+    {
+        service.control_asil_b_memory_size_ = found_control_asil_b_shm_size->second.As<std::uint64_t>().value();
+    }
+
+    const auto& found_control_qm_shm_size =
+        json.As<score::json::Object>().value().get().find(kLolaControlQmShmSizeKey.data());
+    if (found_control_qm_shm_size != json.As<score::json::Object>().value().get().cend())
+    {
+        service.control_qm_memory_size_ = found_control_qm_shm_size->second.As<std::uint64_t>().value();
     }
 
     const auto& instance_id = json.As<score::json::Object>().value().get().find(kInstanceIdKey.data());

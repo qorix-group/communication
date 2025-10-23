@@ -203,8 +203,16 @@
                                 },
                                 "shm-size": {
                                     "type": "integer",
-                                    "description": "(optional) SHM-Specific attribute that defines how big (in bytes) the underlying shared memory object shall be created. Property gets only evaluated on provider/skeleton side. If no value is given, the size is internally calculated based on storage needs of events (type, number of slots) with the calculation method set in global.shm-size-calc-mode"
+                                    "description": "(optional) SHM-Specific attribute that defines how big (in bytes) the underlying shared memory object for the data segment shall be created. Property is not validated! Too small values lead to aborts! If no value is given, the size is internally calculated based on storage needs of events (type, number of slots) with the calculation method set in global.shm-size-calc-mode"
                                 },
+                              "control-asil-b-shm-size": {
+                                "type": "integer",
+                                "description": "(optional) SHM-Specific attribute that defines how big (in bytes) the underlying shared memory object for the ASIL-B control segment shall be created. Property is not validated! Too small values lead to aborts! If no value is given, the size is internally calculated based on storage needs of events (type, number of slots) with the calculation method set in global.shm-size-calc-mode"
+                              },
+                              "control-qm-shm-size": {
+                                "type": "integer",
+                                "description": "(optional) SHM-Specific attribute that defines how big (in bytes) the underlying shared memory object for the QM control segment shall be created. Property is not validated! Too small values lead to aborts! If no value is given, the size is internally calculated based on storage needs of events (type, number of slots) with the calculation method set in global.shm-size-calc-mode"
+                              },
                                 "permission-checks": {
                                     "type": "string",
                                     "enum": [

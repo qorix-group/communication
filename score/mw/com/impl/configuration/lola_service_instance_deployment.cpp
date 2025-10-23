@@ -26,6 +26,8 @@ namespace
 constexpr auto kSerializationVersionKeyInstDepl = "serializationVersion";
 constexpr auto kInstanceIdKeyInstDepl = "instanceId";
 constexpr auto kSharedMemorySizeKeyInstDepl = "sharedMemorySize";
+constexpr auto kControlAsilBMemorySizeKeyInstDepl = "controlAsilBMemorySize";
+constexpr auto kControlQmMemorySizeKeyInstDepl = "controlQmMemorySize";
 constexpr auto kEventsKeyInstDepl = "events";
 constexpr auto kFieldsKeyInstDepl = "fields";
 constexpr auto kStrictKeyInstDepl = "strict";
@@ -111,9 +113,10 @@ bool operator==(const LolaServiceInstanceDeployment& lhs, const LolaServiceInsta
     // deem it an acceptible deviation here.
     // coverity[autosar_cpp14_a5_2_6_violation]
     return ((lhs.instance_id_ == rhs.instance_id_) && (lhs.shared_memory_size_ == rhs.shared_memory_size_) &&
-            (lhs.events_ == rhs.events_) && (lhs.fields_ == rhs.fields_) &&
-            (lhs.strict_permissions_ == rhs.strict_permissions_) && (lhs.allowed_consumer_ == rhs.allowed_consumer_) &&
-            (lhs.allowed_provider_ == rhs.allowed_provider_));
+            (lhs.control_asil_b_memory_size_ == rhs.control_asil_b_memory_size_) &&
+            (lhs.control_qm_memory_size_ == rhs.control_qm_memory_size_) && (lhs.events_ == rhs.events_) &&
+            (lhs.fields_ == rhs.fields_) && (lhs.strict_permissions_ == rhs.strict_permissions_) &&
+            (lhs.allowed_consumer_ == rhs.allowed_consumer_) && (lhs.allowed_provider_ == rhs.allowed_provider_));
 }
 
 bool operator<(const LolaServiceInstanceDeployment& lhs, const LolaServiceInstanceDeployment& rhs) noexcept
@@ -130,6 +133,8 @@ bool operator<(const LolaServiceInstanceDeployment& lhs, const LolaServiceInstan
 LolaServiceInstanceDeployment::LolaServiceInstanceDeployment(const score::json::Object& json_object) noexcept
     : instance_id_{},
       shared_memory_size_{},
+      control_asil_b_memory_size_{},
+      control_qm_memory_size_{},
       events_{ConvertJsonToServiceElementMap<EventInstanceMapping>(json_object, kEventsKeyInstDepl)},
       fields_{ConvertJsonToServiceElementMap<FieldInstanceMapping>(json_object, kFieldsKeyInstDepl)},
       strict_permissions_{GetValueFromJson<bool>(json_object, kStrictKeyInstDepl)},
@@ -153,6 +158,18 @@ LolaServiceInstanceDeployment::LolaServiceInstanceDeployment(const score::json::
     {
         shared_memory_size_ = shared_memory_size_it->second.As<std::size_t>().value();
     }
+
+    const auto control_asil_b_memory_size_it = json_object.find(kControlAsilBMemorySizeKeyInstDepl);
+    if (control_asil_b_memory_size_it != json_object.end())
+    {
+        control_asil_b_memory_size_ = control_asil_b_memory_size_it->second.As<std::size_t>().value();
+    }
+
+    const auto control_qm_memory_size_it = json_object.find(kControlQmMemorySizeKeyInstDepl);
+    if (control_qm_memory_size_it != json_object.end())
+    {
+        control_qm_memory_size_ = control_qm_memory_size_it->second.As<std::size_t>().value();
+    }
 }
 
 LolaServiceInstanceDeployment::LolaServiceInstanceDeployment(
@@ -164,6 +181,8 @@ LolaServiceInstanceDeployment::LolaServiceInstanceDeployment(
     std::unordered_map<QualityType, std::vector<uid_t>> allowed_provider) noexcept
     : instance_id_{instance_id},
       shared_memory_size_{},
+      control_asil_b_memory_size_{},
+      control_qm_memory_size_{},
       events_{std::move(events)},
       fields_{std::move(fields)},
       strict_permissions_{strict_permission},
@@ -185,6 +204,16 @@ score::json::Object LolaServiceInstanceDeployment::Serialize() const noexcept
     if (shared_memory_size_.has_value())
     {
         json_object[kSharedMemorySizeKeyInstDepl] = score::json::Any{shared_memory_size_.value()};
+    }
+
+    if (control_asil_b_memory_size_.has_value())
+    {
+        json_object[kControlAsilBMemorySizeKeyInstDepl] = score::json::Any{control_asil_b_memory_size_.value()};
+    }
+
+    if (control_qm_memory_size_.has_value())
+    {
+        json_object[kControlQmMemorySizeKeyInstDepl] = score::json::Any{control_qm_memory_size_.value()};
     }
 
     json_object[kEventsKeyInstDepl] = ConvertServiceElementMapToJson(events_);

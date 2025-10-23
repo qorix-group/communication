@@ -56,7 +56,9 @@ LolaFieldInstanceDeployment MakeLolaFieldInstanceDeployment(
 
 LolaServiceInstanceDeployment MakeLolaServiceInstanceDeployment(
     const score::cpp::optional<LolaServiceInstanceId> instance_id,
-    const score::cpp::optional<std::size_t> shared_memory_size) noexcept
+    const score::cpp::optional<std::size_t> shared_memory_size,
+    const score::cpp::optional<std::size_t> control_asil_b_memory_size,
+    const score::cpp::optional<std::size_t> control_qm_memory_size) noexcept
 {
     const LolaEventInstanceDeployment event_instance_deployment_1{MakeLolaEventInstanceDeployment(12U, 13U)};
     const LolaEventInstanceDeployment event_instance_deployment_2{MakeLolaEventInstanceDeployment(14U, 15U)};
@@ -78,6 +80,8 @@ LolaServiceInstanceDeployment MakeLolaServiceInstanceDeployment(
     LolaServiceInstanceDeployment unit{};
     unit.instance_id_ = instance_id;
     unit.shared_memory_size_ = shared_memory_size;
+    unit.control_asil_b_memory_size_ = control_asil_b_memory_size;
+    unit.control_qm_memory_size_ = control_qm_memory_size;
     unit.events_ = events;
     unit.fields_ = fields;
     unit.allowed_consumer_ = allowed_consumer;
@@ -161,6 +165,8 @@ void ConfigurationStructsFixture::ExpectLolaServiceInstanceDeploymentObjectsEqua
 {
     EXPECT_EQ(lhs.instance_id_, rhs.instance_id_);
     EXPECT_EQ(lhs.shared_memory_size_, rhs.shared_memory_size_);
+    EXPECT_EQ(lhs.control_asil_b_memory_size_, rhs.control_asil_b_memory_size_);
+    EXPECT_EQ(lhs.control_qm_memory_size_, rhs.control_qm_memory_size_);
 
     ASSERT_EQ(lhs.events_.size(), rhs.events_.size());
     for (const auto& lhs_it : lhs.events_)
