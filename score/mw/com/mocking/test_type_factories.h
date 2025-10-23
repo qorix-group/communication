@@ -10,8 +10,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#ifndef SCORE_MW_COM_MOCKING_TEST_TYPE_FACTORIES_H
-#define SCORE_MW_COM_MOCKING_TEST_TYPE_FACTORIES_H
+#ifndef SCORE_MW_COM_MOCKING_TEST_TYPES_H
+#define SCORE_MW_COM_MOCKING_TEST_TYPES_H
 
 #include "score/mw/com/mocking/runtime_mock.h"
 
@@ -27,4 +27,4 @@ void InjectRuntimeMockImpl(RuntimeMock& runtime_mock);
 
 }  // namespace score::mw::com::runtime
 
-#endif  // SCORE_MW_COM_MOCKING_TEST_TYPE_FACTORIES_H
+#endif  // SCORE_MW_COM_MOCKING_TEST_TYPES_H
