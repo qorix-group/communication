@@ -10,21 +10,24 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#ifndef SCORE_MW_COM_MOCKING_TEST_TYPE_FACTORIES_H
-#define SCORE_MW_COM_MOCKING_TEST_TYPE_FACTORIES_H
+#ifndef SCORE_MW_COM_MOCKING_RUNTIME_MOCK_IMPL_H
+#define SCORE_MW_COM_MOCKING_RUNTIME_MOCK_IMPL_H
 
 #include "score/mw/com/mocking/runtime_mock.h"
 
-/// @brief test_type_factories contains all of the factory functions that are required for creating fakes related to
-/// mw::com::runtime which are required for mocking.
-///
-/// These types and functions should not be accessed directly by applications, but rather they should use
-/// mw/com/test_types.h
+#include <gmock/gmock.h>
+
 namespace score::mw::com::runtime
 {
 
-void InjectRuntimeMockImpl(RuntimeMock& runtime_mock);
+class RuntimeMockImpl : public RuntimeMock
+{
+  public:
+    MOCK_METHOD(score::Result<InstanceIdentifierContainer>, ResolveInstanceIDs, (const InstanceSpecifier), (override));
+    MOCK_METHOD(void, InitializeRuntime, (const std::int32_t, score::cpp::span<const score::StringLiteral>), (override));
+    MOCK_METHOD(void, InitializeRuntime, (const runtime::RuntimeConfiguration&), (override));
+};
 
 }  // namespace score::mw::com::runtime
 
-#endif  // SCORE_MW_COM_MOCKING_TEST_TYPE_FACTORIES_H
+#endif  // SCORE_MW_COM_MOCKING_RUNTIME_MOCK_IMPL_H

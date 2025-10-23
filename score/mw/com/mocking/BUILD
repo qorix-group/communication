@@ -13,14 +13,14 @@ cc_library(
         "//score/mw/com:__subpackages__",
     ],
     deps = [
-        ":i_runtime",
+        ":runtime_mock",
     ],
 )
 
 cc_library(
-    name = "i_runtime",
-    srcs = ["i_runtime.cpp"],
-    hdrs = ["i_runtime.h"],
+    name = "runtime_mock",
+    srcs = ["runtime_mock.cpp"],
+    hdrs = ["runtime_mock.h"],
     features = COMPILER_WARNING_FEATURES,
     visibility = [
         "//score/mw/com:__subpackages__",
@@ -36,16 +36,16 @@ cc_library(
 )
 
 cc_library(
-    name = "runtime_mock",
+    name = "runtime_mock_impl",
     testonly = True,
-    srcs = ["runtime_mock.cpp"],
-    hdrs = ["runtime_mock.h"],
+    srcs = ["runtime_mock_impl.cpp"],
+    hdrs = ["runtime_mock_impl.h"],
     features = COMPILER_WARNING_FEATURES,
     visibility = [
         "//score/mw/com/impl:__subpackages__",
     ],
     deps = [
-        ":i_runtime",
+        ":runtime_mock",
         "@googletest//:gtest",
     ],
 )
@@ -54,7 +54,7 @@ cc_gtest_unit_test(
     name = "runtime_mock_test",
     srcs = ["runtime_mock_test.cpp"],
     deps = [
-        ":runtime_mock",
+        ":runtime_mock_impl",
         ":test_type_factories",
         "//score/mw/com:runtime",
         "//score/mw/com/impl/mocking:test_type_factories",
