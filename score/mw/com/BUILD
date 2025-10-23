@@ -89,22 +89,6 @@ cc_library(
     ],
 )
 
-cc_library(
-    name = "test_types",
-    testonly = True,
-    srcs = ["test_types.cpp"],
-    hdrs = ["test_types.h"],
-    features = COMPILER_WARNING_FEATURES,
-    visibility = [
-        "//score/mw/com:__subpackages__",
-    ],
-    deps = [
-        ":types",
-        "//score/mw/com/impl",
-        "//score/mw/com/impl/mocking:test_type_factories",
-    ],
-)
-
 alias(
     name = "config_schema",
     actual = "//score/mw/com/impl/configuration:ara_com_config_schema",
