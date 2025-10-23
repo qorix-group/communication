@@ -12,7 +12,6 @@
  ********************************************************************************/
 #include "score/mw/com/impl/proxy_base.h"
 
-#include "score/mw/com/impl/instance_identifier.h"
 #include "score/mw/com/impl/plumbing/proxy_binding_factory.h"
 #include "score/mw/com/impl/runtime.h"
 

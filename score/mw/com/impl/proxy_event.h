@@ -137,12 +137,9 @@ ProxyEvent<SampleType>::ProxyEvent(ProxyBase& base, const std::string_view event
     : ProxyEventBase{base, ProxyEventBindingFactory<SampleType>::Create(base, event_name), event_name},
       proxy_event_mock_{nullptr}
 {
-    if (GetTypedEventBinding() != nullptr)
-    {
-        const ProxyBaseView proxy_base_view{base};
-        const auto& instance_identifier = proxy_base_view.GetAssociatedHandleType().GetInstanceIdentifier();
-        tracing_data_ = tracing::GenerateProxyTracingStructFromEventConfig(instance_identifier, event_name);
-    }
+    const ProxyBaseView proxy_base_view{base};
+    const auto& instance_identifier = proxy_base_view.GetAssociatedHandleType().GetInstanceIdentifier();
+    tracing_data_ = tracing::GenerateProxyTracingStructFromEventConfig(instance_identifier, event_name);
 }
 
 template <typename SampleType>
@@ -152,12 +149,9 @@ ProxyEvent<SampleType>::ProxyEvent(ProxyBase& base,
                                    PrivateConstructorEnabler)
     : ProxyEventBase{base, std::move(proxy_binding), event_name}, proxy_event_mock_{nullptr}
 {
-    if (GetTypedEventBinding() != nullptr)
-    {
-        const ProxyBaseView proxy_base_view{base};
-        const auto& instance_identifier = proxy_base_view.GetAssociatedHandleType().GetInstanceIdentifier();
-        tracing_data_ = tracing::GenerateProxyTracingStructFromFieldConfig(instance_identifier, event_name);
-    }
+    const ProxyBaseView proxy_base_view{base};
+    const auto& instance_identifier = proxy_base_view.GetAssociatedHandleType().GetInstanceIdentifier();
+    tracing_data_ = tracing::GenerateProxyTracingStructFromFieldConfig(instance_identifier, event_name);
 }
 
 template <typename SampleType>
@@ -206,10 +200,6 @@ Result<std::size_t> ProxyEvent<SampleType>::GetNewSamples(F&& receiver, std::siz
 template <typename SampleType>
 auto ProxyEvent<SampleType>::GetTypedEventBinding() const noexcept -> ProxyEventBinding<SampleType>*
 {
-    if (binding_base_ == nullptr)
-    {
-        return nullptr;
-    }
     auto typed_binding = dynamic_cast<ProxyEventBinding<SampleType>*>(binding_base_.get());
     SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(typed_binding != nullptr, "Downcast to ProxyEventBinding failed!");
     return typed_binding;

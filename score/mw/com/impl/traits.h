@@ -77,9 +77,6 @@ auto ExtractCreationResultFrom(const Key& key, MapOfQueues& map_of_queues)
 template <typename T>
 class SkeletonWrapperClassTestView;
 
-template <typename T>
-class ProxyWrapperClassTestView;
-
 /// The main idea of these traits are to ease the interface creation for a user. It reduces the necessary generated code
 /// to a bare minimum.
 ///
@@ -217,19 +214,11 @@ std::optional<std::unordered_map<InstanceIdentifier, std::queue<Result<SkeletonW
 template <template <class> class Interface, class Trait>
 class ProxyWrapperClass : public Interface<Trait>
 {
-    friend class ProxyWrapperClassTestView<ProxyWrapperClass>;
-
   public:
     /// \brief Execption-less ProxyWrapperClass constructor
     static Result<ProxyWrapperClass> Create(HandleType instance_handle) noexcept
     {
-        if (creation_results_.has_value())
-        {
-            return detail::ExtractCreationResultFrom(instance_handle, creation_results_.value());
-        }
-
-        auto proxy_binding = ProxyBindingFactory::Create(instance_handle);
-        ProxyWrapperClass proxy_wrapper(instance_handle, std::move(proxy_binding));
+        ProxyWrapperClass proxy_wrapper(instance_handle);
         if (!proxy_wrapper.AreBindingsValid())
         {
             ::score::mw::log::LogError("lola")
@@ -242,29 +231,11 @@ class ProxyWrapperClass : public Interface<Trait>
 
   private:
     /// \brief Constructs ProxyWrapperClass
-    explicit ProxyWrapperClass(HandleType instance_handle, std::unique_ptr<ProxyBinding> proxy_binding)
-        : Interface<Trait>{std::move(proxy_binding), std::move(instance_handle)}
+    explicit ProxyWrapperClass(HandleType instance_handle)
+        : Interface<Trait>{ProxyBindingFactory::Create(instance_handle), std::move(instance_handle)}
     {
     }
-
-    ProxyWrapperClass() : Interface<Trait>{} {}
-
-    static void InjectCreationResults(
-        std::unordered_map<HandleType, std::queue<Result<ProxyWrapperClass>>> creation_results)
-    {
-        score::cpp::ignore = creation_results_.emplace(std::move(creation_results));
-    }
-
-    static void ClearCreationResults()
-    {
-        creation_results_.reset();
-    }
-
-    static std::optional<std::unordered_map<HandleType, std::queue<Result<ProxyWrapperClass>>>> creation_results_;
 };
-template <template <class> class Interface, class Trait>
-std::optional<std::unordered_map<HandleType, std::queue<Result<ProxyWrapperClass<Interface, Trait>>>>>
-    ProxyWrapperClass<Interface, Trait>::creation_results_{};
 
 /// \brief Interpret an interface that follows our traits as proxy (see description above)
 template <template <class> class T>
