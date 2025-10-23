@@ -89,7 +89,6 @@ ProxyEventBase::ProxyEventBase(ProxyBase& proxy_base,
       tracing_data_{},
       event_binding_registration_guard_{
           std::make_unique<EventBindingRegistrationGuard>(proxy_base, binding_base_.get(), event_name)},
-      proxy_event_base_mock_{nullptr},
       receive_handler_scope_{}
 {
 }
@@ -116,11 +115,6 @@ ProxyEventBase& ProxyEventBase::operator=(ProxyEventBase&&) noexcept = default;
 // coverity[autosar_cpp14_a15_5_3_violation : FALSE]
 ResultBlank ProxyEventBase::Subscribe(const std::size_t max_sample_count) noexcept
 {
-    if (proxy_event_base_mock_ != nullptr)
-    {
-        return proxy_event_base_mock_->Subscribe(max_sample_count);
-    }
-
     tracing::TraceSubscribe(tracing_data_, *binding_base_, max_sample_count);
 
     const auto current_state = GetSubscriptionState();
@@ -148,12 +142,6 @@ ResultBlank ProxyEventBase::Subscribe(const std::size_t max_sample_count) noexce
 
 void ProxyEventBase::Unsubscribe() noexcept
 {
-    if (proxy_event_base_mock_ != nullptr)
-    {
-        proxy_event_base_mock_->Unsubscribe();
-        return;
-    }
-
     tracing::TraceUnsubscribe(tracing_data_, *binding_base_);
 
     if (GetSubscriptionState() != SubscriptionState::kNotSubscribed)
@@ -172,33 +160,8 @@ void ProxyEventBase::Unsubscribe() noexcept
     }
 }
 
-std::size_t ProxyEventBase::GetFreeSampleCount() const noexcept
-{
-    if (proxy_event_base_mock_ != nullptr)
-    {
-        return proxy_event_base_mock_->GetFreeSampleCount();
-    }
-
-    return tracker_->GetNumAvailableSamples();
-}
-
-SubscriptionState ProxyEventBase::GetSubscriptionState() const noexcept
-{
-    if (proxy_event_base_mock_ != nullptr)
-    {
-        return proxy_event_base_mock_->GetSubscriptionState();
-    }
-
-    return binding_base_->GetSubscriptionState();
-}
-
 Result<std::size_t> ProxyEventBase::GetNumNewSamplesAvailable() const noexcept
 {
-    if (proxy_event_base_mock_ != nullptr)
-    {
-        return proxy_event_base_mock_->GetNumNewSamplesAvailable();
-    }
-
     const auto get_num_new_samples_available_result = binding_base_->GetNumNewSamplesAvailable();
     if (!get_num_new_samples_available_result.has_value())
     {
@@ -216,11 +179,6 @@ Result<std::size_t> ProxyEventBase::GetNumNewSamplesAvailable() const noexcept
 
 ResultBlank ProxyEventBase::SetReceiveHandler(EventReceiveHandler handler) noexcept
 {
-    if (proxy_event_base_mock_ != nullptr)
-    {
-        return proxy_event_base_mock_->SetReceiveHandler(std::move(handler));
-    }
-
     tracing::TraceSetReceiveHandler(tracing_data_, *binding_base_);
     auto tracing_handler = tracing::CreateTracingReceiveHandler(tracing_data_, *binding_base_, std::move(handler));
 
@@ -249,11 +207,6 @@ ResultBlank ProxyEventBase::SetReceiveHandler(EventReceiveHandler handler) noexc
 
 ResultBlank ProxyEventBase::UnsetReceiveHandler() noexcept
 {
-    if (proxy_event_base_mock_ != nullptr)
-    {
-        return proxy_event_base_mock_->UnsetReceiveHandler();
-    }
-
     if (!receive_handler_ptr_)
     {
         // quick return in case no receive handler has been registered. As per API spec, we are nice to the user and

@@ -25,8 +25,6 @@
 #include "score/mw/com/impl/subscription_state.h"
 #include "score/mw/com/impl/tracing/proxy_event_tracing_data.h"
 
-#include "score/mw/com/impl/mocking/proxy_event_mock.h"
-
 #include "score/language/safecpp/scoped_function/scope.h"
 #include "score/result/result.h"
 
@@ -92,7 +90,10 @@ class ProxyEventBase
     /// This method can always be called regardless of the state of the event.
     ///
     /// \return Subscription state of the event.
-    SubscriptionState GetSubscriptionState() const noexcept;
+    SubscriptionState GetSubscriptionState() const noexcept
+    {
+        return binding_base_->GetSubscriptionState();
+    }
 
     /// \brief End subscription to an event and release needed resources.
     ///
@@ -111,7 +112,10 @@ class ProxyEventBase
     /// GetNewSamples again. If there is no subscription for this event, the returned value is unspecified.
     ///
     /// \return Number of samples that can still be received.
-    std::size_t GetFreeSampleCount() const noexcept;
+    std::size_t GetFreeSampleCount() const noexcept
+    {
+        return tracker_->GetNumAvailableSamples();
+    }
 
     /// \brief Returns the number of new samples a call to GetNewSamples() would currently provide if the
     /// max_sample_count set in the Subscribe call and GetNewSamples call were both infinitely high.
@@ -149,11 +153,6 @@ class ProxyEventBase
     }
 
   protected:
-    void InjectMock(ProxyEventBaseMock& proxy_event_base_mock)
-    {
-        proxy_event_base_mock_ = &proxy_event_base_mock;
-    }
-
     // Suppress "AUTOSAR C++14 M11-0-1" rule findings. This rule states: "Member data in non-POD class types shall
     // be private.". We need these data elements to exchange this information between the ProxyEventBase and the
     // GenericProxyEvent.
@@ -165,8 +164,6 @@ class ProxyEventBase
     tracing::ProxyEventTracingData tracing_data_;
     // coverity[autosar_cpp14_m11_0_1_violation]
     std::unique_ptr<EventBindingRegistrationGuard> event_binding_registration_guard_;
-
-    ProxyEventBaseMock* proxy_event_base_mock_;
 
   private:
     /// \brief Expires the #receive_handler_scope_ in case not being called in the context of an EventReceiveHandler

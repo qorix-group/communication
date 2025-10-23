@@ -14,11 +14,8 @@
 #define SCORE_MW_COM_IMPL_PROXY_FIELD_H
 
 #include "score/mw/com/impl/plumbing/proxy_field_binding_factory.h"
-#include "score/mw/com/impl/plumbing/sample_ptr.h"
 #include "score/mw/com/impl/proxy_event.h"
 #include "score/mw/com/impl/proxy_event_binding.h"
-
-#include "score/mw/com/impl/mocking/proxy_field_mock.h"
 
 #include "score/result/result.h"
 
@@ -61,7 +58,7 @@ class ProxyField final
     ProxyField(ProxyBase& base,
                std::unique_ptr<ProxyEventBinding<FieldType>> proxy_binding,
                const std::string_view field_name)
-        : proxy_event_dispatch_{base, std::move(proxy_binding), field_name}, proxy_field_mock_{nullptr}
+        : proxy_event_dispatch_{base, std::move(proxy_binding), field_name}
     {
     }
 
@@ -73,8 +70,7 @@ class ProxyField final
         : proxy_event_dispatch_{base,
                                 ProxyFieldBindingFactory<FieldType>::CreateEventBinding(base, field_name),
                                 field_name,
-                                typename ProxyEvent<FieldType>::PrivateConstructorEnabler{}},
-          proxy_field_mock_{nullptr}
+                                typename ProxyEvent<FieldType>::PrivateConstructorEnabler{}}
     {
     }
 
@@ -95,11 +91,6 @@ class ProxyField final
     /// \return On failure, returns an error code.
     ResultBlank Subscribe(const std::size_t max_sample_count) noexcept
     {
-        if (proxy_field_mock_ != nullptr)
-        {
-            return proxy_field_mock_->Subscribe(max_sample_count);
-        }
-
         return proxy_event_dispatch_.Subscribe(max_sample_count);
     }
 
@@ -110,11 +101,6 @@ class ProxyField final
     /// \return Subscription state of the field.
     SubscriptionState GetSubscriptionState() const noexcept
     {
-        if (proxy_field_mock_ != nullptr)
-        {
-            return proxy_field_mock_->GetSubscriptionState();
-        }
-
         return proxy_event_dispatch_.GetSubscriptionState();
     }
 
@@ -126,12 +112,6 @@ class ProxyField final
     /// After a call to this method, the field behaves as if it had just been constructed.
     void Unsubscribe() noexcept
     {
-        if (proxy_field_mock_ != nullptr)
-        {
-            proxy_field_mock_->Unsubscribe();
-            return;
-        }
-
         proxy_event_dispatch_.Unsubscribe();
     }
 
@@ -143,11 +123,6 @@ class ProxyField final
     /// \return Number of samples that can still be received.
     std::size_t GetFreeSampleCount() const noexcept
     {
-        if (proxy_field_mock_ != nullptr)
-        {
-            return proxy_field_mock_->GetFreeSampleCount();
-        }
-
         return proxy_event_dispatch_.GetFreeSampleCount();
     }
 
@@ -163,11 +138,6 @@ class ProxyField final
     /// would be provided by a call to GetNewSamples().
     Result<std::size_t> GetNumNewSamplesAvailable() const noexcept
     {
-        if (proxy_field_mock_ != nullptr)
-        {
-            return proxy_field_mock_->GetNumNewSamplesAvailable();
-        }
-
         return proxy_event_dispatch_.GetNumNewSamplesAvailable();
     }
 
@@ -186,46 +156,21 @@ class ProxyField final
     template <typename F>
     Result<std::size_t> GetNewSamples(F&& receiver, const std::size_t max_num_samples) noexcept
     {
-        if (proxy_field_mock_ != nullptr)
-        {
-            typename ProxyFieldMock<FieldType>::Callback mock_callback =
-                [receiver = std::forward<F>(receiver)](SamplePtr<FieldType> sample_ptr) noexcept {
-                    receiver(std::move(sample_ptr));
-                };
-            return proxy_field_mock_->GetNewSamples(std::move(mock_callback), max_num_samples);
-        }
-
         return proxy_event_dispatch_.GetNewSamples(std::forward<F>(receiver), max_num_samples);
     }
 
     ResultBlank SetReceiveHandler(EventReceiveHandler handler) noexcept
     {
-        if (proxy_field_mock_ != nullptr)
-        {
-            return proxy_field_mock_->SetReceiveHandler(std::move(handler));
-        }
-
         return proxy_event_dispatch_.SetReceiveHandler(std::move(handler));
     }
 
     ResultBlank UnsetReceiveHandler() noexcept
     {
-        if (proxy_field_mock_ != nullptr)
-        {
-            return proxy_field_mock_->UnsetReceiveHandler();
-        }
-
         return proxy_event_dispatch_.UnsetReceiveHandler();
-    }
-
-    void InjectMock(ProxyFieldMock<FieldType>& proxy_field_mock)
-    {
-        proxy_field_mock_ = &proxy_field_mock;
     }
 
   private:
     ProxyEvent<FieldType> proxy_event_dispatch_;
-    ProxyFieldMock<FieldType>* proxy_field_mock_;
 };
 
 }  // namespace score::mw::com::impl

@@ -15,14 +15,11 @@
 
 #include "score/mw/com/impl/instance_identifier.h"
 #include "score/mw/com/impl/plumbing/proxy_event_binding_factory.h"
-#include "score/mw/com/impl/plumbing/sample_ptr.h"
 #include "score/mw/com/impl/proxy_base.h"
 #include "score/mw/com/impl/proxy_event_base.h"
 #include "score/mw/com/impl/proxy_event_binding.h"
 #include "score/mw/com/impl/runtime.h"
 #include "score/mw/com/impl/tracing/proxy_event_tracing.h"
-
-#include "score/mw/com/impl/mocking/proxy_event_mock.h"
 
 #include "score/result/result.h"
 #include "score/mw/log/logging.h"
@@ -113,29 +110,21 @@ class ProxyEvent final : public ProxyEventBase
     template <typename F>
     Result<std::size_t> GetNewSamples(F&& receiver, std::size_t max_num_samples) noexcept;
 
-    void InjectMock(ProxyEventMock<SampleType>& proxy_event_mock)
-    {
-        proxy_event_mock_ = &proxy_event_mock;
-        ProxyEventBase::InjectMock(proxy_event_mock);
-    }
-
   private:
     ProxyEventBinding<SampleType>* GetTypedEventBinding() const noexcept;
-    ProxyEventMock<SampleType>* proxy_event_mock_;
 };
 
 template <typename SampleType>
 ProxyEvent<SampleType>::ProxyEvent(ProxyBase& base,
                                    std::unique_ptr<ProxyEventBinding<SampleType>> proxy_binding,
                                    const std::string_view event_name)
-    : ProxyEventBase{base, std::move(proxy_binding), event_name}, proxy_event_mock_{nullptr}
+    : ProxyEventBase{base, std::move(proxy_binding), event_name}
 {
 }
 
 template <typename SampleType>
 ProxyEvent<SampleType>::ProxyEvent(ProxyBase& base, const std::string_view event_name)
-    : ProxyEventBase{base, ProxyEventBindingFactory<SampleType>::Create(base, event_name), event_name},
-      proxy_event_mock_{nullptr}
+    : ProxyEventBase{base, ProxyEventBindingFactory<SampleType>::Create(base, event_name), event_name}
 {
     const ProxyBaseView proxy_base_view{base};
     const auto& instance_identifier = proxy_base_view.GetAssociatedHandleType().GetInstanceIdentifier();
@@ -147,7 +136,7 @@ ProxyEvent<SampleType>::ProxyEvent(ProxyBase& base,
                                    std::unique_ptr<ProxyEventBinding<SampleType>> proxy_binding,
                                    const std::string_view event_name,
                                    PrivateConstructorEnabler)
-    : ProxyEventBase{base, std::move(proxy_binding), event_name}, proxy_event_mock_{nullptr}
+    : ProxyEventBase{base, std::move(proxy_binding), event_name}
 {
     const ProxyBaseView proxy_base_view{base};
     const auto& instance_identifier = proxy_base_view.GetAssociatedHandleType().GetInstanceIdentifier();
@@ -158,15 +147,6 @@ template <typename SampleType>
 template <typename F>
 Result<std::size_t> ProxyEvent<SampleType>::GetNewSamples(F&& receiver, std::size_t max_num_samples) noexcept
 {
-    if (proxy_event_mock_ != nullptr)
-    {
-        typename ProxyEventMock<SampleType>::Callback mock_callback =
-            [receiver = std::forward<F>(receiver)](SamplePtr<SampleType> sample_ptr) noexcept {
-                receiver(std::move(sample_ptr));
-            };
-        return proxy_event_mock_->GetNewSamples(std::move(mock_callback), max_num_samples);
-    }
-
     tracing::TraceGetNewSamples(tracing_data_, *binding_base_);
 
     auto guard_factory = tracker_->Allocate(max_num_samples);
