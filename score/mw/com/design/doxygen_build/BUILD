@@ -6,11 +6,9 @@ doxygen(
         "html",
         "xml",
     ],
-    exclude_patterns = ["*/external/*"],
-    extract_all = True,
-    generate_html = True,
-    generate_xml = True,
     project_name = "com",
+    # Building documentation is resource-intensive,so it will be handled by dedicated jobs instead of during full platform builds.
+    tags = ["manual"],
     deps = [
         "//score/mw/com",
     ],
