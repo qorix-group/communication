@@ -12,7 +12,7 @@
  ********************************************************************************/
 #include "score/mw/com/impl/com_error.h"
 #include "score/mw/com/impl/instance_identifier.h"
-#include "score/mw/com/impl/mocking/skeleton_mock.h"
+#include "score/mw/com/impl/mocking/skeleton_mock_impl.h"
 #include "score/mw/com/impl/mocking/test_type_utilities.h"
 #include "score/mw/com/impl/skeleton_base.h"
 
@@ -34,7 +34,7 @@ class SkeletonMockFixture : public ::testing::Test
         unit_.InjectMock(skeleton_mock_);
     }
 
-    SkeletonMock skeleton_mock_{};
+    SkeletonMockImpl skeleton_mock_{};
     SkeletonBase unit_{nullptr, MakeFakeInstanceIdentifier(1U)};
 };
 

@@ -12,7 +12,7 @@
  ********************************************************************************/
 #include "score/result/result.h"
 #include "score/mw/com/impl/com_error.h"
-#include "score/mw/com/impl/mocking/skeleton_event_mock.h"
+#include "score/mw/com/impl/mocking/skeleton_event_mock_impl.h"
 #include "score/mw/com/impl/mocking/test_type_utilities.h"
 #include "score/mw/com/impl/skeleton_event.h"
 
@@ -39,7 +39,7 @@ class SkeletonEventMockFixture : public ::testing::Test
         unit_.InjectMock(skeleton_event_mock_);
     }
 
-    SkeletonEventMock<TestSampleType> skeleton_event_mock_{};
+    SkeletonEventMockImpl<TestSampleType> skeleton_event_mock_{};
     SkeletonBase skeleton_base_{nullptr, MakeFakeInstanceIdentifier(1U)};
     SkeletonEvent<TestSampleType> unit_{skeleton_base_, kDummyEventName, nullptr};
 };

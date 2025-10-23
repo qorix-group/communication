@@ -15,9 +15,9 @@
 #include "score/mw/com/impl/com_error.h"
 #include "score/mw/com/impl/instance_identifier.h"
 #include "score/mw/com/impl/instance_specifier.h"
-#include "score/mw/com/impl/mocking/skeleton_event_mock.h"
-#include "score/mw/com/impl/mocking/skeleton_field_mock.h"
-#include "score/mw/com/impl/mocking/skeleton_mock.h"
+#include "score/mw/com/impl/mocking/skeleton_event_mock_impl.h"
+#include "score/mw/com/impl/mocking/skeleton_field_mock_impl.h"
+#include "score/mw/com/impl/mocking/skeleton_mock_impl.h"
 #include "score/mw/com/impl/mocking/test_type_utilities.h"
 
 #include "score/result/result.h"
@@ -232,7 +232,7 @@ using SkeletonWrapperTestClassCreateFixture = SkeletonWrapperTestClassFixture;
 TEST_F(SkeletonWrapperTestClassCreateFixture, CreatingMockSkeletonWithAllEventsAndFieldsReturnsSkeleton)
 {
     // Given a SkeletonMock and a mock per event and field.
-    SkeletonMock skeleton_mock{};
+    SkeletonMockImpl skeleton_mock{};
     std::tuple<NamedSkeletonEventMock<TestEventType>, NamedSkeletonEventMock<TestEventType2>> events_tuple{kEventName,
                                                                                                            kEventName2};
     std::tuple<NamedSkeletonFieldMock<TestFieldType>> fields_tuple{kFieldName};
@@ -246,7 +246,7 @@ TEST_F(SkeletonWrapperTestClassCreateFixture, CreatingMockSkeletonWithAllEventsA
 TEST_F(SkeletonWrapperTestClassCreateFixture, CallingFunctionsOnMockSkeletonDispatchesToMocks)
 {
     // Given a SkeletonMock and a mock per event and field.
-    SkeletonMock skeleton_mock{};
+    SkeletonMockImpl skeleton_mock{};
     std::tuple<NamedSkeletonEventMock<TestEventType>, NamedSkeletonEventMock<TestEventType2>> events_tuple{kEventName,
                                                                                                            kEventName2};
     std::tuple<NamedSkeletonFieldMock<TestFieldType>> fields_tuple{kFieldName};
@@ -285,7 +285,7 @@ using SkeletonWrapperTestClassEventsOnlyCreateFixture = SkeletonWrapperTestClass
 TEST_F(SkeletonWrapperTestClassCreateFixture, CreatingMockSkeletonWithAllEventsReturnsSkeleton)
 {
     // Given a SkeletonMock and a mock per Event
-    SkeletonMock skeleton_mock{};
+    SkeletonMockImpl skeleton_mock{};
     std::tuple<NamedSkeletonEventMock<TestEventType>> events_tuple{kEventName};
 
     // When creating a mocked skeleton
@@ -297,7 +297,7 @@ TEST_F(SkeletonWrapperTestClassCreateFixture, CreatingMockSkeletonWithAllEventsR
 TEST_F(SkeletonWrapperTestClassEventsOnlyCreateFixture, CallingFunctionsOnMockSkeletonDispatchesToMocks)
 {
     // Given a SkeletonMock and a mock per Event
-    SkeletonMock skeleton_mock{};
+    SkeletonMockImpl skeleton_mock{};
     std::tuple<NamedSkeletonEventMock<TestEventType>> events_tuple{kEventName};
 
     // and given a mocked skeleton was created
@@ -328,7 +328,7 @@ using SkeletonWrapperTestClassFieldsOnlyCreateFixture = SkeletonWrapperTestClass
 TEST_F(SkeletonWrapperTestClassFieldsOnlyCreateFixture, CreatingMockSkeletonWithAllFieldsReturnsSkeleton)
 {
     // Given a SkeletonMock and a mock per Field
-    SkeletonMock skeleton_mock{};
+    SkeletonMockImpl skeleton_mock{};
     std::tuple<NamedSkeletonFieldMock<TestFieldType>> fields_tuple{kFieldName};
 
     // When creating a mocked skeleton
@@ -340,7 +340,7 @@ TEST_F(SkeletonWrapperTestClassFieldsOnlyCreateFixture, CreatingMockSkeletonWith
 TEST_F(SkeletonWrapperTestClassFieldsOnlyCreateFixture, CallingFunctionsOnMockSkeletonDispatchesToMocks)
 {
     // Given a SkeletonMock and a mock per Field
-    SkeletonMock skeleton_mock{};
+    SkeletonMockImpl skeleton_mock{};
     std::tuple<NamedSkeletonFieldMock<TestFieldType>> fields_tuple{kFieldName};
 
     // and given a mocked skeleton was created

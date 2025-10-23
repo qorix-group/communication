@@ -52,10 +52,10 @@ cc_library(
 )
 
 cc_library(
-    name = "proxy_event_mock",
+    name = "proxy_event_mock_impl",
     testonly = True,
-    srcs = ["proxy_event_mock.cpp"],
-    hdrs = ["proxy_event_mock.h"],
+    srcs = ["proxy_event_mock_impl.cpp"],
+    hdrs = ["proxy_event_mock_impl.h"],
     features = COMPILER_WARNING_FEATURES,
     visibility = [
         "//score/mw/com/impl:__subpackages__",
@@ -84,10 +84,10 @@ cc_library(
 )
 
 cc_library(
-    name = "proxy_field_mock",
+    name = "proxy_field_mock_impl",
     testonly = True,
-    srcs = ["proxy_field_mock.cpp"],
-    hdrs = ["proxy_field_mock.h"],
+    srcs = ["proxy_field_mock_impl.cpp"],
+    hdrs = ["proxy_field_mock_impl.h"],
     features = COMPILER_WARNING_FEATURES,
     visibility = [
         "//score/mw/com/impl:__subpackages__",
@@ -113,10 +113,10 @@ cc_library(
 )
 
 cc_library(
-    name = "skeleton_mock",
+    name = "skeleton_mock_impl",
     testonly = True,
-    srcs = ["skeleton_mock.cpp"],
-    hdrs = ["skeleton_mock.h"],
+    srcs = ["skeleton_mock_impl.cpp"],
+    hdrs = ["skeleton_mock_impl.h"],
     features = COMPILER_WARNING_FEATURES,
     visibility = [
         "//score/mw/com/impl:__subpackages__",
@@ -143,10 +143,10 @@ cc_library(
 )
 
 cc_library(
-    name = "skeleton_event_mock",
+    name = "skeleton_event_mock_impl",
     testonly = True,
-    srcs = ["skeleton_event_mock.cpp"],
-    hdrs = ["skeleton_event_mock.h"],
+    srcs = ["skeleton_event_mock_impl.cpp"],
+    hdrs = ["skeleton_event_mock_impl.h"],
     features = COMPILER_WARNING_FEATURES,
     visibility = [
         "//score/mw/com/impl:__subpackages__",
@@ -173,10 +173,10 @@ cc_library(
 )
 
 cc_library(
-    name = "skeleton_field_mock",
+    name = "skeleton_field_mock_impl",
     testonly = True,
-    srcs = ["skeleton_field_mock.cpp"],
-    hdrs = ["skeleton_field_mock.h"],
+    srcs = ["skeleton_field_mock_impl.cpp"],
+    hdrs = ["skeleton_field_mock_impl.h"],
     features = COMPILER_WARNING_FEATURES,
     visibility = [
         "//score/mw/com/impl:__subpackages__",
@@ -197,9 +197,9 @@ cc_library(
         "//score/mw/com:__subpackages__",
     ],
     deps = [
-        ":skeleton_event_mock",
-        ":skeleton_field_mock",
-        ":skeleton_mock",
+        ":skeleton_event_mock_impl",
+        ":skeleton_field_mock_impl",
+        ":skeleton_mock_impl",
         ":test_type_utilities",
         "//score/mw/com/impl:instance_identifier",
         "//score/mw/com/impl:instance_specifier",
@@ -219,8 +219,8 @@ cc_library(
         "//score/mw/com:__subpackages__",
     ],
     deps = [
-        ":proxy_event_mock",
-        ":proxy_field_mock",
+        ":proxy_event_mock_impl",
+        ":proxy_field_mock_impl",
         ":test_type_utilities",
         "//score/mw/com/impl:traits",
         "//score/mw/com/impl/test:binding_factory_resources",
@@ -241,7 +241,7 @@ cc_gtest_unit_test(
     name = "skeleton_mock_test",
     srcs = ["skeleton_mock_test.cpp"],
     deps = [
-        ":skeleton_mock",
+        ":skeleton_mock_impl",
         ":test_type_utilities",
         "//score/mw/com/impl:skeleton_base",
     ],
@@ -251,7 +251,7 @@ cc_gtest_unit_test(
     name = "skeleton_event_mock_test",
     srcs = ["skeleton_event_mock_test.cpp"],
     deps = [
-        ":skeleton_event_mock",
+        ":skeleton_event_mock_impl",
         ":test_type_utilities",
         "//score/mw/com/impl:skeleton_event",
     ],
@@ -261,7 +261,7 @@ cc_gtest_unit_test(
     name = "skeleton_field_mock_test",
     srcs = ["skeleton_field_mock_test.cpp"],
     deps = [
-        ":skeleton_field_mock",
+        ":skeleton_field_mock_impl",
         ":test_type_utilities",
         "//score/mw/com/impl:skeleton_field",
     ],
@@ -271,8 +271,8 @@ cc_gtest_unit_test(
     name = "proxy_event_mock_test",
     srcs = ["proxy_event_mock_test.cpp"],
     deps = [
-        ":proxy_event_mock",
-        ":proxy_field_mock",
+        ":proxy_event_mock_impl",
+        ":proxy_field_mock_impl",
         ":test_type_utilities",
         "//score/mw/com/impl:proxy_event",
         "//score/mw/com/impl:proxy_field",
@@ -289,9 +289,9 @@ cc_gtest_unit_test(
     name = "skeleton_wrapper_class_test_view_test",
     srcs = ["skeleton_wrapper_class_test_view_test.cpp"],
     deps = [
-        ":skeleton_event_mock",
-        ":skeleton_field_mock",
-        ":skeleton_mock",
+        ":skeleton_event_mock_impl",
+        ":skeleton_field_mock_impl",
+        ":skeleton_mock_impl",
         ":skeleton_wrapper_class_test_view",
         ":test_type_utilities",
         "//score/mw/com:test_types",
@@ -302,8 +302,8 @@ cc_gtest_unit_test(
     name = "proxy_wrapper_class_test_view_test",
     srcs = ["proxy_wrapper_class_test_view_test.cpp"],
     deps = [
-        ":proxy_event_mock",
-        ":proxy_field_mock",
+        ":proxy_event_mock_impl",
+        ":proxy_field_mock_impl",
         ":proxy_wrapper_class_test_view",
         "//score/mw/com:test_types",
     ],

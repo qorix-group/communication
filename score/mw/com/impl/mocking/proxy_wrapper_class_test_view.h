@@ -15,8 +15,8 @@
 
 #include "score/mw/com/impl/traits.h"
 
-#include "score/mw/com/impl/mocking/proxy_event_mock.h"
-#include "score/mw/com/impl/mocking/proxy_field_mock.h"
+#include "score/mw/com/impl/mocking/proxy_event_mock_impl.h"
+#include "score/mw/com/impl/mocking/proxy_field_mock_impl.h"
 #include "score/mw/com/impl/mocking/test_type_utilities.h"
 #include "score/mw/com/impl/proxy_event.h"
 #include "score/mw/com/impl/proxy_field.h"
@@ -45,7 +45,7 @@ struct NamedProxyEventMock
     NamedProxyEventMock(std::string_view event_name_in) : event_name{event_name_in}, mock{} {}
 
     std::string_view event_name;
-    ProxyEventMock<EventType> mock;
+    ProxyEventMockImpl<EventType> mock;
 };
 
 template <typename FieldType>
@@ -54,7 +54,7 @@ struct NamedProxyFieldMock
     NamedProxyFieldMock(std::string_view field_name_in) : field_name{field_name_in}, mock{} {}
 
     std::string_view field_name;
-    ProxyFieldMock<FieldType> mock;
+    ProxyFieldMockImpl<FieldType> mock;
 };
 
 template <typename ProxyWrapperClass>
