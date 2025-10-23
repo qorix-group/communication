@@ -72,9 +72,9 @@ class SkeletonBase
     /// \param mode As a default argument, this is the mode of the service implementation for processing service method
     /// invocations with kEvent as default value. See [SWS_CM_00301] for the type definition and [SWS_CM_00198] for more
     /// details on the behavior
-    explicit SkeletonBase(std::unique_ptr<SkeletonBinding> skeleton_binding,
-                          const InstanceIdentifier instance_id,
-                          MethodCallProcessingMode mode = MethodCallProcessingMode::kEvent);
+    SkeletonBase(std::unique_ptr<SkeletonBinding> skeleton_binding,
+                 const InstanceIdentifier instance_id,
+                 MethodCallProcessingMode mode = MethodCallProcessingMode::kEvent);
 
     virtual ~SkeletonBase();
 
