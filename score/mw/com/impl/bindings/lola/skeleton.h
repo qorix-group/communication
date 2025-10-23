@@ -169,11 +169,11 @@ class Skeleton final : public SkeletonBinding
         // be private.". There are no class invariants to maintain which could be violated by directly accessing member
         // variables.
         // coverity[autosar_cpp14_m11_0_1_violation]
-        const std::size_t data_size;
+        std::size_t data_size;
         // coverity[autosar_cpp14_m11_0_1_violation]
-        const std::size_t control_qm_size;
+        std::size_t control_qm_size;
         // coverity[autosar_cpp14_m11_0_1_violation]
-        const score::cpp::optional<std::size_t> control_asil_b_size;
+        score::cpp::optional<std::size_t> control_asil_b_size;
     };
 
     /// \brief Calculates needed sizes for shm-objects for data and ctrl either via simulation or a rough estimation
