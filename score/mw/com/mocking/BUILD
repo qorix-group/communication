@@ -2,9 +2,9 @@ load("@score-baselibs//:bazel/unit_tests.bzl", "cc_gtest_unit_test", "cc_unit_te
 load("//score/mw:common_features.bzl", "COMPILER_WARNING_FEATURES")
 
 cc_library(
-    name = "test_type_utilities",
-    srcs = ["test_type_utilities.cpp"],
-    hdrs = ["test_type_utilities.h"],
+    name = "test_type_factories",
+    srcs = ["test_type_factories.cpp"],
+    hdrs = ["test_type_factories.h"],
     features = COMPILER_WARNING_FEATURES,
     implementation_deps = [
         "//score/mw/com:runtime",
@@ -55,9 +55,9 @@ cc_gtest_unit_test(
     srcs = ["runtime_mock_test.cpp"],
     deps = [
         ":runtime_mock",
-        ":test_type_utilities",
+        ":test_type_factories",
         "//score/mw/com:runtime",
-        "//score/mw/com/impl/mocking:test_type_utilities",
+        "//score/mw/com/impl/mocking:test_type_factories",
     ],
 )
 

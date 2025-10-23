@@ -10,27 +10,21 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#include "score/mw/com/mocking/test_type_utilities.h"
+#ifndef SCORE_MW_COM_MOCKING_TEST_TYPE_FACTORIES_H
+#define SCORE_MW_COM_MOCKING_TEST_TYPE_FACTORIES_H
 
-#include "score/mw/com/runtime.h"
+#include "score/mw/com/mocking/i_runtime.h"
 
+/// @brief test_type_factories contains all of the factory functions that are required for creating fakes related to
+/// mw::com::runtime which are required for mocking.
+///
+/// These types and functions should not be accessed directly by applications, but rather they should use
+/// mw/com/test_types.h
 namespace score::mw::com::runtime
 {
-namespace detail
-{
 
-/// @brief Function which is a friend of RuntimeMockHolder in mw/com/runtime.h. It allows injecting a mock into the
-/// RuntimeMockHolder.
-void InjectRuntimeMock(IRuntime& runtime_mock)
-{
-    RuntimeMockHolder::InjectRuntimeMockImpl(runtime_mock);
-}
-
-}  // namespace detail
-
-void InjectRuntimeMockImpl(IRuntime& runtime_mock)
-{
-    detail::InjectRuntimeMock(runtime_mock);
-}
+void InjectRuntimeMockImpl(IRuntime& runtime_mock);
 
 }  // namespace score::mw::com::runtime
+
+#endif  // SCORE_MW_COM_MOCKING_TEST_TYPE_FACTORIES_H

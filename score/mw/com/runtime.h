@@ -38,7 +38,7 @@ namespace detail
 /// free-functions in this file.
 ///
 /// The getter is public as it will be accessed by the free-functions in this file. The setter is private and can only
-/// be accessed via the test-only InjectRuntimeMock function in mw/com/test_type_utilities.cpp.
+/// be accessed via the test-only InjectRuntimeMock function in mw/com/test_type_factories.cpp.
 class RuntimeMockHolder
 {
     friend void InjectRuntimeMock(IRuntime&);

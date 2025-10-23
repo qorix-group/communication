@@ -13,7 +13,7 @@
 #include "score/result/result.h"
 #include "score/mw/com/impl/com_error.h"
 #include "score/mw/com/impl/mocking/skeleton_field_mock_impl.h"
-#include "score/mw/com/impl/mocking/test_type_utilities.h"
+#include "score/mw/com/impl/mocking/test_type_factories.h"
 #include "score/mw/com/impl/skeleton_field.h"
 
 #include <gmock/gmock.h>

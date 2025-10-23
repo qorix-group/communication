@@ -10,7 +10,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#include "score/mw/com/impl/mocking/test_type_utilities.h"
+#include "score/mw/com/impl/mocking/test_type_factories.h"
 
 #include "score/mw/com/impl/handle_type.h"
 

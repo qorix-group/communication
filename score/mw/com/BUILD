@@ -103,9 +103,9 @@ cc_library(
         ":runtime",
         ":types",
         "//score/mw/com/impl",
-        "//score/mw/com/impl/mocking:test_type_utilities",
+        "//score/mw/com/impl/mocking:test_type_factories",
         "//score/mw/com/mocking:i_runtime",
-        "//score/mw/com/mocking:test_type_utilities",
+        "//score/mw/com/mocking:test_type_factories",
     ],
 )
 

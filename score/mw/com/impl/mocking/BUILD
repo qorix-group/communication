@@ -14,10 +14,10 @@ load("@score-baselibs//:bazel/unit_tests.bzl", "cc_gtest_unit_test", "cc_unit_te
 load("//score/mw:common_features.bzl", "COMPILER_WARNING_FEATURES")
 
 cc_library(
-    name = "test_type_utilities",
+    name = "test_type_factories",
     testonly = True,
-    srcs = ["test_type_utilities.cpp"],
-    hdrs = ["test_type_utilities.h"],
+    srcs = ["test_type_factories.cpp"],
+    hdrs = ["test_type_factories.h"],
     features = COMPILER_WARNING_FEATURES,
     implementation_deps = [
         "//score/mw/com/impl:instance_specifier",
@@ -200,7 +200,7 @@ cc_library(
         ":skeleton_event_mock_impl",
         ":skeleton_field_mock_impl",
         ":skeleton_mock_impl",
-        ":test_type_utilities",
+        ":test_type_factories",
         "//score/mw/com/impl:instance_identifier",
         "//score/mw/com/impl:instance_specifier",
         "//score/mw/com/impl:traits",
@@ -221,7 +221,7 @@ cc_library(
     deps = [
         ":proxy_event_mock_impl",
         ":proxy_field_mock_impl",
-        ":test_type_utilities",
+        ":test_type_factories",
         "//score/mw/com/impl:traits",
         "//score/mw/com/impl/test:binding_factory_resources",
         "@score-baselibs//score/result",
@@ -229,11 +229,11 @@ cc_library(
 )
 
 cc_gtest_unit_test(
-    name = "test_type_utilities_test",
-    srcs = ["test_type_utilities_test.cpp"],
+    name = "test_type_factories_test",
+    srcs = ["test_type_factories_test.cpp"],
     features = COMPILER_WARNING_FEATURES,
     deps = [
-        ":test_type_utilities",
+        ":test_type_factories",
     ],
 )
 
@@ -242,7 +242,7 @@ cc_gtest_unit_test(
     srcs = ["skeleton_mock_test.cpp"],
     deps = [
         ":skeleton_mock_impl",
-        ":test_type_utilities",
+        ":test_type_factories",
         "//score/mw/com/impl:skeleton_base",
     ],
 )
@@ -252,7 +252,7 @@ cc_gtest_unit_test(
     srcs = ["skeleton_event_mock_test.cpp"],
     deps = [
         ":skeleton_event_mock_impl",
-        ":test_type_utilities",
+        ":test_type_factories",
         "//score/mw/com/impl:skeleton_event",
     ],
 )
@@ -262,7 +262,7 @@ cc_gtest_unit_test(
     srcs = ["skeleton_field_mock_test.cpp"],
     deps = [
         ":skeleton_field_mock_impl",
-        ":test_type_utilities",
+        ":test_type_factories",
         "//score/mw/com/impl:skeleton_field",
     ],
 )
@@ -273,7 +273,7 @@ cc_gtest_unit_test(
     deps = [
         ":proxy_event_mock_impl",
         ":proxy_field_mock_impl",
-        ":test_type_utilities",
+        ":test_type_factories",
         "//score/mw/com/impl:proxy_event",
         "//score/mw/com/impl:proxy_field",
     ],
@@ -293,7 +293,7 @@ cc_gtest_unit_test(
         ":skeleton_field_mock_impl",
         ":skeleton_mock_impl",
         ":skeleton_wrapper_class_test_view",
-        ":test_type_utilities",
+        ":test_type_factories",
         "//score/mw/com:test_types",
     ],
 )
@@ -315,7 +315,7 @@ cc_unit_test_suites_for_host_and_qnx(
         ":skeleton_event_mock_test",
         ":skeleton_field_mock_test",
         ":skeleton_mock_test",
-        ":test_type_utilities_test",
+        ":test_type_factories_test",
         ":proxy_event_mock_test",
         ":proxy_field_mock_test",
         ":proxy_wrapper_class_test_view_test",

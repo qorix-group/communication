@@ -12,9 +12,9 @@
  ********************************************************************************/
 #include "score/mw/com/test_types.h"
 
-#include "score/mw/com/impl/mocking/test_type_utilities.h"
+#include "score/mw/com/impl/mocking/test_type_factories.h"
 #include "score/mw/com/mocking/i_runtime.h"
-#include "score/mw/com/mocking/test_type_utilities.h"
+#include "score/mw/com/mocking/test_type_factories.h"
 
 namespace score::mw::com
 {
