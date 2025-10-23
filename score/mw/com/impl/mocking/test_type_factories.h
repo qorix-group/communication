@@ -17,7 +17,6 @@
 #include "score/mw/com/impl/handle_type.h"
 #include "score/mw/com/impl/instance_identifier.h"
 #include "score/mw/com/impl/plumbing/sample_allocatee_ptr.h"
-#include "score/mw/com/impl/plumbing/sample_ptr.h"
 
 #include <cstdint>
 #include <list>
@@ -41,12 +40,6 @@ template <typename SampleType>
 SampleAllocateePtr<SampleType> MakeFakeSampleAllocateePtr(std::unique_ptr<SampleType> fake_sample_allocatee_ptr)
 {
     return impl::MakeSampleAllocateePtr(std::move(fake_sample_allocatee_ptr));
-}
-
-template <typename SampleType>
-SamplePtr<SampleType> MakeFakeSamplePtr(std::unique_ptr<SampleType> fake_sample_ptr)
-{
-    return SamplePtr<SampleType>(std::move(fake_sample_ptr));
 }
 
 }  // namespace score::mw::com::impl
