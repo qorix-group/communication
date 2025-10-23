@@ -10,28 +10,16 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
+load("@rules_rust//rust:defs.bzl", "rust_library")
 
-load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_test")
-
-rust_binary(
-    name = "com-api-example",
-    srcs = ["main.rs"],
-    visibility = ["//visibility:public"],
-    deps = [
-        "//score/mw/com/impl/rust/com-api",
-        "//score/mw/com/impl/rust/com-api-gen",
-        "//score/mw/com/impl/rust/com-api-runtime",
+rust_library(
+    name = "com-api-runtime",
+    srcs = ["runtime.rs"],
+    visibility = [
+        "//visibility:public",  # platform_only
     ],
-)
-
-rust_test(
-    name = "com-api-example-test",
-    crate = ":com-api-example",
-    tags = ["manual"],
     deps = [
         "//score/mw/com/impl/rust/com-api",
-        "//score/mw/com/impl/rust/com-api-gen",
-        "//score/mw/com/impl/rust/com-api-runtime",
-        "@crate_index//:tokio",
+        "@crate_index//:futures",
     ],
 )
