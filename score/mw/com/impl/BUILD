@@ -319,6 +319,7 @@ cc_library(
         ":proxy_base",
         ":proxy_event_binding",
         ":sample_reference_tracker",
+        "//score/mw/com/impl/mocking:proxy_event_mock",
         "//score/mw/com/impl/tracing:proxy_event_tracing_data",
         "@score_baselibs//score/language/futurecpp",
         "@score_baselibs//score/language/safecpp/scoped_function:scope",

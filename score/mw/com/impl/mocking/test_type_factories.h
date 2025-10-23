@@ -31,6 +31,8 @@
 namespace score::mw::com::impl
 {
 
+/// Note. Since the implementation of MakeInstanceIdentifier uses global lists, the instance identifiers should not be
+/// created in a global context to avoid static initialisation fiasco issues.
 InstanceIdentifier MakeFakeInstanceIdentifier(const std::uint16_t unique_identifier);
 
 HandleType MakeFakeHandle(const std::uint16_t unique_identifier);
