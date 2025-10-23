@@ -9,6 +9,7 @@ cc_library(
     implementation_deps = [
         "//score/mw/com:runtime",
     ],
+    tags = ["FFI"],
     visibility = [
         "//score/mw/com:__subpackages__",
     ],
@@ -22,6 +23,7 @@ cc_library(
     srcs = ["i_runtime.cpp"],
     hdrs = ["i_runtime.h"],
     features = COMPILER_WARNING_FEATURES,
+    tags = ["FFI"],
     visibility = [
         "//score/mw/com:__subpackages__",
     ],

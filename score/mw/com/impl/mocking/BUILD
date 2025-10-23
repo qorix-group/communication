@@ -39,6 +39,7 @@ cc_library(
     srcs = ["i_proxy_event.cpp"],
     hdrs = ["i_proxy_event.h"],
     features = COMPILER_WARNING_FEATURES,
+    tags = ["FFI"],
     visibility = [
         "//score/mw/com/impl:__subpackages__",
     ],
@@ -71,6 +72,7 @@ cc_library(
     srcs = ["i_skeleton_base.cpp"],
     hdrs = ["i_skeleton_base.h"],
     features = COMPILER_WARNING_FEATURES,
+    tags = ["FFI"],
     visibility = [
         "//score/mw/com/impl:__subpackages__",
     ],
@@ -100,6 +102,7 @@ cc_library(
     srcs = ["i_skeleton_event.cpp"],
     hdrs = ["i_skeleton_event.h"],
     features = COMPILER_WARNING_FEATURES,
+    tags = ["FFI"],
     visibility = [
         "//score/mw/com/impl:__subpackages__",
     ],
@@ -130,6 +133,7 @@ cc_library(
     srcs = ["i_skeleton_field.cpp"],
     hdrs = ["i_skeleton_field.h"],
     features = COMPILER_WARNING_FEATURES,
+    tags = ["FFI"],
     visibility = [
         "//score/mw/com/impl:__subpackages__",
     ],
