@@ -12,7 +12,6 @@
  ********************************************************************************/
 #include "score/mw/com/impl/skeleton_base.h"
 
-#include "score/mw/com/impl/instance_identifier.h"
 #include "score/mw/com/impl/plumbing/skeleton_binding_factory.h"
 #include "score/mw/com/impl/runtime.h"
 #include "score/mw/com/impl/skeleton_binding.h"
@@ -83,12 +82,12 @@ SkeletonBinding::SkeletonFieldBindings GetSkeletonFieldBindingsMap(const Skeleto
 }  // namespace
 
 SkeletonBase::SkeletonBase(std::unique_ptr<SkeletonBinding> skeleton_binding,
-                           InstanceIdentifier instance_id,
+                           const InstanceIdentifier instance_id,
                            MethodCallProcessingMode)
     : binding_{std::move(skeleton_binding)},
       events_{},
       fields_{},
-      instance_id_{std::move(instance_id)},
+      instance_id_{instance_id},
       skeleton_mock_{nullptr},
       service_offered_flag_{}
 {

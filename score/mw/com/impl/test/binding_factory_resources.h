@@ -51,7 +51,7 @@ class GenericProxyEventBindingFactoryMockGuard
         GenericProxyEventBindingFactory::InjectMockBinding(nullptr);
     }
 
-    ::testing::NiceMock<GenericProxyEventBindingFactoryMock> factory_mock_{};
+    ::testing::StrictMock<GenericProxyEventBindingFactoryMock> factory_mock_{};
 };
 
 class ProxyBindingFactoryMockGuard
@@ -66,7 +66,7 @@ class ProxyBindingFactoryMockGuard
         ProxyBindingFactory::InjectMockBinding(nullptr);
     }
 
-    ::testing::NiceMock<ProxyBindingFactoryMock> factory_mock_;
+    ::testing::StrictMock<ProxyBindingFactoryMock> factory_mock_;
 };
 
 template <typename SampleType>
@@ -82,7 +82,7 @@ class ProxyEventBindingFactoryMockGuard
         ProxyEventBindingFactory<SampleType>::InjectMockBinding(nullptr);
     }
 
-    ::testing::NiceMock<ProxyEventBindingFactoryMock<SampleType>> factory_mock_;
+    ::testing::StrictMock<ProxyEventBindingFactoryMock<SampleType>> factory_mock_;
 };
 
 template <typename SampleType>
@@ -98,7 +98,7 @@ class ProxyFieldBindingFactoryMockGuard
         ProxyFieldBindingFactory<SampleType>::InjectMockBinding(nullptr);
     }
 
-    ::testing::NiceMock<ProxyFieldBindingFactoryMock<SampleType>> factory_mock_;
+    ::testing::StrictMock<ProxyFieldBindingFactoryMock<SampleType>> factory_mock_;
 };
 
 class SkeletonBindingFactoryMockGuard
@@ -113,7 +113,7 @@ class SkeletonBindingFactoryMockGuard
         SkeletonBindingFactory::InjectMockBinding(nullptr);
     }
 
-    ::testing::NiceMock<SkeletonBindingFactoryMock> factory_mock_;
+    ::testing::StrictMock<SkeletonBindingFactoryMock> factory_mock_;
 };
 
 template <typename SampleType>
@@ -129,7 +129,7 @@ class SkeletonEventBindingFactoryMockGuard
         SkeletonEventBindingFactory<SampleType>::InjectMockBinding(nullptr);
     }
 
-    ::testing::NiceMock<SkeletonEventBindingFactoryMock<SampleType>> factory_mock_;
+    ::testing::StrictMock<SkeletonEventBindingFactoryMock<SampleType>> factory_mock_;
 };
 
 template <typename SampleType>
@@ -145,7 +145,7 @@ class SkeletonFieldBindingFactoryMockGuard
         SkeletonFieldBindingFactory<SampleType>::InjectMockBinding(nullptr);
     }
 
-    ::testing::NiceMock<SkeletonFieldBindingFactoryMock<SampleType>> factory_mock_;
+    ::testing::StrictMock<SkeletonFieldBindingFactoryMock<SampleType>> factory_mock_;
 };
 
 }  // namespace score::mw::com::impl

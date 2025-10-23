@@ -187,28 +187,6 @@ cc_library(
     ],
 )
 
-cc_library(
-    name = "skeleton_wrapper_class_test_view",
-    testonly = True,
-    srcs = ["skeleton_wrapper_class_test_view.cpp"],
-    hdrs = ["skeleton_wrapper_class_test_view.h"],
-    features = COMPILER_WARNING_FEATURES,
-    visibility = [
-        "//score/mw/com:__subpackages__",
-    ],
-    deps = [
-        ":skeleton_event_mock_impl",
-        ":skeleton_field_mock_impl",
-        ":skeleton_mock_impl",
-        ":test_type_factories",
-        "//score/mw/com/impl:instance_identifier",
-        "//score/mw/com/impl:instance_specifier",
-        "//score/mw/com/impl:traits",
-        "//score/mw/com/impl/test:binding_factory_resources",
-        "@score-baselibs//score/result",
-    ],
-)
-
 cc_gtest_unit_test(
     name = "test_type_factories_test",
     srcs = ["test_type_factories_test.cpp"],
@@ -266,19 +244,6 @@ cc_gtest_unit_test(
     deps = [],
 )
 
-cc_gtest_unit_test(
-    name = "skeleton_wrapper_class_test_view_test",
-    srcs = ["skeleton_wrapper_class_test_view_test.cpp"],
-    deps = [
-        ":skeleton_event_mock_impl",
-        ":skeleton_field_mock_impl",
-        ":skeleton_mock_impl",
-        ":skeleton_wrapper_class_test_view",
-        ":test_type_factories",
-        "//score/mw/com:test_types",
-    ],
-)
-
 cc_unit_test_suites_for_host_and_qnx(
     name = "unit_test_suite",
     cc_unit_tests = [
@@ -288,7 +253,6 @@ cc_unit_test_suites_for_host_and_qnx(
         ":test_type_factories_test",
         ":proxy_event_mock_test",
         ":proxy_field_mock_test",
-        ":skeleton_wrapper_class_test_view_test",
     ],
     test_suites_from_sub_packages = [],
     visibility = ["//score/mw/com/impl:__pkg__"],

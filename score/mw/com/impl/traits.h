@@ -13,10 +13,6 @@
 #ifndef SCORE_MW_COM_IMPL_TRAITS_H
 #define SCORE_MW_COM_IMPL_TRAITS_H
 
-#include "score/mw/com/impl/com_error.h"
-#include "score/mw/com/impl/handle_type.h"
-#include "score/mw/com/impl/instance_identifier.h"
-#include "score/mw/com/impl/instance_specifier.h"
 #include "score/mw/com/impl/plumbing/proxy_binding_factory.h"
 #include "score/mw/com/impl/plumbing/skeleton_binding_factory.h"
 #include "score/mw/com/impl/proxy_base.h"
@@ -26,56 +22,10 @@
 #include "score/mw/com/impl/skeleton_event.h"
 #include "score/mw/com/impl/skeleton_field.h"
 
-#include "score/result/result.h"
-#include "score/mw/log/logging.h"
-
-#include <score/utility.hpp>
-
-#include <exception>
-#include <optional>
-#include <queue>
-#include <unordered_map>
-#include <utility>
 #include <vector>
 
 namespace score::mw::com::impl
 {
-namespace detail
-{
-
-template <typename Queue>
-auto PopFront(Queue& queue) -> typename Queue::value_type
-{
-    auto front_element = std::move(queue.front());
-    queue.pop();
-    return std::move(front_element);
-}
-
-template <typename Key, typename MapOfQueues>
-auto ExtractCreationResultFrom(const Key& key, MapOfQueues& map_of_queues)
-{
-    auto queue_it = map_of_queues.find(key);
-    if (queue_it == map_of_queues.cend())
-    {
-        score::mw::log::LogFatal("lola") << "Could not find key in injected creation results!";
-        std::terminate();
-    }
-
-    auto& creation_results_queue = queue_it->second;
-    if (creation_results_queue.empty())
-    {
-        score::mw::log::LogFatal("lola") << "No inject result exists in the provided vector!";
-        std::terminate();
-    }
-
-    auto creation_result = PopFront(creation_results_queue);
-    return std::move(creation_result);
-}
-
-}  // namespace detail
-
-template <typename T>
-class SkeletonWrapperClassTestView;
 
 /// The main idea of these traits are to ease the interface creation for a user. It reduces the necessary generated code
 /// to a bare minimum.
@@ -133,18 +83,11 @@ template <template <class> class Interface, class Trait>
 // NOLINTNEXTLINE(score-struct-usage-compliance): Tolerated.
 class SkeletonWrapperClass : public Interface<Trait>
 {
-    friend class SkeletonWrapperClassTestView<SkeletonWrapperClass>;
-
   public:
     static Result<SkeletonWrapperClass> Create(
         const InstanceSpecifier& specifier,
         MethodCallProcessingMode mode = MethodCallProcessingMode::kEvent) noexcept
     {
-        if (instance_specifier_creation_results_.has_value())
-        {
-            return detail::ExtractCreationResultFrom(specifier, instance_specifier_creation_results_.value());
-        }
-
         const auto instance_identifier_result = GetInstanceIdentifier(specifier);
         if (!instance_identifier_result.has_value())
         {
@@ -158,58 +101,23 @@ class SkeletonWrapperClass : public Interface<Trait>
         const InstanceIdentifier& instance_identifier,
         MethodCallProcessingMode mode = MethodCallProcessingMode::kEvent) noexcept
     {
-        if (instance_specifier_creation_results_.has_value())
-        {
-            return detail::ExtractCreationResultFrom(instance_identifier,
-                                                     instance_identifier_creation_results_.value());
-        }
-
-        auto skeleton_binding = SkeletonBindingFactory::Create(instance_identifier);
-        SkeletonWrapperClass skeleton_wrapper(instance_identifier, std::move(skeleton_binding), mode);
+        SkeletonWrapperClass skeleton_wrapper(instance_identifier, mode);
         if (!skeleton_wrapper.AreBindingsValid())
         {
             ::score::mw::log::LogError("lola") << "Could not create SkeletonWrapperClass as Skeleton binding or service "
                                                 "element bindings could not be created.";
             return MakeUnexpected(ComErrc::kBindingFailure);
         }
-
         return skeleton_wrapper;
     }
 
   private:
     explicit SkeletonWrapperClass(const InstanceIdentifier& instance_id,
-                                  std::unique_ptr<SkeletonBinding> skeleton_binding,
                                   MethodCallProcessingMode mode = MethodCallProcessingMode::kEvent)
-        : Interface<Trait>{std::move(skeleton_binding), instance_id, mode}
+        : Interface<Trait>{SkeletonBindingFactory::Create(instance_id), instance_id, mode}
     {
     }
-
-    static void InjectCreationResults(std::unordered_map<InstanceSpecifier, std::queue<Result<SkeletonWrapperClass>>>
-                                          instance_specifier_creation_results,
-                                      std::unordered_map<InstanceIdentifier, std::queue<Result<SkeletonWrapperClass>>>
-                                          instance_identifier_creation_results)
-    {
-        score::cpp::ignore = instance_specifier_creation_results_.emplace(std::move(instance_specifier_creation_results));
-        score::cpp::ignore = instance_identifier_creation_results_.emplace(std::move(instance_identifier_creation_results));
-    }
-
-    static void ClearCreationResults()
-    {
-        instance_specifier_creation_results_.reset();
-        instance_identifier_creation_results_.reset();
-    }
-
-    static std::optional<std::unordered_map<InstanceSpecifier, std::queue<Result<SkeletonWrapperClass>>>>
-        instance_specifier_creation_results_;
-    static std::optional<std::unordered_map<InstanceIdentifier, std::queue<Result<SkeletonWrapperClass>>>>
-        instance_identifier_creation_results_;
 };
-template <template <class> class Interface, class Trait>
-std::optional<std::unordered_map<InstanceSpecifier, std::queue<Result<SkeletonWrapperClass<Interface, Trait>>>>>
-    SkeletonWrapperClass<Interface, Trait>::instance_specifier_creation_results_{};
-template <template <class> class Interface, class Trait>
-std::optional<std::unordered_map<InstanceIdentifier, std::queue<Result<SkeletonWrapperClass<Interface, Trait>>>>>
-    SkeletonWrapperClass<Interface, Trait>::instance_identifier_creation_results_{};
 
 template <template <class> class Interface, class Trait>
 class ProxyWrapperClass : public Interface<Trait>
