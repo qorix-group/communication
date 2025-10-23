@@ -99,6 +99,7 @@ cc_library(
         ":proxy_event_base",
         ":proxy_event_binding",
         ":runtime",
+        "//score/mw/com/impl/mocking:proxy_event_mock",
         "//score/mw/com/impl/plumbing:event",
         "//score/mw/com/impl/tracing:proxy_event_tracing",
         "@score_baselibs//score/language/futurecpp",
@@ -122,6 +123,7 @@ cc_library(
         ":skeleton_base",
         ":skeleton_event_base",
         ":skeleton_event_binding",
+        "//score/mw/com/impl/mocking:skeleton_event_mock",
         "//score/mw/com/impl/plumbing:event",
         "//score/mw/com/impl/plumbing:sample_allocatee_ptr",
         "//score/mw/com/impl/tracing:skeleton_event_tracing",
@@ -142,6 +144,7 @@ cc_library(
     deps = [
         ":skeleton_event",
         ":skeleton_field_base",
+        "//score/mw/com/impl/mocking:skeleton_field_mock",
         "//score/mw/com/impl/plumbing:field",
         "//score/mw/com/impl/plumbing:sample_allocatee_ptr",
         "@score_baselibs//score/language/futurecpp",
@@ -182,6 +185,7 @@ cc_library(
     deps = [
         ":proxy_event",
         ":proxy_event_binding",
+        "//score/mw/com/impl/mocking:proxy_field_mock",
         "//score/mw/com/impl/plumbing:field",
         "@score_baselibs//score/language/futurecpp",
         "@score_baselibs//score/result",
@@ -232,6 +236,7 @@ cc_library(
     features = COMPILER_WARNING_FEATURES,
     tags = ["FFI"],
     visibility = [
+        "//score/mw/com/impl/mocking:__pkg__",
         "//score/mw/com/impl/plumbing:__pkg__",
     ],
     deps = [
@@ -241,6 +246,7 @@ cc_library(
         ":skeleton_binding",
         ":skeleton_event_base",
         ":skeleton_field_base",
+        "//score/mw/com/impl/mocking:skeleton_mock",
         "//score/mw/com/impl/plumbing",
         "//score/mw/com/impl/tracing:skeleton_tracing",
         "@score_baselibs//score/language/futurecpp",
@@ -978,6 +984,7 @@ cc_unit_test_suites_for_host_and_qnx(
         "//score/mw/com/impl/plumbing:unit_test_suite",
         "//score/mw/com/impl/tracing:unit_test_suite",
         "//score/mw/com/impl/util:unit_test_suite",
+        "//score/mw/com/impl/mocking:unit_test_suite",
     ],
     visibility = ["//score/mw/com:__pkg__"],
 )
