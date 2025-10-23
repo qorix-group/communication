@@ -34,6 +34,12 @@ HandleType MakeFakeHandle(const std::uint16_t unique_identifier);
 
 void ResetInstanceIdentifierConfiguration();
 
+template <typename SampleType>
+SampleAllocateePtr<SampleType> MakeFakeSampleAllocateePtr(std::unique_ptr<SampleType> fake_sample_allocatee_ptr)
+{
+    return impl::MakeFakeSampleAllocateePtr(std::move(fake_sample_allocatee_ptr));
+}
+
 }  // namespace score::mw::com
 
 #endif  // SCORE_MW_COM_TEST_TYPES_H

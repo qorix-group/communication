@@ -16,9 +16,11 @@
 #include "score/mw/com/impl/configuration/service_type_deployment.h"
 #include "score/mw/com/impl/handle_type.h"
 #include "score/mw/com/impl/instance_identifier.h"
+#include "score/mw/com/impl/plumbing/sample_allocatee_ptr.h"
 
 #include <cstdint>
 #include <list>
+#include <memory>
 
 /// @brief test_type_factories contains all of the factory functions that are required for creating fake mw::com::impl
 /// internals which are required for mocking.
@@ -33,6 +35,12 @@ InstanceIdentifier MakeFakeInstanceIdentifier(const std::uint16_t unique_identif
 HandleType MakeFakeHandle(const std::uint16_t unique_identifier);
 
 void ResetInstanceIdentifierConfiguration();
+
+template <typename SampleType>
+SampleAllocateePtr<SampleType> MakeFakeSampleAllocateePtr(std::unique_ptr<SampleType> fake_sample_allocatee_ptr)
+{
+    return impl::MakeSampleAllocateePtr(std::move(fake_sample_allocatee_ptr));
+}
 
 }  // namespace score::mw::com::impl
 
