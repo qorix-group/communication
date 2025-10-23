@@ -21,6 +21,7 @@
 #include <score/blank.hpp>
 #include <score/overload.hpp>
 
+#include <memory>
 #include <utility>
 #include <variant>
 
@@ -42,12 +43,12 @@ class SamplePtr final
 
     /// Create an instance by taking ownership of one of the supported inner sample pointer types.
     ///
-    /// \tparam SamplePtrType The type of the sample pointer. Needs to be one of the types listed in the variant holding
-    ///                       the actual pointer.
+    /// \tparam BindingSamplePtrType The type of the sample pointer. Needs to be one of the types listed in the variant
+    ///                              holding the actual pointer.
     /// \param binding_sample_ptr The binding-specific sample pointer.
-    template <typename SamplePtrType>
-    SamplePtr(SamplePtrType&& binding_sample_ptr, SampleReferenceGuard reference_guard)
-        : binding_sample_ptr_{std::forward<SamplePtrType>(binding_sample_ptr)},
+    template <typename BindingSamplePtrType>
+    SamplePtr(BindingSamplePtrType&& binding_sample_ptr, SampleReferenceGuard reference_guard)
+        : binding_sample_ptr_{std::forward<BindingSamplePtrType>(binding_sample_ptr)},
           reference_guard_{std::move(reference_guard)}
     {
     }
