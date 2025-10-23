@@ -13,7 +13,7 @@
 #ifndef SCORE_MW_COM_IMPL_MOCKING_SKELETON_FIELD_MOCK_IMPL_H
 #define SCORE_MW_COM_IMPL_MOCKING_SKELETON_FIELD_MOCK_IMPL_H
 
-#include "score/mw/com/impl/mocking/skeleton_field_mock.h"
+#include "score/mw/com/impl/mocking/i_skeleton_field.h"
 
 #include <gmock/gmock.h>
 
@@ -21,7 +21,7 @@ namespace score::mw::com::impl
 {
 
 template <typename SampleType>
-class SkeletonFieldMockImpl : public SkeletonFieldMock<SampleType>
+class SkeletonFieldMockImpl : public ISkeletonField<SampleType>
 {
   public:
     MOCK_METHOD(ResultBlank, Update, (const SampleType&), (override));

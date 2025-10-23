@@ -18,7 +18,7 @@
 #include "score/mw/com/impl/skeleton_event.h"
 #include "score/mw/com/impl/skeleton_field_base.h"
 
-#include "score/mw/com/impl/mocking/skeleton_field_mock.h"
+#include "score/mw/com/impl/mocking/i_skeleton_field.h"
 
 #include "score/result/result.h"
 #include "score/mw/log/logging.h"
@@ -75,7 +75,7 @@ class SkeletonField : public SkeletonFieldBase
     /// set up in the Skeleton::PrepareOffer() before the user can obtain / use a SampleAllocateePtr.
     Result<SampleAllocateePtr<FieldType>> Allocate() noexcept;
 
-    void InjectMock(SkeletonFieldMock<FieldType>& skeleton_field_mock)
+    void InjectMock(ISkeletonField<FieldType>& skeleton_field_mock)
     {
         skeleton_field_mock_ = &skeleton_field_mock;
     }
@@ -94,7 +94,7 @@ class SkeletonField : public SkeletonFieldBase
     SkeletonEvent<FieldType>* GetTypedEvent() const noexcept;
 
     std::unique_ptr<FieldType> initial_field_value_;
-    SkeletonFieldMock<FieldType>* skeleton_field_mock_;
+    ISkeletonField<FieldType>* skeleton_field_mock_;
 };
 
 template <typename SampleDataType>

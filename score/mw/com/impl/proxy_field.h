@@ -18,7 +18,7 @@
 #include "score/mw/com/impl/proxy_event.h"
 #include "score/mw/com/impl/proxy_event_binding.h"
 
-#include "score/mw/com/impl/mocking/proxy_field_mock.h"
+#include "score/mw/com/impl/mocking/i_proxy_field.h"
 
 #include "score/result/result.h"
 
@@ -188,7 +188,7 @@ class ProxyField final
     {
         if (proxy_field_mock_ != nullptr)
         {
-            typename ProxyFieldMock<FieldType>::Callback mock_callback =
+            typename IProxyField<FieldType>::Callback mock_callback =
                 [receiver = std::forward<F>(receiver)](SamplePtr<FieldType> sample_ptr) noexcept {
                     receiver(std::move(sample_ptr));
                 };
@@ -218,14 +218,14 @@ class ProxyField final
         return proxy_event_dispatch_.UnsetReceiveHandler();
     }
 
-    void InjectMock(ProxyFieldMock<FieldType>& proxy_field_mock)
+    void InjectMock(IProxyField<FieldType>& proxy_field_mock)
     {
         proxy_field_mock_ = &proxy_field_mock;
     }
 
   private:
     ProxyEvent<FieldType> proxy_event_dispatch_;
-    ProxyFieldMock<FieldType>* proxy_field_mock_;
+    IProxyField<FieldType>* proxy_field_mock_;
 };
 
 }  // namespace score::mw::com::impl
