@@ -21,7 +21,7 @@ namespace score::mw::com::impl
 {
 
 template <typename SampleType>
-class SkeletonEventMockImpl : public ISkeletonEvent<SampleType>
+class SkeletonEventMock : public ISkeletonEvent<SampleType>
 {
   public:
     MOCK_METHOD(ResultBlank, Send, (const SampleType&), (override));

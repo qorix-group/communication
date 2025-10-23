@@ -10,10 +10,10 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#ifndef SCORE_MW_COM_IMPL_MOCKING_PROXY_FIELD_MOCK_IMPL_H
-#define SCORE_MW_COM_IMPL_MOCKING_PROXY_FIELD_MOCK_IMPL_H
+#ifndef SCORE_MW_COM_IMPL_MOCKING_PROXY_EVENT_MOCK_IMPL_H
+#define SCORE_MW_COM_IMPL_MOCKING_PROXY_EVENT_MOCK_IMPL_H
 
-#include "score/mw/com/impl/mocking/i_proxy_field.h"
+#include "score/mw/com/impl/mocking/i_proxy_event.h"
 
 #include <gmock/gmock.h>
 
@@ -21,10 +21,10 @@ namespace score::mw::com::impl
 {
 
 template <typename SampleType>
-class ProxyFieldMockImpl : public IProxyField<SampleType>
+class ProxyEventMock : public IProxyEvent<SampleType>
 {
   public:
-    using Callback = typename IProxyField<SampleType>::Callback;
+    using Callback = typename IProxyEvent<SampleType>::Callback;
 
     MOCK_METHOD(ResultBlank, Subscribe, (const std::size_t), (override));
     MOCK_METHOD(void, Unsubscribe, (), (override));
@@ -39,4 +39,4 @@ class ProxyFieldMockImpl : public IProxyField<SampleType>
 
 }  // namespace score::mw::com::impl
 
-#endif  // SCORE_MW_COM_IMPL_MOCKING_PROXY_FIELD_MOCK_IMPL_H
+#endif  // SCORE_MW_COM_IMPL_MOCKING_PROXY_EVENT_MOCK_IMPL_H
