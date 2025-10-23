@@ -45,6 +45,27 @@ cc_library(
 )
 
 cc_library(
+    name = "method_data",
+    srcs = [
+        "method_data.cpp",
+    ],
+    hdrs = [
+        "method_data.h",
+    ],
+    features = COMPILER_WARNING_FEATURES,
+    tags = ["FFI"],
+    visibility = ["//score/mw/com/impl/bindings/lola:__pkg__"],
+    deps = [
+        ":type_erased_call_queue",
+        "//score/mw/com/impl/configuration",
+        "@score_baselibs//score/containers:dynamic_array",
+        "@score_baselibs//score/language/futurecpp",
+        "@score_baselibs//score/memory/shared:managed_memory_resource",
+        "@score_baselibs//score/memory/shared:polymorphic_offset_ptr_allocator",
+    ],
+)
+
+cc_library(
     name = "i_type_erased_call_queue",
     srcs = ["i_type_erased_call_queue.cpp"],
     hdrs = ["i_type_erased_call_queue.h"],
@@ -131,12 +152,24 @@ cc_gtest_unit_test(
     ],
 )
 
+cc_gtest_unit_test(
+    name = "method_data_test",
+    srcs = [
+        "method_data_test.cpp",
+    ],
+    deps = [
+        ":method_data",
+        "@score_baselibs//score/memory/shared/fake:fake_memory_resources",
+    ],
+)
+
 cc_unit_test_suites_for_host_and_qnx(
     name = "unit_test_suite",
     cc_unit_tests = [
         ":proxy_instance_identifier_test",
         ":skeleton_instance_identifier_test",
         ":type_erased_call_queue_test",
+        ":method_data_test",
     ],
     visibility = [
         "//score/mw/com/impl/bindings/lola:__pkg__",
