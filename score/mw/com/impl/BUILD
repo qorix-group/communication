@@ -246,7 +246,7 @@ cc_library(
         ":skeleton_binding",
         ":skeleton_event_base",
         ":skeleton_field_base",
-        "//score/mw/com/impl/mocking:i_skeleton_base",
+        "//score/mw/com/impl/mocking:i_skeleton",
         "//score/mw/com/impl/plumbing",
         "//score/mw/com/impl/tracing:skeleton_tracing",
         "@score-baselibs//score/language/futurecpp",

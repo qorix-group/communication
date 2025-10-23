@@ -10,32 +10,23 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#ifndef SCORE_MW_COM_IMPL_MOCKING_I_SKELETON_BASE_H
-#define SCORE_MW_COM_IMPL_MOCKING_I_SKELETON_BASE_H
+#ifndef SCORE_MW_COM_IMPL_MOCKING_SKELETON_MOCK_H
+#define SCORE_MW_COM_IMPL_MOCKING_SKELETON_MOCK_H
 
-#include "score/result/result.h"
+#include "score/mw/com/impl/mocking/i_skeleton.h"
 
-#include <cstdint>
+#include <gmock/gmock.h>
 
 namespace score::mw::com::impl
 {
 
-class ISkeletonBase
+class SkeletonMock : public ISkeleton
 {
   public:
-    ISkeletonBase() = default;
-    virtual ~ISkeletonBase() = default;
-
-    virtual ResultBlank OfferService() = 0;
-    virtual void StopOfferService() = 0;
-
-  protected:
-    ISkeletonBase(const ISkeletonBase&) = default;
-    ISkeletonBase(ISkeletonBase&&) noexcept = default;
-    ISkeletonBase& operator=(ISkeletonBase&&) & noexcept = default;
-    ISkeletonBase& operator=(const ISkeletonBase&) & = default;
+    MOCK_METHOD(ResultBlank, OfferService, (), (override));
+    MOCK_METHOD(void, StopOfferService, (), (override));
 };
 
 }  // namespace score::mw::com::impl
 
-#endif  // SCORE_MW_COM_IMPL_MOCKING_I_SKELETON_BASE_H
+#endif  // SCORE_MW_COM_IMPL_MOCKING_SKELETON_MOCK_H

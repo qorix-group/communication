@@ -99,9 +99,9 @@ cc_library(
 )
 
 cc_library(
-    name = "i_skeleton_base",
-    srcs = ["i_skeleton_base.cpp"],
-    hdrs = ["i_skeleton_base.h"],
+    name = "i_skeleton",
+    srcs = ["i_skeleton.cpp"],
+    hdrs = ["i_skeleton.h"],
     features = COMPILER_WARNING_FEATURES,
     visibility = [
         "//score/mw/com/impl:__subpackages__",
@@ -113,16 +113,16 @@ cc_library(
 )
 
 cc_library(
-    name = "skeleton_base_mock",
+    name = "skeleton_mock",
     testonly = True,
-    srcs = ["skeleton_base_mock.cpp"],
-    hdrs = ["skeleton_base_mock.h"],
+    srcs = ["skeleton_mock.cpp"],
+    hdrs = ["skeleton_mock.h"],
     features = COMPILER_WARNING_FEATURES,
     visibility = [
         "//score/mw/com/impl:__subpackages__",
     ],
     deps = [
-        ":i_skeleton_base",
+        ":i_skeleton",
         "@googletest//:gtest",
     ],
 )
@@ -197,9 +197,9 @@ cc_library(
         "//score/mw/com:__subpackages__",
     ],
     deps = [
-        ":skeleton_base_mock",
         ":skeleton_event_mock",
         ":skeleton_field_mock",
+        ":skeleton_mock",
         ":test_type_utilities",
         "//score/mw/com/impl:instance_identifier",
         "//score/mw/com/impl:instance_specifier",
@@ -238,10 +238,10 @@ cc_gtest_unit_test(
 )
 
 cc_gtest_unit_test(
-    name = "skeleton_base_mock_test",
-    srcs = ["skeleton_base_mock_test.cpp"],
+    name = "skeleton_mock_test",
+    srcs = ["skeleton_mock_test.cpp"],
     deps = [
-        ":skeleton_base_mock",
+        ":skeleton_mock",
         ":test_type_utilities",
         "//score/mw/com/impl:skeleton_base",
     ],
@@ -289,9 +289,9 @@ cc_gtest_unit_test(
     name = "skeleton_wrapper_class_test_view_test",
     srcs = ["skeleton_wrapper_class_test_view_test.cpp"],
     deps = [
-        ":skeleton_base_mock",
         ":skeleton_event_mock",
         ":skeleton_field_mock",
+        ":skeleton_mock",
         ":skeleton_wrapper_class_test_view",
         ":test_type_utilities",
         "//score/mw/com:test_types",
@@ -314,7 +314,7 @@ cc_unit_test_suites_for_host_and_qnx(
     cc_unit_tests = [
         ":skeleton_event_mock_test",
         ":skeleton_field_mock_test",
-        ":skeleton_base_mock_test",
+        ":skeleton_mock_test",
         ":test_type_utilities_test",
         ":proxy_event_mock_test",
         ":proxy_field_mock_test",
