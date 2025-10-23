@@ -185,7 +185,7 @@ cc_library(
     deps = [
         ":proxy_event",
         ":proxy_event_binding",
-        "//score/mw/com/impl/mocking:i_proxy_event",
+        "//score/mw/com/impl/mocking:i_proxy_field",
         "//score/mw/com/impl/plumbing:field",
         "@score-baselibs//score/language/futurecpp",
         "@score-baselibs//score/result",

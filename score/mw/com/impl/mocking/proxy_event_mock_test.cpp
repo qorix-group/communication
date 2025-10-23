@@ -13,6 +13,7 @@
 #include "score/mw/com/impl/mocking/proxy_event_mock.h"
 #include "score/mw/com/impl/com_error.h"
 #include "score/mw/com/impl/handle_type.h"
+#include "score/mw/com/impl/mocking/proxy_field_mock.h"
 #include "score/mw/com/impl/mocking/test_type_utilities.h"
 #include "score/mw/com/impl/proxy_event.h"
 #include "score/mw/com/impl/proxy_field.h"
@@ -63,7 +64,7 @@ struct ProxyEventStruct
 struct ProxyFieldStruct
 {
     using ProxyServiceElement = ProxyField<TestSampleType>;
-    using ProxyServiceElementMock = ProxyEventMock<TestSampleType>;
+    using ProxyServiceElementMock = ProxyFieldMock<TestSampleType>;
 };
 
 using MyTypes = ::testing::Types<ProxyEventStruct, ProxyFieldStruct>;
