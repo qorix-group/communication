@@ -22,6 +22,7 @@
 #include "score/mw/com/impl/configuration/service_type_deployment.h"
 #include "score/mw/com/impl/runtime.h"
 
+#include "skeleton_test_resources.h"
 #include <gtest/gtest.h>
 
 #include <sys/stat.h>
@@ -172,7 +173,9 @@ class SkeletonComponentTestFixture : public ::testing::Test
 
     SkeletonComponentTestFixture& WithAServiceInstanceDeploymentContainingSingleEventAndField(
         const QualityType quality_type,
-        score::cpp::optional<std::size_t> configured_shared_memory_size = {})
+        score::cpp::optional<std::size_t> configured_shared_memory_size = {},
+        score::cpp::optional<std::size_t> configured_control_asil_b_shared_memory_size = {},
+        score::cpp::optional<std::size_t> configured_control_qm_shared_memory_size = {})
     {
         events_.emplace(test::kFooEventName, mock_event_binding_);
         lola_event_instance_deployments_.push_back(
@@ -187,7 +190,9 @@ class SkeletonComponentTestFixture : public ::testing::Test
                                                 lola_field_instance_deployments_,
                                                 {},
                                                 {},
-                                                configured_shared_memory_size),
+                                                configured_shared_memory_size,
+                                                configured_control_asil_b_shared_memory_size,
+                                                configured_control_qm_shared_memory_size),
             quality_type,
             kInstanceSpecifier);
         return *this;
@@ -331,6 +336,11 @@ TEST_F(SkeletonComponentTestFixture, ShmObjectsAreCreated)
     // and we expect, that the size of the shm-data file is at least test::kConfiguredDeploymentShmSize as the
     // instance_identifier had a configured shm-size test::kConfiguredDeploymentShmSize.
     EXPECT_GT(GetSize(data_shm), test::kConfiguredDeploymentShmSize);
+
+    // and we expect, that the size of the QM control file is at least
+    // test::kConfiguredDeploymentControlQmShmSize as the instance_identifier had a configured
+    // control-qm-shm-size test::kConfiguredDeploymentControlQmShmSize.
+    EXPECT_GT(GetSize(control_shm), test::kConfiguredDeploymentControlQmShmSize);
 }
 
 /// \brief Test verifies, that the skeleton, when created from a valid InstanceIdentifier defining an ASIL-B enabled
@@ -360,6 +370,11 @@ TEST_F(SkeletonComponentTestFixture, ASILShmIsCreated)
     // ... and the control shm-object is writeable for others
     // (our instance_identifier is based on a deployment without ACLs)
     EXPECT_TRUE(IsWriteableForOthers(asil_control_shm));
+
+    // and we expect, that the size of the ASIL-B control file is at least
+    // test::kConfiguredDeploymentControlAsilBShmSize as the instance_identifier had a configured
+    // control-asil-b-shm-size test::kConfiguredDeploymentControlAsilBShmSize.
+    EXPECT_GT(GetSize(asil_control_shm), test::kConfiguredDeploymentControlAsilBShmSize);
 }
 
 TEST_F(SkeletonComponentTestFixture, DataShmObjectSizeCalc_Simulation_QM)
@@ -538,6 +553,204 @@ TEST_F(SkeletonComponentTestDeathTest, DataShmObjectSizeCalc_Simulation_QM_Termi
         // memory size which is smaller than the required data shm size
         WithAServiceInstanceDeploymentContainingSingleEventAndField(QualityType::kASIL_QM,
                                                                     too_small_user_specified_memory_size)
+            .WithAServiceTypeDeploymentContainingSingleEventAndField();
+        const auto instance_identifier = CreateInstanceIdentifier();
+
+        auto unit = CreateSkeleton(instance_identifier);
+        ASSERT_NE(unit, nullptr);
+
+        const auto* const lola_service_type_deployment =
+            std::get_if<LolaServiceTypeDeployment>(&test::kValidMinimalTypeDeployment.binding_info_);
+        ASSERT_NE(lola_service_type_deployment, nullptr);
+
+        // and that the LoLa runtime returns that ShmSize calculation shall be done via simulation
+        EXPECT_CALL(lola_runtime_mock_, GetShmSizeCalculationMode())
+            .WillOnce(Return(ShmSizeCalculationMode::kSimulation));
+
+        // When preparing to offer a service
+        score::cpp::ignore = unit->PrepareOffer(events_, fields_, {});
+    };
+    // Then the program terminates
+    EXPECT_DEATH(test_function(), ".*");
+}
+
+TEST_F(SkeletonComponentTestFixture,
+       DataShmObjectSizeCalc_Simulation_QM_DoesNotTerminateWhenConfiguredControlQmSizeIsLargerThanEstimate)
+{
+    RecordProperty("Verifies", "SCR-5899126");
+    RecordProperty("Description", "Check if the control_shm is calculated correctly.");
+    RecordProperty("TestType", "Requirements-based test");
+    RecordProperty("Priority", "1");
+    RecordProperty("DerivationTechnique", "Analysis of requirements");
+
+    // At the time of writing, 1000 bytes are sufficient for the control segment.
+    constexpr std::size_t large_enough_user_specified_control_qm_memory_size{1000U};
+
+    // Given a skeleton with one event "fooEvent" and one field "fooField" registered with a user configured shared
+    // memory size which is larger than the required control qm shm size
+    WithAServiceInstanceDeploymentContainingSingleEventAndField(QualityType::kASIL_QM,
+                                                                test::kSimulatedShmSize,
+                                                                test::kSimulatedShmSize,
+                                                                large_enough_user_specified_control_qm_memory_size)
+        .WithAServiceTypeDeploymentContainingSingleEventAndField();
+    const auto instance_identifier = CreateInstanceIdentifier();
+
+    auto unit = CreateSkeleton(instance_identifier);
+    ASSERT_NE(unit, nullptr);
+
+    const auto* const lola_service_type_deployment =
+        std::get_if<LolaServiceTypeDeployment>(&test::kValidMinimalTypeDeployment.binding_info_);
+    ASSERT_NE(lola_service_type_deployment, nullptr);
+
+    // and that the LoLa runtime returns that ShmSize calculation shall be done via simulation
+    EXPECT_CALL(lola_runtime_mock_, GetShmSizeCalculationMode()).WillOnce(Return(ShmSizeCalculationMode::kSimulation));
+
+    // When preparing to offer a service
+    const auto prepare_offer_result = unit->PrepareOffer(events_, fields_, {});
+    mock_event_binding_.PrepareOffer();
+    mock_field_binding_.PrepareOffer();
+
+    // then expect, that it has a value!
+    EXPECT_TRUE(prepare_offer_result.has_value());
+}
+
+TEST_F(SkeletonComponentTestFixture,
+       DataShmObjectSizeCalc_Simulation_QM_DoesNotTerminateWhenConfiguredControlAsilBSizeIsLargerThanEstimate)
+{
+    RecordProperty("Verifies", "SCR-5899126");
+    RecordProperty("Description", "Check if the asil_control_shm is calculated correctly.");
+    RecordProperty("TestType", "Requirements-based test");
+    RecordProperty("Priority", "1");
+    RecordProperty("DerivationTechnique", "Analysis of requirements");
+
+    // At the time of writing, 1000 bytes are sufficient for the control segment.
+    constexpr std::size_t large_enough_user_specified_control_asil_b_memory_size{1000U};
+
+    // Given a skeleton with one event "fooEvent" and one field "fooField" registered with a user configured shared
+    // memory size which is larger than the required control ASIL-B shm size
+    WithAServiceInstanceDeploymentContainingSingleEventAndField(
+        QualityType::kASIL_B, test::kSimulatedShmSize, large_enough_user_specified_control_asil_b_memory_size)
+        .WithAServiceTypeDeploymentContainingSingleEventAndField();
+    const auto instance_identifier = CreateInstanceIdentifier();
+
+    auto unit = CreateSkeleton(instance_identifier);
+    ASSERT_NE(unit, nullptr);
+
+    const auto* const lola_service_type_deployment =
+        std::get_if<LolaServiceTypeDeployment>(&test::kValidMinimalTypeDeployment.binding_info_);
+    ASSERT_NE(lola_service_type_deployment, nullptr);
+
+    // and that the LoLa runtime returns that ShmSize calculation shall be done via simulation
+    EXPECT_CALL(lola_runtime_mock_, GetShmSizeCalculationMode()).WillOnce(Return(ShmSizeCalculationMode::kSimulation));
+
+    // When preparing to offer a service
+    const auto prepare_offer_result = unit->PrepareOffer(events_, fields_, {});
+    mock_event_binding_.PrepareOffer();
+    mock_field_binding_.PrepareOffer();
+
+    // then expect, that it has a value!
+    EXPECT_TRUE(prepare_offer_result.has_value());
+}
+
+TEST_F(SkeletonComponentTestFixture,
+       DataShmObjectSizeCalc_Simulation_QM_DoesNotTerminateWhenShmSizesAreLargerThanEstimates)
+{
+    RecordProperty("Verifies", "SCR-5899126");
+    RecordProperty("Description", "Check if all shm sizes are calculated correctly.");
+    RecordProperty("TestType", "Requirements-based test");
+    RecordProperty("Priority", "1");
+    RecordProperty("DerivationTechnique", "Analysis of requirements");
+
+    // At the time of writing, 1000 bytes are sufficient for every segment.
+    constexpr std::size_t large_enough_user_specified_data_shm_memory_size{1000U};
+    constexpr std::size_t large_enough_user_specified_control_asil_b_memory_size{1000U};
+    constexpr std::size_t large_enough_user_specified_control_qm_memory_size{1000U};
+
+    // Given a skeleton with one event "fooEvent" and one field "fooField" registered with a user configured shared
+    // memory size which is larger than the required control ASIL-B shm size
+    WithAServiceInstanceDeploymentContainingSingleEventAndField(QualityType::kASIL_B,
+                                                                large_enough_user_specified_data_shm_memory_size,
+                                                                large_enough_user_specified_control_asil_b_memory_size,
+                                                                large_enough_user_specified_control_qm_memory_size)
+        .WithAServiceTypeDeploymentContainingSingleEventAndField();
+    const auto instance_identifier = CreateInstanceIdentifier();
+
+    auto unit = CreateSkeleton(instance_identifier);
+    ASSERT_NE(unit, nullptr);
+
+    const auto* const lola_service_type_deployment =
+        std::get_if<LolaServiceTypeDeployment>(&test::kValidMinimalTypeDeployment.binding_info_);
+    ASSERT_NE(lola_service_type_deployment, nullptr);
+
+    // and that the LoLa runtime returns that ShmSize calculation shall be done via simulation
+    EXPECT_CALL(lola_runtime_mock_, GetShmSizeCalculationMode()).WillOnce(Return(ShmSizeCalculationMode::kSimulation));
+
+    // When preparing to offer a service
+    const auto prepare_offer_result = unit->PrepareOffer(events_, fields_, {});
+    mock_event_binding_.PrepareOffer();
+    mock_field_binding_.PrepareOffer();
+
+    // then expect, that it has a value!
+    EXPECT_TRUE(prepare_offer_result.has_value());
+}
+
+using SkeletonComponentTestDeathTest = SkeletonComponentTestFixture;
+TEST_F(SkeletonComponentTestDeathTest,
+       DataShmObjectSizeCalc_Simulation_QM_TerminatesWithTooSmallConfiguredControlQmSize)
+{
+    RecordProperty("Verifies", "SCR-5899126");
+    RecordProperty("Description", "Check if the control_shm is calculated correctly.");
+    RecordProperty("TestType", "Requirements-based test");
+    RecordProperty("Priority", "1");
+    RecordProperty("DerivationTechnique", "Analysis of requirements");
+
+    auto test_function = [this] {
+        constexpr std::size_t too_small_user_specified_control_qm_memory_size{0U};
+
+        // Given a skeleton with one event "fooEvent" and one field "fooField" registered with a user configured shared
+        // memory size which is smaller than the required control shm size
+        WithAServiceInstanceDeploymentContainingSingleEventAndField(QualityType::kASIL_QM,
+                                                                    test::kSimulatedShmSize,
+                                                                    test::kSimulatedShmSize,
+                                                                    too_small_user_specified_control_qm_memory_size)
+            .WithAServiceTypeDeploymentContainingSingleEventAndField();
+        const auto instance_identifier = CreateInstanceIdentifier();
+
+        auto unit = CreateSkeleton(instance_identifier);
+        ASSERT_NE(unit, nullptr);
+
+        const auto* const lola_service_type_deployment =
+            std::get_if<LolaServiceTypeDeployment>(&test::kValidMinimalTypeDeployment.binding_info_);
+        ASSERT_NE(lola_service_type_deployment, nullptr);
+
+        // and that the LoLa runtime returns that ShmSize calculation shall be done via simulation
+        EXPECT_CALL(lola_runtime_mock_, GetShmSizeCalculationMode())
+            .WillOnce(Return(ShmSizeCalculationMode::kSimulation));
+
+        // When preparing to offer a service
+        score::cpp::ignore = unit->PrepareOffer(events_, fields_, {});
+    };
+    // Then the program terminates
+    EXPECT_DEATH(test_function(), ".*");
+}
+
+using SkeletonComponentTestDeathTest = SkeletonComponentTestFixture;
+TEST_F(SkeletonComponentTestDeathTest,
+       DataShmObjectSizeCalc_Simulation_QM_TerminatesWithTooSmallConfiguredControlAsilBSize)
+{
+    RecordProperty("Verifies", "SCR-5899126");
+    RecordProperty("Description", "Check if the asil_control_shm is calculated correctly.");
+    RecordProperty("TestType", "Requirements-based test");
+    RecordProperty("Priority", "1");
+    RecordProperty("DerivationTechnique", "Analysis of requirements");
+
+    auto test_function = [this] {
+        constexpr std::size_t too_small_user_specified_control_asil_b_memory_size{0U};
+
+        // Given a skeleton with one event "fooEvent" and one field "fooField" registered with a user configured shared
+        // memory size which is smaller than the required control ASIL-B shm size
+        WithAServiceInstanceDeploymentContainingSingleEventAndField(
+            QualityType::kASIL_B, test::kSimulatedShmSize, too_small_user_specified_control_asil_b_memory_size)
             .WithAServiceTypeDeploymentContainingSingleEventAndField();
         const auto instance_identifier = CreateInstanceIdentifier();
 

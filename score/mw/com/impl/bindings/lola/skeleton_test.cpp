@@ -21,6 +21,7 @@
 #include "score/mw/com/impl/service_discovery_mock.h"
 #include "score/mw/com/impl/tracing/tracing_runtime_mock.h"
 
+#include "test/skeleton_test_resources.h"
 #include <gtest/gtest.h>
 
 #include <cstddef>
@@ -1277,7 +1278,9 @@ TEST_P(SkeletonRegisterParamaterisedFixture, ValidEventMetaInfoExistAfterEventIs
                                             lola_field_inst_depls,
                                             {},
                                             {},
-                                            test::kConfiguredDeploymentShmSize),
+                                            test::kConfiguredDeploymentShmSize,
+                                            test::kConfiguredDeploymentControlAsilBShmSize,
+                                            test::kConfiguredDeploymentControlQmShmSize),
         QualityType::kASIL_QM,
         test::kFooInstanceSpecifier};
 

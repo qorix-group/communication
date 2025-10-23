@@ -72,7 +72,9 @@ LolaServiceInstanceDeployment CreateLolaServiceInstanceDeployment(
     std::vector<std::pair<std::string, LolaFieldInstanceDeployment>> lola_field_inst_depls,
     std::vector<uid_t> allowed_consumers_qm,
     std::vector<uid_t> allowed_consumers_asil_b,
-    score::cpp::optional<std::size_t> size = score::cpp::nullopt);
+    score::cpp::optional<std::size_t> size = score::cpp::nullopt,
+    score::cpp::optional<std::size_t> control_asil_b_shm_size = score::cpp::nullopt,
+    score::cpp::optional<std::size_t> control_qm_shm_size = score::cpp::nullopt);
 
 /// \brief Creates a ServiceTypeDeployment, which is effectively a LolaServiceTypeDeployment as we currently do not
 ///        support any other.
@@ -135,6 +137,8 @@ constexpr std::size_t kMaxSlots{10U};
 
 /// for our very basic valid deployment, we use a configured shm-size of 500
 static constexpr std::size_t kConfiguredDeploymentShmSize{1024U};
+static constexpr std::size_t kConfiguredDeploymentControlAsilBShmSize{1024U};
+static constexpr std::size_t kConfiguredDeploymentControlQmShmSize{1024U};
 static constexpr LolaServiceInstanceId::InstanceId kDefaultLolaInstanceId{16U};
 
 static const auto kFooEventName{"fooEvent"};
@@ -163,7 +167,14 @@ const auto kFooInstanceSpecifier = InstanceSpecifier::Create("foo/abc/TirePressu
 ///       deployment.
 static const ServiceInstanceDeployment kValidMinimalQmInstanceDeployment{
     kFooService,
-    CreateLolaServiceInstanceDeployment(kDefaultLolaInstanceId, {}, {}, {}, {}, kConfiguredDeploymentShmSize),
+    CreateLolaServiceInstanceDeployment(kDefaultLolaInstanceId,
+                                        {},
+                                        {},
+                                        {},
+                                        {},
+                                        kConfiguredDeploymentShmSize,
+                                        kConfiguredDeploymentControlAsilBShmSize,
+                                        kConfiguredDeploymentControlQmShmSize),
     QualityType::kASIL_QM,
     kFooInstanceSpecifier};
 
@@ -172,13 +183,27 @@ static const ServiceInstanceDeployment kValidMinimalQmInstanceDeployment{
 /// \note same setup as valid_qm_instance_deployment, but ASIL-QM and ASIL-B.
 static const ServiceInstanceDeployment kValidMinimalAsilInstanceDeployment{
     kFooService,
-    CreateLolaServiceInstanceDeployment(kDefaultLolaInstanceId, {}, {}, {}, {}, kConfiguredDeploymentShmSize),
+    CreateLolaServiceInstanceDeployment(kDefaultLolaInstanceId,
+                                        {},
+                                        {},
+                                        {},
+                                        {},
+                                        kConfiguredDeploymentShmSize,
+                                        kConfiguredDeploymentControlAsilBShmSize,
+                                        kConfiguredDeploymentControlQmShmSize),
     QualityType::kASIL_B,
     kFooInstanceSpecifier};
 
 static const ServiceInstanceDeployment kValidMinimalAsilInstanceDeploymentWithAcl{
     kFooService,
-    CreateLolaServiceInstanceDeployment(kDefaultLolaInstanceId, {}, {}, {42U}, {43}, kConfiguredDeploymentShmSize),
+    CreateLolaServiceInstanceDeployment(kDefaultLolaInstanceId,
+                                        {},
+                                        {},
+                                        {42U},
+                                        {43},
+                                        kConfiguredDeploymentShmSize,
+                                        kConfiguredDeploymentControlAsilBShmSize,
+                                        kConfiguredDeploymentControlQmShmSize),
     QualityType::kASIL_B,
     kFooInstanceSpecifier};
 
@@ -190,7 +215,9 @@ static const ServiceInstanceDeployment kValidInstanceDeploymentWithEvent{
         {},
         {},
         {},
-        kConfiguredDeploymentShmSize),
+        kConfiguredDeploymentShmSize,
+        kConfiguredDeploymentControlAsilBShmSize,
+        kConfiguredDeploymentControlQmShmSize),
     QualityType::kASIL_QM,
     kFooInstanceSpecifier};
 
@@ -202,7 +229,9 @@ static const ServiceInstanceDeployment kValidInstanceDeploymentWithField{
         {{test::kFooEventName, LolaFieldInstanceDeployment{test::kMaxSlots, 10U, 1U, true, 0}}},
         {},
         {},
-        kConfiguredDeploymentShmSize),
+        kConfiguredDeploymentShmSize,
+        kConfiguredDeploymentControlAsilBShmSize,
+        kConfiguredDeploymentControlQmShmSize),
     QualityType::kASIL_QM,
     kFooInstanceSpecifier};
 
@@ -214,7 +243,9 @@ static const ServiceInstanceDeployment kValidAsilInstanceDeploymentWithEvent{
         {},
         {},
         {},
-        kConfiguredDeploymentShmSize),
+        kConfiguredDeploymentShmSize,
+        kConfiguredDeploymentControlAsilBShmSize,
+        kConfiguredDeploymentControlQmShmSize),
     QualityType::kASIL_B,
     kFooInstanceSpecifier};
 
@@ -226,7 +257,9 @@ static const ServiceInstanceDeployment kValidAsilInstanceDeploymentWithField{
         {{test::kFooEventName, LolaFieldInstanceDeployment{test::kMaxSlots, 10U, 1U, true, 0}}},
         {},
         {},
-        kConfiguredDeploymentShmSize),
+        kConfiguredDeploymentShmSize,
+        kConfiguredDeploymentControlAsilBShmSize,
+        kConfiguredDeploymentControlQmShmSize),
     QualityType::kASIL_B,
     kFooInstanceSpecifier};
 
@@ -249,6 +282,8 @@ static const ServiceTypeDeployment kValidTypeDeploymentWithField{
     CreateTypeDeployment(kLolaServiceId, {{kFooEventName, kFooEventId}})};
 
 static const ServiceTypeDeployment kValidMinimalTypeDeploymentWithBlankBinding{score::cpp::blank{}};
+
+static const score::cpp::optional<std::size_t> kSimulatedShmSize{};
 
 const auto kControlChannelPathQm{"/lola-ctl-0000000000000001-00016"};
 const auto kControlChannelPathAsilB{"/lola-ctl-0000000000000001-00016-b"};

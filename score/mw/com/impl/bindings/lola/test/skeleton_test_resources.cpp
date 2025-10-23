@@ -46,7 +46,9 @@ LolaServiceInstanceDeployment CreateLolaServiceInstanceDeployment(
     std::vector<std::pair<std::string, LolaFieldInstanceDeployment>> lola_field_inst_depls,
     std::vector<uid_t> allowed_consumers_qm,
     std::vector<uid_t> allowed_consumers_asil_b,
-    score::cpp::optional<std::size_t> size)
+    score::cpp::optional<std::size_t> shm_size,
+    score::cpp::optional<std::size_t> control_asil_b_shm_size,
+    score::cpp::optional<std::size_t> control_qm_shm_size)
 {
     LolaServiceInstanceDeployment lola_service_instance_deployment_{LolaServiceInstanceId{instance_id}};
     for (auto user_id : allowed_consumers_qm)
@@ -57,7 +59,9 @@ LolaServiceInstanceDeployment CreateLolaServiceInstanceDeployment(
     {
         lola_service_instance_deployment_.allowed_consumer_[QualityType::kASIL_B].push_back(user_id);
     }
-    lola_service_instance_deployment_.shared_memory_size_ = size;
+    lola_service_instance_deployment_.shared_memory_size_ = shm_size;
+    lola_service_instance_deployment_.control_asil_b_memory_size_ = control_asil_b_shm_size;
+    lola_service_instance_deployment_.control_qm_memory_size_ = control_qm_shm_size;
 
     for (auto lola_event_inst_depl : lola_event_inst_depls)
     {

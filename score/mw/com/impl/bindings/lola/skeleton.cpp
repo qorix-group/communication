@@ -730,7 +730,24 @@ Skeleton::ShmResourceStorageSizes Skeleton::CalculateShmResourceStorageSizes(Ske
 {
     SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(GetLoLaRuntime().GetShmSizeCalculationMode() == ShmSizeCalculationMode::kSimulation,
                            "No other shm size calculation mode is currently suppored");
-    const auto required_shm_storage_size = CalculateShmResourceStorageSizesBySimulation(events, fields);
+    if (lola_service_instance_deployment_.shared_memory_size_.has_value() &&
+        lola_service_instance_deployment_.control_asil_b_memory_size_.has_value() &&
+        lola_service_instance_deployment_.control_qm_memory_size_.has_value())
+    {
+        score::mw::log::LogInfo("lola") << "shm-size, control-asil-b-shm-size and control-qm-shm-size manually specified "
+                                         "for service_id:instance_id "
+                                      << lola_service_id_
+                                      << ":"
+                                      // coverity[autosar_cpp14_a18_9_2_violation]
+                                      << lola_instance_id_
+                                      << "- Make sure that this value is sufficiently big to"
+                                         "avoid aborts at runtime.";
+        return {lola_service_instance_deployment_.shared_memory_size_.value(),
+                lola_service_instance_deployment_.control_qm_memory_size_.value(),
+                lola_service_instance_deployment_.control_asil_b_memory_size_.value()};
+    }
+
+    auto required_shm_storage_size = CalculateShmResourceStorageSizesBySimulation(events, fields);
 
     const std::size_t control_asil_b_size_result = required_shm_storage_size.control_asil_b_size.has_value()
                                                        ? required_shm_storage_size.control_asil_b_size.value()
@@ -751,16 +768,38 @@ Skeleton::ShmResourceStorageSizes Skeleton::CalculateShmResourceStorageSizes(Ske
 
     if (lola_service_instance_deployment_.shared_memory_size_.has_value())
     {
-        if (lola_service_instance_deployment_.shared_memory_size_.value() < required_shm_storage_size.data_size)
-        {
-            score::mw::log::LogWarn("lola")
-                << "Skeleton::CalculateShmResourceStorageSizes() calculates a needed shm-size for DATA of: "
-                << required_shm_storage_size.data_size << " bytes, but user configured value in deployment is smaller: "
-                << lola_service_instance_deployment_.shared_memory_size_.value();
-        }
-        return {lola_service_instance_deployment_.shared_memory_size_.value(),
-                required_shm_storage_size.control_qm_size,
-                required_shm_storage_size.control_asil_b_size};
+        score::mw::log::LogInfo("lola") << "shm-size manually specified for service_id:instance_id " << lola_service_id_
+                                      << ":"
+                                      // coverity[autosar_cpp14_a18_9_2_violation]
+                                      << lola_instance_id_
+                                      << "- Make sure that this value is sufficiently big to"
+                                         "avoid aborts at runtime.";
+        required_shm_storage_size.data_size = lola_service_instance_deployment_.shared_memory_size_.value();
+    }
+
+    if (lola_service_instance_deployment_.control_asil_b_memory_size_.has_value())
+    {
+        score::mw::log::LogInfo("lola") << "control-asil-b-shm-size manually specified for service_id:instance_id "
+                                      << lola_service_id_
+                                      << ":"
+                                      // coverity[autosar_cpp14_a18_9_2_violation]
+                                      << lola_instance_id_
+                                      << "- Make sure that this value is sufficiently big to"
+                                         "avoid aborts at runtime.";
+        required_shm_storage_size.control_asil_b_size =
+            lola_service_instance_deployment_.control_asil_b_memory_size_.value();
+    }
+
+    if (lola_service_instance_deployment_.control_qm_memory_size_.has_value())
+    {
+        score::mw::log::LogInfo("lola") << "control-qm-shm-size manually specified for service_id:instance_id "
+                                      << lola_service_id_
+                                      << ":"
+                                      // coverity[autosar_cpp14_a18_9_2_violation]
+                                      << lola_instance_id_
+                                      << "- Make sure that this value is sufficiently big to"
+                                         "avoid aborts at runtime.";
+        required_shm_storage_size.control_qm_size = lola_service_instance_deployment_.control_qm_memory_size_.value();
     }
 
     return required_shm_storage_size;
