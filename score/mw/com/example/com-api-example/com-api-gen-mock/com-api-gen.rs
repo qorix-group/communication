@@ -24,12 +24,8 @@
 //!
 //! ```
 
-use com_api::{
-    Builder, Consumer, ConsumerBuilder, Interface, OfferedProducer, Producer, ProducerBuilder,
-    Reloc,
-};
-use com_api_runtime::RuntimeImpl;
-use com_api_runtime::{SampleConsumerBuilder, SampleProducerBuilder};
+use com_api::*;
+use com_api_runtime_mock::{MockRuntimeImpl, SampleConsumerBuilder, SampleProducerBuilder};
 
 #[derive(Debug)]
 pub struct Tire {}
@@ -59,8 +55,8 @@ impl Producer for VehicleProducer {
 }
 
 pub struct VehicleOfferedProducer {
-    pub left_tire: com_api_runtime::Publisher<Tire>,
-    pub exhaust: com_api_runtime::Publisher<Exhaust>,
+    pub left_tire: com_api_runtime_mock::Publisher<Tire>,
+    pub exhaust: com_api_runtime_mock::Publisher<Exhaust>,
 }
 
 impl OfferedProducer for VehicleOfferedProducer {
@@ -78,19 +74,19 @@ impl Builder<VehicleProducer> for SampleProducerBuilder<VehicleInterface> {
     }
 }
 
-impl ProducerBuilder<VehicleInterface, RuntimeImpl, VehicleProducer>
+impl ProducerBuilder<VehicleInterface, MockRuntimeImpl, VehicleProducer>
     for SampleProducerBuilder<VehicleInterface>
 {
 }
 
 pub struct VehicleConsumer {
-    pub left_tire: com_api_runtime::SubscribableImpl<Tire>,
-    pub exhaust: com_api_runtime::SubscribableImpl<Exhaust>,
+    pub left_tire: com_api_runtime_mock::SubscribableImpl<Tire>,
+    pub exhaust: com_api_runtime_mock::SubscribableImpl<Exhaust>,
 }
 
 impl Consumer for VehicleConsumer {}
 
-impl ConsumerBuilder<VehicleInterface, RuntimeImpl> for SampleConsumerBuilder<VehicleInterface> {}
+impl ConsumerBuilder<VehicleInterface, MockRuntimeImpl> for SampleConsumerBuilder<VehicleInterface> {}
 
 impl Builder<VehicleConsumer> for SampleConsumerBuilder<VehicleInterface> {
     fn build(self) -> com_api::Result<VehicleConsumer> {

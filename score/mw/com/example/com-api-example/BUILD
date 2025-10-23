@@ -15,12 +15,12 @@ load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_test")
 
 rust_binary(
     name = "com-api-example",
-    srcs = ["main.rs"],
+    srcs = ["basic-consumer-producer.rs"],
+    crate_name = "com_api_example",
     visibility = ["//visibility:public"],
     deps = [
-        "//score/mw/com/impl/rust/com-api",
-        "//score/mw/com/impl/rust/com-api-gen",
-        "//score/mw/com/impl/rust/com-api-runtime",
+        "//score/mw/com/example/com-api-example/com-api-gen:com-api-gen-mock-variant",
+        "//score/mw/com/impl/rust/com-api/com-api:com-api-mock",
     ],
 )
 

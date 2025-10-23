@@ -11,6 +11,10 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
+//! This crate defines the concepts and traits of the COM API. It does not provide any concrete
+//! implementations. It is meant to be used as a common interface for different implementations
+//! of the COM API, e.g., for different IPC backends.
+//!
 //! # API Design principles
 //!
 //! - We stick to the builder pattern down to a single service (TODO: Should this be introduced to the C++ API?)
@@ -44,15 +48,17 @@
 
 use std::collections::VecDeque;
 use std::fmt::Debug;
+use std::future::Future;
 use std::ops::{Deref, DerefMut};
 use std::path::Path;
-use std::future::Future;
 
 #[derive(Debug)]
 pub enum Error {
     /// TODO: To be replaced, dummy value for "something went wrong"
     Fail,
     Timeout,
+    AllocateFailed,
+    SubscribeFailed,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -66,7 +72,7 @@ pub trait Builder<Output> {
 /// This represents the com implementation and acts as a root for all types and objects provided by
 /// the implementation.
 pub trait Runtime {
-    type Sample<'a, T: Reloc + Send + 'a>: Sample<T>;
+    type Sample<'a, T: Reloc + Send + std::fmt::Debug + 'a>: Sample<T>;
 }
 
 pub trait RuntimeBuilder<B>: Builder<B>
@@ -76,7 +82,9 @@ where
     fn load_config(&mut self, config: &Path) -> &mut Self;
 }
 
-pub struct InstanceSpecifier {}
+pub struct InstanceSpecifier {
+    pub specifier: String,
+}
 
 /// This trait shall ensure that we can safely use an instance of the implementing type across
 /// address boundaries. This property may be violated by the following circumstances:
@@ -130,7 +138,6 @@ where
 
 /// A `SampleMaybeUninit` provides a reference to a memory buffer of an event with a `MaybeUninit` value.
 ///
-/// Utilizing `DerefMut` on the buffer reveals a reference to the internal `MaybeUninit<T>`.
 /// The buffer can be assumed initialized with mutable access by calling `assume_init` which returns a `SampleMut`.
 /// The buffers with its data lives as long as there are references to it existing in the framework.
 ///
@@ -142,12 +149,6 @@ where
 {
     /// Buffer type for mutable data after initialization
     type SampleMut: SampleMut<T>;
-
-    /// Write a value into the buffer and render it initialized.
-    ///
-    /// This corresponds to `MaybeUninit::write`.
-    fn write(self, value: T) -> Self::SampleMut;
-
     /// Render the buffer initialized for mutable access.
     ///
     /// This corresponds to `MaybeUninit::assume_init`.
@@ -158,6 +159,10 @@ where
     ///
     /// The caller has to make sure to initialize the data in the buffer before calling this method.
     unsafe fn assume_init(self) -> Self::SampleMut;
+    /// Write a value into the buffer and render it initialized.
+    ///
+    /// This corresponds to `MaybeUninit::write`.
+    fn write(self, value: T) -> Self::SampleMut;
 }
 
 pub trait Interface {}

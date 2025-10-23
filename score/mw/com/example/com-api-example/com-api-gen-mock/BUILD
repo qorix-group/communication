@@ -10,5 +10,17 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
+load("@rules_rust//rust:defs.bzl", "rust_library")
 
-# This is a placeholder BUILD file for the com-api directory
+rust_library(
+    name = "com-api-gen-mock",
+    srcs = ["com-api-gen.rs"],
+    crate_name = "com_api_gen_mock",
+    visibility = [
+        "//visibility:public",  # platform_only
+    ],
+    deps = [
+        "//score/mw/com/impl/rust/com-api/com-api",
+        "//score/mw/com/impl/rust/com-api/com-api-runtime-mock",
+    ],
+)

@@ -13,13 +13,10 @@
 load("@rules_rust//rust:defs.bzl", "rust_library")
 
 rust_library(
-    name = "com-api-runtime",
-    srcs = ["runtime.rs"],
+    name = "com-api-concept",
+    srcs = ["com_api_concept.rs"],
     visibility = [
         "//visibility:public",  # platform_only
     ],
-    deps = [
-        "//score/mw/com/impl/rust/com-api",
-        "@crate_index//:futures",
-    ],
+    deps = [],
 )

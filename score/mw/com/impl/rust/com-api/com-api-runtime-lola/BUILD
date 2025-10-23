@@ -10,5 +10,16 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
+load("@rules_rust//rust:defs.bzl", "rust_library")
 
-# This is a placeholder BUILD file for the com-api directory
+rust_library(
+    name = "com-api-runtime-lola",
+    srcs = ["runtime.rs"],
+    visibility = [
+        "//visibility:public",  # platform_only
+    ],
+    deps = [
+        "//score/mw/com/impl/rust/com-api/com-api-concept",
+        "@crate_index//:futures",
+    ],
+)
