@@ -10,8 +10,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#ifndef SCORE_MW_COM_IMPL_MOCKING_PROXY_EVENT_MOCK_H
-#define SCORE_MW_COM_IMPL_MOCKING_PROXY_EVENT_MOCK_H
+#ifndef SCORE_MW_COM_IMPL_MOCKING_I_PROXY_EVENT_H
+#define SCORE_MW_COM_IMPL_MOCKING_I_PROXY_EVENT_H
 
 #include "score/mw/com/impl/event_receive_handler.h"
 #include "score/mw/com/impl/plumbing/sample_ptr.h"
@@ -67,4 +67,4 @@ class IProxyEvent : public IProxyEventBase
 
 }  // namespace score::mw::com::impl
 
-#endif  // SCORE_MW_COM_IMPL_MOCKING_PROXY_EVENT_MOCK_H
+#endif  // SCORE_MW_COM_IMPL_MOCKING_I_PROXY_EVENT_H

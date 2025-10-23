@@ -10,8 +10,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#ifndef SCORE_MW_COM_IMPL_MOCKING_SKELETON_EVENT_MOCK_H
-#define SCORE_MW_COM_IMPL_MOCKING_SKELETON_EVENT_MOCK_H
+#ifndef SCORE_MW_COM_IMPL_MOCKING_I_SKELETON_EVENT_H
+#define SCORE_MW_COM_IMPL_MOCKING_I_SKELETON_EVENT_H
 
 #include "score/mw/com/impl/plumbing/sample_allocatee_ptr.h"
 
@@ -42,4 +42,4 @@ class ISkeletonEvent
 
 }  // namespace score::mw::com::impl
 
-#endif  // SCORE_MW_COM_IMPL_MOCKING_SKELETON_EVENT_MOCK_H
+#endif  // SCORE_MW_COM_IMPL_MOCKING_I_SKELETON_EVENT_H
