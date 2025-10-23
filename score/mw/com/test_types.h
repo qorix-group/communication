@@ -16,9 +16,7 @@
 #include "score/mw/com/types.h"
 
 #include "score/mw/com/impl/handle_type.h"
-#include "score/mw/com/impl/instance_identifier.h"
 #include "score/mw/com/impl/mocking/test_type_factories.h"
-#include "score/mw/com/mocking/runtime_mock.h"
 
 #include <cstdint>
 #include <memory>
@@ -29,12 +27,6 @@
 /// test_types does not contain any implementation, but instead simply exposes specific internals of mw::com.
 namespace score::mw::com
 {
-namespace runtime
-{
-
-void InjectRuntimeMock(RuntimeMock& runtime_mock);
-
-}
 
 using HandleType = impl::HandleType;
 

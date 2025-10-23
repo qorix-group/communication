@@ -20,7 +20,6 @@
 #ifndef SCORE_MW_COM_RUNTIME_H
 #define SCORE_MW_COM_RUNTIME_H
 
-#include "score/mw/com/mocking/runtime_mock.h"
 #include "score/mw/com/runtime_configuration.h"
 #include "score/mw/com/types.h"
 
@@ -31,35 +30,6 @@
 
 namespace score::mw::com::runtime
 {
-namespace detail
-{
-
-/// @brief Holder class which stores a pointer to a RuntimeMock which is used to mock the implementation of the
-/// free-functions in this file.
-///
-/// The getter is public as it will be accessed by the free-functions in this file. The setter is private and can only
-/// be accessed via the test-only InjectRuntimeMock function in mw/com/test_type_factories.cpp.
-class RuntimeMockHolder
-{
-    friend void InjectRuntimeMock(RuntimeMock&);
-
-  public:
-    static RuntimeMock* GetRuntimeMock()
-    {
-        return runtime_mock_;
-    }
-
-  private:
-    static void InjectRuntimeMockImpl(RuntimeMock& runtime_mock)
-    {
-        runtime_mock_ = &runtime_mock;
-    }
-
-    static RuntimeMock* runtime_mock_;
-};
-
-}  // namespace detail
-
 /**
  * \api
  * \brief Resolves given InstanceSpecifier (port name in the model) to a collection of InstanceIdentifiers via

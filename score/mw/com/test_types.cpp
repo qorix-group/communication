@@ -13,20 +13,9 @@
 #include "score/mw/com/test_types.h"
 
 #include "score/mw/com/impl/mocking/test_type_factories.h"
-#include "score/mw/com/mocking/runtime_mock.h"
-#include "score/mw/com/mocking/test_type_factories.h"
 
 namespace score::mw::com
 {
-namespace runtime
-{
-
-void InjectRuntimeMock(RuntimeMock& runtime_mock)
-{
-    InjectRuntimeMockImpl(runtime_mock);
-}
-
-}  // namespace runtime
 
 InstanceIdentifier MakeDummyInstanceIdentifier(const std::uint16_t unique_identifier)
 {
