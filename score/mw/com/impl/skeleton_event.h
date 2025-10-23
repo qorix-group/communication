@@ -22,8 +22,6 @@
 #include "score/mw/com/impl/skeleton_event_binding.h"
 #include "score/mw/com/impl/tracing/skeleton_event_tracing.h"
 
-#include "score/mw/com/impl/mocking/skeleton_event_mock.h"
-
 #include "score/result/result.h"
 #include "score/mw/log/logging.h"
 
@@ -76,13 +74,6 @@ class SkeletonEvent : public SkeletonEventBase
                   std::unique_ptr<SkeletonEventBinding<EventType>> binding,
                   PrivateConstructorEnabler);
 
-    /// Constructor that allows to set the binding directly.
-    ///
-    /// This is used only used for testing.
-    SkeletonEvent(SkeletonBase& skeleton_base,
-                  const std::string_view event_name,
-                  std::unique_ptr<SkeletonEventBinding<EventType>> binding);
-
     ~SkeletonEvent() override = default;
 
     SkeletonEvent(const SkeletonEvent&) = delete;
@@ -104,14 +95,8 @@ class SkeletonEvent : public SkeletonEventBase
     /// implementations.
     Result<SampleAllocateePtr<EventType>> Allocate() noexcept;
 
-    void InjectMock(SkeletonEventMock<EventType>& skeleton_event_mock)
-    {
-        skeleton_event_mock_ = &skeleton_event_mock;
-    }
-
   private:
     SkeletonEventBinding<EventType>* GetTypedEventBinding() const noexcept;
-    SkeletonEventMock<EventType>* skeleton_event_mock_;
 };
 
 template <typename SampleDataType>
@@ -121,8 +106,7 @@ SkeletonEvent<SampleDataType>::SkeletonEvent(SkeletonBase& skeleton_base, const 
                         SkeletonEventBindingFactory<EventType>::Create(
                             SkeletonBaseView{skeleton_base}.GetAssociatedInstanceIdentifier(),
                             skeleton_base,
-                            event_name)},
-      skeleton_event_mock_{nullptr}
+                            event_name)}
 {
     SkeletonBaseView base_skeleton_view{skeleton_base};
     base_skeleton_view.RegisterEvent(event_name, *this);
@@ -143,7 +127,7 @@ SkeletonEvent<SampleDataType>::SkeletonEvent(SkeletonBase& skeleton_base,
                                              const std::string_view event_name,
                                              std::unique_ptr<SkeletonEventBinding<EventType>> binding,
                                              PrivateConstructorEnabler)
-    : SkeletonEventBase{skeleton_base, event_name, std::move(binding)}, skeleton_event_mock_{nullptr}
+    : SkeletonEventBase{skeleton_base, event_name, std::move(binding)}
 {
     if (binding_ != nullptr)
     {
@@ -157,16 +141,7 @@ SkeletonEvent<SampleDataType>::SkeletonEvent(SkeletonBase& skeleton_base,
 }
 
 template <typename SampleDataType>
-SkeletonEvent<SampleDataType>::SkeletonEvent(SkeletonBase& skeleton_base,
-                                             const std::string_view event_name,
-                                             std::unique_ptr<SkeletonEventBinding<EventType>> binding)
-    : SkeletonEventBase{skeleton_base, event_name, std::move(binding)}, skeleton_event_mock_{nullptr}
-{
-}
-
-template <typename SampleDataType>
-SkeletonEvent<SampleDataType>::SkeletonEvent(SkeletonEvent&& other) noexcept
-    : SkeletonEventBase(std::move(other)), skeleton_event_mock_{std::move(other.skeleton_event_mock_)}
+SkeletonEvent<SampleDataType>::SkeletonEvent(SkeletonEvent&& other) noexcept : SkeletonEventBase(std::move(other))
 {
     // Since the address of this event has changed, we need update the address stored in the parent skeleton.
     SkeletonBaseView base_skeleton_view{skeleton_base_.get()};
@@ -188,8 +163,6 @@ auto SkeletonEvent<SampleDataType>::operator=(SkeletonEvent&& other) & noexcept 
         // Since the address of this event has changed, we need update the address stored in the parent skeleton.
         SkeletonBaseView base_skeleton_view{skeleton_base_.get()};
         base_skeleton_view.UpdateEvent(event_name_, *this);
-
-        skeleton_event_mock_ = std::move(other.skeleton_event_mock_);
     }
     return *this;
 }
@@ -197,11 +170,6 @@ auto SkeletonEvent<SampleDataType>::operator=(SkeletonEvent&& other) & noexcept 
 template <typename SampleDataType>
 ResultBlank SkeletonEvent<SampleDataType>::Send(const EventType& sample_value) noexcept
 {
-    if (skeleton_event_mock_ != nullptr)
-    {
-        return skeleton_event_mock_->Send(sample_value);
-    }
-
     if (!service_offered_flag_.IsSet())
     {
         score::mw::log::LogError("lola")
@@ -223,11 +191,6 @@ ResultBlank SkeletonEvent<SampleDataType>::Send(const EventType& sample_value) n
 template <typename SampleDataType>
 ResultBlank SkeletonEvent<SampleDataType>::Send(SampleAllocateePtr<EventType> sample) noexcept
 {
-    if (skeleton_event_mock_ != nullptr)
-    {
-        return skeleton_event_mock_->Send(std::move(sample));
-    }
-
     if (!service_offered_flag_.IsSet())
     {
         score::mw::log::LogError("lola")
@@ -251,11 +214,6 @@ ResultBlank SkeletonEvent<SampleDataType>::Send(SampleAllocateePtr<EventType> sa
 template <typename SampleDataType>
 Result<SampleAllocateePtr<SampleDataType>> SkeletonEvent<SampleDataType>::Allocate() noexcept
 {
-    if (skeleton_event_mock_ != nullptr)
-    {
-        return skeleton_event_mock_->Allocate();
-    }
-
     if (!service_offered_flag_.IsSet())
     {
         score::mw::log::LogError("lola")
