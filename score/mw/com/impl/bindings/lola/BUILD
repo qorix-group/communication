@@ -292,6 +292,7 @@ cc_library(
         "proxy.cpp",
         "proxy_event.cpp",
         "proxy_event_common.cpp",
+        "proxy_method.cpp",
         "slot_collector.cpp",
         "subscription_helpers.cpp",
         "subscription_not_subscribed_states.cpp",
@@ -306,6 +307,7 @@ cc_library(
         "proxy.h",
         "proxy_event.h",
         "proxy_event_common.h",
+        "proxy_method.h",
         "slot_collector.h",
         "subscription_helpers.h",
         "subscription_not_subscribed_states.h",
@@ -336,9 +338,14 @@ cc_library(
         "//score/mw/com/impl:runtime_interfaces",
         "//score/mw/com/impl:scoped_event_receive_handler",
         "//score/mw/com/impl/bindings/lola:partial_restart_path_builder",
+        "//score/mw/com/impl/bindings/lola/methods:method_data",
+        "//score/mw/com/impl/bindings/lola/methods:proxy_instance_identifier",
+        "//score/mw/com/impl/bindings/lola/methods:type_erased_call_queue",
         "//score/mw/com/impl/configuration",
+        "//score/mw/com/impl/methods:proxy_method_binding",
         "//score/mw/com/impl/plumbing:sample_ptr",
         "//score/mw/com/impl/tracing:i_tracing_runtime",
+        "//score/mw/com/impl/util:type_erased_storage",
         "@score_baselibs//score/filesystem",
         "@score_baselibs//score/language/safecpp/safe_math",
         "@score_baselibs//score/memory/shared",
@@ -1192,6 +1199,31 @@ cc_gtest_unit_test(
     ],
 )
 
+cc_unit_test(
+    name = "proxy_method_test",
+    srcs = [
+        "proxy_method_test.cpp",
+    ],
+    features = COMPILER_WARNING_FEATURES + [
+        # These tests catch exceptions instead of using gtest EXPECT_DEATH so we disable aborts_upon_exception.
+        "-aborts_upon_exception",
+    ],
+    deps = [
+        "i_runtime",
+        ":element_fq_id",
+        ":proxy",
+        "//score/mw/com/impl",
+        "//score/mw/com/impl/bindings/lola/test:proxy_event_test_resources",
+        "//score/mw/com/impl/configuration/test:configuration_store",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "@score_baselibs//score/language/futurecpp:futurecpp_test_support",
+        "@score_baselibs//score/memory:data_type_size_info",
+        "@score_baselibs//score/mw/log",
+        "@score_baselibs//score/result",
+    ],
+)
+
 cc_unit_test_suites_for_host_and_qnx(
     name = "unit_test_suite",
     cc_unit_tests = [
@@ -1204,7 +1236,8 @@ cc_unit_test_suites_for_host_and_qnx(
         ":proxy_event_common_test",
         ":runtime_application_id_test",
         ":runtime_test",
-        "sample_allocatee_ptr_test",
+        ":sample_allocatee_ptr_test",
+        ":proxy_method_test",
         ":sample_ptr_test",
         ":service_data_storage_test",
         ":skeleton_event_test",
