@@ -10,4 +10,4 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#include "score/mw/com/impl/mocking/i_proxy_event.h"
+#include "score/mw/com/impl/mocking/skeleton_field_mock.h"

@@ -23,21 +23,21 @@ namespace score::mw::com::impl
 {
 
 template <typename SampleType>
-class ISkeletonEvent
+class SkeletonEventMock
 {
   public:
-    ISkeletonEvent() = default;
-    virtual ~ISkeletonEvent() = default;
+    SkeletonEventMock() = default;
+    virtual ~SkeletonEventMock() = default;
 
     virtual ResultBlank Send(const SampleType&) = 0;
     virtual ResultBlank Send(SampleAllocateePtr<SampleType>) = 0;
     virtual Result<SampleAllocateePtr<SampleType>> Allocate() = 0;
 
   protected:
-    ISkeletonEvent(const ISkeletonEvent&) = default;
-    ISkeletonEvent(ISkeletonEvent&&) noexcept = default;
-    ISkeletonEvent& operator=(ISkeletonEvent&&) & noexcept = default;
-    ISkeletonEvent& operator=(const ISkeletonEvent&) & = default;
+    SkeletonEventMock(const SkeletonEventMock&) = default;
+    SkeletonEventMock(SkeletonEventMock&&) noexcept = default;
+    SkeletonEventMock& operator=(SkeletonEventMock&&) & noexcept = default;
+    SkeletonEventMock& operator=(const SkeletonEventMock&) & = default;
 };
 
 }  // namespace score::mw::com::impl

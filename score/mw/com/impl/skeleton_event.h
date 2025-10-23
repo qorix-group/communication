@@ -22,7 +22,7 @@
 #include "score/mw/com/impl/skeleton_event_binding.h"
 #include "score/mw/com/impl/tracing/skeleton_event_tracing.h"
 
-#include "score/mw/com/impl/mocking/i_skeleton_event.h"
+#include "score/mw/com/impl/mocking/skeleton_event_mock.h"
 
 #include "score/result/result.h"
 #include "score/mw/log/logging.h"
@@ -104,14 +104,14 @@ class SkeletonEvent : public SkeletonEventBase
     /// implementations.
     Result<SampleAllocateePtr<EventType>> Allocate() noexcept;
 
-    void InjectMock(ISkeletonEvent<EventType>& skeleton_event_mock)
+    void InjectMock(SkeletonEventMock<EventType>& skeleton_event_mock)
     {
         skeleton_event_mock_ = &skeleton_event_mock;
     }
 
   private:
     SkeletonEventBinding<EventType>* GetTypedEventBinding() const noexcept;
-    ISkeletonEvent<EventType>* skeleton_event_mock_;
+    SkeletonEventMock<EventType>* skeleton_event_mock_;
 };
 
 template <typename SampleDataType>

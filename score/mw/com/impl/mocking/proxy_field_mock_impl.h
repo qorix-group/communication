@@ -13,7 +13,7 @@
 #ifndef SCORE_MW_COM_IMPL_MOCKING_PROXY_FIELD_MOCK_IMPL_H
 #define SCORE_MW_COM_IMPL_MOCKING_PROXY_FIELD_MOCK_IMPL_H
 
-#include "score/mw/com/impl/mocking/i_proxy_field.h"
+#include "score/mw/com/impl/mocking/proxy_field_mock.h"
 
 #include <gmock/gmock.h>
 
@@ -21,10 +21,10 @@ namespace score::mw::com::impl
 {
 
 template <typename SampleType>
-class ProxyFieldMockImpl : public IProxyField<SampleType>
+class ProxyFieldMockImpl : public ProxyFieldMock<SampleType>
 {
   public:
-    using Callback = typename IProxyField<SampleType>::Callback;
+    using Callback = typename ProxyFieldMock<SampleType>::Callback;
 
     MOCK_METHOD(ResultBlank, Subscribe, (const std::size_t), (override));
     MOCK_METHOD(void, Unsubscribe, (), (override));

@@ -22,7 +22,7 @@
 #include "score/mw/com/impl/runtime.h"
 #include "score/mw/com/impl/tracing/proxy_event_tracing.h"
 
-#include "score/mw/com/impl/mocking/i_proxy_event.h"
+#include "score/mw/com/impl/mocking/proxy_event_mock.h"
 
 #include "score/result/result.h"
 #include "score/mw/log/logging.h"
@@ -113,7 +113,7 @@ class ProxyEvent final : public ProxyEventBase
     template <typename F>
     Result<std::size_t> GetNewSamples(F&& receiver, std::size_t max_num_samples) noexcept;
 
-    void InjectMock(IProxyEvent<SampleType>& proxy_event_mock)
+    void InjectMock(ProxyEventMock<SampleType>& proxy_event_mock)
     {
         proxy_event_mock_ = &proxy_event_mock;
         ProxyEventBase::InjectMock(proxy_event_mock);
@@ -121,7 +121,7 @@ class ProxyEvent final : public ProxyEventBase
 
   private:
     ProxyEventBinding<SampleType>* GetTypedEventBinding() const noexcept;
-    IProxyEvent<SampleType>* proxy_event_mock_;
+    ProxyEventMock<SampleType>* proxy_event_mock_;
 };
 
 template <typename SampleType>
@@ -166,7 +166,7 @@ Result<std::size_t> ProxyEvent<SampleType>::GetNewSamples(F&& receiver, std::siz
 {
     if (proxy_event_mock_ != nullptr)
     {
-        typename IProxyEvent<SampleType>::Callback mock_callback =
+        typename ProxyEventMock<SampleType>::Callback mock_callback =
             [receiver = std::forward<F>(receiver)](SamplePtr<SampleType> sample_ptr) noexcept {
                 receiver(std::move(sample_ptr));
             };

@@ -10,8 +10,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#ifndef SCORE_MW_COM_IMPL_MOCKING_PROXY_FIELD_MOCK_H
-#define SCORE_MW_COM_IMPL_MOCKING_PROXY_FIELD_MOCK_H
+#ifndef SCORE_MW_COM_IMPL_MOCKING_PROXY_EVENT_MOCK_H
+#define SCORE_MW_COM_IMPL_MOCKING_PROXY_EVENT_MOCK_H
 
 #include "score/mw/com/impl/event_receive_handler.h"
 #include "score/mw/com/impl/plumbing/sample_ptr.h"
@@ -26,11 +26,11 @@
 namespace score::mw::com::impl
 {
 
-class IProxyFieldBase
+class ProxyEventBaseMock
 {
   public:
-    IProxyFieldBase() = default;
-    virtual ~IProxyFieldBase() = default;
+    ProxyEventBaseMock() = default;
+    virtual ~ProxyEventBaseMock() = default;
 
     virtual ResultBlank Subscribe(const std::size_t) = 0;
     virtual void Unsubscribe() = 0;
@@ -41,30 +41,30 @@ class IProxyFieldBase
     virtual ResultBlank UnsetReceiveHandler() = 0;
 
   protected:
-    IProxyFieldBase(const IProxyFieldBase&) = default;
-    IProxyFieldBase(IProxyFieldBase&&) noexcept = default;
-    IProxyFieldBase& operator=(IProxyFieldBase&&) & noexcept = default;
-    IProxyFieldBase& operator=(const IProxyFieldBase&) & = default;
+    ProxyEventBaseMock(const ProxyEventBaseMock&) = default;
+    ProxyEventBaseMock(ProxyEventBaseMock&&) noexcept = default;
+    ProxyEventBaseMock& operator=(ProxyEventBaseMock&&) & noexcept = default;
+    ProxyEventBaseMock& operator=(const ProxyEventBaseMock&) & = default;
 };
 
 template <typename SampleType>
-class IProxyField : public IProxyFieldBase
+class ProxyEventMock : public ProxyEventBaseMock
 {
   public:
-    IProxyField() = default;
-    virtual ~IProxyField() = default;
+    ProxyEventMock() = default;
+    ~ProxyEventMock() override = default;
 
     using Callback = score::cpp::callback<void(SamplePtr<SampleType>), 80U>;
 
     virtual Result<std::size_t> GetNewSamples(Callback&&, const std::size_t) = 0;
 
   protected:
-    IProxyField(const IProxyField&) = default;
-    IProxyField(IProxyField&&) noexcept = default;
-    IProxyField& operator=(IProxyField&&) & noexcept = default;
-    IProxyField& operator=(const IProxyField&) & = default;
+    ProxyEventMock(const ProxyEventMock&) = default;
+    ProxyEventMock(ProxyEventMock&&) noexcept = default;
+    ProxyEventMock& operator=(ProxyEventMock&&) & noexcept = default;
+    ProxyEventMock& operator=(const ProxyEventMock&) & = default;
 };
 
 }  // namespace score::mw::com::impl
 
-#endif  // SCORE_MW_COM_IMPL_MOCKING_PROXY_FIELD_MOCK_H
+#endif  // SCORE_MW_COM_IMPL_MOCKING_PROXY_EVENT_MOCK_H

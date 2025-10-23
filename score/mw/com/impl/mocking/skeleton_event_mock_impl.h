@@ -13,7 +13,7 @@
 #ifndef SCORE_MW_COM_IMPL_MOCKING_SKELETON_EVENT_MOCK_IMPL_H
 #define SCORE_MW_COM_IMPL_MOCKING_SKELETON_EVENT_MOCK_IMPL_H
 
-#include "score/mw/com/impl/mocking/i_skeleton_event.h"
+#include "score/mw/com/impl/mocking/skeleton_event_mock.h"
 
 #include <gmock/gmock.h>
 
@@ -21,7 +21,7 @@ namespace score::mw::com::impl
 {
 
 template <typename SampleType>
-class SkeletonEventMockImpl : public ISkeletonEvent<SampleType>
+class SkeletonEventMockImpl : public SkeletonEventMock<SampleType>
 {
   public:
     MOCK_METHOD(ResultBlank, Send, (const SampleType&), (override));

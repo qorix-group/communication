@@ -25,7 +25,7 @@
 #include "score/mw/com/impl/subscription_state.h"
 #include "score/mw/com/impl/tracing/proxy_event_tracing_data.h"
 
-#include "score/mw/com/impl/mocking/i_proxy_event.h"
+#include "score/mw/com/impl/mocking/proxy_event_mock.h"
 
 #include "score/language/safecpp/scoped_function/scope.h"
 #include "score/result/result.h"
@@ -149,7 +149,7 @@ class ProxyEventBase
     }
 
   protected:
-    void InjectMock(IProxyEventBase& proxy_event_base_mock)
+    void InjectMock(ProxyEventBaseMock& proxy_event_base_mock)
     {
         proxy_event_base_mock_ = &proxy_event_base_mock;
     }
@@ -166,7 +166,7 @@ class ProxyEventBase
     // coverity[autosar_cpp14_m11_0_1_violation]
     std::unique_ptr<EventBindingRegistrationGuard> event_binding_registration_guard_;
 
-    IProxyEventBase* proxy_event_base_mock_;
+    ProxyEventBaseMock* proxy_event_base_mock_;
 
   private:
     /// \brief Expires the #receive_handler_scope_ in case not being called in the context of an EventReceiveHandler

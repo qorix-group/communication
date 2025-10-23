@@ -35,9 +35,9 @@ cc_library(
 )
 
 cc_library(
-    name = "i_proxy_event",
-    srcs = ["i_proxy_event.cpp"],
-    hdrs = ["i_proxy_event.h"],
+    name = "proxy_event_mock",
+    srcs = ["proxy_event_mock.cpp"],
+    hdrs = ["proxy_event_mock.h"],
     features = COMPILER_WARNING_FEATURES,
     visibility = [
         "//score/mw/com/impl:__subpackages__",
@@ -61,15 +61,15 @@ cc_library(
         "//score/mw/com/impl:__subpackages__",
     ],
     deps = [
-        ":i_proxy_event",
+        ":proxy_event_mock",
         "@googletest//:gtest",
     ],
 )
 
 cc_library(
-    name = "i_proxy_field",
-    srcs = ["i_proxy_field.cpp"],
-    hdrs = ["i_proxy_field.h"],
+    name = "proxy_field_mock",
+    srcs = ["proxy_field_mock.cpp"],
+    hdrs = ["proxy_field_mock.h"],
     features = COMPILER_WARNING_FEATURES,
     visibility = [
         "//score/mw/com/impl:__subpackages__",
@@ -93,15 +93,15 @@ cc_library(
         "//score/mw/com/impl:__subpackages__",
     ],
     deps = [
-        ":i_proxy_field",
+        ":proxy_field_mock",
         "@googletest//:gtest",
     ],
 )
 
 cc_library(
-    name = "i_skeleton",
-    srcs = ["i_skeleton.cpp"],
-    hdrs = ["i_skeleton.h"],
+    name = "skeleton_mock",
+    srcs = ["skeleton_mock.cpp"],
+    hdrs = ["skeleton_mock.h"],
     features = COMPILER_WARNING_FEATURES,
     visibility = [
         "//score/mw/com/impl:__subpackages__",
@@ -122,15 +122,15 @@ cc_library(
         "//score/mw/com/impl:__subpackages__",
     ],
     deps = [
-        ":i_skeleton",
+        ":skeleton_mock",
         "@googletest//:gtest",
     ],
 )
 
 cc_library(
-    name = "i_skeleton_event",
-    srcs = ["i_skeleton_event.cpp"],
-    hdrs = ["i_skeleton_event.h"],
+    name = "skeleton_event_mock",
+    srcs = ["skeleton_event_mock.cpp"],
+    hdrs = ["skeleton_event_mock.h"],
     features = COMPILER_WARNING_FEATURES,
     visibility = [
         "//score/mw/com/impl:__subpackages__",
@@ -152,15 +152,15 @@ cc_library(
         "//score/mw/com/impl:__subpackages__",
     ],
     deps = [
-        ":i_skeleton_event",
+        ":skeleton_event_mock",
         "@googletest//:gtest",
     ],
 )
 
 cc_library(
-    name = "i_skeleton_field",
-    srcs = ["i_skeleton_field.cpp"],
-    hdrs = ["i_skeleton_field.h"],
+    name = "skeleton_field_mock",
+    srcs = ["skeleton_field_mock.cpp"],
+    hdrs = ["skeleton_field_mock.h"],
     features = COMPILER_WARNING_FEATURES,
     visibility = [
         "//score/mw/com/impl:__subpackages__",
@@ -182,7 +182,7 @@ cc_library(
         "//score/mw/com/impl:__subpackages__",
     ],
     deps = [
-        "i_skeleton_field",
+        "skeleton_field_mock",
         "@googletest//:gtest",
     ],
 )

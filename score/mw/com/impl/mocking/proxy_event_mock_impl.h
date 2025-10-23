@@ -13,7 +13,7 @@
 #ifndef SCORE_MW_COM_IMPL_MOCKING_PROXY_EVENT_MOCK_IMPL_H
 #define SCORE_MW_COM_IMPL_MOCKING_PROXY_EVENT_MOCK_IMPL_H
 
-#include "score/mw/com/impl/mocking/i_proxy_event.h"
+#include "score/mw/com/impl/mocking/proxy_event_mock.h"
 
 #include <gmock/gmock.h>
 
@@ -21,10 +21,10 @@ namespace score::mw::com::impl
 {
 
 template <typename SampleType>
-class ProxyEventMockImpl : public IProxyEvent<SampleType>
+class ProxyEventMockImpl : public ProxyEventMock<SampleType>
 {
   public:
-    using Callback = typename IProxyEvent<SampleType>::Callback;
+    using Callback = typename ProxyEventMock<SampleType>::Callback;
 
     MOCK_METHOD(ResultBlank, Subscribe, (const std::size_t), (override));
     MOCK_METHOD(void, Unsubscribe, (), (override));

@@ -13,14 +13,14 @@
 #ifndef SCORE_MW_COM_IMPL_MOCKING_SKELETON_MOCK_IMPL_H
 #define SCORE_MW_COM_IMPL_MOCKING_SKELETON_MOCK_IMPL_H
 
-#include "score/mw/com/impl/mocking/i_skeleton.h"
+#include "score/mw/com/impl/mocking/skeleton_mock.h"
 
 #include <gmock/gmock.h>
 
 namespace score::mw::com::impl
 {
 
-class SkeletonMockImpl : public ISkeleton
+class SkeletonMockImpl : public SkeletonMock
 {
   public:
     MOCK_METHOD(ResultBlank, OfferService, (), (override));
