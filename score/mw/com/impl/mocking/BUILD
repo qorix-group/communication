@@ -30,6 +30,7 @@ cc_library(
         "//score/mw/com/impl:handle_type",
         "//score/mw/com/impl:instance_identifier",
         "//score/mw/com/impl/plumbing:sample_allocatee_ptr",
+        "//score/mw/com/impl/plumbing:sample_ptr",
     ],
 )
 
