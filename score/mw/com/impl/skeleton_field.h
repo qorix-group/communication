@@ -18,6 +18,8 @@
 #include "score/mw/com/impl/skeleton_event.h"
 #include "score/mw/com/impl/skeleton_field_base.h"
 
+#include "score/mw/com/impl/mocking/skeleton_field_mock.h"
+
 #include "score/result/result.h"
 #include "score/mw/log/logging.h"
 
@@ -37,6 +39,13 @@ class SkeletonField : public SkeletonFieldBase
     using FieldType = SampleDataType;
 
     SkeletonField(SkeletonBase& parent, const std::string_view field_name);
+
+    /// Constructor that allows to set the binding directly.
+    ///
+    /// This is used only used for testing.
+    SkeletonField(SkeletonBase& skeleton_base,
+                  const std::string_view field_name,
+                  std::unique_ptr<SkeletonEventBinding<FieldType>> binding);
 
     ~SkeletonField() override = default;
 
@@ -66,6 +75,11 @@ class SkeletonField : public SkeletonFieldBase
     /// set up in the Skeleton::PrepareOffer() before the user can obtain / use a SampleAllocateePtr.
     Result<SampleAllocateePtr<FieldType>> Allocate() noexcept;
 
+    void InjectMock(SkeletonFieldMock<FieldType>& skeleton_field_mock)
+    {
+        skeleton_field_mock_ = &skeleton_field_mock;
+    }
+
   private:
     bool IsInitialValueSaved() const noexcept override
     {
@@ -80,6 +94,7 @@ class SkeletonField : public SkeletonFieldBase
     SkeletonEvent<FieldType>* GetTypedEvent() const noexcept;
 
     std::unique_ptr<FieldType> initial_field_value_;
+    SkeletonFieldMock<FieldType>* skeleton_field_mock_;
 };
 
 template <typename SampleDataType>
@@ -94,10 +109,22 @@ SkeletonField<SampleDataType>::SkeletonField(SkeletonBase& parent, const std::st
                                 parent,
                                 field_name),
                             typename SkeletonEvent<FieldType>::PrivateConstructorEnabler{})},
-      initial_field_value_{nullptr}
+      initial_field_value_{nullptr},
+      skeleton_field_mock_{nullptr}
 {
     SkeletonBaseView skeleton_base_view{parent};
     skeleton_base_view.RegisterField(field_name, *this);
+}
+
+template <typename SampleDataType>
+SkeletonField<SampleDataType>::SkeletonField(SkeletonBase& parent,
+                                             const std::string_view field_name,
+                                             std::unique_ptr<SkeletonEventBinding<FieldType>> binding)
+    : SkeletonFieldBase{parent,
+                        field_name,
+                        std::make_unique<SkeletonEvent<FieldType>>(parent, field_name, std::move(binding))},
+      skeleton_field_mock_{nullptr}
+{
 }
 
 template <typename SampleDataType>
@@ -108,7 +135,8 @@ SkeletonField<SampleDataType>::SkeletonField(SkeletonField&& other) noexcept
       // The derived class member 'initial_field_value_' remains untouched by the base class move constructor,
       // so it's still valid to access it here for moving into our own member.
       // coverity[autosar_cpp14_a12_8_3_violation] This is a false-positive.
-      initial_field_value_{std::move(other.initial_field_value_)}
+      initial_field_value_{std::move(other.initial_field_value_)},
+      skeleton_field_mock_{other.skeleton_field_mock_}
 {
     // Since the address of this event has changed, we need update the address stored in the parent skeleton.
     SkeletonBaseView skeleton_base_view{skeleton_base_.get()};
@@ -123,6 +151,7 @@ auto SkeletonField<SampleDataType>::operator=(SkeletonField&& other) & noexcept 
         SkeletonFieldBase::operator=(std::move(other));
 
         initial_field_value_ = std::move(other.initial_field_value_);
+        skeleton_field_mock_ = std::move(other.skeleton_field_mock_);
 
         // Since the address of this event has changed, we need update the address stored in the parent skeleton.
         SkeletonBaseView skeleton_base_view{skeleton_base_.get()};
@@ -141,6 +170,11 @@ auto SkeletonField<SampleDataType>::operator=(SkeletonField&& other) & noexcept 
 template <typename SampleDataType>
 ResultBlank SkeletonField<SampleDataType>::Update(const FieldType& sample_value) noexcept
 {
+    if (skeleton_field_mock_ != nullptr)
+    {
+        return skeleton_field_mock_->Update(sample_value);
+    }
+
     if (!was_prepare_offer_called_)
     {
         initial_field_value_ = std::make_unique<FieldType>(sample_value);
@@ -154,6 +188,11 @@ ResultBlank SkeletonField<SampleDataType>::Update(const FieldType& sample_value)
 template <typename SampleDataType>
 ResultBlank SkeletonField<SampleDataType>::Update(SampleAllocateePtr<FieldType> sample) noexcept
 {
+    if (skeleton_field_mock_ != nullptr)
+    {
+        return skeleton_field_mock_->Update(std::move(sample));
+    }
+
     return GetTypedEvent()->Send(std::move(sample));
 }
 
@@ -165,6 +204,11 @@ ResultBlank SkeletonField<SampleDataType>::Update(SampleAllocateePtr<FieldType> 
 template <typename SampleDataType>
 Result<SampleAllocateePtr<SampleDataType>> SkeletonField<SampleDataType>::Allocate() noexcept
 {
+    if (skeleton_field_mock_ != nullptr)
+    {
+        return skeleton_field_mock_->Allocate();
+    }
+
     // This check can be removed when Ticket-104261 is implemented
     if (!was_prepare_offer_called_)
     {
