@@ -19,7 +19,7 @@
 #include "score/mw/com/impl/skeleton_binding.h"
 #include "score/mw/com/impl/skeleton_event_binding.h"
 
-#include "score/mw/com/impl/mocking/i_skeleton.h"
+#include "score/mw/com/impl/mocking/i_skeleton_base.h"
 
 #include "score/result/result.h"
 
@@ -94,7 +94,7 @@ class SkeletonBase
     /// \requirement SWS_CM_00111
     void StopOfferService() noexcept;
 
-    void InjectMock(ISkeleton& skeleton_mock)
+    void InjectMock(ISkeletonBase& skeleton_mock)
     {
         skeleton_mock_ = &skeleton_mock;
     }
@@ -118,7 +118,7 @@ class SkeletonBase
     SkeletonFields fields_;
     InstanceIdentifier instance_id_;
 
-    ISkeleton* skeleton_mock_;
+    ISkeletonBase* skeleton_mock_;
 
     /// \brief Perform required clean up operations when a SkeletonBase object is destroyed or overwritten (by the
     /// move assignment operator)

@@ -15,9 +15,9 @@
 
 #include "score/mw/com/impl/instance_identifier.h"
 #include "score/mw/com/impl/instance_specifier.h"
+#include "score/mw/com/impl/mocking/skeleton_base_mock.h"
 #include "score/mw/com/impl/mocking/skeleton_event_mock.h"
 #include "score/mw/com/impl/mocking/skeleton_field_mock.h"
-#include "score/mw/com/impl/mocking/skeleton_mock.h"
 #include "score/mw/com/impl/mocking/test_type_utilities.h"
 #include "score/mw/com/impl/test/binding_factory_resources.h"
 #include "score/mw/com/impl/traits.h"
@@ -80,13 +80,13 @@ class SkeletonWrapperClassTestView
     ///
     /// @tparam EventTypes Variadic template pack containing the types of ALL events specified in the interface
     /// @tparam FieldTypes Variadic template pack containing the types of ALL fields specified in the interface
-    /// @param skeleton_mock SkeletonMock which will be injected into the SkeletonBase of the constructed
+    /// @param skeleton_mock SkeletonBaseMock which will be injected into the SkeletonBase of the constructed
     /// SkeletonWrapperClass
     /// @param event_mocks A tuple containing a NamedEventMock per event in the interface.
     /// @param field_mocks A tuple containing a NamedFieldMock per event in the interface.
     /// @return SkeletonWrapperClass containing mocked skeleton and mocked events / fields.
     template <typename... EventTypes, typename... FieldTypes>
-    static SkeletonWrapperClass Create(SkeletonMock& skeleton_mock,
+    static SkeletonWrapperClass Create(SkeletonBaseMock& skeleton_mock,
                                        std::tuple<NamedSkeletonEventMock<EventTypes>...>& event_mocks,
                                        std::tuple<NamedSkeletonFieldMock<FieldTypes>...>& field_mocks)
     {
@@ -106,7 +106,7 @@ class SkeletonWrapperClassTestView
 
     /// @brief Test-only Create call which can be used when an interface does not contain any fields.
     template <typename... EventTypes>
-    static SkeletonWrapperClass Create(SkeletonMock& skeleton_mock,
+    static SkeletonWrapperClass Create(SkeletonBaseMock& skeleton_mock,
                                        std::tuple<NamedSkeletonEventMock<EventTypes>...>& event_mocks)
     {
         // Since empty_field_mocks is passed to Create as a non-const reference, when this function returns, the
@@ -118,7 +118,7 @@ class SkeletonWrapperClassTestView
 
     /// @brief Test-only Create call which can be used when an interface does not contain any events.
     template <typename... FieldTypes>
-    static SkeletonWrapperClass Create(SkeletonMock& skeleton_mock,
+    static SkeletonWrapperClass Create(SkeletonBaseMock& skeleton_mock,
                                        std::tuple<NamedSkeletonFieldMock<FieldTypes>...>& field_mocks)
     {
         // Since empty_event_mocks is passed to Create as a non-const reference, when this function returns, the
