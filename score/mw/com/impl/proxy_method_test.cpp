@@ -232,5 +232,51 @@ TEST_F(ProxyMethodTestFixture, CallOperator_NonVoidReturn_ZeroCopy)
     // expect, that no error is returned
     EXPECT_TRUE(call_result.has_value());
 }
+
+TEST_F(ProxyMethodTestFixture, ProxyMethodView_WithInArgsAndNonVoidReturnType)
+{
+    // Given a ProxyMethod with a return type of int and three arguments: int, double, char
+    auto unit = ProxyMethod<int(int, double, char)>{kEmptyProxy, std::move(proxy_method_binding_mock_), kMethodName};
+
+    // then we can create a view on the ProxyMethod
+    ProxyMethodView proxy_method_view{unit};
+
+    // and get the type-erased info for in-arguments and return type
+    auto type_erased_in_args = proxy_method_view.GetTypeErasedInAgs();
+    EXPECT_TRUE(type_erased_in_args.has_value());
+    auto type_erased_return_type = proxy_method_view.GetTypeErasedReturnType();
+    EXPECT_TRUE(type_erased_return_type.has_value());
+}
+
+TEST_F(ProxyMethodTestFixture, ProxyMethodView_WithoutInArgs)
+{
+    // Given a ProxyMethod with a return type of int and no arguments.
+    auto unit = ProxyMethod<int()>{kEmptyProxy, std::move(proxy_method_binding_mock_), kMethodName};
+
+    // then we can create a view on the ProxyMethod
+    ProxyMethodView proxy_method_view{unit};
+
+    // and get the type-erased info for in-arguments and return type
+    auto type_erased_in_args = proxy_method_view.GetTypeErasedInAgs();
+    EXPECT_FALSE(type_erased_in_args.has_value());
+    auto type_erased_return_type = proxy_method_view.GetTypeErasedReturnType();
+    EXPECT_TRUE(type_erased_return_type.has_value());
+}
+
+TEST_F(ProxyMethodTestFixture, ProxyMethodView_WithVoidReturnType)
+{
+    // Given a ProxyMethod with a return type of void and three arguments: int, double, char
+    auto unit = ProxyMethod<void(int, double, char)>{kEmptyProxy, std::move(proxy_method_binding_mock_), kMethodName};
+
+    // then we can create a view on the ProxyMethod
+    ProxyMethodView proxy_method_view{unit};
+
+    // and get the type-erased info for in-arguments and return type
+    auto type_erased_in_args = proxy_method_view.GetTypeErasedInAgs();
+    EXPECT_TRUE(type_erased_in_args.has_value());
+    auto type_erased_return_type = proxy_method_view.GetTypeErasedReturnType();
+    EXPECT_FALSE(type_erased_return_type.has_value());
+}
+
 }  // namespace
 }  // namespace score::mw::com::impl

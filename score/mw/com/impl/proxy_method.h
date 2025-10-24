@@ -84,6 +84,12 @@ class ProxyMethod
 template <typename ReturnType>
 class ProxyMethod<ReturnType()>
 {
+    template <typename R, typename... A>
+    // Design decision: This friend class provides a view on the internals of ProxyMethod.
+    // This enables us to hide unnecessary internals from the end-user.
+    // coverity[autosar_cpp14_a11_3_1_violation]
+    friend class ProxyMethodView;
+
   public:
     ProxyMethod(ProxyBase& /* proxy_base */,
                 std::unique_ptr<ProxyMethodBinding> proxy_method_binding,
@@ -117,6 +123,11 @@ class ProxyMethod<ReturnType()>
   private:
     score::Result<std::size_t> AllocateNextAvailableQueueSlot();
 
+    /// \brief Empty optional as in this class template specialization we do not have in-arguments.
+    /// \details We still keep this member for interface consistency with the general ProxyMethod template
+    /// specialization. The access via ProxyMethodView remains the same.
+    static constexpr std::optional<TypeErasedDataTypeInfo> type_erased_in_args_{};
+
     /// \brief Compile-time initialized TypeErasedDataTypeInfo for the return type of this ProxyMethod.
     /// \details This is the only information about the return type of this Proxy Method, which is available at
     /// runtime. It is handed down to the binding layer, which then does the type agnostic transport.
@@ -130,11 +141,22 @@ class ProxyMethod<ReturnType()>
 
     std::string_view method_name_;
 
-    /// \brief Dynamic array: one entry per call-queue position.
+    /// \brief Dynamic array containing queue-slot active flags: one entry per call-queue position.
     /// \details This array contains bool flags, which indicate, if the return value pointer
-    /// passed to the zero-copy call-operator is active (true) or not (false).
-    /// The optionals are needed, since ProxyMethods without return value don't have a return type pointer.
-    containers::DynamicArray<std::optional<bool>> is_return_type_ptr_active_;
+    /// returned from a call-operator is active (true), i.e. still in-use by the user or not (false).
+    ///
+    /// This array is used in these two cases slightly differently:
+    /// In the case, that the return type is non-void, the flag indicates, that the return value pointer handed out via
+    /// the call-operator for the given call-queue position is still active (true) or not (false).
+    /// In the case of a void return type, the flag indicates, that a call at the given call-queue position is still in
+    /// progress (true) or not (false). In any case the related queue slot is considered "in-use". As long as we only
+    /// support synchronous method calls, the latter case (void return type) doesn't use this array, because "queueing"
+    /// (when we had a queue-size > 1) in a synchronous call setup only works for the allocation of in-args (Allocate()
+    /// calls), not for the call-operator itself. But since this template specialization has no in-args/Allocate(),
+    /// there is also no "queuing" for in-arg allocations. Therefore, in the void-return case, this array will only be
+    /// used in a future async call-operator: There it will set the queue-position related flag to "true" at the start
+    /// of the async call and back to false, when the asynchronous call concludes.
+    containers::DynamicArray<bool> is_return_type_ptr_active_;
 
     std::unique_ptr<ProxyMethodBinding> binding_;
 };
@@ -142,6 +164,12 @@ class ProxyMethod<ReturnType()>
 template <typename ReturnType, typename... ArgTypes>
 class ProxyMethod<ReturnType(ArgTypes...)> final
 {
+    template <typename R, typename... A>
+    // Design decision: This friend class provides a view on the internals of ProxyMethod.
+    // This enables us to hide unnecessary internals from the end-user.
+    // coverity[autosar_cpp14_a11_3_1_violation]
+    friend class ProxyMethodView;
+
   public:
     ProxyMethod(ProxyBase& /* proxy_base */,
                 std::unique_ptr<ProxyMethodBinding> proxy_method_binding,
@@ -244,11 +272,13 @@ class ProxyMethod<ReturnType(ArgTypes...)> final
     /// E.g. is_in_arg_ptr_active_[0][2] == true means, that for the call-queue position 0, the 3rd argument
     /// pointer passed to the zero-copy call-operator is active.
     containers::DynamicArray<std::array<bool, sizeof...(ArgTypes)>> is_in_arg_ptr_active_;
-    /// \brief Dynamic array: one entry per call-queue position.
+
+    /// \brief Dynamic array containing queue-slot active flags: one entry per call-queue position.
     /// \details This array contains bool flags, which indicate, if the return value pointer
-    /// passed to the zero-copy call-operator is active (true) or not (false).
-    /// The optionals are needed, since ProxyMethods without return value don't have a return type pointer.
-    containers::DynamicArray<std::optional<bool>> is_return_type_ptr_active_;
+    /// returned from a call-operator is active (true), i.e. still in-use by the user or not (false).
+    /// For further details see the documentation of is_return_type_ptr_active_ in the
+    /// ProxyMethod<ReturnType()> specialization.
+    containers::DynamicArray<bool> is_return_type_ptr_active_;
 
     std::unique_ptr<ProxyMethodBinding> binding_;
 };
@@ -278,7 +308,7 @@ score::Result<MethodReturnTypePtr<ReturnType>> ProxyMethod<ReturnType()>::operat
 
     return MethodReturnTypePtr<ReturnType>{
         *(reinterpret_cast<ReturnType*>(allocated_return_type_storage.value().data())),
-        is_return_type_ptr_active_[queue_position].value(),
+        is_return_type_ptr_active_[queue_position],
         queue_position};
 }
 
@@ -306,7 +336,7 @@ score::Result<std::size_t> ProxyMethod<ReturnType()>::AllocateNextAvailableQueue
 {
     for (std::size_t i = 0U; i < is_return_type_ptr_active_.size(); ++i)
     {
-        if (!is_return_type_ptr_active_[i].has_value() || !is_return_type_ptr_active_[i].value())
+        if (!is_return_type_ptr_active_[i])
         {
             return i;
         }
@@ -377,7 +407,7 @@ score::Result<MethodReturnTypePtr<ReturnType>> ProxyMethod<ReturnType(ArgTypes..
 
     return MethodReturnTypePtr<ReturnType>{
         *(reinterpret_cast<ReturnType*>(allocated_return_type_storage.value().data())),
-        is_return_type_ptr_active_[queue_position].value(),
+        is_return_type_ptr_active_[queue_position],
         queue_position};
 }
 
@@ -426,7 +456,7 @@ score::Result<std::size_t> ProxyMethod<ReturnType(ArgTypes...)>::AllocateNextAva
             std::none_of(is_in_arg_ptr_active_[i].begin(), is_in_arg_ptr_active_[i].end(), [](bool active) {
                 return active;
             });
-        if (all_inactive && (!is_return_type_ptr_active_[i].has_value() || !is_return_type_ptr_active_[i].value()))
+        if (all_inactive && (!is_return_type_ptr_active_[i]))
         {
             // Found an available slot
             return i;
@@ -467,6 +497,27 @@ std::tuple<impl::MethodInArgPtr<ArgTypes>...> ProxyMethod<ReturnType(ArgTypes...
     return std::make_tuple(
         MethodInArgPtr<ArgTypes>(*(std::get<I>(ptrs)), this->is_in_arg_ptr_active_[queue_index][I], queue_index)...);
 }
+
+/// \brief View on ProxyMethod to provide access to internal type-erased type information.
+template <typename ReturnType, typename... ArgTypes>
+class ProxyMethodView
+{
+  public:
+    explicit ProxyMethodView(ProxyMethod<ReturnType, ArgTypes...>& proxy_method) : proxy_method_{proxy_method} {}
+
+    std::optional<TypeErasedDataTypeInfo> GetTypeErasedReturnType() const noexcept
+    {
+        return proxy_method_.type_erased_return_type_;
+    }
+
+    std::optional<TypeErasedDataTypeInfo> GetTypeErasedInAgs() const noexcept
+    {
+        return proxy_method_.type_erased_in_args_;
+    }
+
+  private:
+    ProxyMethod<ReturnType, ArgTypes...>& proxy_method_;
+};
 
 }  // namespace score::mw::com::impl
 
