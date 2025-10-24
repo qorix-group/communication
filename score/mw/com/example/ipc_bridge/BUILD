@@ -66,6 +66,9 @@ cc_library(
 rust_library(
     name = "ipc_bridge_gen_rs",
     srcs = ["ipc_bridge_gen.rs"],
+    visibility = [
+        "//score/mw/com:__subpackages__",
+    ],
     deps = [
         ":ipc_bridge_gen_cpp",
         "//score/mw/com/impl/rust:mw_com",
