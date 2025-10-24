@@ -24,17 +24,16 @@ rust_library(
     deps = [
         "//score/mw/com/impl/rust/com-api/com-api-concept",
         "//score/mw/com/impl/rust/com-api/com-api-runtime-lola",
-        "//score/mw/com/impl/rust/com-api/com-api-runtime-mock",
     ],
 )
 
 # Mock runtime variant for testing
 rust_library(
     name = "com-api-mock",
+    testonly = True,  # Only test targets can depend on this
     srcs = ["com_api.rs"],
     crate_features = ["mock"],
     crate_name = "com_api",
-    tags = ["manual"],
     visibility = [
         "//visibility:public",  # platform_only
     ],

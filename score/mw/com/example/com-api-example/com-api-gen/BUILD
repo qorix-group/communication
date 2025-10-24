@@ -23,17 +23,16 @@ rust_library(
     ],
     deps = [
         "//score/mw/com/example/com-api-example/com-api-gen-lola",
-        "//score/mw/com/example/com-api-example/com-api-gen-mock",
     ],
 )
 
 # Mock variant for testing
 rust_library(
     name = "com-api-gen-mock-variant",
+    testonly = True,  # Only test targets can depend on this
     srcs = ["com_api_gen.rs"],
     crate_features = ["mock"],
     crate_name = "com_api_gen",
-    tags = ["manual"],
     visibility = [
         "//visibility:public",  # platform_only
     ],

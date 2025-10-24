@@ -14,6 +14,7 @@ load("@rules_rust//rust:defs.bzl", "rust_library")
 
 rust_library(
     name = "com-api-gen-mock",
+    testonly = True,
     srcs = ["com-api-gen.rs"],
     crate_name = "com_api_gen_mock",
     visibility = [
