@@ -12,12 +12,17 @@
  ********************************************************************************/
 #include "score/mw/com/impl/bindings/lola/shm_path_builder.h"
 
+#include "score/mw/com/impl/configuration/lola_service_instance_id.h"
+#include "score/mw/com/impl/configuration/quality_type.h"
+
 #include <gtest/gtest.h>
 
 #include <cstdint>
 #include <iomanip>
+#include <limits>
 #include <sstream>
 #include <string>
+#include <tuple>
 
 namespace score::mw::com::impl::lola
 {
@@ -26,58 +31,75 @@ namespace
 
 constexpr std::uint16_t kServiceId{4660U};
 
-class ShmPathBuilderTestFixture
+class ShmPathBuilderControlParamaterizedTestFixture
     : public ::testing::TestWithParam<std::tuple<QualityType, LolaServiceInstanceId::InstanceId, std::string>>
 {
-  public:
-    static constexpr LolaServiceInstanceId::InstanceId kInstanceId{43981U};
-
-  protected:
-    std::string build_path(const std::string_view type,
-                           const std::string_view expected_sub_path,
-                           const QualityType quality_type = QualityType::kASIL_QM) const
-    {
-        std::ostringstream oss;
-        oss << kBasePath << type << expected_sub_path << (quality_type == QualityType::kASIL_B ? kASILBTag : "");
-        return oss.str();
-    }
-
-    ShmPathBuilder builder_{kServiceId};
-
-    static constexpr auto kBasePath{"lola-"};
-    static constexpr auto kDataTag{"data-"};
-    static constexpr auto kControlTag{"ctl-"};
-    static constexpr auto kASILBTag{"-b"};
 };
 
-TEST_P(ShmPathBuilderTestFixture, TestBuildingControlChannelShmNamePath)
+class ShmPathBuilderDataParamaterizedTestFixture
+    : public ::testing::TestWithParam<std::tuple<LolaServiceInstanceId::InstanceId, std::string>>
 {
-    const auto [quality_type, instance_id, expected_sub_path] = GetParam();
-    const auto expected_path = "/" + build_path(kControlTag, expected_sub_path, quality_type);
+};
 
-    const auto actual_path = builder_.GetControlChannelShmName(instance_id, quality_type);
-
-    EXPECT_EQ(expected_path, actual_path);
-}
-
-TEST_P(ShmPathBuilderTestFixture, TestBuildingDataChannelShmNamePath)
+TEST_P(ShmPathBuilderControlParamaterizedTestFixture, TestBuildingControlChannelShmNamePath)
 {
-    const auto [quality_type, instance_id, expected_sub_path] = GetParam();
-    const auto expected_path = "/" + build_path(kDataTag, expected_sub_path);
+    const auto [quality_type, instance_id, expected_path] = GetParam();
 
-    const auto actual_path = builder_.GetDataChannelShmName(instance_id);
+    // Given a ShmPathBuilder
+    ShmPathBuilder builder{kServiceId};
 
+    // When creating the control channel shm name
+    const auto actual_path = builder.GetControlChannelShmName(instance_id, quality_type);
+
+    // Then the returned path should be equal to the expected path
     EXPECT_EQ(expected_path, actual_path);
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    ShmPathBuilderTests,
-    ShmPathBuilderTestFixture,
-    ::testing::Values(
-        std::make_tuple(QualityType::kASIL_QM, LolaServiceInstanceId::InstanceId{1}, "0000000000004660-00001"),
-        std::make_tuple(QualityType::kASIL_B, LolaServiceInstanceId::InstanceId{1}, "0000000000004660-00001"),
-        std::make_tuple(QualityType::kASIL_QM, ShmPathBuilderTestFixture::kInstanceId, "0000000000004660-43981"),
-        std::make_tuple(QualityType::kASIL_B, ShmPathBuilderTestFixture::kInstanceId, "0000000000004660-43981")));
+    ShmPathBuilderControlTests,
+    ShmPathBuilderControlParamaterizedTestFixture,
+    ::testing::Values(std::make_tuple(QualityType::kASIL_QM,
+                                      LolaServiceInstanceId::InstanceId{1},
+                                      "/lola-ctl-0000000000004660-00001"),
+                      std::make_tuple(QualityType::kASIL_B,
+                                      LolaServiceInstanceId::InstanceId{1},
+                                      "/lola-ctl-0000000000004660-00001-b"),
+
+                      std::make_tuple(QualityType::kASIL_QM,
+                                      LolaServiceInstanceId::InstanceId{43981},
+                                      "/lola-ctl-0000000000004660-43981"),
+                      std::make_tuple(QualityType::kASIL_B,
+                                      LolaServiceInstanceId::InstanceId{43981},
+                                      "/lola-ctl-0000000000004660-43981-b"),
+
+                      std::make_tuple(QualityType::kASIL_QM,
+                                      LolaServiceInstanceId::InstanceId{std::numeric_limits<std::uint16_t>::max()},
+                                      "/lola-ctl-0000000000004660-65535"),
+                      std::make_tuple(QualityType::kASIL_B,
+                                      LolaServiceInstanceId::InstanceId{std::numeric_limits<std::uint16_t>::max()},
+                                      "/lola-ctl-0000000000004660-65535-b")));
+
+TEST_P(ShmPathBuilderDataParamaterizedTestFixture, TestBuildingDataChannelShmNamePath)
+{
+    const auto [instance_id, expected_path] = GetParam();
+
+    // Given a ShmPathBuilder
+    ShmPathBuilder builder{kServiceId};
+
+    // When creating the data channel shm name
+    const auto actual_path = builder.GetDataChannelShmName(instance_id);
+
+    // Then the returned path should be equal to the expected path
+    EXPECT_EQ(expected_path, actual_path);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    ShmPathBuilderDataTests,
+    ShmPathBuilderDataParamaterizedTestFixture,
+    ::testing::Values(std::make_tuple(LolaServiceInstanceId::InstanceId{1}, "/lola-data-0000000000004660-00001"),
+                      std::make_tuple(LolaServiceInstanceId::InstanceId{43981}, "/lola-data-0000000000004660-43981"),
+                      std::make_tuple(LolaServiceInstanceId::InstanceId{std::numeric_limits<std::uint16_t>::max()},
+                                      "/lola-data-0000000000004660-65535")));
 
 }  // namespace
 }  // namespace score::mw::com::impl::lola
