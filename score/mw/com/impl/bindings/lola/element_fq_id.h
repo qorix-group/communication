@@ -14,6 +14,8 @@
 #define SCORE_MW_COM_IMPL_BINDINGS_LOLA_ELEMENT_FQ_ID_H
 
 #include "score/mw/com/impl/configuration/lola_event_id.h"
+#include "score/mw/com/impl/configuration/lola_field_id.h"
+#include "score/mw/com/impl/configuration/lola_method_id.h"
 #include "score/mw/com/impl/configuration/lola_service_id.h"
 #include "score/mw/com/impl/configuration/lola_service_instance_id.h"
 #include "score/mw/com/impl/service_element_type.h"
@@ -49,6 +51,11 @@ class ElementFqId
     using ServiceId = LolaServiceId;
     using ElementId = LolaEventId;
     using InstanceId = LolaServiceInstanceId::InstanceId;
+
+    static_assert(std::is_same_v<LolaEventId, LolaFieldId>,
+                  "LolaEventId must be the same as LolaFieldId, otherwise ElementId must be a variant!");
+    static_assert(std::is_same_v<LolaEventId, LolaMethodId>,
+                  "LolaEventId must be the same as LolaMethodId, otherwise ElementId must be a variant!");
 
     /// \brief default ctor initializing all members to their related max value.
     /// \details constructs an "invalid" ElementFqId.
