@@ -80,6 +80,14 @@ bool IsShortNameValid(const std::string_view shortname) noexcept
 
 score::Result<InstanceSpecifier> InstanceSpecifier::Create(std::string&& shortname_path) noexcept
 {
+    // Suppress Rule A18-9-2 (required, implementation, automated)
+    // Forwarding values to other functions shall be done via: (1) std::move if the value is an rvalue reference, (2)
+    // std::forward if the value is forwarding reference.
+    // Here: the function signature IsShortNameValid(const std::string_view shortname) leads to the fact that
+    // std::string_view is implicitly constructed from shortname_path using an lvalue reference, so no move of
+    // shortname_path is required. Additionally,  shortname_path is later used in the function again so it should not be
+    // moved here to avoid use-after-move.
+    //  coverity[autosar_cpp14_a18_9_2_violation : FALSE]
     if (!IsShortNameValid(shortname_path))
     {
         score::mw::log::LogWarn("lola") << "Shortname" << shortname_path

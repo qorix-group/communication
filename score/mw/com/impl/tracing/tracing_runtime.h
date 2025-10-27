@@ -187,13 +187,13 @@ class TracingRuntime : public ITracingRuntime
     /// \details Tracks consecutive getting available slots failures. Incremented on each failure, reset to 0 when
     ///          tracing slot becomes available again. Used with kDebounceAfter threshold to determine when to switch
     ///          log levels from LogInfo to LogDebug.
-    std::uint8_t debounce_counter_{0U};
+    std::uint8_t debounce_counter_;
 
     /// \brief Flag to track if this is the first time debouncing becomes active
     /// \details Initially true. Set to false when debounce_counter_ first exceeds kDebounceAfter threshold. Used to log
     ///          a one-time LogInfo message about switching to LogDebug level before the transition. Remains false for
     ///          the lifetime of the TracingRuntime instance once debouncing has activated.
-    bool first_debounce_{true};
+    bool first_debounce_;
 };
 
 }  // namespace score::mw::com::impl::tracing

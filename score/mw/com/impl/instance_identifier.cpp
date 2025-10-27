@@ -52,6 +52,12 @@ score::Result<InstanceIdentifier> InstanceIdentifier::Create(std::string&& seria
         return MakeUnexpected(ComErrc::kInvalidConfiguration);
     }
     json::JsonParser json_parser{};
+    // Suppress Rule A18-9-2 (required, implementation, automated)
+    // Forwarding values to other functions shall be done via: (1) std::move if the value is an rvalue reference, (2)
+    // std::forward if the value is forwarding reference.
+    // Here serialized_format.data() and serialized_format.size() are no rvalue references and thus don´t need to be
+    // moved.
+    // coverity[autosar_cpp14_a18_9_2_violation : FALSE]
     auto json_result = json_parser.FromBuffer({serialized_format.data(), serialized_format.size()});
     if (!json_result.has_value())
     {

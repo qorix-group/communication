@@ -297,7 +297,10 @@ ITracingRuntimeBinding& TracingRuntime::GetTracingRuntimeBinding(const BindingTy
 
 TracingRuntime::TracingRuntime(
     std::unordered_map<BindingType, ITracingRuntimeBinding*>&& tracing_runtime_bindings) noexcept
-    : ITracingRuntime{}, tracing_runtime_bindings_{std::move(tracing_runtime_bindings)}
+    : ITracingRuntime{},
+      tracing_runtime_bindings_{std::move(tracing_runtime_bindings)},
+      debounce_counter_{0U},
+      first_debounce_{true}
 {
     for (auto tracing_runtime_binding : tracing_runtime_bindings_)
     {
