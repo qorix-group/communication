@@ -29,9 +29,6 @@ const auto kMethodName{"DummyMethod"};
 class ProxyMethodTestFixture : public ::testing::Test
 {
   public:
-    ProxyMethodTestFixture() = default;
-    ~ProxyMethodTestFixture() override = default;
-
     void SetUp() override
     {
         proxy_method_binding_mock_ = std::make_unique<mock_binding::ProxyMethod>();
@@ -89,8 +86,7 @@ TEST_F(ProxyMethodTestFixture, Construction_withNonVoidReturnAndNoArgsSucceeds)
 TEST_F(ProxyMethodTestFixture, AllocateInArgs_Successful)
 {
     // Given a ProxyMethod with a return type of void and three arguments: int, double, char
-    auto unit =
-        ProxyMethod<void(int, double, char)>{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
+    ProxyMethod<void(int, double, char)> unit{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
 
     // Expect that AllocateInArgs is called once for queue position 0 on the binding mock and returns a pointer to our
     // buffer
@@ -120,8 +116,7 @@ TEST_F(ProxyMethodTestFixture, AllocateInArgs_Successful)
 TEST_F(ProxyMethodTestFixture, AllocateInArgs_QueueFullError)
 {
     // Given a ProxyMethod with a return type of void and three arguments: int, double, char
-    auto unit =
-        ProxyMethod<void(int, double, char)>{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
+    ProxyMethod<void(int, double, char)> unit{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
 
     // when Allocate is called on the ProxyMethod for the 1st time
     auto method_in_arg_ptr_tuple = unit.Allocate();
@@ -160,8 +155,7 @@ TEST_F(ProxyMethodTestFixture, AllocateInArgs_BindingError)
 TEST_F(ProxyMethodTestFixture, CallOperator_VoidReturn_WithCopy)
 {
     // Given a ProxyMethod with a return type of void and three arguments: int, double, char
-    auto unit =
-        ProxyMethod<void(int, double, char)>{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
+    ProxyMethod<void(int, double, char)> unit{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
 
     // when call operator is called on the ProxyMethod
     int arg1 = 42;
@@ -175,8 +169,7 @@ TEST_F(ProxyMethodTestFixture, CallOperator_VoidReturn_WithCopy)
 TEST_F(ProxyMethodTestFixture, CallOperator_NonVoidReturn_WithCopy)
 {
     // Given a ProxyMethod with a return type of int and three arguments: int, double, char
-    auto unit =
-        ProxyMethod<int(int, double, char)>{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
+    ProxyMethod<int(int, double, char)> unit{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
 
     // when call operator is called on the ProxyMethod
     int arg1 = 42;
@@ -190,7 +183,7 @@ TEST_F(ProxyMethodTestFixture, CallOperator_NonVoidReturn_WithCopy)
 TEST_F(ProxyMethodTestFixture, CallOperator_VoidReturn_WithCopyTemporary)
 {
     // Given a ProxyMethod with a return type of void and one argument: int
-    auto unit = ProxyMethod<void(int)>{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
+    ProxyMethod<void(int)> unit{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
 
     // when call operator is called on the ProxyMethod handing the arg over as temporary
     auto call_result = unit(42);
@@ -201,7 +194,7 @@ TEST_F(ProxyMethodTestFixture, CallOperator_VoidReturn_WithCopyTemporary)
 TEST_F(ProxyMethodTestFixture, CallOperator_VoidReturn_NoArgs)
 {
     // Given a ProxyMethod with a return type of void and no arguments
-    auto unit = ProxyMethod<void()>{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
+    ProxyMethod<void()> unit{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
 
     // when call operator is called on the ProxyMethod
     auto call_result = unit();
@@ -212,7 +205,7 @@ TEST_F(ProxyMethodTestFixture, CallOperator_VoidReturn_NoArgs)
 TEST_F(ProxyMethodTestFixture, CallOperator_NonVoidReturn_NoArgs)
 {
     // Given a ProxyMethod with a return type of non-void and no arguments
-    auto unit = ProxyMethod<int()>{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
+    ProxyMethod<int()> unit{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
 
     // when call operator is called on the ProxyMethod
     auto call_result = unit();
@@ -223,8 +216,7 @@ TEST_F(ProxyMethodTestFixture, CallOperator_NonVoidReturn_NoArgs)
 TEST_F(ProxyMethodTestFixture, CallOperator_NonVoidReturn_ZeroCopy)
 {
     // Given a ProxyMethod with a return type of int and three arguments: int, double, char
-    auto unit =
-        ProxyMethod<int(int, double, char)>{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
+    ProxyMethod<int(int, double, char)> unit{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
 
     // when Allocate is called on the ProxyMethod
     auto method_in_arg_ptr_tuple = unit.Allocate();
@@ -245,8 +237,7 @@ TEST_F(ProxyMethodTestFixture, CallOperator_NonVoidReturn_ZeroCopy)
 TEST_F(ProxyMethodTestFixture, ProxyMethodView_WithInArgsAndNonVoidReturnType)
 {
     // Given a ProxyMethod with a return type of int and three arguments: int, double, char
-    auto unit =
-        ProxyMethod<int(int, double, char)>{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
+    ProxyMethod<int(int, double, char)> unit{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
 
     // then we can create a view on the ProxyMethod
     ProxyMethodView proxy_method_view{unit};
@@ -261,7 +252,7 @@ TEST_F(ProxyMethodTestFixture, ProxyMethodView_WithInArgsAndNonVoidReturnType)
 TEST_F(ProxyMethodTestFixture, ProxyMethodView_WithoutInArgs)
 {
     // Given a ProxyMethod with a return type of int and no arguments.
-    auto unit = ProxyMethod<int()>{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
+    ProxyMethod<int()> unit{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
 
     // then we can create a view on the ProxyMethod
     ProxyMethodView proxy_method_view{unit};
@@ -276,8 +267,7 @@ TEST_F(ProxyMethodTestFixture, ProxyMethodView_WithoutInArgs)
 TEST_F(ProxyMethodTestFixture, ProxyMethodView_WithVoidReturnType)
 {
     // Given a ProxyMethod with a return type of void and three arguments: int, double, char
-    auto unit =
-        ProxyMethod<void(int, double, char)>{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
+    ProxyMethod<void(int, double, char)> unit{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
 
     // then we can create a view on the ProxyMethod
     ProxyMethodView proxy_method_view{unit};

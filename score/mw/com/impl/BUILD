@@ -122,6 +122,28 @@ cc_library(
 )
 
 cc_library(
+    name = "proxy_method_base",
+    srcs = ["proxy_method_base.cpp"],
+    hdrs = ["proxy_method_base.h"],
+    features = COMPILER_WARNING_FEATURES,
+    tags = ["FFI"],
+    visibility = [
+        "//score/mw/com:__subpackages__",
+    ],
+    deps = [
+        ":error",
+        ":method_signature_element_ptr",
+        ":proxy_base",
+        ":proxy_method_binding",
+        "//score/mw/com/impl/util:type_erased_storage",
+        "@score_baselibs//score/containers:dynamic_array",
+        "@score_baselibs//score/language/futurecpp",
+        "@score_baselibs//score/mw/log",
+        "@score_baselibs//score/result",
+    ],
+)
+
+cc_library(
     name = "proxy_method",
     srcs = ["proxy_method.cpp"],
     hdrs = ["proxy_method.h"],
@@ -134,6 +156,7 @@ cc_library(
         ":error",
         ":method_signature_element_ptr",
         ":proxy_base",
+        ":proxy_method_base",
         ":proxy_method_binding",
         "//score/mw/com/impl/util:type_erased_storage",
         "@score_baselibs//score/containers:dynamic_array",
