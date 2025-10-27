@@ -32,6 +32,12 @@ class ShmPathBuilderMock : public IShmPathBuilder
                 GetControlChannelShmName,
                 (LolaServiceInstanceId::InstanceId instance_id, const QualityType),
                 (const, noexcept, override));
+    MOCK_METHOD(std::string,
+                GetMethodChannelShmName,
+                (const LolaServiceInstanceId::InstanceId instance_id,
+                 const pid_t pid,
+                 const MethodUniqueIdentifier unique_identifier),
+                (const, noexcept, override));
 };
 
 }  // namespace score::mw::com::impl::lola

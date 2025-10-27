@@ -13,6 +13,7 @@
 #include "score/mw/com/impl/bindings/lola/shm_path_builder.h"
 
 #include "score/mw/com/impl/bindings/lola/path_builder.h"
+#include <sched.h>
 
 #include <iomanip>
 #include <sstream>
@@ -26,6 +27,7 @@ namespace
 
 constexpr auto kDataChannelPrefix = "lola-data-";
 constexpr auto kControlChannelPrefix = "lola-ctl-";
+constexpr auto kMethodChannelPrefix = "lola-methods-";
 constexpr auto kAsilBControlChannelSuffix = "-b";
 
 /// Emit file name of the control file to an ostream
@@ -87,6 +89,23 @@ void EmitDataFileName(std::ostream& out,
     AppendServiceAndInstance(out, service_id, instance_id);
 }
 
+/// Emit file name of the method file to an ostream
+///
+/// \param out output ostream to use
+void EmitMethodFileName(std::ostream& out,
+                        const std::uint16_t service_id,
+                        const LolaServiceInstanceId::InstanceId instance_id,
+                        const pid_t pid,
+                        const ShmPathBuilder::MethodUniqueIdentifier unique_identifier) noexcept
+{
+    out << kMethodChannelPrefix;
+    AppendServiceAndInstance(out, service_id, instance_id);
+
+    out << '-';
+    out << std::setfill('0') << std::setw(5) << pid << '-';
+    out << std::setfill('0') << std::setw(5) << unique_identifier;
+}
+
 }  // namespace
 
 std::string ShmPathBuilder::GetDataChannelShmName(const LolaServiceInstanceId::InstanceId instance_id) const noexcept
@@ -101,6 +120,15 @@ std::string ShmPathBuilder::GetControlChannelShmName(const LolaServiceInstanceId
 {
     return EmitWithPrefix('/', [this, channel_type, instance_id](auto& out) noexcept {
         EmitControlFileName(out, channel_type, service_id_, instance_id);
+    });
+}
+
+std::string ShmPathBuilder::GetMethodChannelShmName(const LolaServiceInstanceId::InstanceId instance_id,
+                                                    const pid_t pid,
+                                                    const MethodUniqueIdentifier unique_identifier) const noexcept
+{
+    return EmitWithPrefix('/', [this, instance_id, pid, unique_identifier](auto& out) noexcept {
+        EmitMethodFileName(out, service_id_, instance_id, pid, unique_identifier);
     });
 }
 

@@ -16,6 +16,8 @@
 #include "score/mw/com/impl/configuration/lola_service_instance_id.h"
 #include "score/mw/com/impl/configuration/quality_type.h"
 
+#include <sys/types.h>
+#include <cstdint>
 #include <string>
 
 namespace score::mw::com::impl::lola
@@ -36,6 +38,8 @@ namespace score::mw::com::impl::lola
 class IShmPathBuilder
 {
   public:
+    using MethodUniqueIdentifier = std::uint16_t;
+
     IShmPathBuilder() noexcept = default;
 
     virtual ~IShmPathBuilder() noexcept = default;
@@ -51,6 +55,16 @@ class IShmPathBuilder
     /// \return The shm file name
     virtual std::string GetControlChannelShmName(const LolaServiceInstanceId::InstanceId instance_id,
                                                  const QualityType channel_type) const noexcept = 0;
+
+    /// Returns the path suitable for shm_open to the method shared memory.
+    ///
+    /// \param instance_id InstanceId of path to be created
+    /// \param pid of the process which will create the shm region
+    /// \param unique_identifier a unique identifier that will be appended to the shm name
+    /// \return The shm file name
+    virtual std::string GetMethodChannelShmName(const LolaServiceInstanceId::InstanceId instance_id,
+                                                const pid_t pid,
+                                                const MethodUniqueIdentifier unique_identifier) const noexcept = 0;
 
   protected:
     IShmPathBuilder(IShmPathBuilder&&) noexcept = default;

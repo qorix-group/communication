@@ -51,9 +51,19 @@ class ShmPathBuilder : public IShmPathBuilder
     ///
     /// \param instance_id InstanceId of path to be created
     /// \param channel_type Whether to return the ASIL QM or ASIL B name.
-    /// \return The shm file name, or nullopt if the binding didn't contain a valid instance
+    /// \return The shm file name
     std::string GetControlChannelShmName(const LolaServiceInstanceId::InstanceId instance_id,
                                          const QualityType channel_type) const noexcept override;
+
+    /// Returns the path suitable for shm_open to the method shared memory.
+    ///
+    /// \param instance_id InstanceId of path to be created
+    /// \param pid of the process which will create the shm region
+    /// \param unique_identifier a unique identifier that will be appended to the shm name
+    /// \return The shm file name
+    std::string GetMethodChannelShmName(const LolaServiceInstanceId::InstanceId instance_id,
+                                        const pid_t pid,
+                                        const MethodUniqueIdentifier unique_identifier) const noexcept override;
 
   private:
     const std::uint16_t service_id_;
