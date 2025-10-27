@@ -626,7 +626,6 @@ cc_gtest_unit_test(
     features = COMPILER_WARNING_FEATURES,
     deps = [
         ":runtime_binding_factory",
-        "//score/mw/com/impl/bindings/lola/messaging:mock",
         "//score/mw/com/impl/configuration/test:configuration_store",
         "//score/mw/com/impl/test:dummy_instance_identifier_builder",
         "//score/mw/com/message_passing:mock",
@@ -655,7 +654,6 @@ cc_test(
         ":proxy_binding_factory_mock",
         "//score/mw/com/impl:runtime_mock",
         "//score/mw/com/impl/bindings/lola:runtime_mock",
-        "//score/mw/com/impl/bindings/lola/messaging:mock",
         "//score/mw/com/impl/bindings/lola/test:proxy_event_test_resources",
         "//score/mw/com/impl/bindings/lola/test_doubles",
         "//score/mw/com/impl/bindings/mock_binding",

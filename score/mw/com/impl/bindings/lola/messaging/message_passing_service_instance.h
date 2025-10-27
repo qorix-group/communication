@@ -18,9 +18,6 @@
 #include "score/mw/com/impl/bindings/lola/messaging/i_message_passing_service.h"
 #include "score/mw/com/impl/bindings/lola/messaging/message_passing_client_cache.h"
 
-// TODO: remove after adopting AsilSpecificCfg
-#include "score/mw/com/impl/bindings/lola/messaging/message_passing_facade.h"
-
 // TODO: PMR
 #include "score/concurrency/thread_pool.h"
 
@@ -37,10 +34,18 @@ namespace score::mw::com::impl::lola
 class MessagePassingServiceInstance
 {
   public:
-    // TODO: make our own
-    using AsilSpecificCfg = MessagePassingFacade::AsilSpecificCfg;
-
     using ClientQualityType = MessagePassingClientCache::ClientQualityType;
+
+    /// \brief Aggregation of ASIL level specific/dependent config properties.
+    struct AsilSpecificCfg
+    {
+        // Suppress "AUTOSAR C++14 M11-0-1" rule findings. This rule states: "Member data in non-POD class types shall
+        // be private.". We need these data elements to be organized into a coherent organized data structure.
+        // coverity[autosar_cpp14_m11_0_1_violation]
+        std::int32_t message_queue_rx_size_;
+        // coverity[autosar_cpp14_m11_0_1_violation]
+        std::vector<uid_t> allowed_user_ids_;
+    };
 
     MessagePassingServiceInstance(const ClientQualityType asil_level,
                                   const AsilSpecificCfg config,

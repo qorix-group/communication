@@ -18,6 +18,7 @@
 #include "score/mw/com/impl/scoped_event_receive_handler.h"
 
 #include <cstdint>
+#include <memory>
 
 namespace score::mw::com::impl::lola
 {

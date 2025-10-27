@@ -11,13 +11,17 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 #include "score/mw/com/impl/bindings/lola/messaging/message_passing_service_instance.h"
-
-#include "score/language/safecpp/safe_math/safe_math.h"
 #include "score/mw/com/impl/bindings/lola/messaging/thread_abstraction.h"
 
 #include "score/message_passing/i_server_connection.h"
+
+#include "score/language/safecpp/safe_math/safe_math.h"
+
 #include "score/os/errno_logging.h"
+#include "score/os/unistd.h"
+
 #include "score/mw/log/logging.h"
+
 #include <limits>
 #include <variant>
 

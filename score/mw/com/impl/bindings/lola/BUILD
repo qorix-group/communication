@@ -127,7 +127,6 @@ cc_library(
     deps = [
         ":i_runtime",
         "//score/mw/com/impl/bindings/lola/messaging",
-        "//score/mw/com/impl/bindings/lola/messaging:messaging2",
         "//score/mw/com/impl/bindings/lola/service_discovery/client:service_discovery_client",
         "//score/mw/com/impl/bindings/lola/tracing:tracing_runtime",
         "@score-baselibs//score/concurrency:executor",
@@ -912,7 +911,7 @@ cc_gtest_unit_test(
         ":transaction_log_rollback_executor",
         "//score/mw/com/impl:runtime",
         "//score/mw/com/impl:runtime_mock",
-        "//score/mw/com/impl/bindings/lola/messaging:mock",
+        "//score/mw/com/impl/bindings/lola/messaging:message_passing_service_mock",
         "//score/mw/com/impl/bindings/lola/test:transaction_log_test_resources",
         "@score-baselibs//score/memory/shared:shared_memory_resource_heap_allocator_mock",
     ],
@@ -1067,7 +1066,6 @@ cc_gtest_unit_test(
     features = COMPILER_WARNING_FEATURES,
     deps = [
         ":event_data_control_test_resources",
-        "//score/mw/com/impl/bindings/lola/messaging:mock",
         "//score/mw/com/impl/bindings/lola/test:skeleton_event_test_resources",
         "//score/mw/com/impl/bindings/lola/test:transaction_log_test_resources",
         "//score/mw/com/impl/tracing/configuration:tracing_filter_config_mock",

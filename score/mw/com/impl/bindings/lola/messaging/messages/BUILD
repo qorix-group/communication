@@ -28,7 +28,10 @@ cc_library(
     ],
     features = COMPILER_WARNING_FEATURES,
     tags = ["FFI"],
-    visibility = ["//score/mw/com/impl/bindings/lola/messaging:__pkg__"],
+    visibility = [
+        "//score/mw/com/impl/bindings/lola/messaging:__pkg__",
+        "//score/mw/com/test/separate_reception_threads:__pkg__",
+    ],
     deps = [
         "//score/mw/com/impl/bindings/lola:element_fq_id",
         "//score/mw/com/message_passing",
