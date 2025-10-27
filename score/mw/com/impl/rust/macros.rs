@@ -62,7 +62,9 @@ macro_rules! import_type {
 
         impl $crate::proxy_bridge::EventOps for $ctype {
             fn get_sample_ref(ptr: &$crate::proxy_bridge::SamplePtr<Self>) -> &Self {
-                unsafe { &*$uid::get(ptr) }
+                unsafe {
+                    $uid::get(ptr).as_ref().expect("Received null ptr from dereferenced sample_ptr")
+                }
             }
 
             fn delete_sample_ptr(mut ptr: $crate::proxy_bridge::SamplePtr<Self>) {

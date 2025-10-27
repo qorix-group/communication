@@ -21,7 +21,6 @@
 #include "score/mw/com/types.h"
 
 #include <score/assert.hpp>
-#include <optional>
 
 namespace score::mw::com::impl::rust
 {
@@ -85,6 +84,7 @@ inline S* CreateSkeletonWrapper(const ::score::mw::com::InstanceSpecifier& insta
                                                                                                                     \
     void mw_com_gen_ProxyWrapperClass_##uid##_delete(uid##MwComProxyType* proxy)                                    \
     {                                                                                                               \
+        SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(proxy != nullptr, "Attempt to delete nullptr proxywrapper!");                        \
         delete proxy;                                                                                               \
     }                                                                                                               \
                                                                                                                     \
@@ -96,16 +96,19 @@ inline S* CreateSkeletonWrapper(const ::score::mw::com::InstanceSpecifier& insta
                                                                                                                     \
     void mw_com_gen_SkeletonWrapperClass_##uid##_delete(uid##MwComSkeletonType* skeleton)                           \
     {                                                                                                               \
+        SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(skeleton != nullptr, "Attempt to delete nullptr skeleton!");                         \
         delete skeleton;                                                                                            \
     }                                                                                                               \
                                                                                                                     \
     bool mw_com_gen_SkeletonWrapperClass_##uid##_offer(uid##MwComSkeletonType* skeleton)                            \
     {                                                                                                               \
+        SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(skeleton != nullptr, "Attempt to use nullptr skeleton!");                            \
         return skeleton->OfferService().has_value();                                                                \
     }                                                                                                               \
                                                                                                                     \
     void mw_com_gen_SkeletonWrapperClass_##uid##_stop_offer(uid##MwComSkeletonType* skeleton)                       \
     {                                                                                                               \
+        SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(skeleton != nullptr, "Attempt to use nullptr skeleton!");                            \
         skeleton->StopOfferService();                                                                               \
     }
 
@@ -113,12 +116,14 @@ inline S* CreateSkeletonWrapper(const ::score::mw::com::InstanceSpecifier& insta
     ::score::mw::com::impl::ProxyEvent<event_type>* mw_com_gen_ProxyWrapperClass_##uid##_##event_name##_get(       \
         uid##MwComProxyType* proxy) noexcept                                                                     \
     {                                                                                                            \
+        SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(proxy != nullptr, "Attempt to use nullptr proxy!");                               \
         return &proxy->event_name;                                                                               \
     }                                                                                                            \
                                                                                                                  \
     ::score::mw::com::impl::SkeletonEvent<event_type>* mw_com_gen_SkeletonWrapperClass_##uid##_##event_name##_get( \
         uid##MwComSkeletonType* skeleton) noexcept                                                               \
     {                                                                                                            \
+        SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(skeleton != nullptr, "Attempt to use nullptr skeleton!");                         \
         return &skeleton->event_name;                                                                            \
     }
 
@@ -160,16 +165,26 @@ inline S* CreateSkeletonWrapper(const ::score::mw::com::InstanceSpecifier& insta
                                                                                                                      \
     const type* mw_com_gen_SamplePtr_##uid##_get(const ::score::mw::com::impl::SamplePtr<type>* sample_ptr) noexcept   \
     {                                                                                                                \
-        return sample_ptr->Get();                                                                                    \
+        if (sample_ptr != nullptr)                                                                                   \
+        {                                                                                                            \
+            return sample_ptr->Get();                                                                                \
+        }                                                                                                            \
+        else                                                                                                         \
+        {                                                                                                            \
+            return nullptr;                                                                                          \
+        }                                                                                                            \
     }                                                                                                                \
                                                                                                                      \
     void mw_com_gen_SamplePtr_##uid##_delete(::score::mw::com::impl::SamplePtr<type>* sample_ptr)                      \
     {                                                                                                                \
+        SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(sample_ptr != nullptr, "Attempt to delete null sample ptr!");                         \
         sample_ptr->~SamplePtr<type>();                                                                              \
     }                                                                                                                \
                                                                                                                      \
     bool mw_com_gen_SkeletonEvent_##uid##_send(::score::mw::com::impl::SkeletonEvent<type>* event, type* data)         \
     {                                                                                                                \
+        SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(event != nullptr, "Attempt to use nullptr event!");                                   \
+        SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(data != nullptr, "Attempt to send nullptr data");                                     \
         return event->Send(std::move(*data)).has_value();                                                            \
     }                                                                                                                \
     }
