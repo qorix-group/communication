@@ -299,6 +299,15 @@ INSTANTIATE_TEST_CASE_P(
     ServiceInstanceDeploymentLessThanParamaterisedFixture,
     ServiceInstanceDeploymentLessThanParamaterisedFixture,
     ::testing::Values(
+        // Comparing two ServiceInstanceDeployments with equal bindings compares based on Asil level
+        std::make_pair(ServiceInstanceDeployment{kDummyService,
+                                                 LolaServiceInstanceDeployment{1U},
+                                                 QualityType::kASIL_QM,
+                                                 kInstanceSpecifier},
+                       ServiceInstanceDeployment{kDummyService,
+                                                 LolaServiceInstanceDeployment{1U},
+                                                 QualityType::kASIL_B,
+                                                 kInstanceSpecifier}),
 
         // Comparing two LolaServiceInstanceDeployments compares based on InstanceId only
         std::make_pair(ServiceInstanceDeployment{kDummyService,
