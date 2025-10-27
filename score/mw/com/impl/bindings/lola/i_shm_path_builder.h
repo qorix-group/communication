@@ -40,30 +40,6 @@ class IShmPathBuilder
 
     virtual ~IShmPathBuilder() noexcept = default;
 
-    /// Returns the file name to the control shared memory file.
-    ///
-    /// \param asil_b Whether to return the ASIL QM or ASIL B path.
-    /// \return The name of the file
-    virtual std::string GetControlChannelFileName(const LolaServiceInstanceId::InstanceId instance_id,
-                                                  const QualityType channel_type) const noexcept = 0;
-
-    /// Returns the path to the data shared memory file.
-    ///
-    /// \return The name of the file
-    virtual std::string GetDataChannelFileName(const LolaServiceInstanceId::InstanceId instance_id) const noexcept = 0;
-
-    /// Returns the file path to the control shared memory file.
-    ///
-    /// \param asil_b Whether to return the ASIL QM or ASIL B path.
-    /// \return The path to the file
-    virtual std::string GetControlChannelPath(const LolaServiceInstanceId::InstanceId instance_id,
-                                              const QualityType channel_type) const noexcept = 0;
-
-    /// Returns the file path to the data shared memory file.
-    ///
-    /// \return The path to the file
-    virtual std::string GetDataChannelPath(const LolaServiceInstanceId::InstanceId instance_id) const noexcept = 0;
-
     /// Returns the path suitable for shm_open to the data shared memory.
     ///
     /// \return The shm file name

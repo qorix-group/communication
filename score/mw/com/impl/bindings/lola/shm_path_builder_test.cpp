@@ -48,32 +48,7 @@ class ShmPathBuilderTestFixture
     static constexpr auto kDataTag{"data-"};
     static constexpr auto kControlTag{"ctl-"};
     static constexpr auto kASILBTag{"-b"};
-#if defined(__QNXNTO__)
-    static constexpr auto kSharedMemoryPathPrefix{"/dev/shmem/"};
-#else
-    static constexpr auto kSharedMemoryPathPrefix{"/dev/shm/"};
-#endif
 };
-
-TEST_P(ShmPathBuilderTestFixture, TestBuildingControlChannelFileNamePath)
-{
-    const auto [quality_type, instance_id, expected_sub_path] = GetParam();
-    const auto expected_path = build_path(kControlTag, expected_sub_path, quality_type);
-
-    const auto actual_path = builder_.GetControlChannelFileName(instance_id, quality_type);
-
-    EXPECT_EQ(expected_path, actual_path);
-}
-
-TEST_P(ShmPathBuilderTestFixture, TestBuildingDataChannelFileNamePath)
-{
-    const auto [quality_type, instance_id, expected_sub_path] = GetParam();
-    const auto expected_path = build_path(kDataTag, expected_sub_path);
-
-    const auto actual_path = builder_.GetDataChannelFileName(instance_id);
-
-    EXPECT_EQ(expected_path, actual_path);
-}
 
 TEST_P(ShmPathBuilderTestFixture, TestBuildingControlChannelShmNamePath)
 {
@@ -95,26 +70,6 @@ TEST_P(ShmPathBuilderTestFixture, TestBuildingDataChannelShmNamePath)
     EXPECT_EQ(expected_path, actual_path);
 }
 
-TEST_P(ShmPathBuilderTestFixture, TestBuildingControlChannelPath)
-{
-    const auto [quality_type, instance_id, expected_sub_path] = GetParam();
-    const auto expected_path = kSharedMemoryPathPrefix + build_path(kControlTag, expected_sub_path, quality_type);
-
-    const auto actual_path = builder_.GetControlChannelPath(instance_id, quality_type);
-
-    EXPECT_EQ(expected_path, actual_path);
-}
-
-TEST_P(ShmPathBuilderTestFixture, TestBuildingDataChannelPath)
-{
-    const auto [quality_type, instance_id, expected_sub_path] = GetParam();
-    const auto expected_path = kSharedMemoryPathPrefix + build_path(kDataTag, expected_sub_path);
-
-    const auto actual_path = builder_.GetDataChannelPath(instance_id);
-
-    EXPECT_EQ(expected_path, actual_path);
-}
-
 INSTANTIATE_TEST_SUITE_P(
     ShmPathBuilderTests,
     ShmPathBuilderTestFixture,
@@ -123,38 +78,6 @@ INSTANTIATE_TEST_SUITE_P(
         std::make_tuple(QualityType::kASIL_B, LolaServiceInstanceId::InstanceId{1}, "0000000000004660-00001"),
         std::make_tuple(QualityType::kASIL_QM, ShmPathBuilderTestFixture::kInstanceId, "0000000000004660-43981"),
         std::make_tuple(QualityType::kASIL_B, ShmPathBuilderTestFixture::kInstanceId, "0000000000004660-43981")));
-
-TEST_F(ShmPathBuilderTestFixture, TestGetAsilBSuffixWorks)
-{
-    const auto actual_tag = ShmPathBuilder::GetAsilBSuffix();
-
-    EXPECT_EQ(kASILBTag, actual_tag);
-}
-
-TEST_F(ShmPathBuilderTestFixture, TestGetSharedMemoryPrefixWorks)
-{
-    const auto actual_shm_prefix = ShmPathBuilder::GetSharedMemoryPrefix();
-
-    EXPECT_EQ(kSharedMemoryPathPrefix, actual_shm_prefix);
-}
-
-TEST(ShmPathBuilderTest, GetPrefixContainingControlChannelAndServiceIdWorks)
-{
-    const auto expected_prefix_containing_control_channel_and_service_id = "lola-ctl-0000000000004660-";
-
-    const auto actual_prefix_containing_control_channel_and_service_id =
-        ShmPathBuilder::GetPrefixContainingControlChannelAndServiceId(kServiceId);
-
-    EXPECT_EQ(expected_prefix_containing_control_channel_and_service_id,
-              actual_prefix_containing_control_channel_and_service_id);
-}
-
-// Death Test Suite
-using ShmPathBuilderDeathTest = ShmPathBuilderTestFixture;
-TEST_F(ShmPathBuilderDeathTest, TestBuildingWithInvalidQualityType)
-{
-    EXPECT_DEATH(builder_.GetControlChannelFileName(ShmPathBuilderDeathTest::kInstanceId, QualityType::kInvalid), ".*");
-}
 
 }  // namespace
 }  // namespace score::mw::com::impl::lola

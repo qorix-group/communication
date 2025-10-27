@@ -118,10 +118,6 @@ class lola::SlotCollector {
 
 class lola::ShmPathBuilder {
   +ShmPathBuilder(instance_deployment: const LolaServiceInstanceDeployment&, type_deploymenttype_deployment: const LolaServiceTypeDeployment&)
-  +GetControlChannelFileName(channel_type: const QualityType): score::cpp::optional<std::string>
-  +GetDataChannelFileName(): score::cpp::optional<std::string>
-  +GetControlChannelPath(channel_type: const QualityType): score::cpp::optional<std::string>
-  +GetDataChannelPath(): score::cpp::optional<std::string>
   +GetDataChannelShmName(): score::cpp::optional<std::string>
   +GetControlChannelShmName(const QualityType channel_type): score::cpp::optional<std::string>
 }

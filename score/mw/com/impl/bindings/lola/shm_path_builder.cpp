@@ -27,18 +27,6 @@ namespace
 constexpr auto kDataChannelPrefix = "lola-data-";
 constexpr auto kControlChannelPrefix = "lola-ctl-";
 constexpr auto kAsilBControlChannelSuffix = "-b";
-// Suppress "AUTOSAR C++14 A16-0-1" rule findings. This rule stated: "The pre-processor shall only be used for
-// unconditional and conditional file inclusion and include guards, and using the following directives: (1) #ifndef,
-// #ifdef, (3) #if, (4) #if defined, (5) #elif, (6) #else, (7) #define, (8) #endif, (9) #include.".
-// Need to limit this functionality to QNX only.
-// coverity[autosar_cpp14_a16_0_1_violation]
-#if defined(__QNXNTO__)
-constexpr auto kSharedMemoryPathPrefix = "/dev/shmem/";
-// coverity[autosar_cpp14_a16_0_1_violation]  Different implementation required for linux.
-#else
-constexpr auto kSharedMemoryPathPrefix = "/dev/shm/";
-// coverity[autosar_cpp14_a16_0_1_violation]
-#endif
 
 /// Emit file name of the control file to an ostream
 ///
@@ -101,36 +89,6 @@ void EmitDataFileName(std::ostream& out,
 
 }  // namespace
 
-std::string ShmPathBuilder::GetControlChannelFileName(const LolaServiceInstanceId::InstanceId instance_id,
-                                                      const QualityType channel_type) const noexcept
-{
-    return EmitWithPrefix("", [this, channel_type, instance_id](auto& out) noexcept {
-        EmitControlFileName(out, channel_type, service_id_, instance_id);
-    });
-}
-
-std::string ShmPathBuilder::GetDataChannelFileName(const LolaServiceInstanceId::InstanceId instance_id) const noexcept
-{
-    return EmitWithPrefix("", [this, instance_id](auto& out) noexcept {
-        EmitDataFileName(out, service_id_, instance_id);
-    });
-}
-
-std::string ShmPathBuilder::GetControlChannelPath(const LolaServiceInstanceId::InstanceId instance_id,
-                                                  const QualityType channel_type) const noexcept
-{
-    return EmitWithPrefix(kSharedMemoryPathPrefix, [this, channel_type, instance_id](auto& out) noexcept {
-        EmitControlFileName(out, channel_type, service_id_, instance_id);
-    });
-}
-
-std::string ShmPathBuilder::GetDataChannelPath(const LolaServiceInstanceId::InstanceId instance_id) const noexcept
-{
-    return EmitWithPrefix(kSharedMemoryPathPrefix, [this, instance_id](auto& out) noexcept {
-        EmitDataFileName(out, service_id_, instance_id);
-    });
-}
-
 std::string ShmPathBuilder::GetDataChannelShmName(const LolaServiceInstanceId::InstanceId instance_id) const noexcept
 {
     return EmitWithPrefix('/', [this, instance_id](auto& out) {
@@ -144,24 +102,6 @@ std::string ShmPathBuilder::GetControlChannelShmName(const LolaServiceInstanceId
     return EmitWithPrefix('/', [this, channel_type, instance_id](auto& out) noexcept {
         EmitControlFileName(out, channel_type, service_id_, instance_id);
     });
-}
-
-std::string ShmPathBuilder::GetPrefixContainingControlChannelAndServiceId(const std::uint16_t service_id) noexcept
-{
-    std::stringstream out{};
-    out << kControlChannelPrefix;
-    AppendService(out, service_id);
-    return out.str();
-}
-
-std::string ShmPathBuilder::GetAsilBSuffix() noexcept
-{
-    return kAsilBControlChannelSuffix;
-}
-
-std::string ShmPathBuilder::GetSharedMemoryPrefix() noexcept
-{
-    return kSharedMemoryPathPrefix;
 }
 
 }  // namespace score::mw::com::impl::lola

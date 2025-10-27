@@ -41,35 +41,6 @@ class ShmPathBuilder : public IShmPathBuilder
     /// \param service_id ServiceId of path to be created
     explicit ShmPathBuilder(const std::uint16_t service_id) noexcept : IShmPathBuilder{}, service_id_{service_id} {}
 
-    /// Returns the file name to the control shared memory file.
-    ///
-    /// \param instance_id InstanceId of path to be created
-    /// \param channel_type Whether to return the ASIL QM or ASIL B name.
-    /// \return The name of the file, or nullopt if the binding didn't contain a valid instance
-    std::string GetControlChannelFileName(const LolaServiceInstanceId::InstanceId instance_id,
-                                          const QualityType channel_type) const noexcept override;
-
-    /// Returns the path to the data shared memory file.
-    ///
-    /// \param instance_id InstanceId of path to be created
-    /// \return The name of the file
-    std::string GetDataChannelFileName(const LolaServiceInstanceId::InstanceId instance_id) const noexcept override;
-
-    /// Returns the file path to the control shared memory file.
-    ///
-    /// \param instance_id InstanceId of path to be created
-    /// \param channel_type Whether to return the ASIL QM or ASIL B path.
-    /// \return The path to the file, or nullopt if the binding didn't contain a valid instance
-
-    std::string GetControlChannelPath(const LolaServiceInstanceId::InstanceId instance_id,
-                                      const QualityType channel_type) const noexcept override;
-
-    /// Returns the file path to the data shared memory file.
-    ///
-    /// \param instance_id InstanceId of path to be created
-    /// \return The path to the file
-    std::string GetDataChannelPath(const LolaServiceInstanceId::InstanceId instance_id) const noexcept override;
-
     /// Returns the path suitable for shm_open to the data shared memory.
     ///
     /// \param instance_id InstanceId of path to be created
@@ -83,10 +54,6 @@ class ShmPathBuilder : public IShmPathBuilder
     /// \return The shm file name, or nullopt if the binding didn't contain a valid instance
     std::string GetControlChannelShmName(const LolaServiceInstanceId::InstanceId instance_id,
                                          const QualityType channel_type) const noexcept override;
-
-    static std::string GetPrefixContainingControlChannelAndServiceId(const std::uint16_t service_id) noexcept;
-    static std::string GetAsilBSuffix() noexcept;
-    static std::string GetSharedMemoryPrefix() noexcept;
 
   private:
     const std::uint16_t service_id_;

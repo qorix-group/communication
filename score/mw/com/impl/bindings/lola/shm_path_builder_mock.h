@@ -25,22 +25,6 @@ class ShmPathBuilderMock : public IShmPathBuilder
 {
   public:
     MOCK_METHOD(std::string,
-                GetControlChannelFileName,
-                (LolaServiceInstanceId::InstanceId instance_id, const QualityType),
-                (const, noexcept, override));
-    MOCK_METHOD(std::string,
-                GetDataChannelFileName,
-                (LolaServiceInstanceId::InstanceId instance_id),
-                (const, noexcept, override));
-    MOCK_METHOD(std::string,
-                GetControlChannelPath,
-                (LolaServiceInstanceId::InstanceId instance_id, const QualityType),
-                (const, noexcept, override));
-    MOCK_METHOD(std::string,
-                GetDataChannelPath,
-                (LolaServiceInstanceId::InstanceId instance_id),
-                (const, noexcept, override));
-    MOCK_METHOD(std::string,
                 GetDataChannelShmName,
                 (LolaServiceInstanceId::InstanceId instance_id),
                 (const, noexcept, override));
