@@ -129,31 +129,6 @@ TEST_F(ProxyBindingFactoryCreateFixture, CanCreateLoLaProxy)
     EXPECT_NE(result, nullptr);
 }
 
-TEST_F(ProxyBindingFactoryCreateFixture, MissingLoLaTypeDeployment)
-{
-    RecordProperty("Verifies", "SCR-21803701, SCR-21803702, SCR-5898925");
-    RecordProperty("Description",
-                   "Checks whether no proxy event lola binding can be created and set at runtime if lola type "
-                   "deployment is missing");
-    RecordProperty("TestType", "Requirements-based test");
-    RecordProperty("Priority", "1");
-    RecordProperty("DerivationTechnique", "Analysis of requirements");
-
-    // Given a LoLa binding with missing type deployment
-    DummyInstanceIdentifierBuilder instance_identifier_builder{};
-    auto identifier = instance_identifier_builder.CreateLolaInstanceIdentifierWithoutTypeDeployment();
-    auto handle = make_HandleType(identifier, ServiceInstanceId{LolaServiceInstanceId{1}});
-
-    ON_CALL(service_discovery_mock_, StartFindService(_, EnrichedInstanceIdentifier{handle}))
-        .WillByDefault(Return(make_FindServiceHandle(10U)));
-
-    // When creating a proxy with that
-    const auto result = ProxyBindingFactory::Create(handle);
-
-    // Then a nullptr is returned
-    EXPECT_EQ(result, nullptr);
-}
-
 TEST_F(ProxyBindingFactoryCreateFixture, CannotCreateBlank)
 {
     RecordProperty("Verifies", "SCR-21803701, SCR-21803702, SCR-5898925");
@@ -192,6 +167,30 @@ TEST_F(ProxyBindingFactoryCreateFixture, CannotCreateSomeIpBinding)
 
     // Then a nullptr is returned
     EXPECT_EQ(result, nullptr);
+}
+
+using ProxyBindingFactoryCreateDeathTest = ProxyBindingFactoryCreateFixture;
+TEST_F(ProxyBindingFactoryCreateDeathTest, MissingLoLaTypeDeployment)
+{
+    RecordProperty("Verifies", "SCR-21803701, SCR-21803702, SCR-5898925");
+    RecordProperty("Description",
+                   "Checks whether no proxy event lola binding can be created and set at runtime if lola type "
+                   "deployment is missing");
+    RecordProperty("TestType", "Requirements-based test");
+    RecordProperty("Priority", "1");
+    RecordProperty("DerivationTechnique", "Analysis of requirements");
+
+    // Given a LoLa binding with missing type deployment
+    DummyInstanceIdentifierBuilder instance_identifier_builder{};
+    auto identifier = instance_identifier_builder.CreateLolaInstanceIdentifierWithoutTypeDeployment();
+    auto handle = make_HandleType(identifier, ServiceInstanceId{LolaServiceInstanceId{1}});
+
+    ON_CALL(service_discovery_mock_, StartFindService(_, EnrichedInstanceIdentifier{handle}))
+        .WillByDefault(Return(make_FindServiceHandle(10U)));
+
+    // When creating a proxy with that
+    // Then the program terminates
+    EXPECT_DEATH(score::cpp::ignore = ProxyBindingFactory::Create(handle), ".*");
 }
 
 }  // namespace

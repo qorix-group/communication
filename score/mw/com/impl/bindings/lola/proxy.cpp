@@ -24,6 +24,9 @@
 #include "score/mw/com/impl/configuration/lola_service_instance_id.h"
 #include "score/mw/com/impl/configuration/lola_service_type_deployment.h"
 #include "score/mw/com/impl/configuration/quality_type.h"
+#include "score/mw/com/impl/configuration/service_instance_deployment.h"
+#include "score/mw/com/impl/configuration/service_instance_id.h"
+#include "score/mw/com/impl/configuration/service_type_deployment.h"
 #include "score/mw/com/impl/find_service_handle.h"
 #include "score/mw/com/impl/handle_type.h"
 #include "score/mw/com/impl/runtime.h"
@@ -106,18 +109,18 @@ PlaceSharedLockOnUsageMarkerFileWithRetry(memory::shared::LockFile& service_inst
     return nullptr;
 }
 
-const LolaServiceInstanceDeployment* GetLoLaInstanceDeployment(const score::mw::com::impl::HandleType& handle) noexcept
+const LolaServiceInstanceDeployment& GetLoLaInstanceDeployment(const score::mw::com::impl::HandleType& handle) noexcept
 {
-    const auto* const instance_deployment =
-        std::get_if<LolaServiceInstanceDeployment>(&handle.GetServiceInstanceDeployment().bindingInfo_);
-    return instance_deployment;
+    const auto& instance_identifier = InstanceIdentifierView{handle.GetInstanceIdentifier()};
+    const auto& service_instance_deployment = instance_identifier.GetServiceInstanceDeployment();
+    return GetServiceInstanceDeploymentBinding<LolaServiceInstanceDeployment>(service_instance_deployment);
 }
 
-const LolaServiceTypeDeployment* GetLoLaServiceTypeDeployment(const score::mw::com::impl::HandleType& handle) noexcept
+const LolaServiceTypeDeployment& GetLoLaServiceTypeDeployment(const score::mw::com::impl::HandleType& handle) noexcept
 {
-    const auto* lola_service_deployment = std::get_if<LolaServiceTypeDeployment>(
-        &InstanceIdentifierView{handle.GetInstanceIdentifier()}.GetServiceTypeDeployment().binding_info_);
-    return lola_service_deployment;
+    const auto& instance_identifier = InstanceIdentifierView{handle.GetInstanceIdentifier()};
+    const auto& service_type_deployment = instance_identifier.GetServiceTypeDeployment();
+    return GetServiceTypeDeploymentBinding<LolaServiceTypeDeployment>(service_type_deployment);
 }
 
 std::pair<std::shared_ptr<memory::shared::ManagedMemoryResource>,
@@ -275,34 +278,15 @@ ElementFqId Proxy::EventNameToElementFqIdConverter::Convert(const std::string_vi
 // coverity[autosar_cpp14_a15_5_3_violation : FALSE]
 std::unique_ptr<Proxy> Proxy::Create(const HandleType handle) noexcept
 {
-    const auto* const instance_deployment = GetLoLaInstanceDeployment(handle);
-    if (instance_deployment == nullptr)
-    {
-        score::mw::log::LogError("lola") << "Could not create Proxy: lola service instance deployment does not exist.";
-        return nullptr;
-    }
-    const auto& instance_deployment_ref = *instance_deployment;
+    const auto& instance_deployment = GetLoLaInstanceDeployment(handle);
+    const auto& lola_service_deployment = GetLoLaServiceTypeDeployment(handle);
 
-    const auto* const lola_service_deployment = GetLoLaServiceTypeDeployment(handle);
-    if (lola_service_deployment == nullptr)
-    {
-        score::mw::log::LogError("lola") << "Could not create Proxy: lola service type deployment does not exist.";
-        return nullptr;
-    }
-    const auto& lola_service_deployment_ref = *lola_service_deployment;
+    auto service_instance_id = handle.GetInstanceId();
+    const auto lola_service_instance_id = GetServiceInstanceIdBinding<LolaServiceInstanceId>(service_instance_id);
 
-    const auto service_instance_id = handle.GetInstanceId();
-    const auto* const lola_service_instance_id = std::get_if<LolaServiceInstanceId>(&service_instance_id.binding_info_);
-    if (lola_service_instance_id == nullptr)
-    {
-        score::mw::log::LogError("lola") << "Could not create Proxy: lola service instance id does not exist.";
-        return nullptr;
-    }
-    const auto& lola_service_instance_id_ref = *lola_service_instance_id;
-
-    PartialRestartPathBuilder partial_restart_builder{lola_service_deployment_ref.service_id_};
+    PartialRestartPathBuilder partial_restart_builder{lola_service_deployment.service_id_};
     const auto service_instance_usage_marker_file_path =
-        partial_restart_builder.GetServiceInstanceUsageMarkerFilePath(lola_service_instance_id_ref.GetId());
+        partial_restart_builder.GetServiceInstanceUsageMarkerFilePath(lola_service_instance_id.GetId());
 
     auto service_instance_usage_marker_file = memory::shared::LockFile::Open(service_instance_usage_marker_file_path);
     if (!service_instance_usage_marker_file.has_value())
@@ -323,8 +307,8 @@ std::unique_ptr<Proxy> Proxy::Create(const HandleType handle) noexcept
 
     QualityType quality_type{handle.GetServiceInstanceDeployment().asilLevel_};
 
-    const auto shared_memory = OpenSharedMemory(
-        instance_deployment_ref, quality_type, lola_service_deployment_ref, lola_service_instance_id_ref);
+    const auto shared_memory =
+        OpenSharedMemory(instance_deployment, quality_type, lola_service_deployment, lola_service_instance_id);
 
     if ((shared_memory.first == nullptr) || (shared_memory.second == nullptr))
     {
@@ -340,8 +324,8 @@ std::unique_ptr<Proxy> Proxy::Create(const HandleType handle) noexcept
         return nullptr;
     }
 
-    EventNameToElementFqIdConverter event_name_to_element_fq_id_converter{lola_service_deployment_ref,
-                                                                          lola_service_instance_id_ref.GetId()};
+    EventNameToElementFqIdConverter event_name_to_element_fq_id_converter{lola_service_deployment,
+                                                                          lola_service_instance_id.GetId()};
     return std::make_unique<Proxy>(shared_memory.first,
                                    shared_memory.second,
                                    quality_type,

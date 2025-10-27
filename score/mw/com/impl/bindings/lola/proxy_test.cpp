@@ -209,7 +209,8 @@ TEST_F(ProxyCreationFixture, ProxyCreationSucceedsWhenSharedLockOnUsageMarkerFil
     EXPECT_NE(proxy_, nullptr);
 }
 
-TEST_F(ProxyCreationFixture, CreatingProxyWithoutLolaInstanceDeploymentReturnsNullptr)
+using ProxyCreationDeathTest = ProxyCreationFixture;
+TEST_F(ProxyCreationDeathTest, CreatingProxyWithoutLolaInstanceDeploymentReturnsNullptr)
 {
     // Given a deployment information which contains an instance deployment with blank binding
     const ServiceInstanceDeployment service_instance_deployment_with_blank_binding{
@@ -218,13 +219,12 @@ TEST_F(ProxyCreationFixture, CreatingProxyWithoutLolaInstanceDeploymentReturnsNu
         make_InstanceIdentifier(service_instance_deployment_with_blank_binding, kServiceTypeDeployment);
 
     // When creating a proxy
-    const auto proxy_result = Proxy::Create(make_HandleType(identifier, ServiceInstanceId{kLolaServiceInstanceId}));
-
-    // Then the result will be a nullptr
-    EXPECT_EQ(proxy_result, nullptr);
+    // Then the program terminates
+    EXPECT_DEATH(score::cpp::ignore = Proxy::Create(make_HandleType(identifier, ServiceInstanceId{kLolaServiceInstanceId})),
+                 ".*");
 }
 
-TEST_F(ProxyCreationFixture, CreatingProxyWithoutLolaTypeDeploymentReturnsNullptr)
+TEST_F(ProxyCreationDeathTest, CreatingProxyWithoutLolaTypeDeploymentReturnsNullptr)
 {
     // Given a deployment information which contains a type deployment with blank binding
     const ServiceTypeDeployment service_type_deployment_with_blank_binding{score::cpp::blank{}};
@@ -232,13 +232,12 @@ TEST_F(ProxyCreationFixture, CreatingProxyWithoutLolaTypeDeploymentReturnsNullpt
         make_InstanceIdentifier(kServiceInstanceDeployment, service_type_deployment_with_blank_binding);
 
     // When creating a proxy
-    const auto proxy_result = Proxy::Create(make_HandleType(identifier, ServiceInstanceId{kLolaServiceInstanceId}));
-
-    // Then the result will be a nullptr
-    EXPECT_EQ(proxy_result, nullptr);
+    // Then the program terminates
+    EXPECT_DEATH(score::cpp::ignore = Proxy::Create(make_HandleType(identifier, ServiceInstanceId{kLolaServiceInstanceId})),
+                 ".*");
 }
 
-TEST_F(ProxyCreationFixture, CreatingProxyWithoutLolaServiceInstanceIdReturnsNullptr)
+TEST_F(ProxyCreationDeathTest, CreatingProxyWithoutLolaServiceInstanceIdReturnsNullptr)
 {
     // Given a deployment information which contains a lola instance deployment which has no instance ID
     const ServiceInstanceDeployment service_instance_deployment_without_instance_id{
@@ -250,13 +249,10 @@ TEST_F(ProxyCreationFixture, CreatingProxyWithoutLolaServiceInstanceIdReturnsNul
         make_InstanceIdentifier(service_instance_deployment_without_instance_id, kServiceTypeDeployment);
 
     // When creating a proxy with a handle which also does not contain a lola instance ID
-    const auto proxy_result = Proxy::Create(make_HandleType(identifier, ServiceInstanceId{score::cpp::blank{}}));
-
-    // Then the result will be a nullptr
-    EXPECT_EQ(proxy_result, nullptr);
+    // Then the program terminates
+    EXPECT_DEATH(score::cpp::ignore = Proxy::Create(make_HandleType(identifier, ServiceInstanceId{score::cpp::blank{}})), ".*");
 }
 
-using ProxyCreationDeathTest = ProxyCreationFixture;
 TEST_F(ProxyCreationDeathTest, GettingEventDataControlWithoutInitialisedEventDataControlTerminates)
 {
     // Given a fake Skeleton which creates an empty ServiceDataControl
