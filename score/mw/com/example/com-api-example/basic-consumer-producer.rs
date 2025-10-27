@@ -17,9 +17,7 @@ use com_api_gen::*;
 fn main() {
     let runtime_builder = RuntimeBuilderImpl::new();
     let runtime = Builder::<MockRuntimeImpl>::build(runtime_builder).unwrap();
-    let producer_builder = runtime.producer_builder::<VehicleInterface>(InstanceSpecifier {
-        specifier: "My/Funk/ServiceName".to_string(),
-    });
+    let producer_builder = runtime.producer_builder::<VehicleInterface>(InstanceSpecifier::new("My/Funk/ServiceName").unwrap());
     let producer = producer_builder.build().unwrap();
     let offered_producer = producer.offer().unwrap();
 
@@ -29,9 +27,7 @@ fn main() {
     sample.send().unwrap();
 
     // Create service discovery
-    let consumer_discovery = runtime.find_service::<VehicleInterface>(InstanceSpecifier {
-        specifier: "My/Funk/ServiceName".to_string(),
-    });
+    let consumer_discovery = runtime.find_service::<VehicleInterface>(InstanceSpecifier::new("My/Funk/ServiceName").unwrap());
     let available_service_instances = consumer_discovery.get_available_instances().unwrap();
 
     // Create consumer from first discovered service
@@ -70,9 +66,7 @@ mod test {
         // Factory
         let runtime_builder = RuntimeBuilderImpl::new();
         let runtime = runtime_builder.build().unwrap();
-        let producer_builder = runtime.producer_builder::<VehicleInterface>(InstanceSpecifier {
-            specifier: "My/Funk/ServiceName".to_string(),
-        });
+        let producer_builder = runtime.producer_builder::<VehicleInterface>(InstanceSpecifier::new("My/Funk/ServiceName").unwrap());
         let producer = producer_builder.build().unwrap();
         let offered_producer = producer.offer().unwrap();
 
@@ -92,9 +86,7 @@ mod test {
         let runtime = runtime_builder.build().unwrap();
 
         // Create service discovery
-        let consumer_discovery = runtime.find_service::<VehicleInterface>(InstanceSpecifier {
-            specifier: "My/Funk/ServiceName".to_string(),
-        });
+        let consumer_discovery = runtime.find_service::<VehicleInterface>(InstanceSpecifier::new("My/Funk/ServiceName").unwrap());
         let available_service_instances = consumer_discovery.get_available_instances().unwrap();
 
         // Create consumer from first discovered service
@@ -143,9 +135,7 @@ mod test {
         let runtime_builder = RuntimeBuilderImpl::new();
         let runtime = runtime_builder.build().unwrap();
 
-        let consumer_discovery = runtime.find_service::<VehicleInterface>(InstanceSpecifier {
-            specifier: "My/Funk/ServiceName".to_string(),
-        });
+        let consumer_discovery = runtime.find_service::<VehicleInterface>(InstanceSpecifier::new("My/Funk/ServiceName").unwrap());
         let available_service_instances = consumer_discovery.get_available_instances().unwrap();
 
         // Create consumer from first discovered service

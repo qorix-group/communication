@@ -25,6 +25,6 @@ pub use com_api_runtime_lola::LolaRuntimeImpl;
 
 pub use com_api_concept::{
     Builder, Consumer, ConsumerBuilder, ConsumerDescriptor, InstanceSpecifier, Interface,
-    OfferedProducer, Producer, ProducerBuilder, Reloc, Result, SampleContainer, SampleMaybeUninit,
+    OfferedProducer, Producer, ProducerBuilder, Publisher, Reloc, Result, SampleContainer, SampleMaybeUninit,
     SampleMut, ServiceDiscovery, Subscriber, Subscription,
 };
