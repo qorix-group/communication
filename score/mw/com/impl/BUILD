@@ -929,6 +929,7 @@ cc_gtest_unit_test(
     deps = [
         ":proxy_method",
         "//score/mw/com/impl/bindings/mock_binding",
+        "//score/mw/com/impl/configuration/test:configuration_store",
     ],
 )
 
