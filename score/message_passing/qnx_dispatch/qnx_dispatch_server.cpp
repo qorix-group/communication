@@ -118,7 +118,7 @@ void QnxDispatchServer::ServerConnection::RequestDisconnect() noexcept
     // TODO: implement as ionotify for zero-read (once this functionality is demanded)
 }
 
-// Suppress AUTOSAR C++14 A15-5-3 violation for variant access in destructor
+// Suppress AUTOSAR C++14 A15-5-3 violation for variant access
 // Rationale: std::get<HandlerPointerT>(user_data) is preceded by std::holds_alternative check,
 // guaranteeing the variant contains the correct type. No std::bad_variant_access can be thrown.
 // The exception handling rule is satisfied as no actual exception can occur in this context.
@@ -189,6 +189,9 @@ std::int32_t QnxDispatchServer::ServerConnection::ProcessReadRequest(resmgr_cont
     }
 
     auto& send_message = send_queue_.front();
+    // Suppress AUTOSAR C++14 A0-1-1 violation for io_size variable
+    // Rationale: io_size is used as template parameter for std::array<iov_t, io_size>.
+    // coverity[autosar_cpp14_a0_1_1_violation]
     constexpr std::size_t io_size = 2U;
     std::array<iov_t, io_size> io{};
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access) C API
@@ -243,11 +246,12 @@ void QnxDispatchServer::ServerConnection::ProcessDisconnect() noexcept
     self_.reset();
 }
 
-// Suppress AUTOSAR C++14 A15-5-1 violation for variant access in destructor
+// Suppress AUTOSAR C++14 A15-5-1, A15-5-3 violation for variant access in destructor
 // Rationale: std::get<HandlerPointerT>(user_data) is preceded by std::holds_alternative check,
 // guaranteeing the variant contains the correct type. No std::bad_variant_access can be thrown.
 // The exception handling rule is satisfied as no actual exception can occur in this context.
 // coverity[autosar_cpp14_a15_5_1_violation]
+// coverity[autosar_cpp14_a15_5_3_violation]
 QnxDispatchServer::ServerConnection::~ServerConnection() noexcept
 {
     auto& server = GetQnxDispatchServer();

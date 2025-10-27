@@ -40,7 +40,7 @@ QnxResourcePath::QnxResourcePath(const std::string_view identifier) noexcept
         ++identifier_begin;
     }
     score::cpp::ignore = buffer_.insert(buffer_.cend(), identifier_begin, identifier.cend());
-    buffer_.push_back(0);
+    buffer_.push_back('\0');  // AUTOSAR C++14 M5-0-11: Use character literal instead of plain integer
 }
 
 }  // namespace detail
