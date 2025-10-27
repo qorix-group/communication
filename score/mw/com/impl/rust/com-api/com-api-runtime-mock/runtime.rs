@@ -152,7 +152,7 @@ where
     T: Reloc,
 {
     data: T,
-    _lifetime: PhantomData<&'a T>,
+    lifetime: PhantomData<&'a T>,
 }
 
 impl<'a, T> com_api_concept::SampleMut<T> for SampleMut<'a, T>
@@ -195,7 +195,7 @@ where
     T: Reloc + Send,
 {
     data: MaybeUninit<T>,
-    _lifetime: PhantomData<&'a T>,
+    lifetime: PhantomData<&'a T>,
 }
 
 impl<'a, T> com_api_concept::SampleMaybeUninit<T> for SampleMaybeUninit<'a, T>
@@ -207,25 +207,29 @@ where
     fn write(self, val: T) -> SampleMut<'a, T> {
         SampleMut {
             data: val,
-            _lifetime: PhantomData,
+            lifetime: PhantomData,
         }
+    }
+
+    fn as_mut_ptr(&mut self) -> *mut T {
+        self.data.as_mut_ptr()
     }
 
     unsafe fn assume_init(self) -> SampleMut<'a, T> {
         SampleMut {
             data: unsafe { self.data.assume_init() },
-            _lifetime: PhantomData,
+            lifetime: PhantomData,
         }
     }
 }
 
 pub struct SubscribableImpl<T> {
-    _data: PhantomData<T>,
+    data: PhantomData<T>,
 }
 
 impl<T> Default for SubscribableImpl<T> {
     fn default() -> Self {
-        Self { _data: PhantomData }
+        Self { data: PhantomData }
     }
 }
 
@@ -313,11 +317,18 @@ where
     pub fn new() -> Self {
         Self { _data: PhantomData }
     }
+}
 
-    pub fn allocate<'a>(&'a self) -> com_api_concept::Result<SampleMaybeUninit<'a, T>> {
+impl<T> com_api_concept::Publisher<T> for Publisher<T>
+where
+    T: Reloc + Send,
+{
+    type SampleMaybeUninit<'a> = SampleMaybeUninit<'a, T> where Self: 'a;
+
+    fn allocate<'a>(&'a self) -> com_api_concept::Result<SampleMaybeUninit<'a, T>> {
         Ok(SampleMaybeUninit {
             data: MaybeUninit::uninit(),
-            _lifetime: PhantomData,
+            lifetime: PhantomData,
         })
     }
 }
@@ -413,7 +424,7 @@ impl RuntimeBuilderImpl {
 
 #[cfg(test)]
 mod test {
-    use com_api_concept::{SampleContainer, Subscription};
+    use com_api::{Publisher, SampleContainer, SampleMaybeUninit, SampleMut, Subscription};
 
     #[test]
     fn receive_stuff() {
@@ -453,5 +464,13 @@ mod test {
                 Err(e) => panic!("{:?}", e),
             }
         })
+    }
+
+      #[test]
+    fn send_stuff() {
+        let test_publisher = super::Publisher::<u32>::new();
+        let sample = test_publisher.allocate().expect("Couldn't allocate sample");
+        let sample = sample.write(42);
+        sample.send().expect("Send failed for sample");
     }
 }

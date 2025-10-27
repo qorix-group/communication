@@ -80,6 +80,9 @@ mod test {
         let uninit_sample = offered_producer.left_tire.allocate().unwrap();
         let sample = uninit_sample.write(Tire {});
         sample.send().unwrap();
+
+        offered_producer.unoffer();
+
     }
 
     #[test]

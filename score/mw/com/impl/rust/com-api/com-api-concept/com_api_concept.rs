@@ -163,10 +163,17 @@ where
     ///
     /// This corresponds to `MaybeUninit::write`.
     fn write(self, value: T) -> Self::SampleMut;
+
+    /// Get a mutable pointer to the internal maybe uninitialized `T`.
+    ///
+    /// The caller has to make sure to initialize the data in the buffer.
+    /// Reading from the received pointer before initialization is undefined behavior.
+    fn as_mut_ptr(&mut self) -> *mut T;
 }
 
 pub trait Interface {}
 
+#[must_use = "if a service is offered it will be unoffered and dropped immediately, causing unexpected behavior in the system"]
 pub trait OfferedProducer {
     type Interface: Interface;
     type Producer: Producer<Interface = Self::Interface>;
@@ -179,6 +186,23 @@ pub trait Producer {
     type OfferedProducer: OfferedProducer<Interface = Self::Interface>;
 
     fn offer(self) -> Result<Self::OfferedProducer>;
+}
+
+pub trait Publisher<T>
+where
+    T: Reloc + Send,
+{
+    type SampleMaybeUninit<'a>: SampleMaybeUninit<T> + 'a
+    where
+        Self: 'a;
+
+    fn allocate<'a>(&'a self) -> Result<Self::SampleMaybeUninit<'a>>;
+
+    fn send(&self, value: T) -> Result<()> {
+        let sample = self.allocate()?;
+        let init_sample = sample.write(value);
+        init_sample.send()
+    }
 }
 
 pub trait Consumer {}
