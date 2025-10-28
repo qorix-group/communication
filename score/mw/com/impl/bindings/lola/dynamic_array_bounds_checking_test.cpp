@@ -12,6 +12,7 @@
  ********************************************************************************/
 #include "score/containers/dynamic_array.h"
 
+#include "score/containers/non_relocatable_vector.h"
 #include "score/memory/shared/fake/my_bounded_memory_resource.h"
 #include "score/memory/shared/polymorphic_offset_ptr_allocator.h"
 
@@ -28,6 +29,24 @@ namespace score::containers::test
 {
 
 template <typename ServiceElementType, typename Allocator>
+class NonRelocatableVectorAttorney
+{
+  public:
+    NonRelocatableVectorAttorney(NonRelocatableVector<ServiceElementType, Allocator>& non_relocatable_vector)
+        : non_relocatable_vector_{non_relocatable_vector}
+    {
+    }
+
+    void SetPointerToUnderlyingArray(void* const new_array_address)
+    {
+        non_relocatable_vector_.non_relocatable_vector_ = static_cast<ServiceElementType*>(new_array_address);
+    }
+
+  private:
+    NonRelocatableVector<ServiceElementType, Allocator>& non_relocatable_vector_;
+};
+
+template <typename ServiceElementType, typename Allocator>
 class DynamicArrayTestAttorney
 {
   public:
@@ -37,7 +56,9 @@ class DynamicArrayTestAttorney
 
     void SetPointerToUnderlyingArray(void* const new_array_address)
     {
-        dynamic_array_.dynamic_array_ = static_cast<ServiceElementType*>(new_array_address);
+        auto& non_relocatable_vector = dynamic_array_.non_relocatable_vector_;
+        NonRelocatableVectorAttorney<ServiceElementType, Allocator> attorney{non_relocatable_vector};
+        attorney.SetPointerToUnderlyingArray(new_array_address);
     }
 
   private:

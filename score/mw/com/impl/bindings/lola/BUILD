@@ -798,6 +798,7 @@ cc_unit_test(
         "@googletest//:gtest",
         "@googletest//:gtest_main",
         "@score_baselibs//score/containers:dynamic_array",
+        "@score_baselibs//score/containers:non_relocatable_vector",
         "@score_baselibs//score/language/futurecpp:futurecpp_test_support",
         "@score_baselibs//score/language/safecpp/coverage_termination_handler",
         "@score_baselibs//score/memory/shared:polymorphic_offset_ptr_allocator",
