@@ -92,6 +92,19 @@ TEST_F(KnownInstancesContainerTest, CanInsertInstance)
     EXPECT_THAT(unit_.GetKnownHandles(kEnrichedInstanceIdentifierAny), Contains(kHandleTypeAny1));
 }
 
+TEST_F(KnownInstancesContainerTest, DoubleInsertionWillReturnFalse)
+{
+    // Given a container with an instance identifier already added
+    unit_.Insert(kEnrichedInstanceIdentifier1);
+
+    // When inserting the same identifier a second time
+    const auto inserted = unit_.Insert(kEnrichedInstanceIdentifier1);
+
+    // We get a negative response and the identifier is still in the container
+    EXPECT_FALSE(inserted);
+    EXPECT_THAT(unit_.GetKnownHandles(kEnrichedInstanceIdentifierAny), Contains(kHandleTypeAny1));
+}
+
 TEST_F(KnownInstancesContainerTest, CanRemoveInstance)
 {
     unit_.Insert(kEnrichedInstanceIdentifier1);
