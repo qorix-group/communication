@@ -31,9 +31,13 @@
 namespace score::mw::com::impl::lola
 {
 
+class MessagePassingServiceInstanceAttorney;
+
 class MessagePassingServiceInstance
 {
   public:
+    friend class MessagePassingServiceInstanceAttorney;
+
     using ClientQualityType = MessagePassingClientCache::ClientQualityType;
 
     /// \brief Aggregation of ASIL level specific/dependent config properties.
@@ -51,7 +55,7 @@ class MessagePassingServiceInstance
                                   const AsilSpecificCfg config,
                                   score::message_passing::IServerFactory& server_factory,
                                   score::message_passing::IClientFactory& client_factory,
-                                  score::concurrency::ThreadPool& local_event_thread_pool) noexcept;
+                                  score::concurrency::Executor& local_event_thread_pool) noexcept;
 
     MessagePassingServiceInstance(const MessagePassingServiceInstance&) = delete;
     MessagePassingServiceInstance(MessagePassingServiceInstance&&) = delete;
@@ -104,13 +108,16 @@ class MessagePassingServiceInstance
         std::uint16_t counter;
     };
 
+    static constexpr std::uint8_t kMaxReceiveHandlersPerEvent{5U};
+    static constexpr std::uint8_t NodeIdTmpBufferSize{20U};
+
     // TODO: PMR
     using EventUpdateNotifierMapType = std::unordered_map<ElementFqId, std::vector<RegisteredNotificationHandler>>;
     using EventUpdateNodeIdMapType = std::unordered_map<ElementFqId, std::set<pid_t>>;
     using EventUpdateRegistrationCountMapType = std::unordered_map<ElementFqId, NodeCounter>;
     /// \brief tmp buffer for copying ids under lock.
     /// \todo Make its size configurable?
-    using NodeIdTmpBufferType = std::array<pid_t, 20>;
+    using NodeIdTmpBufferType = std::array<pid_t, NodeIdTmpBufferSize>;
 
     void MessageCallback(const pid_t sender_pid, const score::cpp::span<const std::uint8_t> message) noexcept;
     void HandleNotifyEventMsg(const score::cpp::span<const std::uint8_t> payload, const pid_t sender_node_id) noexcept;
@@ -232,7 +239,7 @@ class MessagePassingServiceInstance
     /// \brief thread pool for processing local event update notification.
     /// \detail local update notification leads to a user provided receive handler callout, whose
     ///         runtime is unknown, so we decouple with worker threads.
-    score::concurrency::ThreadPool& thread_pool_;
+    score::concurrency::Executor& thread_pool_;
 };
 
 }  // namespace score::mw::com::impl::lola

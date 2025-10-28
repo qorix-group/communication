@@ -30,8 +30,6 @@ namespace
 
 constexpr std::uint32_t kMaxSendSize{9U};
 
-constexpr std::uint8_t kMaxReceiveHandlersPerEvent{5U};
-
 // TODO: make proper serialization
 template <typename T>
 bool DeserializeFromPayload(const score::cpp::span<const std::uint8_t> payload, T& t) noexcept
@@ -82,7 +80,7 @@ score::mw::com::impl::lola::MessagePassingServiceInstance::MessagePassingService
     const AsilSpecificCfg /*config*/,
     score::message_passing::IServerFactory& server_factory,
     score::message_passing::IClientFactory& client_factory,
-    score::concurrency::ThreadPool& local_event_thread_pool) noexcept
+    score::concurrency::Executor& local_event_thread_pool) noexcept
     : cur_registration_no_{0U}, client_cache_{asil_level, client_factory}, thread_pool_{local_event_thread_pool}
 {
     // TODO: PMR
@@ -99,6 +97,7 @@ score::mw::com::impl::lola::MessagePassingServiceInstance::MessagePassingService
     };
     auto disconnect_callback = [](score::message_passing::IServerConnection& /*connection*/) noexcept {
         // TODO: outdated node id?
+        // TODO: update related unit test as well
     };
     // Suppress autosar_cpp14_a15_5_3_violation: False Positive
     // Rationale: Passing an argument by reference cannot throw
@@ -137,7 +136,8 @@ score::mw::com::impl::lola::MessagePassingServiceInstance::MessagePassingService
                                      "Message Passing : Message Passing: PID is bigger than pid_t::max()");
 
         score::mw::log::LogError("lola") << "MessagePassingService: Unexpected request from client "
-                                       << client_pid.error();
+                                       << client_pid.value();
+
         return {};
     };
 
@@ -316,11 +316,13 @@ void score::mw::com::impl::lola::MessagePassingServiceInstance::NotifyEventRemot
     std::uint8_t loop_count{0U};
     do
     {
+        // LCOV_EXCL_START exceeds "short" limit for unit tests
         if (loop_count == 255U)
         {
             score::mw::log::LogError("lola") << "An overflow in counting the node identifiers to notifies event update.";
             break;
         }
+        // LCOV_EXCL_STOP
         else
         {
             loop_count++;
@@ -388,7 +390,9 @@ std::uint32_t score::mw::com::impl::lola::MessagePassingServiceInstance::NotifyE
     std::uint8_t number_weak_ptrs_copied{0U};
     auto& handlers_for_event = search->second;
     auto handler_it = handlers_for_event.cbegin();
-    while ((handler_it != handlers_for_event.cend()) && (number_weak_ptrs_copied <= kMaxReceiveHandlersPerEvent))
+    // LCOV_EXCL_START: decision couldn't be analyzed; considered normal under 100% line coverage
+    while ((handler_it != handlers_for_event.cend()) && (number_weak_ptrs_copied < kMaxReceiveHandlersPerEvent))
+    // LCOV_EXCL_STOP
     {
         // NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index): number_weak_ptrs_copied is assured to be
         // always <= kMaxReceiveHandlersPerEvent, which is the array size. So no out-of-bounds access possible.

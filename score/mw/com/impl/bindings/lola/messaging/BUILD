@@ -153,11 +153,28 @@ cc_gtest_unit_test(
     ],
 )
 
+cc_gtest_unit_test(
+    name = "message_passing_service_instance_test",
+    srcs = ["message_passing_service_instance_test.cpp"],
+    features = COMPILER_WARNING_FEATURES,
+    visibility = [
+        "//score/mw/com/impl:__subpackages__",
+    ],
+    deps = [
+        ":messaging",
+        "@communication//score/message_passing:mock",
+        "@score_baselibs//score/concurrency:executor_mock",
+        "@score_baselibs//score/language/futurecpp",
+        "@score_baselibs//score/os/mocklib:unistd_mock",
+    ],
+)
+
 cc_unit_test_suites_for_host_and_qnx(
     name = "unit_test_suite",
     cc_unit_tests = [
         ":thread_abstraction_test",
         ":node_identifier_copier_test",
+        ":message_passing_service_instance_test",
         ":message_passing_client_cache_test",
     ],
     test_suites_from_sub_packages = [
