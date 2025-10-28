@@ -32,7 +32,8 @@ namespace score::mw::com::impl
 // Initialization of static thread_local variable!
 thread_local bool ProxyEventBase::is_in_receive_handler_context = false;
 
-/// \brief Helper class which registers the ProxyEventBase with its parent proxy and unregisters on destruction
+/// \brief Helper class which registers the ProxyEventBindingBase with its parent proxy (ProxyBinding) and unregisters
+/// on destruction
 ///
 /// Since ProxyBase is moveable, we must ensure that this class does not store a reference or pointer to it. As if the
 /// Proxy is moved, then the pointer or reference would be invalidated. However, the ProxyBinding is not moveable, so

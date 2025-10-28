@@ -175,6 +175,22 @@ cc_library(
 )
 
 cc_library(
+    name = "proxy_field_base",
+    srcs = ["proxy_field_base.cpp"],
+    hdrs = ["proxy_field_base.h"],
+    features = COMPILER_WARNING_FEATURES,
+    tags = ["FFI"],
+    visibility = [
+        "//score/mw/com:__subpackages__",
+    ],
+    deps = [
+        ":proxy_event_base",
+        "@score_baselibs//score/language/futurecpp",
+        "@score_baselibs//score/result",
+    ],
+)
+
+cc_library(
     name = "proxy_field",
     srcs = ["proxy_field.cpp"],
     hdrs = ["proxy_field.h"],
@@ -186,6 +202,7 @@ cc_library(
     deps = [
         ":proxy_event",
         ":proxy_event_binding",
+        ":proxy_field_base",
         "//score/mw/com/impl/mocking:i_proxy_event",
         "//score/mw/com/impl/plumbing:field",
         "@score_baselibs//score/language/futurecpp",
@@ -905,6 +922,30 @@ cc_gtest_unit_test(
     ],
 )
 
+cc_gtest_unit_test(
+    name = "proxy_field_test",
+    srcs = ["proxy_field_test.cpp"],
+    deps = [
+        ":impl",
+        ":runtime_mock",
+        "//score/mw/com/impl/plumbing:proxy_field_binding_factory_mock",
+        "//score/mw/com/impl/test:binding_factory_resources",
+        "//score/mw/com/impl/test:proxy_resources",
+    ],
+)
+
+cc_gtest_unit_test(
+    name = "proxy_event_test",
+    srcs = ["proxy_event_test.cpp"],
+    deps = [
+        ":impl",
+        ":runtime_mock",
+        "//score/mw/com/impl/plumbing:proxy_field_binding_factory_mock",
+        "//score/mw/com/impl/test:binding_factory_resources",
+        "//score/mw/com/impl/test:proxy_resources",
+    ],
+)
+
 cc_test(
     name = "unit_test",
     # TODO: Investigate why this unit tests takes more than 1 minute under memcheck (Ticket-141169)
@@ -921,7 +962,6 @@ cc_test(
         "proxy_event_base_test.cpp",
         "proxy_event_binding_base_test.cpp",
         "proxy_event_test.cpp",
-        "proxy_field_test.cpp",
         "service_element_map_test.cpp",
         "skeleton_base_test.cpp",
         "skeleton_binding_test.cpp",
@@ -946,6 +986,7 @@ cc_test(
         "//score/mw/com/impl/bindings/lola:runtime_mock",
         "//score/mw/com/impl/bindings/lola/test_doubles",
         "//score/mw/com/impl/bindings/mock_binding",
+        "//score/mw/com/impl/configuration/test:configuration_store",
         "//score/mw/com/impl/configuration/test:configuration_test_resources",
         "//score/mw/com/impl/plumbing:proxy_binding_factory_mock",
         "//score/mw/com/impl/plumbing:proxy_event_binding_factory_mock",
@@ -970,14 +1011,15 @@ cc_test(
 cc_unit_test_suites_for_host_and_qnx(
     name = "unit_test_suite",
     cc_unit_tests = [
-        ":service_element_type_test",
         ":flag_owner_test",
-        ":generic_proxy_test",
-        ":sample_reference_tracker_test",
         ":find_service_handle_test",
-        ":service_discovery_test",
-        ":unit_test",
+        ":generic_proxy_test",
+        ":proxy_field_test",
         ":runtime_test",
+        ":sample_reference_tracker_test",
+        ":service_discovery_test",
+        ":service_element_type_test",
+        ":unit_test",
         ":unit_test_runtime_single_exec",
     ],
     test_suites_from_sub_packages = [

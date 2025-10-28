@@ -13,25 +13,38 @@
 #include "score/mw/com/impl/proxy_base.h"
 #include "score/mw/com/impl/bindings/mock_binding/proxy.h"
 #include "score/mw/com/impl/com_error.h"
+#include "score/mw/com/impl/configuration/lola_service_instance_deployment.h"
+#include "score/mw/com/impl/configuration/lola_service_instance_id.h"
+#include "score/mw/com/impl/configuration/quality_type.h"
+#include "score/mw/com/impl/configuration/service_identifier_type.h"
 #include "score/mw/com/impl/configuration/service_instance_deployment.h"
+#include "score/mw/com/impl/configuration/service_instance_id.h"
 #include "score/mw/com/impl/configuration/service_type_deployment.h"
+#include "score/mw/com/impl/configuration/test/configuration_store.h"
 #include "score/mw/com/impl/find_service_handle.h"
 #include "score/mw/com/impl/find_service_handler.h"
 #include "score/mw/com/impl/handle_type.h"
+#include "score/mw/com/impl/instance_identifier.h"
 #include "score/mw/com/impl/instance_specifier.h"
-#include "score/mw/com/impl/runtime.h"
-#include "score/mw/com/impl/runtime_mock.h"
+#include "score/mw/com/impl/methods/proxy_method_base.h"
+#include "score/mw/com/impl/proxy_event_base.h"
 #include "score/mw/com/impl/scoped_event_receive_handler.h"
 #include "score/mw/com/impl/service_discovery_mock.h"
 #include "score/mw/com/impl/test/runtime_mock_guard.h"
 
 #include "score/language/safecpp/scoped_function/scope.h"
+#include "score/result/result.h"
 
 #include <score/utility.hpp>
 
+#include <gmock/gmock-actions.h>
+#include <gmock/gmock-matchers.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+
+#include <cstdint>
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -44,18 +57,10 @@ using ::testing::MockFunction;
 using ::testing::Return;
 using ::testing::StrictMock;
 
-const auto kServiceSpecifierString = "abc/abc/TirePressurePort";
-const auto kInstanceSpecifier = InstanceSpecifier::Create(kServiceSpecifierString).value();
+const auto kInstanceSpecifier = InstanceSpecifier::Create(std::string{"abc/abc/TirePressurePort"}).value();
 const auto kServiceIdentifier = make_ServiceIdentifierType("foo", 13, 37);
-LolaServiceInstanceId kLolaInstanceId{23U};
-ServiceInstanceId kInstanceId{kLolaInstanceId};
-const ServiceInstanceDeployment kDeploymentInfo{kServiceIdentifier,
-                                                LolaServiceInstanceDeployment{kLolaInstanceId},
-                                                QualityType::kASIL_QM,
-                                                kInstanceSpecifier};
-std::uint16_t kServiceId{34U};
-const ServiceTypeDeployment kTypeDeployment{LolaServiceTypeDeployment{kServiceId}};
-const auto kInstanceIdWithLolaBinding = make_InstanceIdentifier(kDeploymentInfo, kTypeDeployment);
+const LolaServiceInstanceId kLolaInstanceId{23U};
+constexpr std::uint16_t kServiceId{34U};
 
 class ProxyBaseFixture : public ::testing::Test
 {
@@ -67,8 +72,7 @@ class ProxyBaseFixture : public ::testing::Test
         ON_CALL(service_discovery_mock_, StopFindService(_)).WillByDefault(Return(ResultBlank{}));
     }
 
-    ProxyBaseFixture& WithAProxyBaseWithMockBinding(
-        const HandleType& handle_type = make_HandleType(kInstanceIdWithLolaBinding, kInstanceId))
+    ProxyBaseFixture& WithAProxyBaseWithMockBinding(const HandleType& handle_type)
     {
         base_proxy_ = std::make_unique<ProxyBase>(std::move(proxy_binding_mock_), handle_type);
         return *this;
@@ -78,6 +82,14 @@ class ProxyBaseFixture : public ::testing::Test
     {
         return ScopedEventReceiveHandler(event_receive_handler_scope_, mock_function.AsStdFunction());
     }
+
+    ConfigurationStore config_store_{kInstanceSpecifier,
+                                     kServiceIdentifier,
+                                     QualityType::kASIL_QM,
+                                     kServiceId,
+                                     kLolaInstanceId};
+    InstanceIdentifier instance_identifier_{config_store_.GetInstanceIdentifier()};
+    HandleType handle_{config_store_.GetHandle()};
 
     RuntimeMockGuard runtime_mock_guard_{};
     ServiceDiscoveryMock service_discovery_mock_{};
@@ -91,16 +103,15 @@ class ProxyBaseFixture : public ::testing::Test
 TEST_F(ProxyBaseFixture, CanConstructProxyBaseWithABindingContainingNullptr)
 {
     // Given a handle to a service with a lola binding
-    auto handle = make_HandleType(kInstanceIdWithLolaBinding, kInstanceId);
 
     // When constructing a Proxybase with a binding that is a nullptr nothing bad happens
-    ProxyBase proxy_base{nullptr, handle};
+    ProxyBase proxy_base{nullptr, handle_};
 }
 
 TEST_F(ProxyBaseFixture, GetImplReturnsProxyBindingPassedToConstructor)
 {
     // Given a ProxyBase with a mock binding and valid handle
-    WithAProxyBaseWithMockBinding();
+    WithAProxyBaseWithMockBinding(handle_);
 
     // When getting the proxy binding
     auto* proxy_binding = ProxyBaseView{*base_proxy_}.GetBinding();
@@ -119,14 +130,13 @@ TEST_F(ProxyBaseFixture, StoredHandleTypeEqualToSuppliedOne)
     RecordProperty("DerivationTechnique", "Analysis of requirements");
 
     // Given a ProxyBase with a mock binding and valid handle
-    auto handle = make_HandleType(kInstanceIdWithLolaBinding, kInstanceId);
-    WithAProxyBaseWithMockBinding(handle);
+    WithAProxyBaseWithMockBinding(handle_);
 
     // When getting the handle from the ProxyBase
     auto returned_handle = base_proxy_->GetHandle();
 
     // Then the returned handle will be the same handle provided to the constructor of ProxyBase
-    EXPECT_EQ(returned_handle, handle);
+    EXPECT_EQ(returned_handle, handle_);
 }
 
 using ProxyBaseFindServiceInstanceSpecifierFixture = ProxyBaseFixture;
@@ -141,7 +151,7 @@ TEST_F(ProxyBaseFindServiceInstanceSpecifierFixture, FindServiceShouldReturnHand
 
     // Expecting that the ServiceDiscoveryMock will return the handle corresponding to the instance identifier when
     // finding the service
-    auto expected_handle = make_HandleType(kInstanceIdWithLolaBinding, kInstanceId);
+    auto expected_handle = config_store_.GetHandle();
     EXPECT_CALL(service_discovery_mock_, FindService(kInstanceSpecifier))
         .WillOnce(Return(Result<std::vector<HandleType>>{{expected_handle}}));
 
@@ -170,7 +180,7 @@ TEST_F(ProxyBaseFindServiceInstanceSpecifierFixture, FindServiceShouldReturnErro
     // Given a valid instance identifier with a lola binding
 
     // Expecting that the ServiceDiscoveryMock will return an error
-    auto expected_handle = make_HandleType(kInstanceIdWithLolaBinding, kInstanceId);
+    auto expected_handle = config_store_.GetHandle();
     EXPECT_CALL(service_discovery_mock_, FindService(kInstanceSpecifier))
         .WillOnce(Return(MakeUnexpected(binding_error_code)));
 
@@ -259,10 +269,10 @@ TEST_F(ProxyBaseStartFindServiceInstanceIdentifierFixture, StartFindServiceWillD
 
     // Expecting that StartFindService is called on the Proxy binding
     const FindServiceHandle handle{make_FindServiceHandle(0)};
-    EXPECT_CALL(service_discovery_mock_, StartFindService(_, kInstanceIdWithLolaBinding)).WillOnce(Return(handle));
+    EXPECT_CALL(service_discovery_mock_, StartFindService(_, instance_identifier_)).WillOnce(Return(handle));
 
     // When calling StartFindService
-    score::cpp::ignore = ProxyBase::StartFindService([](auto, auto) noexcept {}, kInstanceIdWithLolaBinding);
+    score::cpp::ignore = ProxyBase::StartFindService([](auto, auto) noexcept {}, instance_identifier_);
 }
 
 TEST_F(ProxyBaseStartFindServiceInstanceIdentifierFixture,
@@ -277,11 +287,10 @@ TEST_F(ProxyBaseStartFindServiceInstanceIdentifierFixture,
 
     // Expecting that StartFindService is called on the Proxy binding
     const FindServiceHandle handle{make_FindServiceHandle(0)};
-    ON_CALL(service_discovery_mock_, StartFindService(_, kInstanceIdWithLolaBinding)).WillByDefault(Return(handle));
+    ON_CALL(service_discovery_mock_, StartFindService(_, instance_identifier_)).WillByDefault(Return(handle));
 
     // When calling StartFindService
-    auto find_service_handle_result =
-        ProxyBase::StartFindService([](auto, auto) noexcept {}, kInstanceIdWithLolaBinding);
+    auto find_service_handle_result = ProxyBase::StartFindService([](auto, auto) noexcept {}, instance_identifier_);
 
     // Then the handle from the binding will be returned
     ASSERT_TRUE(find_service_handle_result.has_value());
@@ -300,12 +309,11 @@ TEST_F(ProxyBaseStartFindServiceInstanceIdentifierFixture, StartFindServiceWillR
     RecordProperty("DerivationTechnique", "Analysis of requirements");
 
     // Expecting that StartFindService is called on the Proxy binding and returns an error
-    ON_CALL(service_discovery_mock_, StartFindService(_, kInstanceIdWithLolaBinding))
+    ON_CALL(service_discovery_mock_, StartFindService(_, instance_identifier_))
         .WillByDefault(Return(Unexpected{ComErrc::kNotOffered}));
 
     // When calling StartFindService
-    auto find_service_handle_result =
-        ProxyBase::StartFindService([](auto, auto) noexcept {}, kInstanceIdWithLolaBinding);
+    auto find_service_handle_result = ProxyBase::StartFindService([](auto, auto) noexcept {}, instance_identifier_);
 
     // Then an error containing kFindServiceHandlerFailure will be returned
     ASSERT_FALSE(find_service_handle_result.has_value());
@@ -384,13 +392,11 @@ TEST_F(ProxyBaseFindServiceInstanceIdentifierFixture,
 
     // Expecting that the ServiceDiscovery will return the handle corresponding to the instance identifier
     // when finding the service
-    auto expected_handle = make_HandleType(kInstanceIdWithLolaBinding, kInstanceId);
-    EXPECT_CALL(service_discovery_mock_, FindService(kInstanceIdWithLolaBinding))
-        .WillOnce(Return(Result<std::vector<HandleType>>{{expected_handle}}));
+    EXPECT_CALL(service_discovery_mock_, FindService(instance_identifier_))
+        .WillOnce(Return(Result<std::vector<HandleType>>{{handle_}}));
 
     // When calling FindService with the instance identifier
-    const Result<ServiceHandleContainer<HandleType>> handles_result =
-        ProxyBase::FindService(kInstanceIdWithLolaBinding);
+    const Result<ServiceHandleContainer<HandleType>> handles_result = ProxyBase::FindService(instance_identifier_);
 
     // Then the service can be found
     ASSERT_TRUE(handles_result.has_value());
@@ -398,7 +404,7 @@ TEST_F(ProxyBaseFindServiceInstanceIdentifierFixture,
     ASSERT_EQ(handles.size(), 1);
 
     // And the returned handle is derived from the instance identifier
-    EXPECT_EQ(handles[0], expected_handle);
+    EXPECT_EQ(handles[0], handle_);
 }
 
 TEST_F(ProxyBaseFindServiceInstanceIdentifierFixture,
@@ -417,13 +423,11 @@ TEST_F(ProxyBaseFindServiceInstanceIdentifierFixture,
 
     // Expecting and that the ServiceDiscovery will return an error when finding the service when finding the
     // service
-    auto expected_handle = make_HandleType(kInstanceIdWithLolaBinding, kInstanceId);
-    EXPECT_CALL(service_discovery_mock_, FindService(kInstanceIdWithLolaBinding))
+    EXPECT_CALL(service_discovery_mock_, FindService(instance_identifier_))
         .WillOnce(Return(MakeUnexpected(binding_error_code)));
 
     // When calling FindService with the instance identifier
-    const Result<ServiceHandleContainer<HandleType>> handles_result =
-        ProxyBase::FindService(kInstanceIdWithLolaBinding);
+    const Result<ServiceHandleContainer<HandleType>> handles_result = ProxyBase::FindService(instance_identifier_);
 
     // Then an error is returned
     ASSERT_FALSE(handles_result.has_value());
@@ -444,7 +448,8 @@ TEST_F(ProxyBaseFindServiceMultipleBindingsFixture,
         LolaServiceInstanceDeployment{LolaServiceInstanceId{instance_id_2}},
         QualityType::kASIL_QM,
         kInstanceSpecifier};
-    const auto instance_with_fake_binding_2 = make_InstanceIdentifier(deployment_info_2, kTypeDeployment);
+    const auto instance_with_fake_binding_2 =
+        make_InstanceIdentifier(deployment_info_2, ServiceTypeDeployment{config_store_.lola_service_type_deployment_});
 
     const auto service_identifier_3 = make_ServiceIdentifierType("foo3", 15, 39);
     std::uint16_t instance_id_3{33U};
@@ -453,21 +458,22 @@ TEST_F(ProxyBaseFindServiceMultipleBindingsFixture,
         LolaServiceInstanceDeployment{LolaServiceInstanceId{instance_id_3}},
         QualityType::kASIL_QM,
         kInstanceSpecifier};
-    const auto instance_with_fake_binding_3 = make_InstanceIdentifier(deployment_info_3, kTypeDeployment);
+    const auto instance_with_fake_binding_3 =
+        make_InstanceIdentifier(deployment_info_3, ServiceTypeDeployment{config_store_.lola_service_type_deployment_});
 
     // Given a valid instance identifier with a valid lola binding
 
     // Expecting that the runtime will return a vector containing 3 instance identifiers
     EXPECT_CALL(runtime_mock_guard_.runtime_mock_, resolve(kInstanceSpecifier))
         .WillOnce(Return(std::vector<InstanceIdentifier>{
-            kInstanceIdWithLolaBinding, instance_with_fake_binding_2, instance_with_fake_binding_3}));
+            instance_identifier_, instance_with_fake_binding_2, instance_with_fake_binding_3}));
 
     // and that the ServiceDiscovery will return a handles vector containing one error and two valid handles
     // when finding the service
     const auto expected_handle_with_error = MakeUnexpected(ComErrc::kInvalidConfiguration);
-    const auto expected_handle_2 = make_HandleType(instance_with_fake_binding_2, kInstanceId);
-    const auto expected_handle_3 = make_HandleType(instance_with_fake_binding_3, kInstanceId);
-    EXPECT_CALL(service_discovery_mock_, FindService(kInstanceIdWithLolaBinding))
+    const auto expected_handle_2 = make_HandleType(instance_with_fake_binding_2, ServiceInstanceId{kLolaInstanceId});
+    const auto expected_handle_3 = make_HandleType(instance_with_fake_binding_3, ServiceInstanceId{kLolaInstanceId});
+    EXPECT_CALL(service_discovery_mock_, FindService(instance_identifier_))
         .WillOnce(Return(Result<std::vector<HandleType>>{expected_handle_with_error}));
     EXPECT_CALL(service_discovery_mock_, FindService(instance_with_fake_binding_2))
         .WillOnce(Return(Result<std::vector<HandleType>>{{expected_handle_2}}));
@@ -497,21 +503,22 @@ TEST_F(ProxyBaseFindServiceMultipleBindingsFixture, DISABLED_FindServiceShouldRe
         LolaServiceInstanceDeployment{LolaServiceInstanceId{instance_id_2}},
         QualityType::kASIL_QM,
         kInstanceSpecifier};
-    const auto instance_with_fake_binding_2 = make_InstanceIdentifier(deployment_info_2, kTypeDeployment);
+    const auto instance_with_fake_binding_2 =
+        make_InstanceIdentifier(deployment_info_2, ServiceTypeDeployment{config_store_.lola_service_type_deployment_});
 
     // Given a valid instance identifier with a valid lola binding
 
     // Expecting that the runtime will return a vector containing 2 instance identifiers
     EXPECT_CALL(runtime_mock_guard_.runtime_mock_, resolve(kInstanceSpecifier))
-        .WillOnce(Return(std::vector<InstanceIdentifier>{kInstanceIdWithLolaBinding, instance_with_fake_binding_2}));
+        .WillOnce(Return(std::vector<InstanceIdentifier>{instance_identifier_, instance_with_fake_binding_2}));
 
     // and that the ServiceDiscovery will return a handles vector containing one error and one handle
     // when finding the service
     const auto expected_handle_with_error = MakeUnexpected(ComErrc::kInvalidConfiguration);
     const auto expected_handle_with_error_2 = MakeUnexpected(ComErrc::kInvalidConfiguration);
-    EXPECT_CALL(service_discovery_mock_, FindService(kInstanceIdWithLolaBinding))
+    EXPECT_CALL(service_discovery_mock_, FindService(instance_identifier_))
         .WillOnce(Return(Result<std::vector<HandleType>>{expected_handle_with_error}));
-    EXPECT_CALL(service_discovery_mock_, FindService(kInstanceIdWithLolaBinding))
+    EXPECT_CALL(service_discovery_mock_, FindService(instance_identifier_))
         .WillOnce(Return(Result<std::vector<HandleType>>{expected_handle_with_error_2}));
 
     // When finding a specific service

@@ -32,7 +32,8 @@ class ProxyFieldAttorney
 
     ProxyEvent<FieldType>& GetProxyEvent() noexcept
     {
-        return proxy_field_.proxy_event_dispatch_;
+        SCORE_LANGUAGE_FUTURECPP_ASSERT(proxy_field_.proxy_event_dispatch_ != nullptr);
+        return *proxy_field_.proxy_event_dispatch_;
     }
 
   private:

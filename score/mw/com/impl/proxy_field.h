@@ -17,12 +17,16 @@
 #include "score/mw/com/impl/plumbing/sample_ptr.h"
 #include "score/mw/com/impl/proxy_event.h"
 #include "score/mw/com/impl/proxy_event_binding.h"
+#include "score/mw/com/impl/proxy_field_base.h"
 
 #include "score/mw/com/impl/mocking/i_proxy_event.h"
 
 #include "score/result/result.h"
 
+#include <score/assert.hpp>
+
 #include <cstddef>
+#include <memory>
 #include <string_view>
 #include <utility>
 
@@ -40,9 +44,8 @@ class ProxyFieldAttorney;
 ///
 /// \tparam SampleDataType Type of data that is transferred by the event.
 template <typename SampleDataType>
-class ProxyField final
+class ProxyField final : public ProxyFieldBase
 {
-
     // Suppress "AUTOSAR C++14 A11-3-1", The rule declares: "Friend declarations shall not be used".
     // Design dessision: The "*Attorney" class is a helper, which sets the internal state of this class accessing
     // private members and used for testing purposes only.
@@ -58,10 +61,12 @@ class ProxyField final
     /// here.
     ///
     /// \param proxy_binding The binding that shall be associated with this proxy.
-    ProxyField(ProxyBase& base,
+    ProxyField(ProxyBase& proxy_base,
                std::unique_ptr<ProxyEventBinding<FieldType>> proxy_binding,
                const std::string_view field_name)
-        : proxy_event_dispatch_{base, std::move(proxy_binding), field_name}
+        : ProxyField{proxy_base,
+                     std::make_unique<ProxyEvent<FieldType>>(proxy_base, std::move(proxy_binding), field_name),
+                     field_name}
     {
     }
 
@@ -69,11 +74,14 @@ class ProxyField final
     ///
     /// \param base Proxy that contains this field
     /// \param field_name Field name of the field, taken from the AUTOSAR model
-    ProxyField(ProxyBase& base, const std::string_view field_name)
-        : proxy_event_dispatch_{base,
-                                ProxyFieldBindingFactory<FieldType>::CreateEventBinding(base, field_name),
-                                field_name,
-                                typename ProxyEvent<FieldType>::PrivateConstructorEnabler{}}
+    ProxyField(ProxyBase& proxy_base, const std::string_view field_name)
+        : ProxyField{proxy_base,
+                     std::make_unique<ProxyEvent<FieldType>>(
+                         proxy_base,
+                         ProxyFieldBindingFactory<FieldType>::CreateEventBinding(proxy_base, field_name),
+                         field_name,
+                         typename ProxyEvent<FieldType>::PrivateConstructorEnabler{}),
+                     field_name}
     {
     }
 
@@ -86,63 +94,6 @@ class ProxyField final
     ProxyField& operator=(ProxyField&&) noexcept = default;
 
     ~ProxyField() noexcept = default;
-
-    /// Subscribe to the field.
-    ///
-    /// \param max_sample_count Specify the maximum number of concurrent samples that this event shall
-    ///                         be able to offer to the using application.
-    /// \return On failure, returns an error code.
-    ResultBlank Subscribe(const std::size_t max_sample_count) noexcept
-    {
-        return proxy_event_dispatch_.Subscribe(max_sample_count);
-    }
-
-    /// \brief Get the subscription state of this field.
-    ///
-    /// This method can always be called regardless of the state of the field.
-    ///
-    /// \return Subscription state of the field.
-    SubscriptionState GetSubscriptionState() const noexcept
-    {
-        return proxy_event_dispatch_.GetSubscriptionState();
-    }
-
-    /// \brief End subscription to a field and release needed resources.
-    ///
-    /// It is illegal to call this method while data is still held by the application in the form of SamplePtr. Doing so
-    /// will result in undefined behavior.
-    ///
-    /// After a call to this method, the field behaves as if it had just been constructed.
-    void Unsubscribe() noexcept
-    {
-        proxy_event_dispatch_.Unsubscribe();
-    }
-
-    /// \brief Get the number of samples that can still be received by the user of this field.
-    ///
-    /// If this returns 0, the user first has to drop at least one SamplePtr before it is possible to receive data via
-    /// GetNewSamples again. If there is no subscription for this field, the returned value is unspecified.
-    ///
-    /// \return Number of samples that can still be received.
-    std::size_t GetFreeSampleCount() const noexcept
-    {
-        return proxy_event_dispatch_.GetFreeSampleCount();
-    }
-
-    /// \brief Returns the number of new samples a call to GetNewSamples() (given parameter max_num_samples
-    /// doesn't restrict it) would currently provide.
-    ///
-    /// \details This is a proprietary extension to the official ara::com API. It is useful in resource sensitive
-    ///          setups, where the user wants to work in polling mode only without registered async receive-handlers.
-    ///          For further details see //score/mw/com/design/extensions/README.md.
-    ///
-    /// \return Either 0 if no new samples are available (and GetNewSamples() wouldn't return any) or N, where 1 <= N <=
-    /// actual new samples. I.e. an implementation is allowed to report a lower number than actual new samples, which
-    /// would be provided by a call to GetNewSamples().
-    Result<std::size_t> GetNumNewSamplesAvailable() const noexcept
-    {
-        return proxy_event_dispatch_.GetNumNewSamplesAvailable();
-    }
 
     /// \brief Receive pending data from the field.
     ///
@@ -159,26 +110,34 @@ class ProxyField final
     template <typename F>
     Result<std::size_t> GetNewSamples(F&& receiver, const std::size_t max_num_samples) noexcept
     {
-        return proxy_event_dispatch_.GetNewSamples(std::forward<F>(receiver), max_num_samples);
-    }
-
-    ResultBlank SetReceiveHandler(EventReceiveHandler handler) noexcept
-    {
-        return proxy_event_dispatch_.SetReceiveHandler(std::move(handler));
-    }
-
-    ResultBlank UnsetReceiveHandler() noexcept
-    {
-        return proxy_event_dispatch_.UnsetReceiveHandler();
+        return proxy_event_dispatch_->GetNewSamples(std::forward<F>(receiver), max_num_samples);
     }
 
     void InjectMock(IProxyEvent<FieldType>& proxy_event_mock)
     {
-        proxy_event_dispatch_.InjectMock(proxy_event_mock);
+        proxy_event_dispatch_->InjectMock(proxy_event_mock);
     }
 
   private:
-    ProxyEvent<FieldType> proxy_event_dispatch_;
+    /// \brief Private constructor which allows the production / test-only public constructors to create and provide
+    /// proxy_event_dispatch.
+    ///
+    /// By adding this additional constructor, we can pass a pointer to the proxy_event_dispatch to the base class
+    /// before storing it in this class.
+    ProxyField(ProxyBase& proxy_base,
+               std::unique_ptr<ProxyEvent<FieldType>> proxy_event_dispatch,
+               const std::string_view field_name)
+        : ProxyFieldBase{proxy_base, proxy_event_dispatch.get(), field_name},
+          proxy_event_dispatch_{std::move(proxy_event_dispatch)}
+    {
+        // Defensive programming: This assertion is also in the constructor of ProxyFieldBase.
+        SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD(proxy_event_dispatch_ != nullptr);
+    }
+
+    // All public event-related calls to ProxyField will dispatch to proxy_event_dispatch_. It is a unique_ptr since we
+    // pass a pointer to it to ProxyFieldBase, so we must ensure that it doesn't move when the ProxyField is moved to
+    // avoid dangling references.
+    std::unique_ptr<ProxyEvent<FieldType>> proxy_event_dispatch_;
 };
 
 }  // namespace score::mw::com::impl
