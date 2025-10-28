@@ -12,7 +12,6 @@
 # *******************************************************************************
 load("@rules_rust//rust:defs.bzl", "rust_library")
 
-# Wrapper library that selects between mock and lola implementations
 rust_library(
     name = "com-api-gen",
     srcs = ["com_api_gen.rs"],
@@ -26,10 +25,9 @@ rust_library(
     ],
 )
 
-# Mock variant for testing
 rust_library(
     name = "com-api-gen-mock-variant",
-    testonly = True,  # Only test targets can depend on this
+    testonly = True,
     srcs = ["com_api_gen.rs"],
     crate_features = ["mock"],
     crate_name = "com_api_gen",
