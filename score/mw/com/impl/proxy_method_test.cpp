@@ -83,7 +83,7 @@ TEST_F(ProxyMethodTestFixture, Construction_withNonVoidReturnAndNoArgsSucceeds)
     ProxyMethod<int()> unit{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
 }
 
-TEST_F(ProxyMethodTestFixture, AllocateInArgs_Successful)
+TEST_F(ProxyMethodTestFixture, AllocateInArgs_ReturnsInArgPointersPointingToInArgsAllocatedByBinding)
 {
     // Given a ProxyMethod with a return type of void and three arguments: int, double, char
     ProxyMethod<void(int, double, char)> unit{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
@@ -101,12 +101,12 @@ TEST_F(ProxyMethodTestFixture, AllocateInArgs_Successful)
     // locations in the buffer
     auto& pointer1 = std::get<0>(method_in_arg_ptr_tuple.value());
     EXPECT_EQ(pointer1.GetQueuePosition(), 0);
-    // Expect, that the 2nd argument pointer is after the 1st argument pointer in the buffer (detailed position is not
+    // then the 2nd argument pointer is after the 1st argument pointer in the buffer (detailed position is not
     // checked here as this is done/verified in TypeErasedStorage tests)
     EXPECT_EQ(reinterpret_cast<std::byte*>(pointer1.get()), &(method_in_args_buffer_[0]));
     auto& pointer2 = std::get<1>(method_in_arg_ptr_tuple.value());
     EXPECT_EQ(pointer2.GetQueuePosition(), 0);
-    // Expect, that the 3rd argument pointer is after the 1st argument pointer in the buffer (detailed position is not
+    // and the 3rd argument pointer is after the 1st argument pointer in the buffer (detailed position is not
     // checked here as this is done/verified in TypeErasedStorage tests)
     EXPECT_GT(reinterpret_cast<std::byte*>(pointer2.get()), reinterpret_cast<std::byte*>(pointer1.get()));
     auto& pointer3 = std::get<2>(method_in_arg_ptr_tuple.value());
@@ -128,7 +128,7 @@ TEST_F(ProxyMethodTestFixture, AllocateInArgs_QueueFullError)
     // 1st call)
     auto method_in_arg_ptr_tuple_2 = unit.Allocate();
 
-    // expect that a CallQueueFull error is returned
+    // then a CallQueueFull error is returned
     EXPECT_FALSE(method_in_arg_ptr_tuple_2.has_value());
     EXPECT_EQ(method_in_arg_ptr_tuple_2.error(), ComErrc::kCallQueueFull);
 }
@@ -162,7 +162,7 @@ TEST_F(ProxyMethodTestFixture, CallOperator_VoidReturn_WithCopy)
     double arg2 = 3.14;
     char arg3 = 'a';
     auto call_result = unit(arg1, arg2, arg3);
-    // expect, that no error is returned
+    // then no error is returned
     EXPECT_TRUE(call_result.has_value());
 }
 
@@ -176,7 +176,7 @@ TEST_F(ProxyMethodTestFixture, CallOperator_NonVoidReturn_WithCopy)
     double arg2 = 3.14;
     char arg3 = 'a';
     auto call_result = unit(arg1, arg2, arg3);
-    // expect, that no error is returned
+    // then no error is returned
     EXPECT_TRUE(call_result.has_value());
 }
 
@@ -198,7 +198,7 @@ TEST_F(ProxyMethodTestFixture, CallOperator_VoidReturn_NoArgs)
 
     // when call operator is called on the ProxyMethod
     auto call_result = unit();
-    // expect, that no error is returned
+    // then no error is returned
     EXPECT_TRUE(call_result.has_value());
 }
 
@@ -209,7 +209,7 @@ TEST_F(ProxyMethodTestFixture, CallOperator_NonVoidReturn_NoArgs)
 
     // when call operator is called on the ProxyMethod
     auto call_result = unit();
-    // expect, that no error is returned
+    // then no error is returned
     EXPECT_TRUE(call_result.has_value());
 }
 
@@ -230,7 +230,7 @@ TEST_F(ProxyMethodTestFixture, CallOperator_NonVoidReturn_ZeroCopy)
     *method_in_arg_ptr_2 = 'a';
     auto call_result =
         unit(std::move(method_in_arg_ptr_0), std::move(method_in_arg_ptr_1), std::move(method_in_arg_ptr_2));
-    // expect, that no error is returned
+    // then no error is returned
     EXPECT_TRUE(call_result.has_value());
 }
 
@@ -242,10 +242,13 @@ TEST_F(ProxyMethodTestFixture, ProxyMethodView_WithInArgsAndNonVoidReturnType)
     // then we can create a view on the ProxyMethod
     ProxyMethodView proxy_method_view{unit};
 
-    // and get the type-erased info for in-arguments and return type
+    // and when we call GetTypeErasedInAgs
     auto type_erased_in_args = proxy_method_view.GetTypeErasedInAgs();
+    // then we get a valid TypeErasedDataTypeInfo
     EXPECT_TRUE(type_erased_in_args.has_value());
+    // and when we call GetTypeErasedReturnType
     auto type_erased_return_type = proxy_method_view.GetTypeErasedReturnType();
+    // then we get a valid TypeErasedDataTypeInfo
     EXPECT_TRUE(type_erased_return_type.has_value());
 }
 
@@ -257,10 +260,13 @@ TEST_F(ProxyMethodTestFixture, ProxyMethodView_WithoutInArgs)
     // then we can create a view on the ProxyMethod
     ProxyMethodView proxy_method_view{unit};
 
-    // and get the type-erased info for in-arguments and return type
+    // and when we call GetTypeErasedInAgs
     auto type_erased_in_args = proxy_method_view.GetTypeErasedInAgs();
+    // then we get no TypeErasedDataTypeInfo for in-arguments
     EXPECT_FALSE(type_erased_in_args.has_value());
+    // and when we call GetTypeErasedReturnType
     auto type_erased_return_type = proxy_method_view.GetTypeErasedReturnType();
+    // then we get a valid TypeErasedDataTypeInfo
     EXPECT_TRUE(type_erased_return_type.has_value());
 }
 
@@ -272,10 +278,13 @@ TEST_F(ProxyMethodTestFixture, ProxyMethodView_WithVoidReturnType)
     // then we can create a view on the ProxyMethod
     ProxyMethodView proxy_method_view{unit};
 
-    // and get the type-erased info for in-arguments and return type
+    // and when we call GetTypeErasedInAgs
     auto type_erased_in_args = proxy_method_view.GetTypeErasedInAgs();
+    // then we get a valid TypeErasedDataTypeInfo for in-arguments
     EXPECT_TRUE(type_erased_in_args.has_value());
+    // and when we call GetTypeErasedReturnType
     auto type_erased_return_type = proxy_method_view.GetTypeErasedReturnType();
+    // then we get no TypeErasedDataTypeInfo for return type
     EXPECT_FALSE(type_erased_return_type.has_value());
 }
 

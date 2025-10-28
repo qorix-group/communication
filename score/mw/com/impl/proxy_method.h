@@ -39,7 +39,7 @@ score::Result<std::size_t> DetermineNextAvailableQueueSlot(
     containers::DynamicArray<std::array<bool, sizeof...(ArgTypes)>>& in_arg_ptr_flags,
     containers::DynamicArray<bool>& return_type_ptr_flags)
 {
-    // Find an index, where in is_in_arg_ptr_active_ and is_return_type_ptr_active_ is inactive
+    // Find an index, where both are_in_arg_ptrs_active_ and is_return_type_ptr_active_ are inactive
     for (std::size_t i = 0U; i < in_arg_ptr_flags.size(); ++i)
     {
         bool all_inactive = std::none_of(in_arg_ptr_flags[i].begin(), in_arg_ptr_flags[i].end(), [](bool active) {
@@ -107,9 +107,9 @@ score::Result<std::tuple<impl::MethodInArgPtr<ArgTypes>...>> Allocate(
     auto allocated_in_args_storage = binding.AllocateInArgs(queue_index);
     SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(allocated_in_args_storage.has_value(),
                            "ProxyMethod::Allocate: AllocateInArgs failed unexpectedly.");
-    MemoryBufferAccessor in_args_buffer_accessor{(allocated_in_args_storage.value().data()),
+    score::cpp::span<std::byte> in_args_buffer{(allocated_in_args_storage.value().data()),
                                                  allocated_in_args_storage.value().size()};
-    const auto deserialized_arg_pointers = Deserialize<ArgTypes...>(in_args_buffer_accessor);
+    const auto deserialized_arg_pointers = impl::Deserialize<ArgTypes...>(in_args_buffer);
     auto method_in_arg_ptr_tuple = detail::CreateMethodInArgPtrTuple(
         deserialized_arg_pointers, in_arg_ptr_flags, queue_index, std::make_index_sequence<sizeof...(ArgTypes)>());
 
@@ -261,7 +261,7 @@ class ProxyMethod<ReturnType(ArgTypes...)> final : public ProxyMethodBase
                 std::unique_ptr<ProxyMethodBinding> proxy_method_binding,
                 std::string_view method_name) noexcept
         : ProxyMethodBase(proxy_base, std::move(proxy_method_binding), method_name),
-          is_in_arg_ptr_active_{kCallQueueSize}
+          are_in_arg_ptrs_active_{kCallQueueSize}
     {
     }
 
@@ -278,7 +278,7 @@ class ProxyMethod<ReturnType(ArgTypes...)> final : public ProxyMethodBase
     /// returned.
     score::Result<std::tuple<impl::MethodInArgPtr<ArgTypes>...>> Allocate()
     {
-        return detail::Allocate<ArgTypes...>(*binding_, is_in_arg_ptr_active_, is_return_type_ptr_active_);
+        return detail::Allocate<ArgTypes...>(*binding_, are_in_arg_ptrs_active_, is_return_type_ptr_active_);
     };
 
     /// \brief This is the copying call-operator of ProxyMethod for a non-void ReturnType.
@@ -309,9 +309,9 @@ class ProxyMethod<ReturnType(ArgTypes...)> final : public ProxyMethodBase
     /// \brief Outer dynamic array: one entry per call-queue position, inner array: one entry per argument.
     /// \details This array of arrays contains bool flags, which indicate, if the corresponding argument pointer
     /// passed to the zero-copy call-operator is active (true) or not (false).
-    /// E.g. is_in_arg_ptr_active_[0][2] == true means, that for the call-queue position 0, the 3rd argument
+    /// E.g. are_in_arg_ptrs_active_[0][2] == true means, that for the call-queue position 0, the 3rd argument
     /// pointer passed to the zero-copy call-operator is active.
-    containers::DynamicArray<std::array<bool, sizeof...(ArgTypes)>> is_in_arg_ptr_active_;
+    containers::DynamicArray<std::array<bool, sizeof...(ArgTypes)>> are_in_arg_ptrs_active_;
 };
 
 /// \brief Partial specialization of ProxyMethod for function signatures with arguments and void return
@@ -330,7 +330,7 @@ class ProxyMethod<void(ArgTypes...)> final : public ProxyMethodBase
                 std::unique_ptr<ProxyMethodBinding> proxy_method_binding,
                 std::string_view method_name) noexcept
         : ProxyMethodBase(proxy_base, std::move(proxy_method_binding), method_name),
-          is_in_arg_ptr_active_{kCallQueueSize}
+          are_in_arg_ptrs_active_{kCallQueueSize}
     {
     }
 
@@ -347,7 +347,7 @@ class ProxyMethod<void(ArgTypes...)> final : public ProxyMethodBase
     /// returned.
     score::Result<std::tuple<impl::MethodInArgPtr<ArgTypes>...>> Allocate()
     {
-        return detail::Allocate<ArgTypes...>(*binding_, is_in_arg_ptr_active_, is_return_type_ptr_active_);
+        return detail::Allocate<ArgTypes...>(*binding_, are_in_arg_ptrs_active_, is_return_type_ptr_active_);
     };
 
     /// \brief This is the copying call-operator of ProxyMethod for a void ReturnType.
@@ -375,9 +375,9 @@ class ProxyMethod<void(ArgTypes...)> final : public ProxyMethodBase
     /// \brief Outer dynamic array: one entry per call-queue position, inner array: one entry per argument.
     /// \details This array of arrays contains bool flags, which indicate, if the corresponding argument pointer
     /// passed to the zero-copy call-operator is active (true) or not (false).
-    /// E.g. is_in_arg_ptr_active_[0][2] == true means, that for the call-queue position 0, the 3rd argument
+    /// E.g. are_in_arg_ptrs_active_[0][2] == true means, that for the call-queue position 0, the 3rd argument
     /// pointer passed to the zero-copy call-operator is active.
-    containers::DynamicArray<std::array<bool, sizeof...(ArgTypes)>> is_in_arg_ptr_active_;
+    containers::DynamicArray<std::array<bool, sizeof...(ArgTypes)>> are_in_arg_ptrs_active_;
 };
 
 /// ---------------------------------------------------------------------------------------------

@@ -30,6 +30,7 @@ cc_library(
         ":generic_proxy_event",
         ":proxy_event",
         ":proxy_field",
+        ":proxy_method",
         ":skeleton_event",
         ":skeleton_field",
         ":traits",
@@ -1075,6 +1076,7 @@ cc_unit_test_suites_for_host_and_qnx(
         ":unit_test",
         ":runtime_test",
         ":method_signature_element_ptr_test",
+        ":proxy_method_test",
         ":unit_test_runtime_single_exec",
     ],
     test_suites_from_sub_packages = [

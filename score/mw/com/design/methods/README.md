@@ -97,11 +97,11 @@ in the binding layer, the `impl::ProxyMethod` class template manages the call qu
 hands out `MethodInArgPtr` and `MethodReturnPtr` to the user, which are linked to specific logical call-queue entries.
 
 This "linkage" is done via embedding a reference to a call-queue slot specific bool flag, which the `impl::ProxyMethod`
-class template manages internally in its members `is_in_arg_ptr_active_` and `is_return_type_ptr_active_`. This flag
+class template manages internally in its members `are_in_arg_ptrs_active_` and `is_return_type_ptr_active_`. This flag
 indicates, whether the specific call-queue entry is currently in use.
 
 When the `impl::ProxyMethod` class template hands out a `MethodInArgPtr` or `MethodReturnPtr` to the user, it calls the
-ctor of `MethodInArgPtr`/`MethodInArgPtr` with a related reference to the corresponding flag in `is_in_arg_ptr_active_`
+ctor of `MethodInArgPtr`/`MethodInArgPtr` with a related reference to the corresponding flag in `are_in_arg_ptrs_active_`
 and `is_return_type_ptr_active_` and the `ctor` sets the flag to `true`, indicating that the specific call-queue entry
 is in use. Then the `dtor` of `MethodInArgPtr`/`MethodReturnPtr` sets the flag to `false` again, indicating that the
 specific call-queue entry is free/available again.
