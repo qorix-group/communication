@@ -60,7 +60,9 @@ Runtime::Runtime(const Configuration& config,
       long_running_threads_{long_running_threads},
       lola_messaging_stop_source_{},
       lola_messaging_service_{
+          // LCOV_EXCL_START Tooling issue - Lines before and after are covered Ticket-184253
           Runtime::GetMessagePassingCfg(QualityType::kASIL_QM),
+          // LCOV_EXCL_STOP
           Runtime::HasAsilBSupport()
               ? score::cpp::optional<MessagePassingServiceInstance::AsilSpecificCfg>{Runtime::GetMessagePassingCfg(
                     QualityType::kASIL_B)}

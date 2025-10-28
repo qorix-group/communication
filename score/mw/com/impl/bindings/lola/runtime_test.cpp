@@ -92,12 +92,15 @@ class RuntimeFixture : public ::testing::Test
         config_ = std::make_unique<Configuration>(
             service_types, service_instances, std::move(global_configuration), std::move(tracing_configuration));
 
-        unit_ = std::make_unique<Runtime>(*config_, long_running_threads_, nullptr);
+        tracing_runtime_ = std::make_unique<tracing::TracingRuntime>(0, *config_);
+
+        unit_ = std::make_unique<Runtime>(*config_, long_running_threads_, std::move(tracing_runtime_));
     }
 
     score::mw::com::message_passing::ReceiverMock receiver_mock_;
     std::unique_ptr<Configuration> config_;
     concurrency::LongRunningThreadsContainer long_running_threads_;
+    std::unique_ptr<tracing::TracingRuntime> tracing_runtime_;
     std::unique_ptr<Runtime> unit_;
 };
 
@@ -133,9 +136,25 @@ TEST_F(RuntimeFixture, EnsureCorrectAsilBSupport)
     EXPECT_TRUE(unit_->HasAsilBSupport());
 }
 
-TEST_F(RuntimeFixture, CanRetrieveMessagingAPI)
+TEST_F(RuntimeFixture, CanRetrieveTracingRuntime)
 {
-    score::cpp::ignore = unit_->GetLolaMessaging();
+    // Given a tracing configuration
+    GlobalConfiguration global_configuration{};
+    global_configuration.SetProcessAsilLevel(QualityType::kASIL_B);
+
+    TracingConfiguration tracing_configuration{};
+    tracing_configuration.SetTracingEnabled(true);
+
+    SetConfig(Configuration::ServiceTypeDeployments{},
+              Configuration::ServiceInstanceDeployments{},
+              std::move(global_configuration),
+              std::move(tracing_configuration));
+
+    // When retrieving the tracing runtime
+    const auto* tracing_runtime = unit_->GetTracingRuntime();
+
+    // Then the runtime is valid
+    EXPECT_NE(tracing_runtime, nullptr);
 }
 
 TEST_F(RuntimeFixture, GetMessagePassingCfgWithPredefinedTwoLolaServiceConfig)
@@ -345,6 +364,40 @@ TEST_F(RuntimeFixture, GetMessagePassingCfgOneEmptyQMConsumer)
     }
 }
 
+TEST_F(RuntimeFixture, GetMessagePassingCfgMissingConsumer)
+{
+    // Given a configuration with a LoLa service instance deployment without any allowed consumers (set fully missing)
+    LolaServiceInstanceDeployment lolaServiceInstanceDeployment1;
+    lolaServiceInstanceDeployment1.allowed_provider_.insert({QualityType::kASIL_B, {15}});
+    ServiceInstanceDeployment::BindingInformation binding1(lolaServiceInstanceDeployment1);
+
+    ServiceIdentifierType si1 = make_ServiceIdentifierType("foo", 1U, 1U);
+    ServiceInstanceDeployment deployment1(si1, binding1, QualityType::kASIL_B, kInstanceSpecifier);
+
+    auto instance_specifier_result = InstanceSpecifier::Create("foo_1");
+    ASSERT_TRUE(instance_specifier_result.has_value());
+
+    Configuration::ServiceInstanceDeployments instanceDeployments;
+    instanceDeployments.insert({instance_specifier_result.value(), deployment1});
+
+    GlobalConfiguration global_configuration{};
+
+    Configuration configuration{Configuration::ServiceTypeDeployments{},
+                                instanceDeployments,
+                                std::move(global_configuration),
+                                TracingConfiguration{}};
+
+    // when creating a LoLa runtime with this configuration
+    Runtime unit{configuration, long_running_threads_, nullptr};
+
+    // and reading out the ASIL_QM specific message passing cfgs
+    MessagePassingService::AsilSpecificCfg cfg_qm = unit.GetMessagePassingCfg(QualityType::kASIL_QM);
+
+    // expect that the user_ids allowed as senders for the QM are empty
+    std::set<uid_t> expected_userids_qm = {};
+    EXPECT_EQ(cfg_qm.allowed_user_ids_.size(), 0);
+}
+
 using RuntimeDeathTest = RuntimeFixture;
 TEST_F(RuntimeDeathTest, GettingAsilBConfigInQmProcessTerminates)
 {
@@ -369,6 +422,33 @@ TEST_F(RuntimeDeathTest, GettingAsilBConfigInQmProcessTerminates)
 
     // the program terminates when reading out the ASIL_B specific message passing cfgs
     EXPECT_DEATH(unit.GetMessagePassingCfg(QualityType::kASIL_B), ".*");
+}
+
+TEST_F(RuntimeFixture, CanRetrieveShmSizeCalculationMode)
+{
+    // Given a configuration with a specific SHM size calc mode
+    const auto expected_shm_size_calc_mode = config_->GetGlobalConfiguration().GetShmSizeCalcMode();
+
+    // When getting the SHM size calc mode from the runtime
+    const auto actual_shm_size_calc_mode = unit_->GetShmSizeCalculationMode();
+
+    // Then it equals the one in the configuration
+    EXPECT_EQ(actual_shm_size_calc_mode, expected_shm_size_calc_mode);
+}
+
+TEST_F(RuntimeDeathTest, CanRetrieveServiceDiscoveryClient)
+{
+    EXPECT_NO_FATAL_FAILURE(unit_->GetServiceDiscoveryClient());
+}
+
+TEST_F(RuntimeDeathTest, CanRetrieveRollbackSynchronization)
+{
+    EXPECT_NO_FATAL_FAILURE(unit_->GetRollbackSynchronization());
+}
+
+TEST_F(RuntimeDeathTest, CanRetrieveMessagingAPI)
+{
+    EXPECT_NO_FATAL_FAILURE(unit_->GetLolaMessaging());
 }
 
 TEST_F(RuntimeFixture, EnsureCorrectPidReturned)
