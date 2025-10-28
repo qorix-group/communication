@@ -17,8 +17,8 @@
 
 #include <score/assert.hpp>
 
-#include <gtest/gtest.h>
 #include <score/blank.hpp>
+#include <gtest/gtest.h>
 #include <limits>
 #include <memory>
 #include <utility>

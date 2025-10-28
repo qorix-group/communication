@@ -39,8 +39,7 @@ class SkeletonEvent : public SkeletonEventBinding<SampleType>
   public:
     MOCK_METHOD(ResultBlank,
                 Send,
-                (const SampleType& value,
-                 score::cpp::optional<typename SkeletonEventBinding<SampleType>::SendTraceCallback>),
+                (const SampleType& value, score::cpp::optional<typename SkeletonEventBinding<SampleType>::SendTraceCallback>),
                 (noexcept, override));
     MOCK_METHOD(ResultBlank,
                 Send,

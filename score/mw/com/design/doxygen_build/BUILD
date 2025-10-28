@@ -1,4 +1,4 @@
-load("@doxygen//:doxygen.bzl", "doxygen")
+load("@rules_doxygen//doxygen:doxygen.bzl", "doxygen")
 
 doxygen(
     name = "generate_doxygen",
