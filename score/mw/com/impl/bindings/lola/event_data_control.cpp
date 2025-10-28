@@ -66,7 +66,10 @@ auto EventDataControlImpl<AtomicIndirectorType>::AllocateNextSlot() noexcept -> 
             continue;
         }
 
-        EventSlotStatus status{selected_slot.GetSlot().load(std::memory_order_acquire)};
+        const auto& slot = selected_slot.GetSlot();
+        const auto slot_value =
+            AtomicIndirectorType<EventSlotStatus::value_type>::load(slot, std::memory_order_acquire);
+        EventSlotStatus status{slot_value};
 
         // we need to check that this is still the same, since it is possible that is has changed after we found it
         // earlier
@@ -135,7 +138,8 @@ auto EventDataControlImpl<AtomicIndirectorType>::FindOldestUnusedSlot() noexcept
          ++current_index)
     {
         // coverity[autosar_cpp14_a5_3_2_violation]
-        const EventSlotStatus status{it->load(std::memory_order_acquire)};
+        const EventSlotStatus status{
+            AtomicIndirectorType<EventSlotStatus::value_type>::load(*it, std::memory_order_acquire)};
 
         if (status.IsInvalid())
         {

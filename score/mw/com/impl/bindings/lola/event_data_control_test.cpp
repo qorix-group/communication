@@ -76,6 +76,9 @@ class EventDataControlFixture : public ::testing::Test
 {
   public:
     FakeMemoryResource memory_{};
+    std::unique_ptr<memory::shared::AtomicMock<EventSlotStatus::value_type>> atomic_mock_{nullptr};
+    std::unique_ptr<detail_event_data_control::EventDataControlImpl<memory::shared::AtomicIndirectorMock>> unit_mock_{
+        nullptr};
 
     static void SetUpTestSuite()
     {
@@ -86,6 +89,23 @@ class EventDataControlFixture : public ::testing::Test
         RecordProperty("TestType", "Requirements-based test");
         RecordProperty("Priority", "1");
         RecordProperty("DerivationTechnique", "Analysis of requirements");
+    }
+
+    EventDataControlFixture& WithMockedEventDataControl()
+    {
+        atomic_mock_ = std::make_unique<memory::shared::AtomicMock<EventSlotStatus::value_type>>();
+        memory::shared::AtomicIndirectorMock<EventSlotStatus::value_type>::SetMockObject(atomic_mock_.get());
+
+        unit_mock_ =
+            std::make_unique<detail_event_data_control::EventDataControlImpl<memory::shared::AtomicIndirectorMock>>(
+                kMaxSlots, memory_.getMemoryResourceProxy(), kMaxSubscribers);
+
+        return *this;
+    }
+
+    void TearDown() override
+    {
+        memory::shared::AtomicIndirectorMock<EventSlotStatus::value_type>::SetMockObject(nullptr);
     }
 };
 
@@ -106,6 +126,52 @@ TEST_F(EventDataControlFixture, CanAllocateOneSlotWithoutContention)
     EXPECT_TRUE(slot.IsValid());
     // The expected (first) slot is returned
     EXPECT_EQ(slot.GetIndex(), 0);
+}
+
+TEST_F(EventDataControlFixture, CanAllocateOneSlotWhenReferenceCountChanges)
+{
+    RecordProperty("Verifies", "SCR-5899076");
+    RecordProperty("Description", "Ensures that a slot can be allocated");
+    RecordProperty("TestType", "Requirements-based test");
+    RecordProperty("Priority", "1");
+    RecordProperty("DerivationTechnique", "Analysis of requirements");
+
+    // Given an initialized EventDataControl structure
+    score::cpp::ignore = WithMockedEventDataControl();
+
+    // And an atomic mimicking two relevant slots where ...
+    EXPECT_CALL(*atomic_mock_, load(_))
+        // ... first slot is unreferenced for the first iteration in FindOldestUnusedSlot()
+        .WillOnce([] {
+            EventSlotStatus invalid_event_slot_status{};
+            return static_cast<EventSlotStatus::value_type>(invalid_event_slot_status);
+        })
+        // ... first slot was set to in-writing by a different party at the last possible time right before we check in
+        // AllocateNextSlot()
+        .WillOnce([] {
+            EventSlotStatus event_slot_status_in_writing{};
+            event_slot_status_in_writing.SetReferenceCount(kSlotIsInWriting);
+            return static_cast<EventSlotStatus::value_type>(event_slot_status_in_writing);
+        })
+        // ... first slot keeps in-writing status during next iteration in FindOldestUnusedSlot() and therefore won't be
+        // chosen
+        .WillOnce([] {
+            EventSlotStatus event_slot_status_in_writing{};
+            event_slot_status_in_writing.SetReferenceCount(kSlotIsInWriting);
+            return static_cast<EventSlotStatus::value_type>(event_slot_status_in_writing);
+        })
+        // ... second slot is always unreferenced in all future calls and is therefore chosen
+        .WillRepeatedly([] {
+            EventSlotStatus invalid_event_slot_status{};
+            return static_cast<EventSlotStatus::value_type>(invalid_event_slot_status);
+        });
+
+    // When allocating a slot
+    const auto slot = unit_mock_->AllocateNextSlot();
+
+    EXPECT_TRUE(slot.IsValid());
+    // The expected (second) slot is returned
+    EXPECT_EQ(slot.GetIndex(), 1);
 }
 
 TEST_F(EventDataControlFixture, CanAllocateMultipleSlotWithoutContention)
