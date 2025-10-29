@@ -25,7 +25,12 @@ namespace score::mw::com::impl
 {
 
 ProxyBase::ProxyBase(std::unique_ptr<ProxyBinding> proxy_binding, HandleType handle)
-    : proxy_binding_{std::move(proxy_binding)}, handle_{std::move(handle)}, are_service_element_bindings_valid_{true}
+    : proxy_binding_{std::move(proxy_binding)},
+      handle_{std::move(handle)},
+      are_service_element_bindings_valid_{true},
+      events_{},
+      fields_{},
+      methods_{}
 {
 }
 
@@ -69,8 +74,8 @@ auto ProxyBase::StartFindService(FindServiceHandler<HandleType> handler,
     return start_find_service_result;
 }
 
-auto ProxyBase::StartFindService(FindServiceHandler<HandleType> handler, InstanceSpecifier instance_specifier) noexcept
-    -> Result<FindServiceHandle>
+auto ProxyBase::StartFindService(FindServiceHandler<HandleType> handler,
+                                 InstanceSpecifier instance_specifier) noexcept -> Result<FindServiceHandle>
 {
     const auto start_find_service_result = Runtime::getInstance().GetServiceDiscovery().StartFindService(
         std::move(handler), std::move(instance_specifier));
