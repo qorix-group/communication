@@ -17,6 +17,7 @@
 #include "score/mw/com/impl/plumbing/skeleton_binding_factory.h"
 #include "score/mw/com/impl/plumbing/skeleton_event_binding_factory.h"
 #include "score/mw/com/impl/plumbing/skeleton_field_binding_factory.h"
+#include "score/mw/com/impl/service_element_type.h"
 #include "score/mw/com/impl/test/dummy_instance_identifier_builder.h"
 
 #include <gtest/gtest.h>
@@ -39,7 +40,7 @@ constexpr std::uint16_t kDummyFieldId{6U};
 
 constexpr uint16_t kInstanceId = 0x31U;
 const LolaServiceId kServiceId{1U};
-const auto kInstanceSpecifier = InstanceSpecifier::Create("/my_dummy_instance_specifier").value();
+const auto kInstanceSpecifier = InstanceSpecifier::Create(std::string{"/my_dummy_instance_specifier"}).value();
 
 const LolaServiceInstanceDeployment kLolaServiceInstanceDeployment{
     LolaServiceInstanceId{kInstanceId},
@@ -87,6 +88,7 @@ class SkeletonServiceElementBindingFactoryParamaterisedFixture : public ::testin
                 return lola::ElementFqId{kServiceId, kDummyEventId, kInstanceId, service_element_type_};
             case ServiceElementType::FIELD:
                 return lola::ElementFqId{kServiceId, kDummyFieldId, kInstanceId, service_element_type_};
+            case ServiceElementType::METHOD:
             case ServiceElementType::INVALID:
             default:
                 // This should never be reached since we assert the value of service_element_type_ in SetUp()
@@ -111,6 +113,7 @@ class SkeletonServiceElementBindingFactoryParamaterisedFixture : public ::testin
             case ServiceElementType::FIELD:
                 return SkeletonFieldBindingFactory<TestSampleType>::CreateEventBinding(
                     instance_identifier, *skeleton_base_, kDummyFieldName);
+            case ServiceElementType::METHOD:
             case ServiceElementType::INVALID:
             default:
                 // This should never be reached since we assert the value of service_element_type_ in SetUp()
