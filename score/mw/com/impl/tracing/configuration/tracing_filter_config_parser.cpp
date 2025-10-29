@@ -191,7 +191,7 @@ std::set<std::string_view> GetElementNamesOfServiceType(const std::string_view s
                     score::cpp::ignore = result.insert(event.first);
                 }
             }
-            // LCOV_EXCL_BR_LINE (Defensive programming: GetElementNamesOfServiceType is always called with either
+            // LCOV_EXCL_BR_START (Defensive programming: GetElementNamesOfServiceType is always called with either
             // ServiceElementType::EVENT or ServiceElementType::FIELD. Entering the false branch of this check is
             // therefore unreachable.
             else if (element_type == ServiceElementType::FIELD)
