@@ -65,7 +65,7 @@ class ProxyEvent final : public ProxyEventBase
     friend class ProxyField<SampleDataType>;
 
     // Empty struct that is used to make the second constructor only accessible to ProxyField (as it is a friend).
-    struct PrivateConstructorEnabler
+    struct FieldOnlyConstructorEnabler
     {
     };
 
@@ -89,7 +89,7 @@ class ProxyEvent final : public ProxyEventBase
     ProxyEvent(ProxyBase& base,
                std::unique_ptr<ProxyEventBinding<SampleType>> proxy_binding,
                const std::string_view event_name,
-               PrivateConstructorEnabler);
+               FieldOnlyConstructorEnabler);
 
     /// \brief Constructs a ProxyEvent by querying the base proxie's ProxyBinding for the respective ProxyEventBinding.
     ///
@@ -183,7 +183,7 @@ template <typename SampleType>
 ProxyEvent<SampleType>::ProxyEvent(ProxyBase& base,
                                    std::unique_ptr<ProxyEventBinding<SampleType>> proxy_binding,
                                    const std::string_view event_name,
-                                   PrivateConstructorEnabler)
+                                   FieldOnlyConstructorEnabler)
     : ProxyEventBase{base, ProxyBaseView{base}.GetBinding(), std::move(proxy_binding), event_name},
       proxy_event_mock_{nullptr},
       is_field_event_{true}

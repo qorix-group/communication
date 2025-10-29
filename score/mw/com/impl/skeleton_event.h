@@ -55,7 +55,7 @@ class SkeletonEvent : public SkeletonEventBase
 
     // Empty struct that is used to make the second constructor only accessible to SkeletonEvent and SkeletonField (as
     // the latter is a friend).
-    struct PrivateConstructorEnabler
+    struct FieldOnlyConstructorEnabler
     {
     };
 
@@ -69,12 +69,12 @@ class SkeletonEvent : public SkeletonEventBase
     /// \brief Constructor that should be called by a SkeletonField. This constructor does not register itself with the
     /// skeleton on creation.
     ///
-    /// We use PrivateConstructorEnabler as an argument to prevent public usage of this constructor instead of using a
+    /// We use FieldOnlyConstructorEnabler as an argument to prevent public usage of this constructor instead of using a
     /// private constructor to allow the constructor to be used with std::make_unique.
     SkeletonEvent(SkeletonBase& skeleton_base,
                   const std::string_view event_name,
                   std::unique_ptr<SkeletonEventBinding<EventType>> binding,
-                  PrivateConstructorEnabler);
+                  FieldOnlyConstructorEnabler);
 
     /// Constructor that allows to set the binding directly.
     ///
@@ -142,7 +142,7 @@ template <typename SampleDataType>
 SkeletonEvent<SampleDataType>::SkeletonEvent(SkeletonBase& skeleton_base,
                                              const std::string_view event_name,
                                              std::unique_ptr<SkeletonEventBinding<EventType>> binding,
-                                             PrivateConstructorEnabler)
+                                             FieldOnlyConstructorEnabler)
     : SkeletonEventBase{skeleton_base, event_name, std::move(binding)}, skeleton_event_mock_{nullptr}
 {
     if (binding_ != nullptr)

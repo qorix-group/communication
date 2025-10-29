@@ -80,7 +80,7 @@ class ProxyField final : public ProxyFieldBase
                          proxy_base,
                          ProxyFieldBindingFactory<FieldType>::CreateEventBinding(proxy_base, field_name),
                          field_name,
-                         typename ProxyEvent<FieldType>::PrivateConstructorEnabler{}),
+                         typename ProxyEvent<FieldType>::FieldOnlyConstructorEnabler{}),
                      field_name}
     {
     }

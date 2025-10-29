@@ -108,7 +108,7 @@ SkeletonField<SampleDataType>::SkeletonField(SkeletonBase& parent, const std::st
                                 SkeletonBaseView{parent}.GetAssociatedInstanceIdentifier(),
                                 parent,
                                 field_name),
-                            typename SkeletonEvent<FieldType>::PrivateConstructorEnabler{})},
+                            typename SkeletonEvent<FieldType>::FieldOnlyConstructorEnabler{})},
       initial_field_value_{nullptr},
       skeleton_field_mock_{nullptr}
 {
