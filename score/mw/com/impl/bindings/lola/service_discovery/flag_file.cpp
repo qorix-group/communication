@@ -81,7 +81,9 @@ auto GetMatchingFlagFilePaths(const EnrichedInstanceIdentifier& enriched_instanc
                           const bool is_regular_file =
                               (file_status.has_value() && (file_status->Type() == filesystem::FileType::kRegular));
                           const bool path_contains_quality_type = substring_iterator != std::string::npos;
+                          // LCOV_EXCL_BR_START Tooling issue Ticket-199161 - all branches covered
                           if (is_regular_file && path_contains_quality_type)
+                          // LCOV_EXCL_BR_STOP
                           {
                               score::cpp::ignore = flag_file_paths.emplace_back(entry.GetPath());
                           }
