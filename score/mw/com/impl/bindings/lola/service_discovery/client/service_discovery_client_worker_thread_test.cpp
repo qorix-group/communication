@@ -227,8 +227,8 @@ TEST_F(ServiceDiscoveryClientWorkerThreadFixture,
        AllUnexpectedInotifyEventsForUnknownWatchesReturnedByInotifyReadWillNotTriggerTermination)
 {
     const uint32_t unknown_inotify_event_mask{0U};
-    const auto vector_with_unknown_events =
-        CreateEventVectorWithEventMasks({IN_ACCESS, IN_MOVED_TO, IN_CREATE, IN_ISDIR, unknown_inotify_event_mask});
+    const auto vector_with_unknown_events = CreateEventVectorWithEventMasks(
+        {IN_ACCESS, IN_MOVED_TO, IN_CREATE, IN_DELETE, IN_ISDIR, unknown_inotify_event_mask});
     std::promise<void> barrier{};
 
     // Expecting that INotify::Read() will be called which returns a vector containing unexpected events
