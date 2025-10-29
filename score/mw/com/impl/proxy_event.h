@@ -72,9 +72,10 @@ class ProxyEvent final : public ProxyEventBase
   public:
     using SampleType = SampleDataType;
 
-    /// Constructor that allows to set the binding directly.
+    /// Constructor which is dispatched to by the other public constructors.
     ///
-    /// This is used only used for testing.
+    /// Instantiates the base class and members of ProxyEvent and MarkServiceElementBindingInvalid() if the binding is
+    /// invalid. Should only be called directly in tests.
     ///
     /// \param proxy_binding The binding that shall be associated with this proxy.
     ProxyEvent(ProxyBase& base,
@@ -153,26 +154,15 @@ ProxyEvent<SampleType>::ProxyEvent(ProxyBase& base,
         proxy_base_view.MarkServiceElementBindingInvalid();
         return;
     }
-    proxy_base_view.RegisterEvent(event_name, *this);
 }
 
 template <typename SampleType>
 ProxyEvent<SampleType>::ProxyEvent(ProxyBase& base, const std::string_view event_name)
-    : ProxyEventBase{base,
-                     ProxyBaseView{base}.GetBinding(),
-                     ProxyEventBindingFactory<SampleType>::Create(base, event_name),
-                     event_name},
-      proxy_event_mock_{nullptr},
-      is_field_event_{false}
+    : ProxyEvent{base, ProxyEventBindingFactory<SampleType>::Create(base, event_name), event_name}
 {
-    ProxyBaseView proxy_base_view{base};
-    if (!binding_base_)
-    {
-        proxy_base_view.MarkServiceElementBindingInvalid();
-        return;
-    }
     if (GetTypedEventBinding() != nullptr)
     {
+        ProxyBaseView proxy_base_view{base};
         proxy_base_view.RegisterEvent(event_name, *this);
         const auto& instance_identifier = proxy_base_view.GetAssociatedHandleType().GetInstanceIdentifier();
         tracing_data_ = tracing::GenerateProxyTracingStructFromEventConfig(instance_identifier, event_name);
@@ -184,21 +174,14 @@ ProxyEvent<SampleType>::ProxyEvent(ProxyBase& base,
                                    std::unique_ptr<ProxyEventBinding<SampleType>> proxy_binding,
                                    const std::string_view event_name,
                                    FieldOnlyConstructorEnabler)
-    : ProxyEventBase{base, ProxyBaseView{base}.GetBinding(), std::move(proxy_binding), event_name},
-      proxy_event_mock_{nullptr},
-      is_field_event_{true}
+    : ProxyEvent{base, std::move(proxy_binding), event_name}
 {
     // This is the specific ctor that is used by ProxyField for its "dispatch event" composite. Therefore, we do not
     // register the event in the ProxyBase's event map, since registration in the correct field map is done by
     // ProxyField ctor
-    ProxyBaseView proxy_base_view{base};
-    if (!binding_base_)
-    {
-        proxy_base_view.MarkServiceElementBindingInvalid();
-        return;
-    }
     if (GetTypedEventBinding() != nullptr)
     {
+        ProxyBaseView proxy_base_view{base};
         const auto& instance_identifier = proxy_base_view.GetAssociatedHandleType().GetInstanceIdentifier();
         tracing_data_ = tracing::GenerateProxyTracingStructFromFieldConfig(instance_identifier, event_name);
     }
