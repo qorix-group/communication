@@ -35,6 +35,7 @@
 #include <score/optional.hpp>
 #include <score/utility.hpp>
 
+#include <atomic>
 #include <mutex>
 #include <optional>
 #include <string_view>
@@ -122,6 +123,17 @@ class SkeletonEvent final : public SkeletonEventBinding<SampleType>
     bool qm_disconnect_;
     impl::tracing::SkeletonEventTracingData skeleton_event_tracing_data_;
 
+    /// \brief Atomic flags indicating whether any receive handlers are currently registered for this event
+    ///        at each quality level (QM and ASIL-B).
+    /// \details These flags are updated via callbacks from MessagePassingServiceInstance when handler
+    ///          registration status changes. They allow Send() to skip the NotifyEvent() call when no
+    ///          handlers are registered for a specific quality level, avoiding unnecessary lock overhead
+    ///          in the main path. Uses memory_order_relaxed as the flags are optimisation hints - false
+    ///          positives (thinking handlers exist when they don't) are harmless, and false negatives
+    ///          (missing handlers) are prevented by the callback mechanism.
+    std::atomic<bool> qm_event_update_notifications_registered_{false};
+    std::atomic<bool> asil_b_event_update_notifications_registered_{false};
+
     /// \brief optional RAII guards for tracing transaction log registration/un-registration and cleanup of "pending"
     /// type erased sample pointers which are created in PrepareOffer() and destroyed in PrepareStopoffer() - optional
     /// as only needed when tracing is enabled and when they haven't been cleaned up via a call to PrepareStopoffer().
@@ -192,11 +204,17 @@ ResultBlank SkeletonEvent<SampleType>::Send(impl::SampleAllocateePtr<SampleType>
     {
         (*send_trace_callback)(sample);
     }
-    if (!qm_disconnect_)
+
+    // Only call NotifyEvent if there are any registered receive handlers for each quality level.
+    // This avoids the expensive lock operation in the common case where no handlers are registered.
+    // Using memory_order_relaxed is safe here as this is an optimisation, if we miss a very recent
+    // handler registration, the next Send() will pick it up.
+    if (qm_event_update_notifications_registered_.load() && !qm_disconnect_)
     {
         GetLoLaRuntime().GetLolaMessaging().NotifyEvent(QualityType::kASIL_QM, event_fqn_);
     }
-    if (parent_.GetInstanceQualityType() == QualityType::kASIL_B)
+    if (asil_b_event_update_notifications_registered_.load() &&
+        parent_.GetInstanceQualityType() == QualityType::kASIL_B)
     {
         GetLoLaRuntime().GetLolaMessaging().NotifyEvent(QualityType::kASIL_B, event_fqn_);
     }
@@ -281,6 +299,25 @@ ResultBlank SkeletonEvent<SampleType>::PrepareOffer() noexcept
             TransactionLogRegistrationGuard::Create(event_data_control_composite_->GetQmEventDataControl()));
         score::cpp::ignore = type_erased_sample_ptrs_guard_.emplace(skeleton_event_tracing_data_.service_element_tracing_data);
     }
+
+    // Register callbacks to be notified when event notification existence changes.
+    // This allows us to optimise the Send() path by skipping NotifyEvent() when no handlers are registered.
+    // Separate callbacks for QM and ASIL-B update their respective atomic flags for lock-free access.
+    if (parent_.GetInstanceQualityType() == QualityType::kASIL_QM)
+    {
+        GetLoLaRuntime().GetLolaMessaging().RegisterEventNotificationExistenceChangedCallback(
+            QualityType::kASIL_QM, event_fqn_, [this](const bool has_handlers) noexcept {
+                qm_event_update_notifications_registered_.store(has_handlers);
+            });
+    }
+    if (parent_.GetInstanceQualityType() == QualityType::kASIL_B)
+    {
+        GetLoLaRuntime().GetLolaMessaging().RegisterEventNotificationExistenceChangedCallback(
+            QualityType::kASIL_B, event_fqn_, [this](const bool has_handlers) noexcept {
+                asil_b_event_update_notifications_registered_.store(has_handlers);
+            });
+    }
+
     return {};
 }
 
@@ -293,6 +330,20 @@ template <typename SampleType>
 // coverity[autosar_cpp14_a15_5_3_violation : FALSE]
 void SkeletonEvent<SampleType>::PrepareStopOffer() noexcept
 {
+    // Unregister event notification existence changed callbacks
+    GetLoLaRuntime().GetLolaMessaging().UnregisterEventNotificationExistenceChangedCallback(QualityType::kASIL_QM,
+                                                                                            event_fqn_);
+
+    if (parent_.GetInstanceQualityType() == QualityType::kASIL_B)
+    {
+        GetLoLaRuntime().GetLolaMessaging().UnregisterEventNotificationExistenceChangedCallback(QualityType::kASIL_B,
+                                                                                                event_fqn_);
+    }
+
+    // Reset the flags to indicate no handlers are registered
+    qm_event_update_notifications_registered_.store(false);
+    asil_b_event_update_notifications_registered_.store(false);
+
     type_erased_sample_ptrs_guard_.reset();
     if (event_data_control_composite_.has_value())
     {

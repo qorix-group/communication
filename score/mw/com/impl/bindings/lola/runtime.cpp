@@ -64,9 +64,9 @@ Runtime::Runtime(const Configuration& config,
           Runtime::GetMessagePassingCfg(QualityType::kASIL_QM),
           // LCOV_EXCL_STOP
           Runtime::HasAsilBSupport()
-              ? score::cpp::optional<MessagePassingServiceInstance::AsilSpecificCfg>{Runtime::GetMessagePassingCfg(
+              ? std::optional<MessagePassingServiceInstance::AsilSpecificCfg>{Runtime::GetMessagePassingCfg(
                     QualityType::kASIL_B)}
-              : score::cpp::nullopt},
+              : std::nullopt},
       service_discovery_client_{long_running_threads_},
       tracing_runtime_{std::move(lola_tracing_runtime)},
       rollback_data_{},

@@ -17,6 +17,8 @@
 #include "score/mw/com/impl/configuration/quality_type.h"
 #include "score/mw/com/impl/scoped_event_receive_handler.h"
 
+#include <score/callback.hpp>
+
 #include <cstdint>
 #include <memory>
 
@@ -30,6 +32,13 @@ class IMessagePassingService
 {
   public:
     using HandlerRegistrationNoType = std::uint32_t;
+
+    /// \brief Callback type to be invoked when either the first registration of an event-update-notification
+    ///        occurs for the given event_id or the last event-update-notification has been withdrawn.
+    /// \details The callback receives true when at least one handler is registered (transition from 0 to >0),
+    ///          and false when no handlers are registered (transition from >0 to 0).
+    ///          The callback is invoked synchronously during handler registration/unregistration.
+    using HandlerStatusChangeCallback = score::cpp::callback<void(bool)>;
 
     IMessagePassingService() noexcept = default;
 
@@ -107,6 +116,29 @@ class IMessagePassingService
     virtual void NotifyOutdatedNodeId(const QualityType asil_level,
                                       const pid_t outdated_node_id,
                                       const pid_t target_node_id) noexcept = 0;
+
+    /// \brief Registers a callback for event notification existence changes.
+    /// \details This callback is invoked when the existence of event notification registrations changes:
+    ///          with 'true' when the first event notification is registered and with 'false' when the last event
+    ///          notification is unregistered. This allows SkeletonEvent to optimise performance by skipping
+    ///          NotifyEvent() calls when no event notifications are registered. The callback is invoked synchronously
+    ///          during event notification registration/unregistration. If event notifications are already registered
+    ///          when this method is called, the callback is invoked immediately with 'true'.
+    /// \param asil_level ASIL level of event.
+    /// \param event_id The event to monitor for event notification existence changes.
+    /// \param callback The callback to invoke when event notification existence changes.
+    virtual void RegisterEventNotificationExistenceChangedCallback(const QualityType asil_level,
+                                                                   const ElementFqId event_id,
+                                                                   HandlerStatusChangeCallback callback) noexcept = 0;
+
+    /// \brief Unregisters the callback for event notification existence changes.
+    /// \details After unregistration, no further callbacks will be invoked for event notification
+    ///          existence changes of this event. It is safe to call this method even if no callback
+    ///          is currently registered.
+    /// \param asil_level ASIL level of event.
+    /// \param event_id The event to stop monitoring.
+    virtual void UnregisterEventNotificationExistenceChangedCallback(const QualityType asil_level,
+                                                                     const ElementFqId event_id) noexcept = 0;
 };
 
 }  // namespace score::mw::com::impl::lola

@@ -22,8 +22,22 @@
 
 #include "score/mw/log/logging.h"
 
+#include <score/span.hpp>
+
+#include <algorithm>
+#include <array>
+#include <cstdint>
+#include <cstring>
+#include <exception>
 #include <limits>
+#include <mutex>
+#include <set>
+#include <shared_mutex>
+#include <tuple>
+#include <type_traits>
+#include <utility>
 #include <variant>
+#include <vector>
 
 namespace
 {
@@ -75,7 +89,10 @@ auto SerializeToMessage(const std::uint8_t message_id, const T& t) noexcept -> s
 
 }  // namespace
 
-score::mw::com::impl::lola::MessagePassingServiceInstance::MessagePassingServiceInstance(
+namespace score::mw::com::impl::lola
+{
+
+MessagePassingServiceInstance::MessagePassingServiceInstance(
     const ClientQualityType asil_level,
     const AsilSpecificCfg /*config*/,
     score::message_passing::IServerFactory& server_factory,
@@ -157,9 +174,8 @@ score::mw::com::impl::lola::MessagePassingServiceInstance::MessagePassingService
     }
 }
 
-void score::mw::com::impl::lola::MessagePassingServiceInstance::MessageCallback(
-    const pid_t sender_pid,
-    const score::cpp::span<const std::uint8_t> message) noexcept
+void MessagePassingServiceInstance::MessageCallback(const pid_t sender_pid,
+                                                    const score::cpp::span<const std::uint8_t> message) noexcept
 {
     if (message.size() < 1U)
     {
@@ -188,9 +204,8 @@ void score::mw::com::impl::lola::MessagePassingServiceInstance::MessageCallback(
     }
 }
 
-void score::mw::com::impl::lola::MessagePassingServiceInstance::HandleNotifyEventMsg(
-    const score::cpp::span<const std::uint8_t> payload,
-    const pid_t sender_node_id) noexcept
+void MessagePassingServiceInstance::HandleNotifyEventMsg(const score::cpp::span<const std::uint8_t> payload,
+                                                         const pid_t sender_node_id) noexcept
 {
     // TODO: make proper serialization
     ElementFqId elementFqId{};
@@ -208,9 +223,8 @@ void score::mw::com::impl::lola::MessagePassingServiceInstance::HandleNotifyEven
     }
 }
 
-void score::mw::com::impl::lola::MessagePassingServiceInstance::HandleRegisterNotificationMsg(
-    const score::cpp::span<const std::uint8_t> payload,
-    const pid_t sender_node_id) noexcept
+void MessagePassingServiceInstance::HandleRegisterNotificationMsg(const score::cpp::span<const std::uint8_t> payload,
+                                                                  const pid_t sender_node_id) noexcept
 {
     // TODO: make proper serialization
     ElementFqId elementFqId{};
@@ -220,6 +234,14 @@ void score::mw::com::impl::lola::MessagePassingServiceInstance::HandleRegisterNo
     }
 
     bool already_registered{false};
+    bool notify_status_change = false;
+
+    // Check if there are local handlers first (to maintain lock hierarchy: handlers before nodes)
+    std::shared_lock<std::shared_mutex> handlers_read_lock(event_update_handlers_mutex_);
+    auto handlers_search = event_update_handlers_.find(elementFqId);
+    const bool has_local_handlers =
+        (handlers_search != event_update_handlers_.end()) && (!handlers_search->second.empty());
+    handlers_read_lock.unlock();
 
     // TODO: PMR
     std::unique_lock<std::shared_mutex> write_lock(event_update_interested_nodes_mutex_);
@@ -228,13 +250,18 @@ void score::mw::com::impl::lola::MessagePassingServiceInstance::HandleRegisterNo
     {
         auto inserted = search->second.insert(sender_node_id);
         already_registered = (inserted.second == false);
+        notify_status_change = !already_registered && (search->second.size() == 1U);
     }
     else
     {
         auto emplaced = event_update_interested_nodes_.emplace(elementFqId, std::set<pid_t>{});
         score::cpp::ignore = emplaced.first->second.insert(sender_node_id);
+        notify_status_change = true;  // First remote handler
     }
     write_lock.unlock();
+
+    // Only notify if no local handlers exist
+    notify_status_change = notify_status_change && !has_local_handlers;
 
     if (already_registered)
     {
@@ -242,11 +269,22 @@ void score::mw::com::impl::lola::MessagePassingServiceInstance::HandleRegisterNo
             << "MessagePassingService: Received redundant RegisterEventNotificationMessage for event: "
             << elementFqId.ToString() << " from node " << sender_node_id;
     }
+
+    // Notify SkeletonEvent that the first handler (remote) has been registered.
+    // This allows SkeletonEvent to start sending NotifyEvent() calls for this event.
+    if (notify_status_change)
+    {
+        std::shared_lock<std::shared_mutex> callback_read_lock(handler_status_change_callbacks_mutex_);
+        auto callback_search = handler_status_change_callbacks_.find(elementFqId);
+        if (callback_search != handler_status_change_callbacks_.end())
+        {
+            callback_search->second(true);  // Now has handlers
+        }
+    }
 }
 
-void score::mw::com::impl::lola::MessagePassingServiceInstance::HandleUnregisterNotificationMsg(
-    const score::cpp::span<const std::uint8_t> payload,
-    const pid_t sender_node_id) noexcept
+void MessagePassingServiceInstance::HandleUnregisterNotificationMsg(const score::cpp::span<const std::uint8_t> payload,
+                                                                    const pid_t sender_node_id) noexcept
 {
     // TODO: make proper serialization
     ElementFqId elementFqId{};
@@ -256,12 +294,27 @@ void score::mw::com::impl::lola::MessagePassingServiceInstance::HandleUnregister
     }
 
     bool registration_found{false};
+    bool notify_status_change = false;
+
+    // Check if there are local handlers first (to maintain lock hierarchy: handlers before nodes)
+    std::shared_lock<std::shared_mutex> handlers_read_lock(event_update_handlers_mutex_);
+    auto handlers_search = event_update_handlers_.find(elementFqId);
+    const bool has_local_handlers =
+        (handlers_search != event_update_handlers_.end()) && (!handlers_search->second.empty());
+    handlers_read_lock.unlock();
 
     std::unique_lock<std::shared_mutex> write_lock(event_update_interested_nodes_mutex_);
     auto search = event_update_interested_nodes_.find(elementFqId);
     if (search != event_update_interested_nodes_.end())
     {
         registration_found = search->second.erase(sender_node_id) == 1U;
+
+        // If this was the last remote node being unregistered, we have a status change only if there are
+        // no local handlers exist.
+        if (registration_found && search->second.empty())
+        {
+            notify_status_change = !has_local_handlers;
+        }
     }
     write_lock.unlock();
 
@@ -271,11 +324,22 @@ void score::mw::com::impl::lola::MessagePassingServiceInstance::HandleUnregister
             << "MessagePassingService: Received UnregisterEventNotificationMessage for event: "
             << elementFqId.ToString() << " from node " << sender_node_id << ", but there was no registration!";
     }
+
+    // Notify SkeletonEvent that the last handler (remote) has been unregistered.
+    // This allows SkeletonEvent to skip NotifyEvent() calls for this event to save performance.
+    if (notify_status_change)
+    {
+        std::shared_lock<std::shared_mutex> callback_read_lock(handler_status_change_callbacks_mutex_);
+        auto callback_search = handler_status_change_callbacks_.find(elementFqId);
+        if (callback_search != handler_status_change_callbacks_.end())
+        {
+            callback_search->second(false);  // No handlers remain
+        }
+    }
 }
 
-void score::mw::com::impl::lola::MessagePassingServiceInstance::HandleOutdatedNodeIdMsg(
-    const score::cpp::span<const std::uint8_t> payload,
-    const pid_t sender_node_id) noexcept
+void MessagePassingServiceInstance::HandleOutdatedNodeIdMsg(const score::cpp::span<const std::uint8_t> payload,
+                                                            const pid_t sender_node_id) noexcept
 {
     pid_t pid_to_unregister{};
 
@@ -307,7 +371,7 @@ void score::mw::com::impl::lola::MessagePassingServiceInstance::HandleOutdatedNo
 // This is a false positive: .at() could throw if the index is outside of the range of the container but the function
 // CopyNodeIdentifiers will only return a value which is in range of the array. Otherwise CopyNodeIdentifiers will break
 // coverity[autosar_cpp14_a15_5_3_violation : FALSE]
-void score::mw::com::impl::lola::MessagePassingServiceInstance::NotifyEventRemote(const ElementFqId event_id) noexcept
+void MessagePassingServiceInstance::NotifyEventRemote(const ElementFqId event_id) noexcept
 {
     NodeIdTmpBufferType nodeIdentifiersTmp;
     pid_t start_node_id{0};
@@ -371,8 +435,7 @@ void score::mw::com::impl::lola::MessagePassingServiceInstance::NotifyEventRemot
     }
 }
 
-std::uint32_t score::mw::com::impl::lola::MessagePassingServiceInstance::NotifyEventLocally(
-    const ElementFqId event_id) noexcept
+std::uint32_t MessagePassingServiceInstance::NotifyEventLocally(const ElementFqId event_id) noexcept
 {
     std::uint32_t handlers_called{0U};
 
@@ -432,7 +495,7 @@ std::uint32_t score::mw::com::impl::lola::MessagePassingServiceInstance::NotifyE
     return handlers_called;
 }
 
-void score::mw::com::impl::lola::MessagePassingServiceInstance::NotifyEvent(const ElementFqId event_id) noexcept
+void MessagePassingServiceInstance::NotifyEvent(const ElementFqId event_id) noexcept
 {
     // first we forward notification of event update to other LoLa processes, which are interested in this notification.
     // we do this first as message-sending is done synchronous/within the calling thread as it has "short"/deterministic
@@ -461,22 +524,26 @@ void score::mw::com::impl::lola::MessagePassingServiceInstance::NotifyEvent(cons
     }
 }
 
-score::mw::com::impl::lola::IMessagePassingService::HandlerRegistrationNoType
-score::mw::com::impl::lola::MessagePassingServiceInstance::RegisterEventNotification(
+IMessagePassingService::HandlerRegistrationNoType MessagePassingServiceInstance::RegisterEventNotification(
     const ElementFqId event_id,
     std::weak_ptr<ScopedEventReceiveHandler> callback,
     const pid_t target_node_id) noexcept
 {
+    bool notify_status_change = false;
+
     std::unique_lock<std::shared_mutex> write_lock(event_update_handlers_mutex_);
 
-    // The rule against increment and decriment operators mixed with others on the same line sems to be more applicable
+    // Check if this is the first handler being registered
+    auto search = event_update_handlers_.find(event_id);
+    const bool was_empty = (search == event_update_handlers_.end()) || (search->second.empty());
+
+    // The rule against increment and decrement operators mixed with others on the same line sems to be more applicable
     // to arithmetic operators. Here the only other operator is the member access operator (i.e. the dot operator) and
     // it in no way confusing to combine it with the increment operator.
-    // This rule is also absent from the new MISRA 2023 standart, thus it is in general reasonable to deviate from it.
+    // This rule is also absent from the new MISRA 2023 standard, thus it is in general reasonable to deviate from it.
     // coverity[autosar_cpp14_m5_2_10_violation]
     const IMessagePassingService::HandlerRegistrationNoType registration_no = cur_registration_no_++;
     RegisteredNotificationHandler newHandler{std::move(callback), registration_no};
-    auto search = event_update_handlers_.find(event_id);
     if (search != event_update_handlers_.end())
     {
         search->second.push_back(std::move(newHandler));
@@ -486,6 +553,20 @@ score::mw::com::impl::lola::MessagePassingServiceInstance::RegisterEventNotifica
         auto result = event_update_handlers_.emplace(event_id, std::vector<RegisteredNotificationHandler>{});
         result.first->second.push_back(std::move(newHandler));
     }
+
+    // Check if we need to notify about status change (transition from 0 to 1 local handlers)
+    // We only notify if there were no remote handlers either
+    if (was_empty)
+    {
+        std::shared_lock<std::shared_mutex> nodes_read_lock(event_update_interested_nodes_mutex_);
+        auto nodes_search = event_update_interested_nodes_.find(event_id);
+        const bool has_remote_handlers =
+            (nodes_search != event_update_interested_nodes_.end()) && (!nodes_search->second.empty());
+        nodes_read_lock.unlock();
+        // Only notify if no remote handlers exist, because only then we have a state change from 0 -> >0.
+        notify_status_change = !has_remote_handlers;
+    }
+
     write_lock.unlock();
 
     if (target_node_id != score::os::Unistd::instance().getpid())
@@ -493,12 +574,23 @@ score::mw::com::impl::lola::MessagePassingServiceInstance::RegisterEventNotifica
         RegisterEventNotificationRemote(event_id, target_node_id);
     }
 
+    // Notify SkeletonEvent that the first handler (local) has been registered.
+    // This allows SkeletonEvent to start sending NotifyEvent() calls for this event.
+    if (notify_status_change)
+    {
+        std::shared_lock<std::shared_mutex> callback_read_lock(handler_status_change_callbacks_mutex_);
+        auto callback_search = handler_status_change_callbacks_.find(event_id);
+        if (callback_search != handler_status_change_callbacks_.end())
+        {
+            callback_search->second(true);  // Now has handlers
+        }
+    }
+
     return registration_no;
 }
 
-void score::mw::com::impl::lola::MessagePassingServiceInstance::ReregisterEventNotification(
-    const score::mw::com::impl::lola::ElementFqId event_id,
-    const pid_t target_node_id) noexcept
+void MessagePassingServiceInstance::ReregisterEventNotification(const ElementFqId event_id,
+                                                                const pid_t target_node_id) noexcept
 {
     std::shared_lock<std::shared_mutex> read_lock(event_update_handlers_mutex_);
     auto search = event_update_handlers_.find(event_id);
@@ -530,10 +622,10 @@ void score::mw::com::impl::lola::MessagePassingServiceInstance::ReregisterEventN
             // we aren't the 1st proxy to re-register. Another proxy already re-registered the event with the new remote
             // pid.
 
-            // The rule against increment and decriment operators mixed with others on the same line sems to be more
+            // The rule against increment and decrement operators mixed with others on the same line sems to be more
             // applicable to arithmetic operators. Here the only other operator is the member access operator (i.e. the
             // dot operator) and it in no way confusing to combine it with the increment operator. This rule is also
-            // absent from the new MISRA 2023 standart, thus it is in general reasonable to deviate from it.
+            // absent from the new MISRA 2023 standard, thus it is in general reasonable to deviate from it.
             // coverity[autosar_cpp14_m5_2_10_violation]
             registration_count->second.counter++;
             remote_reg_write_lock.unlock();
@@ -549,12 +641,13 @@ void score::mw::com::impl::lola::MessagePassingServiceInstance::ReregisterEventN
     }
 }
 
-void score::mw::com::impl::lola::MessagePassingServiceInstance::UnregisterEventNotification(
+void MessagePassingServiceInstance::UnregisterEventNotification(
     const ElementFqId event_id,
     const IMessagePassingService::HandlerRegistrationNoType registration_no,
     const pid_t target_node_id) noexcept
 {
     bool found{false};
+    bool notify_status_change = false;
 
     std::unique_lock<std::shared_mutex> write_lock(event_update_handlers_mutex_);
     auto search = event_update_handlers_.find(event_id);
@@ -574,9 +667,22 @@ void score::mw::com::impl::lola::MessagePassingServiceInstance::UnregisterEventN
         {
             score::cpp::ignore = search->second.erase(result);
             found = true;
+
+            // If this was the last local handler, check if remote nodes interested in update notification exist
+            if (search->second.empty())
+            {
+                std::shared_lock<std::shared_mutex> nodes_read_lock(event_update_interested_nodes_mutex_);
+                auto nodes_search = event_update_interested_nodes_.find(event_id);
+                const bool has_remote_handlers =
+                    (nodes_search != event_update_interested_nodes_.end()) && (!nodes_search->second.empty());
+                nodes_read_lock.unlock();
+                // Only notify if no remote handlers exist, because only then we have a state change from >0 -> 0.
+                notify_status_change = !has_remote_handlers;
+            }
         }
     }
     write_lock.unlock();
+
     if (!found)
     {
         score::mw::log::LogWarn("lola")
@@ -591,10 +697,22 @@ void score::mw::com::impl::lola::MessagePassingServiceInstance::UnregisterEventN
     {
         UnregisterEventNotificationRemote(event_id, registration_no, target_node_id);
     }
+
+    // Notify SkeletonEvent that the last handler (local) has been unregistered.
+    // This allows SkeletonEvent to skip NotifyEvent() calls for this event to save performance.
+    if (notify_status_change)
+    {
+        std::shared_lock<std::shared_mutex> callback_read_lock(handler_status_change_callbacks_mutex_);
+        auto callback_search = handler_status_change_callbacks_.find(event_id);
+        if (callback_search != handler_status_change_callbacks_.end())
+        {
+            callback_search->second(false);  // No handlers remain
+        }
+    }
 }
 
-void score::mw::com::impl::lola::MessagePassingServiceInstance::NotifyOutdatedNodeId(const pid_t outdated_node_id,
-                                                                                   const pid_t target_node_id) noexcept
+void MessagePassingServiceInstance::NotifyOutdatedNodeId(const pid_t outdated_node_id,
+                                                         const pid_t target_node_id) noexcept
 {
     const auto message = SerializeToMessage(score::cpp::to_underlying(MessageType::kOutdatedNodeId), outdated_node_id);
 
@@ -611,9 +729,8 @@ void score::mw::com::impl::lola::MessagePassingServiceInstance::NotifyOutdatedNo
     }
 }
 
-void score::mw::com::impl::lola::MessagePassingServiceInstance::RegisterEventNotificationRemote(
-    const ElementFqId event_id,
-    const pid_t target_node_id) noexcept
+void MessagePassingServiceInstance::RegisterEventNotificationRemote(const ElementFqId event_id,
+                                                                    const pid_t target_node_id) noexcept
 {
     std::unique_lock<std::shared_mutex> remote_reg_write_lock(event_update_remote_registrations_mutex_);
     const auto registration_count_inserted =
@@ -633,10 +750,10 @@ void score::mw::com::impl::lola::MessagePassingServiceInstance::RegisterEventNot
         }
         else
         {
-            // The rule against increment and decriment operators mixed with others on the same line sems to be more
+            // The rule against increment and decrement operators mixed with others on the same line sems to be more
             // applicable to arithmetic operators. Here the only other operator is the member access operator (i.e. the
             // dot operator) and it in no way confusing to combine it with the increment operator. This rule is also
-            // absent from the new MISRA 2023 standart, thus it is in general reasonable to deviate from it.
+            // absent from the new MISRA 2023 standard, thus it is in general reasonable to deviate from it.
             // coverity[autosar_cpp14_m5_2_10_violation]
             registration_count_inserted.first->second.counter++;
         }
@@ -650,7 +767,7 @@ void score::mw::com::impl::lola::MessagePassingServiceInstance::RegisterEventNot
     }
 }
 
-void score::mw::com::impl::lola::MessagePassingServiceInstance::UnregisterEventNotificationRemote(
+void MessagePassingServiceInstance::UnregisterEventNotificationRemote(
     const ElementFqId event_id,
     const IMessagePassingService::HandlerRegistrationNoType registration_no,
     const pid_t target_node_id) noexcept
@@ -682,10 +799,10 @@ void score::mw::com::impl::lola::MessagePassingServiceInstance::UnregisterEventN
             return;
         }
 
-        // The rule against increment and decriment operators mixed with others on the same line sems to be more
+        // The rule against increment and decrement operators mixed with others on the same line sems to be more
         // applicable to arithmetic operators. Here the only other operator is the member access operator (i.e. the dot
-        // operator) and it in no way confusing to combine it with the decriment operator. This rule is also absent from
-        // the new MISRA 2023 standart, thus it is in general reasonable to deviate from it.
+        // operator) and it in no way confusing to combine it with the decrement operator. This rule is also absent from
+        // the new MISRA 2023 standard, thus it is in general reasonable to deviate from it.
         // coverity[autosar_cpp14_m5_2_10_violation]
         registration_count->second.counter--;
         // only if the counter of registrations switched back to 0, we send a message to the remote node.
@@ -714,9 +831,8 @@ void score::mw::com::impl::lola::MessagePassingServiceInstance::UnregisterEventN
     }
 }
 
-void score::mw::com::impl::lola::MessagePassingServiceInstance::SendRegisterEventNotificationMessage(
-    const ElementFqId event_id,
-    const pid_t target_node_id) noexcept
+void MessagePassingServiceInstance::SendRegisterEventNotificationMessage(const ElementFqId event_id,
+                                                                         const pid_t target_node_id) noexcept
 {
     const auto message = SerializeToMessage(score::cpp::to_underlying(MessageType::kRegisterEventNotifier), event_id);
     // Suppress "AUTOSAR C++14 A18-5-8" rule finding. This rule states: "Objects that do not outlive a function shall
@@ -731,3 +847,56 @@ void score::mw::com::impl::lola::MessagePassingServiceInstance::SendRegisterEven
                                        << target_node_id << " failed with error: " << result.error();
     }
 }
+
+void MessagePassingServiceInstance::RegisterEventNotificationExistenceChangedCallback(
+    const ElementFqId event_id,
+    IMessagePassingService::HandlerStatusChangeCallback callback) noexcept
+{
+    std::unique_lock<std::shared_mutex> write_lock(handler_status_change_callbacks_mutex_);
+    handler_status_change_callbacks_[event_id] = std::move(callback);
+    write_lock.unlock();
+
+    // Check current handler status and invoke callback if handlers already exist
+    std::shared_lock<std::shared_mutex> handlers_read_lock(event_update_handlers_mutex_);
+    auto handlers_search = event_update_handlers_.find(event_id);
+    const bool has_local_handlers =
+        (handlers_search != event_update_handlers_.end()) && (!handlers_search->second.empty());
+    handlers_read_lock.unlock();
+
+    std::shared_lock<std::shared_mutex> nodes_read_lock(event_update_interested_nodes_mutex_);
+    auto nodes_search = event_update_interested_nodes_.find(event_id);
+    const bool has_remote_handlers =
+        (nodes_search != event_update_interested_nodes_.end()) && (!nodes_search->second.empty());
+    nodes_read_lock.unlock();
+
+    const bool has_any_handlers = has_local_handlers || has_remote_handlers;
+
+    // Invoke the callback immediately only if handlers are already registered.
+    // This avoids unnecessary callback invocation when the atomic flags are already initialized to false.
+    if (has_any_handlers)
+    {
+        std::shared_lock<std::shared_mutex> callback_read_lock(handler_status_change_callbacks_mutex_);
+        auto callback_search = handler_status_change_callbacks_.find(event_id);
+        if (callback_search != handler_status_change_callbacks_.end())
+        {
+            callback_search->second(true);
+        }
+    }
+}
+
+void MessagePassingServiceInstance::UnregisterEventNotificationExistenceChangedCallback(
+    const ElementFqId event_id) noexcept
+{
+    std::unique_lock<std::shared_mutex> write_lock(handler_status_change_callbacks_mutex_);
+    std::size_t erased_count = handler_status_change_callbacks_.erase(event_id);
+    write_lock.unlock();
+
+    if (erased_count == 0U)
+    {
+        score::mw::log::LogWarn("lola")
+            << "MessagePassingService: UnregisterEventNotificationExistenceChangedCallback called for event "
+            << event_id.ToString() << " but no callback was registered";
+    }
+}
+
+}  // namespace score::mw::com::impl::lola

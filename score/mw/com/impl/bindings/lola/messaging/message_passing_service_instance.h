@@ -10,8 +10,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#ifndef SCORE_MW_COM_IMPL_BINDINGS_LOLA_MESSAGEPASSINGSERVICEINSTANCE_H
-#define SCORE_MW_COM_IMPL_BINDINGS_LOLA_MESSAGEPASSINGSERVICEINSTANCE_H
+#ifndef SCORE_MW_COM_IMPL_BINDINGS_LOLA_MESSAGE_PASSING_SERVICE_INSTANCE_H
+#define SCORE_MW_COM_IMPL_BINDINGS_LOLA_MESSAGE_PASSING_SERVICE_INSTANCE_H
 
 #include "score/message_passing/i_client_factory.h"
 #include "score/message_passing/i_server_factory.h"
@@ -22,11 +22,16 @@
 #include "score/concurrency/thread_pool.h"
 
 // TODO: PMR
+#include <array>
+#include <atomic>
+#include <cstdint>
+#include <iterator>
+#include <memory>
 #include <set>
+#include <shared_mutex>
 #include <unordered_map>
+#include <utility>
 #include <vector>
-
-#include <iostream>
 
 namespace score::mw::com::impl::lola
 {
@@ -80,6 +85,25 @@ class MessagePassingServiceInstance
                                      const pid_t target_node_id) noexcept;
 
     void NotifyOutdatedNodeId(const pid_t outdated_node_id, const pid_t target_node_id) noexcept;
+
+    /// \brief Registers a callback for event notification existence changes.
+    /// \details This callback is invoked when the existence of event notification registrations changes:
+    ///          with 'true' when the first event notification is registered and with 'false' when the last event
+    ///          notification is unregistered. This allows SkeletonEvent to optimise performance by skipping
+    ///          NotifyEvent() calls when no event notifications are registered. The callback is invoked synchronously
+    ///          during event notification registration/unregistration. If event notifications are already registered
+    ///          when this method is called, the callback is invoked immediately with 'true'.
+    /// \param event_id The event to monitor for event notification existence changes.
+    /// \param callback The callback to invoke when event notification existence changes.
+    void RegisterEventNotificationExistenceChangedCallback(
+        const ElementFqId event_id,
+        IMessagePassingService::HandlerStatusChangeCallback callback) noexcept;
+
+    /// \brief Unregisters the callback for event notification existence changes.
+    /// \details After unregistration, no further callbacks will be invoked for event notification
+    ///          existence changes of this event.
+    /// \param event_id The event to stop monitoring.
+    void UnregisterEventNotificationExistenceChangedCallback(const ElementFqId event_id) noexcept;
 
   private:
     enum class MessageType : std::uint8_t
@@ -222,6 +246,15 @@ class MessagePassingServiceInstance
 
     std::shared_mutex event_update_handlers_mutex_;
 
+    /// \brief map holding per event_id a callback to notify when handler registration status changes.
+    /// \details This allows SkeletonEvent instances to be notified when they transition from having
+    ///          no handlers to having at least one handler (or vice versa), avoiding unnecessary lock
+    ///          overhead in the main path when no handlers are registered.
+    std::unordered_map<ElementFqId, IMessagePassingService::HandlerStatusChangeCallback>
+        handler_status_change_callbacks_;
+
+    std::shared_mutex handler_status_change_callbacks_mutex_;
+
     /// \brief map holding per event_id a list of remote LoLa nodes, which need to be informed, when the event with
     ///        given _event_id_ is updated.
     /// \note This is the symmetric data structure to event_update_handlers_, in case the proxy-event registering
@@ -251,4 +284,4 @@ class MessagePassingServiceInstance
 
 }  // namespace score::mw::com::impl::lola
 
-#endif  // SCORE_MW_COM_IMPL_BINDINGS_LOLA_MESSAGEPASSINGSERVICEINSTANCE_H
+#endif  // SCORE_MW_COM_IMPL_BINDINGS_LOLA_MESSAGE_PASSING_SERVICE_INSTANCE_H

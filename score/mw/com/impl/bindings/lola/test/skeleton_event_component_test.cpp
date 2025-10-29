@@ -53,6 +53,13 @@ class SkeletonEventAttorney
         return skeleton_event_.event_data_control_composite_.value();
     }
 
+    /// \brief Set handler availability flags for testing purposes
+    void SetHandlerAvailability(bool qm_available, bool asil_b_available)
+    {
+        skeleton_event_.qm_event_update_notifications_registered_.store(qm_available);
+        skeleton_event_.asil_b_event_update_notifications_registered_.store(asil_b_available);
+    }
+
   private:
     SkeletonEvent<SampleType>& skeleton_event_;
 };
@@ -244,6 +251,11 @@ TEST_F(SkeletonEventComponentTestFixture, CanAllocateAndSendEvent)
     // Given an offered event in an offered service
     const auto prepare_offer_result = skeleton_event_.PrepareOffer();
     ASSERT_TRUE(prepare_offer_result.has_value());
+
+    // Simulate handlers being available for the test
+    // This is necessary because the optimization only sends NotifyEvent when handlers are present
+    auto attorney = SkeletonEventAttorney<SkeletonEventSampleType>{skeleton_event_};
+    attorney.SetHandlerAvailability(true, true);  // Enable both QM and ASIL-B handler availability
 
     // When allocating and sending the allocated event
     auto slot_result = skeleton_event_.Allocate();

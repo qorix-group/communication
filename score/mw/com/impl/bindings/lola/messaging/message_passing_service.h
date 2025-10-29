@@ -26,6 +26,11 @@
 #include "score/message_passing/unix_domain/unix_domain_server_factory.h"
 #endif
 
+#include "score/concurrency/thread_pool.h"
+
+#include <memory>
+#include <optional>
+
 namespace score::mw::com::impl::lola
 {
 
@@ -58,7 +63,7 @@ class MessagePassingService final : public IMessagePassingService
     ///                application/process is implemented according to ASIL_B requirements and there is at least one
     ///                LoLa service deployment (proxy or skeleton) for the process, with asilLevel "ASIL_B".
     MessagePassingService(const AsilSpecificCfg config_asil_qm,
-                          const score::cpp::optional<AsilSpecificCfg> config_asil_b) noexcept;
+                          const std::optional<AsilSpecificCfg> config_asil_b) noexcept;
 
     MessagePassingService(const MessagePassingService&) = delete;
     MessagePassingService(MessagePassingService&&) = delete;
@@ -97,6 +102,19 @@ class MessagePassingService final : public IMessagePassingService
     void NotifyOutdatedNodeId(const QualityType asil_level,
                               const pid_t outdated_node_id,
                               const pid_t target_node_id) noexcept override;
+
+    /// \brief Registers a callback for event notification existence changes.
+    /// \details See IMessagePassingService::RegisterEventNotificationExistenceChangedCallback for detailed
+    /// documentation.
+    void RegisterEventNotificationExistenceChangedCallback(const QualityType asil_level,
+                                                           const ElementFqId event_id,
+                                                           HandlerStatusChangeCallback callback) noexcept override;
+
+    /// \brief Unregisters the callback for event notification existence changes.
+    /// \details See IMessagePassingService::UnregisterEventNotificationExistenceChangedCallback for detailed
+    /// documentation.
+    void UnregisterEventNotificationExistenceChangedCallback(const QualityType asil_level,
+                                                             const ElementFqId event_id) noexcept override;
 
   private:
 // TODO: dependency injection?

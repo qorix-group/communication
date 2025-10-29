@@ -18,7 +18,9 @@
 #include "score/os/errno_logging.h"
 #include "score/mw/log/logging.h"
 
-#include <sstream>
+#include <cstdio>
+#include <memory>
+#include <optional>
 
 namespace
 {
@@ -29,13 +31,15 @@ constexpr auto kLocalThreadPoolName = "mw::com MessageReceiver";
 
 }  // namespace
 
+namespace score::mw::com::impl::lola
+{
+
 // Suppress autosar_cpp14_a15_5_3_violation
 // Rationale: Calling std::terminate() if any exceptions are thrown is expected as per safety requirements
 // coverity[autosar_cpp14_a15_5_3_violation]
-score::mw::com::impl::lola::MessagePassingService::MessagePassingService(
-    const AsilSpecificCfg config_asil_qm,
-    const score::cpp::optional<AsilSpecificCfg> config_asil_b) noexcept
-    : score::mw::com::impl::lola::IMessagePassingService{},
+MessagePassingService::MessagePassingService(const AsilSpecificCfg config_asil_qm,
+                                             const std::optional<AsilSpecificCfg> config_asil_b) noexcept
+    : IMessagePassingService{},
       server_factory_{},
       client_factory_{},
       // Suppress "AUTOSAR C++14 A15-4-2" rule findings. This rule states: "Throwing an exception in a
@@ -72,8 +76,7 @@ score::mw::com::impl::lola::MessagePassingService::MessagePassingService(
     }
 }
 
-void score::mw::com::impl::lola::MessagePassingService::NotifyEvent(const QualityType asil_level,
-                                                                  const ElementFqId event_id) noexcept
+void MessagePassingService::NotifyEvent(const QualityType asil_level, const ElementFqId event_id) noexcept
 {
     auto& instance = asil_level == QualityType::kASIL_QM ? qm_ : asil_b_;
     SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(instance.has_value(), "Invalid asil level.");
@@ -81,8 +84,7 @@ void score::mw::com::impl::lola::MessagePassingService::NotifyEvent(const Qualit
     instance->NotifyEvent(event_id);
 }
 
-score::mw::com::impl::lola::IMessagePassingService::HandlerRegistrationNoType
-score::mw::com::impl::lola::MessagePassingService::RegisterEventNotification(
+IMessagePassingService::HandlerRegistrationNoType MessagePassingService::RegisterEventNotification(
     const QualityType asil_level,
     const ElementFqId event_id,
     std::weak_ptr<ScopedEventReceiveHandler> callback,
@@ -94,9 +96,9 @@ score::mw::com::impl::lola::MessagePassingService::RegisterEventNotification(
     return instance->RegisterEventNotification(event_id, std::move(callback), target_node_id);
 }
 
-void score::mw::com::impl::lola::MessagePassingService::ReregisterEventNotification(const QualityType asil_level,
-                                                                                  const ElementFqId event_id,
-                                                                                  const pid_t target_node_id) noexcept
+void MessagePassingService::ReregisterEventNotification(const QualityType asil_level,
+                                                        const ElementFqId event_id,
+                                                        const pid_t target_node_id) noexcept
 {
     auto& instance = asil_level == QualityType::kASIL_QM ? qm_ : asil_b_;
     SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(instance.has_value(), "Invalid asil level.");
@@ -104,7 +106,7 @@ void score::mw::com::impl::lola::MessagePassingService::ReregisterEventNotificat
     instance->ReregisterEventNotification(event_id, target_node_id);
 }
 
-void score::mw::com::impl::lola::MessagePassingService::UnregisterEventNotification(
+void MessagePassingService::UnregisterEventNotification(
     const QualityType asil_level,
     const ElementFqId event_id,
     const IMessagePassingService::HandlerRegistrationNoType registration_no,
@@ -116,12 +118,34 @@ void score::mw::com::impl::lola::MessagePassingService::UnregisterEventNotificat
     instance->UnregisterEventNotification(event_id, registration_no, target_node_id);
 }
 
-void score::mw::com::impl::lola::MessagePassingService::NotifyOutdatedNodeId(const QualityType asil_level,
-                                                                           const pid_t outdated_node_id,
-                                                                           const pid_t target_node_id) noexcept
+void MessagePassingService::NotifyOutdatedNodeId(const QualityType asil_level,
+                                                 const pid_t outdated_node_id,
+                                                 const pid_t target_node_id) noexcept
 {
     auto& instance = asil_level == QualityType::kASIL_QM ? qm_ : asil_b_;
     SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(instance.has_value(), "Invalid asil level.");
 
     instance->NotifyOutdatedNodeId(outdated_node_id, target_node_id);
 }
+
+void MessagePassingService::RegisterEventNotificationExistenceChangedCallback(
+    const QualityType asil_level,
+    const ElementFqId event_id,
+    HandlerStatusChangeCallback callback) noexcept
+{
+    auto& instance = asil_level == QualityType::kASIL_QM ? qm_ : asil_b_;
+    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(instance.has_value(), "Invalid asil level.");
+
+    instance->RegisterEventNotificationExistenceChangedCallback(event_id, std::move(callback));
+}
+
+void MessagePassingService::UnregisterEventNotificationExistenceChangedCallback(const QualityType asil_level,
+                                                                                const ElementFqId event_id) noexcept
+{
+    auto& instance = asil_level == QualityType::kASIL_QM ? qm_ : asil_b_;
+    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(instance.has_value(), "Invalid asil level.");
+
+    instance->UnregisterEventNotificationExistenceChangedCallback(event_id);
+}
+
+}  // namespace score::mw::com::impl::lola

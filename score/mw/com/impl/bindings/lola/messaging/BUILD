@@ -93,6 +93,8 @@ cc_library(
     visibility = ["//score/mw/com/impl:__subpackages__"],
     deps = [
         ":i_message_passing_service",
+        "//score/mw/com/impl/bindings/lola:element_fq_id",
+        "//score/mw/com/impl/configuration:quality_type",
         "@googletest//:gtest",
     ],
 )

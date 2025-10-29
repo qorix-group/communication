@@ -13,9 +13,13 @@
 #ifndef SCORE_MW_COM_IMPL_BINDINGS_LOLA_MESSAGING_MESSAGE_PASSING_SERVICE_MOCK_H
 #define SCORE_MW_COM_IMPL_BINDINGS_LOLA_MESSAGING_MESSAGE_PASSING_SERVICE_MOCK_H
 
+#include "score/mw/com/impl/bindings/lola/element_fq_id.h"
 #include "score/mw/com/impl/bindings/lola/messaging/i_message_passing_service.h"
+#include "score/mw/com/impl/configuration/quality_type.h"
 
 #include <gmock/gmock.h>
+
+#include <memory>
 
 namespace score::mw::com::impl::lola
 {
@@ -34,6 +38,14 @@ class MessagePassingServiceMock : public IMessagePassingService
                 (QualityType, ElementFqId, HandlerRegistrationNoType, pid_t),
                 (noexcept, override));
     MOCK_METHOD(void, NotifyOutdatedNodeId, (QualityType, pid_t, pid_t), (noexcept, override));
+    MOCK_METHOD(void,
+                RegisterEventNotificationExistenceChangedCallback,
+                (QualityType, ElementFqId, HandlerStatusChangeCallback),
+                (noexcept, override));
+    MOCK_METHOD(void,
+                UnregisterEventNotificationExistenceChangedCallback,
+                (QualityType, ElementFqId),
+                (noexcept, override));
 };
 
 }  // namespace score::mw::com::impl::lola
