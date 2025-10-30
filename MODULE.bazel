@@ -43,12 +43,21 @@ download_archive(
 
 bazel_dep(name = "nlohmann_json", version = "3.11.3")
 bazel_dep(name = "bazel_skylib", version = "1.7.1")
-bazel_dep(name = "score-baselibs", version = "0.0.0")
+bazel_dep(name = "rules_doxygen", version = "2.5.0")
+bazel_dep(name = "score_baselibs", version = "0.2.0")
 git_override(
-    module_name = "score-baselibs",
-    commit = "f02d7f427df1968df8d5f9f9aa85bf68baeb839e",
+    module_name = "score_baselibs",
+    commit = "de5bb275ee9957433b3587582ac07d3eeb98dd6a",
+    patches = [
+        "//:wait_free_stack_fix.patch",
+    ],
+    patch_strip = 1,
     remote = "https://github.com/eclipse-score/baselibs.git",
 )
+
+# Doxygen extension for documentation generation
+doxygen_extension = use_extension("@rules_doxygen//:extensions.bzl", "doxygen_extension")
+use_repo(doxygen_extension, "doxygen")
 
 # Python 3.12 toolchain for Bazel (required for LOBSTER/TRLC dependencies)
 bazel_dep(name = "rules_python", version = "0.32.0")

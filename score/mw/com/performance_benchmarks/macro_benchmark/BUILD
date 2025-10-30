@@ -11,8 +11,8 @@
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
 
-load("@score-baselibs//:bazel/unit_tests.bzl", "cc_gtest_unit_test", "cc_unit_test_suites_for_host_and_qnx")
-load("@score-baselibs//score/language/safecpp:toolchain_features.bzl", "COMPILER_WARNING_FEATURES")
+load("@score_baselibs//:bazel/unit_tests.bzl", "cc_gtest_unit_test", "cc_unit_test_suites_for_host_and_qnx")
+load("@score_baselibs//score/language/safecpp:toolchain_features.bzl", "COMPILER_WARNING_FEATURES")
 load("//score/mw/com/performance_benchmarks/macro_benchmark/config_generator:config_generator_rule.bzl", "make_configs")
 
 alias(
@@ -64,8 +64,8 @@ cc_library(
         "//score/mw/com/performance_benchmarks/common_test_resources:shared_memory_object_creator",
         "//score/mw/com/performance_benchmarks/common_test_resources:stop_token_sig_term_handler",
         "@boost.program_options",
-        "@score-baselibs//score/language/futurecpp",
-        "@score-baselibs//score/mw/log",
+        "@score_baselibs//score/language/futurecpp",
+        "@score_baselibs//score/mw/log",
     ],
 )
 
@@ -79,8 +79,8 @@ cc_library(
     visibility = ["//score/mw/com/performance_benchmarks/macro_benchmark:__pkg__"],
     deps = [
         ":common_resources",
-        "@score-baselibs//score/json",
-        "@score-baselibs//score/mw/log",
+        "@score_baselibs//score/json",
+        "@score_baselibs//score/mw/log",
     ],
 )
 
@@ -98,7 +98,7 @@ cc_library(
         "//score/mw/com",
         "//score/mw/com/performance_benchmarks/common_test_resources:shared_memory_object_creator",
         "//score/mw/com/performance_benchmarks/common_test_resources:stop_token_sig_term_handler",
-        "@score-baselibs//score/mw/log",
+        "@score_baselibs//score/mw/log",
     ],
 )
 
@@ -138,7 +138,7 @@ cc_binary(
         "//score/mw/com",
         "//score/mw/com/performance_benchmarks/common_test_resources:shared_memory_object_creator",
         "//score/mw/com/performance_benchmarks/common_test_resources:shared_memory_object_guard",
-        "@score-baselibs//score/mw/log",
+        "@score_baselibs//score/mw/log",
     ],
 )
 
@@ -170,7 +170,7 @@ cc_binary(
         "//score/mw/com",
         "//score/mw/com/performance_benchmarks/common_test_resources:shared_memory_object_creator",
         "//score/mw/com/performance_benchmarks/common_test_resources:shared_memory_object_guard",
-        "@score-baselibs//score/mw/log",
+        "@score_baselibs//score/mw/log",
     ],
 )
 
@@ -203,7 +203,7 @@ cc_gtest_unit_test(
     deps = [
         ":common_resources",
         ":json_parsing_convenience_wrappers",
-        "@score-baselibs//score/json",
+        "@score_baselibs//score/json",
     ],
 )
 

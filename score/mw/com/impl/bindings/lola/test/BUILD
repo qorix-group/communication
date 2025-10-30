@@ -29,10 +29,10 @@ cc_library(
         "//score/mw/com/impl/bindings/lola/messaging:message_passing_service_mock",
         "//score/mw/com/impl/bindings/lola/test_doubles",
         "@googletest//:gtest_main",
-        "@score-baselibs//score/language/futurecpp",
-        "@score-baselibs//score/memory/shared:shared_memory_factory_mock",
-        "@score-baselibs//score/os/mocklib:fcntl_mock",
-        "@score-baselibs//score/os/mocklib:unistd_mock",
+        "@score_baselibs//score/language/futurecpp",
+        "@score_baselibs//score/memory/shared:shared_memory_factory_mock",
+        "@score_baselibs//score/os/mocklib:fcntl_mock",
+        "@score_baselibs//score/os/mocklib:unistd_mock",
     ],
 )
 
@@ -55,13 +55,13 @@ cc_library(
         "//score/mw/com/impl/configuration",
         "//score/mw/com/impl/tracing:tracing_runtime_mock",
         "@googletest//:gtest_main",
-        "@score-baselibs//score/filesystem:mock",
-        "@score-baselibs//score/language/futurecpp",
-        "@score-baselibs//score/memory/shared:shared_memory_factory_mock",
-        "@score-baselibs//score/memory/shared:shared_memory_resource_heap_allocator_mock",
-        "@score-baselibs//score/memory/shared:shared_memory_resource_mock",
-        "@score-baselibs//score/os/mocklib:fcntl_mock",
-        "@score-baselibs//score/os/mocklib:unistd_mock",
+        "@score_baselibs//score/filesystem:mock",
+        "@score_baselibs//score/language/futurecpp",
+        "@score_baselibs//score/memory/shared:shared_memory_factory_mock",
+        "@score_baselibs//score/memory/shared:shared_memory_resource_heap_allocator_mock",
+        "@score_baselibs//score/memory/shared:shared_memory_resource_mock",
+        "@score_baselibs//score/os/mocklib:fcntl_mock",
+        "@score_baselibs//score/os/mocklib:unistd_mock",
     ],
 )
 
@@ -80,7 +80,7 @@ cc_library(
         "//score/mw/com/impl/bindings/lola:event",
         "//score/mw/com/impl/bindings/lola/messaging:message_passing_service_mock",
         "@googletest//:gtest_main",
-        "@score-baselibs//score/language/futurecpp",
+        "@score_baselibs//score/language/futurecpp",
     ],
 )
 
@@ -97,8 +97,8 @@ cc_library(
         "//score/mw/com/impl:find_service_handler",
         "//score/mw/com/impl:handle_type",
         "@googletest//:gtest_main",
-        "@score-baselibs//score/filesystem",
-        "@score-baselibs//score/language/futurecpp",
+        "@score_baselibs//score/filesystem",
+        "@score_baselibs//score/language/futurecpp",
     ],
 )
 
@@ -138,9 +138,9 @@ cc_test(
         "//score/mw/com/impl:runtime",
         "//score/mw/com/impl/bindings/mock_binding",
         "@googletest//:gtest_main",
-        "@score-baselibs//score/language/safecpp/coverage_termination_handler",
-        "@score-baselibs//score/os/mocklib:acl_mock",
-        "@score-baselibs//score/os/mocklib:fcntl_mock",
+        "@score_baselibs//score/language/safecpp/coverage_termination_handler",
+        "@score_baselibs//score/os/mocklib:acl_mock",
+        "@score_baselibs//score/os/mocklib:fcntl_mock",
     ],
 )
 
@@ -166,9 +166,9 @@ cc_test(
         "//score/mw/com/impl/bindings/mock_binding/tracing:tracing_runtime",
         "//score/mw/com/impl/tracing:tracing_runtime_mock",
         "@googletest//:gtest_main",
-        "@score-baselibs//score/filesystem",
-        "@score-baselibs//score/language/safecpp/coverage_termination_handler",
-        "@score-baselibs//score/os/mocklib:fcntl_mock",
+        "@score_baselibs//score/filesystem",
+        "@score_baselibs//score/language/safecpp/coverage_termination_handler",
+        "@score_baselibs//score/os/mocklib:fcntl_mock",
     ],
 )
 
@@ -179,7 +179,7 @@ cc_test(
     srcs = ["proxy_component_test.cpp"],
     features = COMPILER_WARNING_FEATURES + ["aborts_upon_exception"],
     target_compatible_with = select({
-        "@platforms//os:qnx": ["@score-baselibs//bazel/platforms/qnx_version:qnx7"],  # TODO: Ticket-214229 QNX8 incompatible
+        "@platforms//os:qnx": ["@score_baselibs//bazel/platforms/qnx_version:qnx7"],  # TODO: Ticket-214229 QNX8 incompatible
         "//conditions:default": [],
     }),
     visibility = [
@@ -195,7 +195,7 @@ cc_test(
         "//score/mw/com/impl/bindings/lola/test_doubles",
         "//score/mw/com/impl/configuration/test:configuration_store",
         "@googletest//:gtest_main",
-        "@score-baselibs//score/filesystem",
-        "@score-baselibs//score/language/safecpp/coverage_termination_handler",
+        "@score_baselibs//score/filesystem",
+        "@score_baselibs//score/language/safecpp/coverage_termination_handler",
     ],
 )

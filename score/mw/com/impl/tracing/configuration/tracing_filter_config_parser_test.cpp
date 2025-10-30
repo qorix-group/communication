@@ -492,7 +492,7 @@ TEST_F(TraceConfigParserFixture, FilterConfigWithTwoServiceTypesOK)
           }
         }
       ]
-    },
+    }
   ]
 }
 )"_json;

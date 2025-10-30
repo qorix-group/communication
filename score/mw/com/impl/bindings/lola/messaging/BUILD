@@ -11,7 +11,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
 
-load("@score-baselibs//:bazel/unit_tests.bzl", "cc_gtest_unit_test", "cc_unit_test_suites_for_host_and_qnx")
+load("@score_baselibs//:bazel/unit_tests.bzl", "cc_gtest_unit_test", "cc_unit_test_suites_for_host_and_qnx")
 load("//score/mw:common_features.bzl", "COMPILER_WARNING_FEATURES")
 
 cc_library(
@@ -44,7 +44,7 @@ cc_library(
     tags = ["FFI"],
     deps = [
         "//score/mw/com/impl/bindings/lola:element_fq_id",
-        "@score-baselibs//score/language/futurecpp",
+        "@score_baselibs//score/language/futurecpp",
     ],
 )
 
@@ -79,8 +79,10 @@ cc_library(
     deps = [
         ":i_message_passing_service",
         "@communication//score/message_passing",
-        "@score-baselibs//score/language/futurecpp",
-        "@score-baselibs//score/mw/log",
+        "@score_baselibs//score/concurrency:thread_pool",
+        "@score_baselibs//score/language/futurecpp",
+        "@score_baselibs//score/mw/log",
+        "@score_baselibs//score/os:errno_logging",
     ],
 )
 
