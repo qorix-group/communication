@@ -96,18 +96,18 @@ struct equivalent_struct_test_arguments_3
     std::uint8_t e;
 };
 
-/// \brief Wrapper for CreateTypeErasedDataTypeInfoFromTypes, which is needed, when
-/// CreateTypeErasedDataTypeInfoFromTypes gets called by std::apply.
-/// \details Within our std::apply usage, we need to wrap our CreateTypeErasedDataTypeInfoFromXXX function templates
+/// \brief Wrapper for CreateDataTypeSizeInfoFromTypes, which is needed, when
+/// CreateDataTypeSizeInfoFromTypes gets called by std::apply.
+/// \details Within our std::apply usage, we need to wrap our CreateDataTypeSizeInfoFromXXX function templates
 /// into lambda, since directly using our function template does not work (Error: "can't deduce the function type"), see
 /// https://en.cppreference.com/w/cpp/utility/apply.html -> Code example.
 /// But since C++17 doesn't support template-lambdas, we use a regular lambda, which calls this wrapper, where we can
-/// deduce the type-args for the right call to CreateTypeErasedDataTypeInfoFromTypes. This is just needed for
-/// CreateTypeErasedDataTypeInfoFromTypes, because it has no call arguments from which to deduce the types!
+/// deduce the type-args for the right call to CreateDataTypeSizeInfoFromTypes. This is just needed for
+/// CreateDataTypeSizeInfoFromTypes, because it has no call arguments from which to deduce the types!
 template <typename... Args>
-TypeErasedDataTypeInfo CreateTypeErasedDataTypeInfoFromTypesWrapper(Args...)
+DataTypeSizeInfo CreateDataTypeSizeInfoFromTypesWrapper(Args...)
 {
-    return CreateTypeErasedDataTypeInfoFromTypes<Args...>();
+    return CreateDataTypeSizeInfoFromTypes<Args...>();
 }
 
 template <typename... Args>
@@ -116,12 +116,12 @@ std::tuple<typename std::add_pointer<Args>::type...> DeserializeFromTypesWrapper
     return Deserialize<Args...>(buffer);
 }
 
-TEST(TypeErasedStorageTest, CreateTypeErasedDataTypeInfoFromValues_1)
+TEST(TypeErasedStorageTest, CreateDataTypeSizeInfoFromValues_1)
 {
-    // given a TypeErasedDataTypeInfo calculated from test_arguments_1
+    // given a DataTypeSizeInfo calculated from test_arguments_1
     auto result = std::apply(
         [](auto&&... args) {
-            return CreateTypeErasedDataTypeInfoFromValues(args...);
+            return CreateDataTypeSizeInfoFromValues(args...);
         },
         test_arguments_1);
 
@@ -131,12 +131,12 @@ TEST(TypeErasedStorageTest, CreateTypeErasedDataTypeInfoFromValues_1)
     EXPECT_EQ(result.alignment, alignof(equivalent_struct_test_arguments_1));
 }
 
-TEST(TypeErasedStorageTest, CreateTypeErasedDataTypeInfoFromValues_2)
+TEST(TypeErasedStorageTest, CreateDataTypeSizeInfoFromValues_2)
 {
-    // given a TypeErasedDataTypeInfo calculated from test_arguments_2
+    // given a DataTypeSizeInfo calculated from test_arguments_2
     auto result = std::apply(
         [](auto&&... args) {
-            return CreateTypeErasedDataTypeInfoFromValues(args...);
+            return CreateDataTypeSizeInfoFromValues(args...);
         },
         test_arguments_2);
 
@@ -146,12 +146,12 @@ TEST(TypeErasedStorageTest, CreateTypeErasedDataTypeInfoFromValues_2)
     EXPECT_EQ(result.alignment, alignof(equivalent_struct_test_arguments_2));
 }
 
-TEST(TypeErasedStorageTest, CreateTypeErasedDataTypeInfoFromValues_3)
+TEST(TypeErasedStorageTest, CreateDataTypeSizeInfoFromValues_3)
 {
-    // given a TypeErasedDataTypeInfo calculated from test_arguments_3
+    // given a DataTypeSizeInfo calculated from test_arguments_3
     auto result = std::apply(
         [](auto&&... args) {
-            return CreateTypeErasedDataTypeInfoFromValues(args...);
+            return CreateDataTypeSizeInfoFromValues(args...);
         },
         test_arguments_3);
 
@@ -161,12 +161,12 @@ TEST(TypeErasedStorageTest, CreateTypeErasedDataTypeInfoFromValues_3)
     EXPECT_EQ(result.alignment, alignof(equivalent_struct_test_arguments_3));
 }
 
-TEST(TypeErasedStorageTest, CreateTypeErasedDataTypeInfoFromTypes_1)
+TEST(TypeErasedStorageTest, CreateDataTypeSizeInfoFromTypes_1)
 {
-    // given a TypeErasedDataTypeInfo calculated from test_arguments_1
+    // given a DataTypeSizeInfo calculated from test_arguments_1
     auto result = std::apply(
         [](auto&&... args) {
-            return CreateTypeErasedDataTypeInfoFromTypesWrapper(args...);
+            return CreateDataTypeSizeInfoFromTypesWrapper(args...);
         },
         test_arguments_1);
 
@@ -176,12 +176,12 @@ TEST(TypeErasedStorageTest, CreateTypeErasedDataTypeInfoFromTypes_1)
     EXPECT_EQ(result.alignment, alignof(equivalent_struct_test_arguments_1));
 }
 
-TEST(TypeErasedStorageTest, CreateTypeErasedDataTypeInfoFromType_2)
+TEST(TypeErasedStorageTest, CreateDataTypeSizeInfoFromType_2)
 {
-    // given a TypeErasedDataTypeInfo calculated from test_arguments_2
+    // given a DataTypeSizeInfo calculated from test_arguments_2
     auto result = std::apply(
         [](auto&&... args) {
-            return CreateTypeErasedDataTypeInfoFromTypesWrapper(args...);
+            return CreateDataTypeSizeInfoFromTypesWrapper(args...);
         },
         test_arguments_2);
 
@@ -191,12 +191,12 @@ TEST(TypeErasedStorageTest, CreateTypeErasedDataTypeInfoFromType_2)
     EXPECT_EQ(result.alignment, alignof(equivalent_struct_test_arguments_2));
 }
 
-TEST(TypeErasedStorageTest, CreateTypeErasedDataTypeInfoFromTypes_3)
+TEST(TypeErasedStorageTest, CreateDataTypeSizeInfoFromTypes_3)
 {
-    // given a TypeErasedDataTypeInfo calculated from test_arguments_2
+    // given a DataTypeSizeInfo calculated from test_arguments_2
     auto result = std::apply(
         [](auto&&... args) {
-            return CreateTypeErasedDataTypeInfoFromTypesWrapper(args...);
+            return CreateDataTypeSizeInfoFromTypesWrapper(args...);
         },
         test_arguments_3);
 
@@ -206,20 +206,20 @@ TEST(TypeErasedStorageTest, CreateTypeErasedDataTypeInfoFromTypes_3)
     EXPECT_EQ(result.alignment, alignof(equivalent_struct_test_arguments_3));
 }
 
-TEST(TypeErasedStorageTest, CreateTypeErasedDataTypeInfoFromTypes_constexpr)
+TEST(TypeErasedStorageTest, CreateDataTypeSizeInfoFromTypes_constexpr)
 {
     // Expect, that instantiation of a std::array specifying its size depending on the outcome of a call to
-    // CreateTypeErasedDataTypeInfoFromTypes() compiles.
-    std::array<std::uint8_t, CreateTypeErasedDataTypeInfoFromTypes<int, char, int>().size> dummy_array{};
+    // CreateDataTypeSizeInfoFromTypes() compiles.
+    std::array<std::uint8_t, CreateDataTypeSizeInfoFromTypes<int, char, int>().size> dummy_array{};
     EXPECT_GT(dummy_array.size(), 0U);
 }
 
-TEST(TypeErasedStorageTest, CreateTypeErasedDataTypeInfoFromValues_constexpr)
+TEST(TypeErasedStorageTest, CreateDataTypeSizeInfoFromValues_constexpr)
 {
     // Expect, that instantiation of a std::array specifying its size depending on the outcome of a call to
-    // CreateTypeErasedDataTypeInfoFromValues() compiles.
+    // CreateDataTypeSizeInfoFromValues() compiles.
     const int i{0}, j{0}, k{0};
-    std::array<std::uint8_t, CreateTypeErasedDataTypeInfoFromValues(i, j, k).size> dummy_array{};
+    std::array<std::uint8_t, CreateDataTypeSizeInfoFromValues(i, j, k).size> dummy_array{};
     EXPECT_GT(dummy_array.size(), 0U);
 }
 
@@ -316,7 +316,7 @@ TEST(TypeErasedStorageTest, SerializeAndDeserialize_2)
         std::make_index_sequence<std::tuple_size<decltype(test_arguments_1)>::value>{}));
 }
 
-/// \brief Rough code snippet, how an impl::ProxyMethod is using TypeErasedDataTypeInfo.
+/// \brief Rough code snippet, how an impl::ProxyMethod is using DataTypeSizeInfo.
 /// It creates (compile time static type_erased_in_args_ from the Inarg template args.
 /// This type_erased_in_args_ is then the only info, which gets handed down to the LoLa binding layer!
 template <typename... Args>
@@ -324,22 +324,21 @@ class DummyProxyMethod
 {
   public:
     DummyProxyMethod() = default;
-    static TypeErasedDataTypeInfo GetTypeErasedDataTypeInfo()
+    static DataTypeSizeInfo GetDataTypeSizeInfo()
     {
         return type_erased_in_args_;
     }
 
   private:
-    constexpr static TypeErasedDataTypeInfo type_erased_in_args_{CreateTypeErasedDataTypeInfoFromTypes<Args...>()};
+    constexpr static DataTypeSizeInfo type_erased_in_args_{CreateDataTypeSizeInfoFromTypes<Args...>()};
 };
 
 TEST(TypeErasedStorageTest, SimulateProxyMethodUseCase)
 {
     DummyProxyMethod<std::uint8_t, std::uint64_t, char> proxy_method{};
-    auto proxy_method_type_erased_data_type_info = proxy_method.GetTypeErasedDataTypeInfo();
-    auto equivalent_type_erased_data_type_info =
-        CreateTypeErasedDataTypeInfoFromTypes<std::uint8_t, std::uint64_t, char>();
-    EXPECT_EQ(proxy_method_type_erased_data_type_info, equivalent_type_erased_data_type_info);
+    auto proxy_method_data_type_size_info = proxy_method.GetDataTypeSizeInfo();
+    auto equivalent_data_type_size_info = CreateDataTypeSizeInfoFromTypes<std::uint8_t, std::uint64_t, char>();
+    EXPECT_EQ(proxy_method_data_type_size_info, equivalent_data_type_size_info);
 }
 
 }  // namespace

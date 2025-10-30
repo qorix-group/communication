@@ -43,16 +43,16 @@ cc_library(
     tags = ["FFI"],
     visibility = ["//score/mw/com/impl:__subpackages__"],
     deps = [
-        ":type_erased_data_type_info",
+        ":data_type_size_info",
         "@score_baselibs//score/language/futurecpp",
         "@score_baselibs//score/memory/shared:pointer_arithmetic_util",
     ],
 )
 
 cc_library(
-    name = "type_erased_data_type_info",
-    srcs = ["type_erased_data_type_info.cpp"],
-    hdrs = ["type_erased_data_type_info.h"],
+    name = "data_type_size_info",
+    srcs = ["data_type_size_info.cpp"],
+    hdrs = ["data_type_size_info.h"],
     features = COMPILER_WARNING_FEATURES,
     tags = ["FFI"],
     visibility = ["//score/mw/com/impl:__subpackages__"],
@@ -88,8 +88,8 @@ cc_gtest_unit_test(
 )
 
 cc_gtest_unit_test(
-    name = "type_erased_data_type_info_test",
-    srcs = ["type_erased_data_type_info_test.cpp"],
+    name = "data_type_size_info_test",
+    srcs = ["data_type_size_info_test.cpp"],
     features = COMPILER_WARNING_FEATURES,
     deps = [
         ":type_erased_storage",
@@ -101,7 +101,7 @@ cc_unit_test_suites_for_host_and_qnx(
     name = "unit_test_suite",
     cc_unit_tests = [
         ":copyable_atomic_test",
-        ":type_erased_data_type_info_test",
+        ":data_type_size_info_test",
         ":arithmetic_utils_test",
         ":type_erased_storage_test",
     ],

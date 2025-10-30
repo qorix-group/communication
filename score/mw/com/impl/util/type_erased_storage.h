@@ -13,7 +13,7 @@
 #ifndef SCORE_MW_COM_IMPL_UTIL_TYPE_ERASED_STORAGE_H
 #define SCORE_MW_COM_IMPL_UTIL_TYPE_ERASED_STORAGE_H
 
-#include "score/mw/com/impl/util/type_erased_data_type_info.h"
+#include "score/mw/com/impl/util/data_type_size_info.h"
 
 #include "score/memory/shared/pointer_arithmetic_util.h"
 
@@ -49,14 +49,14 @@ struct MemoryBufferAccessor
     std::size_t offset;
 };
 
-/// \brief Aggregates new argument type into given TypeErasedDataTypeInfo.
-/// \details Existing TypeErasedDataTypeInfo is virtually a "struct", which has a given size/alignment. This template
+/// \brief Aggregates new argument type into given DataTypeSizeInfo.
+/// \details Existing DataTypeSizeInfo is virtually a "struct", which has a given size/alignment. This template
 /// func semantically adds the given argument type as a new member, taking into account any needed padding and then
-/// updates the overall size/alignment of the TypeErasedDataTypeInfo
-/// \tparam Arg type of argument to be aggregated into existing TypeErasedDataTypeInfo
-/// \param info existing TypeErasedDataTypeInfo
+/// updates the overall size/alignment of the DataTypeSizeInfo
+/// \tparam Arg type of argument to be aggregated into existing DataTypeSizeInfo
+/// \param info existing DataTypeSizeInfo
 template <typename Arg>
-constexpr void AggregateArgType(TypeErasedDataTypeInfo& info)
+constexpr void AggregateArgType(DataTypeSizeInfo& info)
 {
     auto padding = (info.size % alignof(Arg)) == 0 ? 0 : alignof(Arg) - (info.size % alignof(Arg));
     info.size += sizeof(Arg) + padding;
@@ -125,7 +125,7 @@ void SerializeArgs(MemoryBufferAccessor& target_buffer, T arg, Args... args)
 
 /// \brief Creates meta-info (sizeof/alignment) a "type-erased representation" of the given argument types would have.
 /// \details When we do a "type-erased" storage of the given arguments, we technically "simulate", to aggregate the
-/// given argument types into a struct. The returned TypeErasedDataTypeInfo then contains the size and alignment the
+/// given argument types into a struct. The returned DataTypeSizeInfo then contains the size and alignment the
 /// hypothetical struct aggregating the given argument types, would have.
 /// Example: Given the following Args: std::uint8_t, boolean, std::uint64_t, this function internally builds up the
 /// following representation:
@@ -136,11 +136,11 @@ void SerializeArgs(MemoryBufferAccessor& target_buffer, T arg, Args... args)
 /// }
 /// and then returns its sizeof/alignof.
 /// \tparam Args argument types
-/// \return  TypeErasedDataTypeInfo containing sizeof/alignof of the aggregated representation.
+/// \return  DataTypeSizeInfo containing sizeof/alignof of the aggregated representation.
 template <typename... Args>
-constexpr TypeErasedDataTypeInfo CreateTypeErasedDataTypeInfoFromTypes()
+constexpr DataTypeSizeInfo CreateDataTypeSizeInfoFromTypes()
 {
-    TypeErasedDataTypeInfo result{};
+    DataTypeSizeInfo result{};
 
     ((detail::AggregateArgType<Args>(result)), ...);
 
@@ -156,24 +156,24 @@ constexpr TypeErasedDataTypeInfo CreateTypeErasedDataTypeInfoFromTypes()
 }
 
 /// \brief Creates meta-info (sizeof/alignment) a type-erased representation of the given arguments would have.
-/// \details See #CreateTypeErasedDataTypeInfoFromTypes(). This is a variation, which takes parameters of the argument
+/// \details See #CreateDataTypeSizeInfoFromTypes(). This is a variation, which takes parameters of the argument
 /// types, which is "easier" in some call-contexts for template argument deduction.
 /// \tparam Args argument types
 /// \param ... values for the argument types, just used for type deduction.
-/// \return TypeErasedDataTypeInfo containing sizeof/alignof of the aggregated representation.
+/// \return DataTypeSizeInfo containing sizeof/alignof of the aggregated representation.
 template <typename... Args>
-constexpr TypeErasedDataTypeInfo CreateTypeErasedDataTypeInfoFromValues(Args...)
+constexpr DataTypeSizeInfo CreateDataTypeSizeInfoFromValues(Args...)
 {
-    return CreateTypeErasedDataTypeInfoFromTypes<Args...>();
+    return CreateDataTypeSizeInfoFromTypes<Args...>();
 }
 
 /// \brief Variadic template to serialize argument values into given buffer.
 /// \details Typical usage of this func template is to serialize strongly typed arguments into a type erased storage
-/// (the target_buffer). So the regular steps are: 1st call one of the CreateTypeErasedDataTypeInfoFromXXX() functions
-/// on the arguments/argument types, you want to store "type-erased". This gives you then a TypeErasedDataTypeInfo,
+/// (the target_buffer). So the regular steps are: 1st call one of the CreateDataTypeSizeInfoFromXXX() functions
+/// on the arguments/argument types, you want to store "type-erased". This gives you then a DataTypeSizeInfo,
 /// which contain sizeof/alignof needs of the type-erased storage for the given arguments. 2nd step is to allocate a
-/// memory buffer with the alignment and size of TypeErasedDataTypeInfo. Then in the last step you call this func, to
-/// serialize the typed arguments into the buffer. I.e. CreateTypeErasedDataTypeInfoFromXXX/SerializeArgs form a pair
+/// memory buffer with the alignment and size of DataTypeSizeInfo. Then in the last step you call this func, to
+/// serialize the typed arguments into the buffer. I.e. CreateDataTypeSizeInfoFromXXX/SerializeArgs form a pair
 /// of funcs, which both use/expect the same "storage format" for a given sequence of argument types.
 /// "Serialization" here means doing a mem-copy, taking into account alignment needs (do the needed padding)
 /// \tparam T front/current argument type

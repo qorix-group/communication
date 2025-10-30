@@ -10,7 +10,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#include "score/mw/com/impl/util/type_erased_data_type_info.h"
+#include "score/mw/com/impl/util/data_type_size_info.h"
 #include "score/mw/com/impl/util/type_erased_storage.h"
 
 #include <gtest/gtest.h>
@@ -25,11 +25,11 @@ namespace
 constexpr std::size_t kDummySize{10U};
 constexpr std::size_t kDummyAlignment{20U};
 
-TEST(TypeErasedDataTypeInfoEqualityTest, ObjectsWithSameSizeAndAlignmentCompareTrue)
+TEST(DataTypeSizeInfoEqualityTest, ObjectsWithSameSizeAndAlignmentCompareTrue)
 {
-    // Given two TypeErasedDataTypeInfo objects with the same size and alignment
-    TypeErasedDataTypeInfo unit{kDummySize, kDummyAlignment};
-    TypeErasedDataTypeInfo unit2{kDummySize, kDummyAlignment};
+    // Given two DataTypeSizeInfo objects with the same size and alignment
+    DataTypeSizeInfo unit{kDummySize, kDummyAlignment};
+    DataTypeSizeInfo unit2{kDummySize, kDummyAlignment};
 
     // When comparing the two objects
     const auto compare_result = unit == unit2;
@@ -38,11 +38,11 @@ TEST(TypeErasedDataTypeInfoEqualityTest, ObjectsWithSameSizeAndAlignmentCompareT
     EXPECT_TRUE(compare_result);
 }
 
-TEST(TypeErasedDataTypeInfoEqualityTest, ObjectsWithDifferentSizeCompareFalse)
+TEST(DataTypeSizeInfoEqualityTest, ObjectsWithDifferentSizeCompareFalse)
 {
-    // Given two TypeErasedDataTypeInfo objects with the different sizes
-    TypeErasedDataTypeInfo unit{kDummySize, kDummyAlignment};
-    TypeErasedDataTypeInfo unit2{kDummySize + 1U, kDummyAlignment};
+    // Given two DataTypeSizeInfo objects with the different sizes
+    DataTypeSizeInfo unit{kDummySize, kDummyAlignment};
+    DataTypeSizeInfo unit2{kDummySize + 1U, kDummyAlignment};
 
     // When comparing the two objects
     const auto compare_result = unit == unit2;
@@ -51,11 +51,11 @@ TEST(TypeErasedDataTypeInfoEqualityTest, ObjectsWithDifferentSizeCompareFalse)
     EXPECT_FALSE(compare_result);
 }
 
-TEST(TypeErasedDataTypeInfoEqualityTest, ObjectsWithDifferentAlignemtCompareFalse)
+TEST(DataTypeSizeInfoEqualityTest, ObjectsWithDifferentAlignemtCompareFalse)
 {
-    // Given two TypeErasedDataTypeInfo objects with the different alignments
-    TypeErasedDataTypeInfo unit{kDummySize, kDummyAlignment};
-    TypeErasedDataTypeInfo unit2{kDummySize, kDummyAlignment + 1U};
+    // Given two DataTypeSizeInfo objects with the different alignments
+    DataTypeSizeInfo unit{kDummySize, kDummyAlignment};
+    DataTypeSizeInfo unit2{kDummySize, kDummyAlignment + 1U};
 
     // When comparing the two objects
     const auto compare_result = unit == unit2;

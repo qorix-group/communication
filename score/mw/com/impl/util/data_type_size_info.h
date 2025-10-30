@@ -10,15 +10,15 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#ifndef SCORE_MW_COM_IMPL_UTIL_TYPE_ERASED_DATA_TYPE_INFO_H
-#define SCORE_MW_COM_IMPL_UTIL_TYPE_ERASED_DATA_TYPE_INFO_H
+#ifndef SCORE_MW_COM_IMPL_UTIL_DATA_TYPE_SIZE_INFO_H
+#define SCORE_MW_COM_IMPL_UTIL_DATA_TYPE_SIZE_INFO_H
 
 #include <cstddef>
 
 namespace score::mw::com::impl
 {
 
-struct TypeErasedDataTypeInfo
+struct DataTypeSizeInfo
 {
     // Suppress "AUTOSAR C++14 M11-0-1" rule findings. This rule states: "Member data in non-POD class types
     // shall be private.". This struct is a POD class!
@@ -28,8 +28,8 @@ struct TypeErasedDataTypeInfo
     std::size_t alignment{};
 };
 
-bool operator==(const TypeErasedDataTypeInfo& lhs, const TypeErasedDataTypeInfo& rhs) noexcept;
+bool operator==(const DataTypeSizeInfo& lhs, const DataTypeSizeInfo& rhs) noexcept;
 
 }  // namespace score::mw::com::impl
 
-#endif  // SCORE_MW_COM_IMPL_UTIL_TYPE_ERASED_DATA_TYPE_INFO_H
+#endif  // SCORE_MW_COM_IMPL_UTIL_DATA_TYPE_SIZE_INFO_H
