@@ -892,6 +892,26 @@ cc_gtest_unit_test(
     ],
 )
 
+cc_unit_test(
+    name = "proxy_method_handling_test",
+    srcs = ["proxy_method_handling_test.cpp"],
+    features = COMPILER_WARNING_FEATURES + [
+        # These tests catch exceptions instead of using gtest EXPECT_DEATH so we disable aborts_upon_exception.
+        "-aborts_upon_exception",
+    ],
+    deps = [
+        ":proxy",
+        "//score/mw/com/impl/bindings/lola/test:proxy_event_test_resources",
+        "//score/mw/com/impl/configuration/test:configuration_store",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "@score_baselibs//score/filesystem:mock",
+        "@score_baselibs//score/language/futurecpp:futurecpp_test_support",
+        "@score_baselibs//score/memory/shared:shared_memory_resource_mock",
+        "@score_baselibs//score/memory/shared/fake:my_bounded_shared_memory_resource",
+    ],
+)
+
 cc_gtest_unit_test(
     name = "proxy_event_test",
     srcs = ["proxy_event_test.cpp"],
@@ -1256,6 +1276,7 @@ cc_unit_test_suites_for_host_and_qnx(
         ":generic_proxy_event_test",
         ":partial_restart_path_builder_test",
         ":proxy_event_test",
+        ":proxy_method_handling_test",
         ":proxy_test",
         ":shm_path_builder_test",
         ":skeleton_test",
