@@ -21,12 +21,6 @@ bazel_dep(name = "googletest", version = "1.15.0")
 bazel_dep(name = "google_benchmark", version = "1.9.1")
 bazel_dep(name = "rules_rust", version = "0.61.0")
 bazel_dep(name = "score_crates", version = "0.0.2", repo_name = "crate_index")
-bazel_dep(name = "rules_boost", repo_name = "com_github_nelhage_rules_boost")
-archive_override(
-    module_name = "rules_boost",
-    strip_prefix = "rules_boost-master",
-    urls = ["https://github.com/nelhage/rules_boost/archive/refs/heads/master.tar.gz"],
-)
 
 bazel_dep(name = "boost.program_options", version = "1.87.0")
 bazel_dep(name = "download_utils", version = "1.0.1")
