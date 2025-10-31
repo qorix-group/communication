@@ -215,6 +215,7 @@ cc_gtest_unit_test(
     name = "unit_test",
     srcs = [
         "non_blocking_sender_test.cpp",
+        "receiver_factory_test.cpp",
         "receiver_test.cpp",
         "sender_factory_test.cpp",
         "sender_test.cpp",

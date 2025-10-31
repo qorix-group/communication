@@ -22,6 +22,7 @@ namespace
 {
 
 using ::testing::An;
+using ::testing::Return;
 
 constexpr auto SOME_VALID_PATH = "foo";
 
@@ -37,7 +38,7 @@ class SenderFactoryFixture : public ::testing::Test
         message_passing::SenderFactory::InjectSenderMock(nullptr);
     }
 
-    message_passing::SenderMock sender_mock_{};
+    testing::StrictMock<message_passing::SenderMock> sender_mock_{};
     score::cpp::stop_source lifecycle_source_{};
 };
 
@@ -49,9 +50,11 @@ TEST_F(SenderFactoryFixture, CheckSenderMock)
 
     EXPECT_CALL(sender_mock_, Send(An<const message_passing::ShortMessage&>())).Times(1);
     EXPECT_CALL(sender_mock_, Send(An<const message_passing::MediumMessage&>())).Times(1);
+    EXPECT_CALL(sender_mock_, HasNonBlockingGuarantee()).Times(1).WillOnce(Return(true));
 
     EXPECT_TRUE(unit->Send(ShortMessage{}));
     EXPECT_TRUE(unit->Send(MediumMessage{}));
+    EXPECT_TRUE(unit->HasNonBlockingGuarantee());
 }
 
 }  // namespace
