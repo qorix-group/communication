@@ -13,12 +13,15 @@
 #include "score/mw/com/impl/proxy_base.h"
 
 #include "score/mw/com/impl/instance_identifier.h"
-#include "score/mw/com/impl/plumbing/proxy_binding_factory.h"
+#include "score/mw/com/impl/methods/proxy_method_base.h"
+#include "score/mw/com/impl/proxy_event_base.h"
+#include "score/mw/com/impl/proxy_field_base.h"
 #include "score/mw/com/impl/runtime.h"
 
 #include <score/assert.hpp>
 
 #include <cstdlib>
+#include <memory>
 #include <utility>
 
 namespace score::mw::com::impl
@@ -32,6 +35,63 @@ ProxyBase::ProxyBase(std::unique_ptr<ProxyBinding> proxy_binding, HandleType han
       fields_{},
       methods_{}
 {
+}
+
+ProxyBase::ProxyBase(ProxyBase&& other) noexcept
+    : proxy_binding_(std::move(other.proxy_binding_)),
+      handle_(std::move(other.handle_)),
+      are_service_element_bindings_valid_(other.are_service_element_bindings_valid_),
+      events_(std::move(other.events_)),
+      fields_(std::move(other.fields_)),
+      methods_(std::move(other.methods_))
+{
+    // Since the address of this proxy has changed, we need update the address stored in each of the events, fields
+    // and methods belonging to the proxy.
+    for (auto& event : events_)
+    {
+        event.second.get().UpdateProxyReference(*this);
+    }
+
+    for (auto& field : fields_)
+    {
+        field.second.get().UpdateProxyReference(*this);
+    }
+
+    for (auto& method : methods_)
+    {
+        method.second.get().UpdateProxyReference(*this);
+    }
+}
+
+ProxyBase& ProxyBase::operator=(ProxyBase&& other) noexcept
+{
+    if (this != &other)
+    {
+        proxy_binding_ = std::move(other.proxy_binding_);
+        handle_ = std::move(other.handle_);
+        are_service_element_bindings_valid_ = other.are_service_element_bindings_valid_;
+        events_ = std::move(other.events_);
+        fields_ = std::move(other.fields_);
+        methods_ = std::move(other.methods_);
+
+        // Since the address of this proxy has changed, we need update the address stored in each of the events, fields
+        // and methods belonging to the proxy.
+        for (auto& event : events_)
+        {
+            event.second.get().UpdateProxyReference(*this);
+        }
+
+        for (auto& field : fields_)
+        {
+            field.second.get().UpdateProxyReference(*this);
+        }
+
+        for (auto& method : methods_)
+        {
+            method.second.get().UpdateProxyReference(*this);
+        }
+    }
+    return *this;
 }
 
 const HandleType& ProxyBase::GetHandle() const noexcept
@@ -74,8 +134,8 @@ auto ProxyBase::StartFindService(FindServiceHandler<HandleType> handler,
     return start_find_service_result;
 }
 
-auto ProxyBase::StartFindService(FindServiceHandler<HandleType> handler,
-                                 InstanceSpecifier instance_specifier) noexcept -> Result<FindServiceHandle>
+auto ProxyBase::StartFindService(FindServiceHandler<HandleType> handler, InstanceSpecifier instance_specifier) noexcept
+    -> Result<FindServiceHandle>
 {
     const auto start_find_service_result = Runtime::getInstance().GetServiceDiscovery().StartFindService(
         std::move(handler), std::move(instance_specifier));

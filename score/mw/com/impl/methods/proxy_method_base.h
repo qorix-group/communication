@@ -15,7 +15,6 @@
 #define SCORE_MW_COM_IMPL_METHODS_PROXY_METHOD_BASE_H
 
 #include "score/mw/com/impl/methods/proxy_method_binding.h"
-#include "score/mw/com/impl/proxy_base.h"
 
 #include "score/containers/dynamic_array.h"
 
@@ -25,13 +24,17 @@
 
 namespace score::mw::com::impl
 {
+
+class ProxyBase;
+
 class ProxyMethodBase
 {
   public:
-    ProxyMethodBase(ProxyBase& /*proxy_base*/,
+    ProxyMethodBase(ProxyBase& proxy_base,
                     std::unique_ptr<ProxyMethodBinding> proxy_method_binding,
                     std::string_view method_name) noexcept
-        : method_name_{method_name},
+        : proxy_base_{proxy_base},
+          method_name_{method_name},
           is_return_type_ptr_active_{kCallQueueSize, false},
           binding_{std::move(proxy_method_binding)}
     {
@@ -45,10 +48,17 @@ class ProxyMethodBase
     ProxyMethodBase& operator=(ProxyMethodBase&&) = default;
     virtual ~ProxyMethodBase() = default;
 
+    void UpdateProxyReference(ProxyBase& proxy_base) noexcept
+    {
+        proxy_base_ = proxy_base;
+    }
+
   protected:
     /// \brief Size of the call-queue is currently fixed to 1! As soon as we are going to support larger call-queues,
     /// the call-queue-size shall be taken from configuration and handed over to ProxyMethod ctor.
     static constexpr containers::DynamicArray<int>::size_type kCallQueueSize = 1U;
+
+    std::reference_wrapper<ProxyBase> proxy_base_;
 
     std::string_view method_name_;
 

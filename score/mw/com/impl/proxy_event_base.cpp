@@ -14,6 +14,7 @@
 
 #include "score/language/safecpp/scoped_function/scope.h"
 #include "score/mw/com/impl/com_error.h"
+#include "score/mw/com/impl/proxy_binding.h"
 #include "score/mw/com/impl/scoped_event_receive_handler.h"
 #include "score/mw/com/impl/tracing/proxy_event_tracing.h"
 
@@ -41,19 +42,12 @@ thread_local bool ProxyEventBase::is_in_receive_handler_context = false;
 class EventBindingRegistrationGuard final
 {
   public:
-    EventBindingRegistrationGuard(ProxyBase& proxy_base,
+    EventBindingRegistrationGuard(ProxyBinding* proxy_binding,
                                   ProxyEventBindingBase* proxy_event_binding_base,
                                   std::string_view event_name) noexcept
-        : proxy_binding_{ProxyBaseView{proxy_base}.GetBinding()},
-          proxy_event_binding_base_{proxy_event_binding_base},
-          event_name_{event_name}
+        : proxy_binding_{proxy_binding}, proxy_event_binding_base_{proxy_event_binding_base}, event_name_{event_name}
     {
-        if (proxy_event_binding_base_ == nullptr)
-        {
-            ProxyBaseView{proxy_base}.MarkServiceElementBindingInvalid();
-            return;
-        }
-        if (proxy_binding_ != nullptr)
+        if (proxy_binding_ != nullptr && proxy_event_binding_base_ != nullptr)
         {
             proxy_binding_->RegisterEventBinding(event_name, *proxy_event_binding_base);
         }
@@ -83,13 +77,16 @@ class EventBindingRegistrationGuard final
 // This is false positive. Function is declared only once.
 // coverity[autosar_cpp14_a3_1_1_violation]
 ProxyEventBase::ProxyEventBase(ProxyBase& proxy_base,
+                               ProxyBinding* proxy_binding_ptr,
                                std::unique_ptr<ProxyEventBindingBase> proxy_event_binding,
                                std::string_view event_name) noexcept
     : binding_base_{std::move(proxy_event_binding)},
+      proxy_base_(proxy_base),
+      event_name_{event_name},
       tracker_{std::make_unique<SampleReferenceTracker>()},
       tracing_data_{},
       event_binding_registration_guard_{
-          std::make_unique<EventBindingRegistrationGuard>(proxy_base, binding_base_.get(), event_name)},
+          std::make_unique<EventBindingRegistrationGuard>(proxy_binding_ptr, binding_base_.get(), event_name)},
       proxy_event_base_mock_{nullptr},
       receive_handler_scope_{}
 {

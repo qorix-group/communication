@@ -12,6 +12,8 @@
  ********************************************************************************/
 #include "score/mw/com/impl/proxy_base.h"
 #include "score/mw/com/impl/bindings/mock_binding/proxy.h"
+#include "score/mw/com/impl/bindings/mock_binding/proxy_event.h"
+#include "score/mw/com/impl/bindings/mock_binding/proxy_method.h"
 #include "score/mw/com/impl/com_error.h"
 #include "score/mw/com/impl/configuration/lola_service_instance_deployment.h"
 #include "score/mw/com/impl/configuration/lola_service_instance_id.h"
@@ -28,6 +30,7 @@
 #include "score/mw/com/impl/instance_specifier.h"
 #include "score/mw/com/impl/methods/proxy_method_base.h"
 #include "score/mw/com/impl/proxy_event_base.h"
+#include "score/mw/com/impl/proxy_field_base.h"
 #include "score/mw/com/impl/scoped_event_receive_handler.h"
 #include "score/mw/com/impl/service_discovery_mock.h"
 #include "score/mw/com/impl/test/runtime_mock_guard.h"
@@ -527,6 +530,183 @@ TEST_F(ProxyBaseFindServiceMultipleBindingsFixture, DISABLED_FindServiceShouldRe
     // Then an error is returned
     ASSERT_FALSE(handles_result.has_value());
     EXPECT_EQ(handles_result.error(), ComErrc::kBindingFailure);
+}
+
+class MyProxy : public ProxyBase
+{
+  public:
+    using ProxyBase::ProxyBase;
+
+    const ProxyBase::ProxyEvents& GetEvents()
+    {
+        return events_;
+    }
+
+    const ProxyBase::ProxyFields& GetFields()
+    {
+        return fields_;
+    }
+
+    const ProxyBase::ProxyMethods& GetMethods()
+    {
+        return methods_;
+    }
+};
+
+/// Note. Technically, these tests are testing internals of ProxyBase. While we generally strive to test only the public
+/// interface, we make an exception in this case since the reference updating of service elements is complex and can
+/// lead to dangling references if not done correctly, which can be hard to test using the public interface alone.
+class ProxyBaseServiceElementReferencesFixture : public ::testing::Test
+{
+  public:
+    const std::string event_name_0_{"event_name_0"};
+    const std::string event_name_1_{"event_name_1"};
+    std::string field_name_0_{"field_name_0"};
+    std::string field_name_1_{"field_name_1"};
+    std::string method_name_0_{"method_name_0"};
+    std::string method_name_1_{"method_name_1"};
+
+    ConfigurationStore config_store_{kInstanceSpecifier,
+                                     kServiceIdentifier,
+                                     QualityType::kASIL_QM,
+                                     kServiceId,
+                                     kLolaInstanceId};
+    InstanceIdentifier instance_identifier_{config_store_.GetInstanceIdentifier()};
+    HandleType handle_{config_store_.GetHandle()};
+
+    mock_binding::Proxy proxy_binding_mock_{};
+    MyProxy proxy_{std::make_unique<mock_binding::ProxyFacade>(proxy_binding_mock_), handle_};
+
+    ProxyEventBase event_0_{proxy_,
+                            &proxy_binding_mock_,
+                            std::make_unique<mock_binding::ProxyEventBase>(),
+                            event_name_0_};
+    ProxyEventBase event_1_{proxy_,
+                            &proxy_binding_mock_,
+                            std::make_unique<mock_binding::ProxyEventBase>(),
+                            event_name_1_};
+
+    ProxyEventBase field_event_dispatch_0_{proxy_,
+                                           &proxy_binding_mock_,
+                                           std::make_unique<mock_binding::ProxyEventBase>(),
+                                           field_name_0_};
+    ProxyEventBase field_event_dispatch_1_{proxy_,
+                                           &proxy_binding_mock_,
+                                           std::make_unique<mock_binding::ProxyEventBase>(),
+                                           field_name_1_};
+    ProxyFieldBase field_0_{proxy_, &field_event_dispatch_0_, field_name_0_};
+    ProxyFieldBase field_1_{proxy_, &field_event_dispatch_1_, field_name_1_};
+
+    ProxyMethodBase method_0_{proxy_, std::make_unique<mock_binding::ProxyMethod>(), method_name_0_};
+    ProxyMethodBase method_1_{proxy_, std::make_unique<mock_binding::ProxyMethod>(), method_name_1_};
+};
+
+TEST_F(ProxyBaseServiceElementReferencesFixture, RegisteringServiceElementStoresReferenceInMap)
+{
+    // Given a valid MyProxy object
+
+    // When registering 2 Events, Fields and Methods
+    ProxyBaseView{proxy_}.RegisterEvent(event_name_0_, event_0_);
+    ProxyBaseView{proxy_}.RegisterEvent(event_name_1_, event_1_);
+    ProxyBaseView{proxy_}.RegisterField(field_name_0_, field_0_);
+    ProxyBaseView{proxy_}.RegisterField(field_name_1_, field_1_);
+    ProxyBaseView{proxy_}.RegisterMethod(method_name_0_, method_0_);
+    ProxyBaseView{proxy_}.RegisterMethod(method_name_1_, method_1_);
+
+    // Then the proxy's reference maps should contain references to the registered elements
+    const auto& events = proxy_.GetEvents();
+    EXPECT_EQ(events.size(), 2U);
+    EXPECT_EQ(&events.at(event_name_0_).get(), &event_0_);
+    EXPECT_EQ(&events.at(event_name_1_).get(), &event_1_);
+
+    const auto& fields = proxy_.GetFields();
+    EXPECT_EQ(fields.size(), 2U);
+    EXPECT_EQ(&fields.at(field_name_0_).get(), &field_0_);
+    EXPECT_EQ(&fields.at(field_name_1_).get(), &field_1_);
+
+    const auto& methods = proxy_.GetMethods();
+    EXPECT_EQ(methods.size(), 2U);
+    EXPECT_EQ(&methods.at(method_name_0_).get(), &method_0_);
+    EXPECT_EQ(&methods.at(method_name_1_).get(), &method_1_);
+}
+
+TEST_F(ProxyBaseServiceElementReferencesFixture, MoveConstructingUpdatesReferencesToServiceElements)
+{
+    // Given a valid MyProxy object on which 2 Events, Fields and Methods were registered
+    ProxyBaseView{proxy_}.RegisterEvent(event_name_0_, event_0_);
+    ProxyBaseView{proxy_}.RegisterEvent(event_name_1_, event_1_);
+    ProxyBaseView{proxy_}.RegisterField(field_name_0_, field_0_);
+    ProxyBaseView{proxy_}.RegisterField(field_name_1_, field_1_);
+    ProxyBaseView{proxy_}.RegisterMethod(method_name_0_, method_0_);
+    ProxyBaseView{proxy_}.RegisterMethod(method_name_1_, method_1_);
+
+    // When move constructing a new MyProxy object
+    MyProxy moved_to_proxy{std::move(proxy_)};
+
+    // Then the moved-to proxy's reference maps should still contain references to the registered elements
+    const auto& events = moved_to_proxy.GetEvents();
+    ASSERT_EQ(events.size(), 2U);
+    EXPECT_EQ(&events.at(event_name_0_).get(), &event_0_);
+    EXPECT_EQ(&events.at(event_name_1_).get(), &event_1_);
+
+    const auto& fields = moved_to_proxy.GetFields();
+    ASSERT_EQ(fields.size(), 2U);
+    EXPECT_EQ(&fields.at(field_name_0_).get(), &field_0_);
+    EXPECT_EQ(&fields.at(field_name_1_).get(), &field_1_);
+
+    const auto& methods = moved_to_proxy.GetMethods();
+    EXPECT_EQ(methods.size(), 2U);
+    EXPECT_EQ(&methods.at(method_name_0_).get(), &method_0_);
+    EXPECT_EQ(&methods.at(method_name_1_).get(), &method_1_);
+}
+
+TEST_F(ProxyBaseServiceElementReferencesFixture, MoveAssigningUpdatesReferencesToServiceElements)
+{
+    constexpr auto other_event_name{"other_event"};
+    constexpr auto other_field_name{"other_field"};
+    constexpr auto other_method_name{"other_method"};
+    mock_binding::Proxy proxy_binding_mock{};
+
+    // Given a valid MyProxy object on which 2 Events, Fields and Methods were registered
+    ProxyBaseView{proxy_}.RegisterEvent(event_name_0_, event_0_);
+    ProxyBaseView{proxy_}.RegisterField(field_name_0_, field_0_);
+    ProxyBaseView{proxy_}.RegisterMethod(method_name_0_, method_0_);
+    ProxyBaseView{proxy_}.RegisterEvent(event_name_1_, event_1_);
+    ProxyBaseView{proxy_}.RegisterField(field_name_1_, field_1_);
+    ProxyBaseView{proxy_}.RegisterMethod(method_name_1_, method_1_);
+
+    // and given a second valid MyProxy object
+    MyProxy proxy_2{std::make_unique<mock_binding::ProxyFacade>(proxy_binding_mock), handle_};
+
+    // and given that an Event, Field and Method were registered on the second proxy
+    ProxyEventBase event{
+        proxy_2, &proxy_binding_mock, std::make_unique<mock_binding::ProxyEventBase>(), other_event_name};
+    ProxyEventBase field_event_dispatch{
+        proxy_2, &proxy_binding_mock, std::make_unique<mock_binding::ProxyEventBase>(), other_field_name};
+    ProxyFieldBase field{proxy_2, &field_event_dispatch, other_field_name};
+    ProxyMethodBase method{proxy_2, std::make_unique<mock_binding::ProxyMethod>(), other_method_name};
+    ProxyBaseView{proxy_2}.RegisterEvent(other_event_name, event);
+    ProxyBaseView{proxy_2}.RegisterField(other_field_name, field);
+    ProxyBaseView{proxy_2}.RegisterMethod(other_method_name, method);
+
+    // When move assigning the first MyProxy object to the second
+    proxy_2 = std::move(proxy_);
+
+    // Then the second proxy's reference maps should contain references to the first proxy's registered elements
+    const auto& events = proxy_2.GetEvents();
+    ASSERT_EQ(events.size(), 2U);
+    EXPECT_EQ(&events.at(event_name_0_).get(), &event_0_);
+    EXPECT_EQ(&events.at(event_name_1_).get(), &event_1_);
+
+    const auto& fields = proxy_2.GetFields();
+    ASSERT_EQ(fields.size(), 2U);
+    EXPECT_EQ(&fields.at(field_name_0_).get(), &field_0_);
+    EXPECT_EQ(&fields.at(field_name_1_).get(), &field_1_);
+
+    const auto& methods = proxy_2.GetMethods();
+    EXPECT_EQ(methods.size(), 2U);
+    EXPECT_EQ(&methods.at(method_name_0_).get(), &method_0_);
+    EXPECT_EQ(&methods.at(method_name_1_).get(), &method_1_);
 }
 
 }  // namespace score::mw::com::impl

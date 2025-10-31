@@ -46,6 +46,11 @@ class ProxyFieldBase
 
     virtual ~ProxyFieldBase() noexcept = default;
 
+    void UpdateProxyReference(ProxyBase& proxy_base) noexcept
+    {
+        proxy_base_ = proxy_base;
+    }
+
     /// Subscribe to the field.
     ///
     /// \param max_sample_count Specify the maximum number of concurrent samples that this event shall

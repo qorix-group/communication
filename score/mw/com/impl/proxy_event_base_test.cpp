@@ -38,7 +38,7 @@ namespace
 
 using namespace ::testing;
 
-using TestFieldType = std::uint16_t;
+using TestEventOrFieldType = std::uint16_t;
 
 const ServiceTypeDeployment kEmptyTypeDeployment{score::cpp::blank{}};
 const ServiceIdentifierType kFooservice{make_ServiceIdentifierType("foo")};
@@ -58,9 +58,8 @@ class DummyProxy : public ProxyBase
     }
 };
 
-DummyProxy kEmptyProxy(std::make_unique<mock_binding::Proxy>(),
-                       make_HandleType(make_InstanceIdentifier(kEmptyInstanceDeployment, kEmptyTypeDeployment)));
 const auto kEventName{"DummyEvent1"};
+const auto kEventName2{"DummyEvent2"};
 
 template <typename T>
 class ProxyEventBaseFixture : public ::testing::Test
@@ -75,19 +74,21 @@ class ProxyEventBaseFixture : public ::testing::Test
         mock_service_element_binding_ = mock_service_element_binding_ptr.get();
 
         service_element_ =
-            std::make_unique<ServiceElementType>(kEmptyProxy, std::move(mock_service_element_binding_ptr), kEventName);
+            std::make_unique<ServiceElementType>(empty_proxy_, std::move(mock_service_element_binding_ptr), kEventName);
 
         ON_CALL(*mock_service_element_binding_, SetReceiveHandler(_)).WillByDefault(Return(score::cpp::blank{}));
     }
 
+    DummyProxy empty_proxy_{std::make_unique<mock_binding::Proxy>(),
+                            make_HandleType(make_InstanceIdentifier(kEmptyInstanceDeployment, kEmptyTypeDeployment))};
     std::unique_ptr<ServiceElementType> service_element_{nullptr};
     MockServiceElementType* mock_service_element_binding_{nullptr};
 };
 
 struct ProxyEventStruct
 {
-    using ServiceElementType = ProxyEventBase;
-    using MockServiceElementType = mock_binding::ProxyEventBase;
+    using ServiceElementType = ProxyEvent<TestEventOrFieldType>;
+    using MockServiceElementType = mock_binding::ProxyEvent<TestEventOrFieldType>;
 };
 
 struct GenericProxyEventStruct
@@ -98,8 +99,8 @@ struct GenericProxyEventStruct
 
 struct ProxyFieldStruct
 {
-    using ServiceElementType = ProxyField<TestFieldType>;
-    using MockServiceElementType = mock_binding::ProxyEvent<TestFieldType>;
+    using ServiceElementType = ProxyField<TestEventOrFieldType>;
+    using MockServiceElementType = mock_binding::ProxyEvent<TestEventOrFieldType>;
 };
 
 // Gtest will run all tests in the LolaProxyEventFixture once for every type, t, in MyTypes, such that TypeParam
@@ -357,7 +358,7 @@ class AServiceElement : public ::testing::Test
         mock_service_element_binding_ = mock_service_element_binding_ptr.get();
 
         service_element_ =
-            std::make_unique<ServiceElementType>(kEmptyProxy, std::move(mock_service_element_binding_ptr), kEventName);
+            std::make_unique<ServiceElementType>(empty_proxy_, std::move(mock_service_element_binding_ptr), kEventName);
         ASSERT_NE(service_element_, nullptr);
 
         ON_CALL(*mock_service_element_binding_, SetReceiveHandler(_)).WillByDefault(Return(score::cpp::blank{}));
@@ -395,6 +396,8 @@ class AServiceElement : public ::testing::Test
     std::shared_ptr<std::promise<std::weak_ptr<ScopedEventReceiveHandler>>> event_receive_handler_promise_{
         std::make_shared<std::promise<std::weak_ptr<ScopedEventReceiveHandler>>>()};
 
+    DummyProxy empty_proxy_{std::make_unique<mock_binding::Proxy>(),
+                            make_HandleType(make_InstanceIdentifier(kEmptyInstanceDeployment, kEmptyTypeDeployment))};
     MockServiceElementType* mock_service_element_binding_{nullptr};
     std::unique_ptr<ServiceElementType> service_element_{nullptr};
 };
@@ -1032,8 +1035,12 @@ TEST(ProxyEventBaseTest, MoveConstructingProxyEventDoesNotCrash)
     auto mock_proxy_event_binding_ptr = std::make_unique<StrictMock<mock_binding::ProxyEventBase>>();
     auto& mock_proxy_event_binding = *mock_proxy_event_binding_ptr;
 
+    DummyProxy empty_proxy(std::make_unique<mock_binding::Proxy>(),
+                           make_HandleType(make_InstanceIdentifier(kEmptyInstanceDeployment, kEmptyTypeDeployment)));
+
     // Given a Service Element, that is connected to a mock binding
-    ProxyEventBase dummy_event{kEmptyProxy, std::move(mock_proxy_event_binding_ptr), kEventName};
+    ProxyEventBase dummy_event{
+        empty_proxy, ProxyBaseView{empty_proxy}.GetBinding(), std::move(mock_proxy_event_binding_ptr), kEventName};
 
     // And a new Service Element is created with the move constructor
     ProxyEventBase dummy_event_2{std::move(dummy_event)};
@@ -1054,11 +1061,18 @@ TEST(ProxyEventBaseTest, MoveAssigningProxyEventDoesNotCrash)
     auto mock_proxy_event_binding_ptr = std::make_unique<StrictMock<mock_binding::ProxyEventBase>>();
     auto& mock_proxy_event_binding = *mock_proxy_event_binding_ptr;
 
+    DummyProxy empty_proxy(std::make_unique<mock_binding::Proxy>(),
+                           make_HandleType(make_InstanceIdentifier(kEmptyInstanceDeployment, kEmptyTypeDeployment)));
+
     // Given a Service Element, that is connected to a mock binding
-    ProxyEventBase dummy_event{kEmptyProxy, std::move(mock_proxy_event_binding_ptr), kEventName};
+    ProxyEventBase dummy_event{
+        empty_proxy, ProxyBaseView{empty_proxy}.GetBinding(), std::move(mock_proxy_event_binding_ptr), kEventName};
 
     // And a new Service Element is created and move assigned
-    ProxyEventBase dummy_event_2{kEmptyProxy, std::make_unique<StrictMock<mock_binding::ProxyEventBase>>(), kEventName};
+    ProxyEventBase dummy_event_2{empty_proxy,
+                                 ProxyBaseView{empty_proxy}.GetBinding(),
+                                 std::make_unique<StrictMock<mock_binding::ProxyEventBase>>(),
+                                 kEventName2};
     dummy_event_2 = std::move(dummy_event);
 
     // Expect that Subscribe is called on the binding only once

@@ -10,16 +10,12 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-///
-/// @file
-/// @copyright Copyright (C) 2023, Bayerische Motoren Werke Aktiengesellschaft (BMW AG)
-///
 
 #ifndef SCORE_MW_COM_IMPL_PROXY_EVENT_BASE_H
 #define SCORE_MW_COM_IMPL_PROXY_EVENT_BASE_H
 
 #include "score/mw/com/impl/event_receive_handler.h"
-#include "score/mw/com/impl/proxy_base.h"
+#include "score/mw/com/impl/proxy_binding.h"
 #include "score/mw/com/impl/proxy_event_binding_base.h"
 #include "score/mw/com/impl/sample_reference_tracker.h"
 #include "score/mw/com/impl/subscription_state.h"
@@ -37,6 +33,7 @@ namespace score::mw::com::impl
 {
 
 class EventBindingRegistrationGuard;
+class ProxyBase;
 
 /// \brief This is the user-visible class of an event that is part of a proxy. It contains ProxyEvent functionality that
 /// is agnostic of the data type that is transferred by the event.
@@ -52,7 +49,17 @@ class ProxyEventBase
     friend class ProxyEventBaseAttorney;
 
   public:
+    /// \brief Constructs a ProxyEventBase with the given proxy event binding.
+    /// \param proxy_base The parent proxy of this event. ProxyEventBase just stores a reference to it and allows the
+    /// update of this reference in case the ProxyBase is moved. For this a simple forward declaration of ProxyBase is
+    /// sufficient and needed to avoid cyclic dependencies. Subclasses of ProxyEventBase need to include the full
+    /// definition of ProxyBase, which is not a problem, since it doesn't provoke cyclic dependencies.
+    /// \param proxy_binding_ptr Pointer to the ProxyBinding of the parent ProxyBase. Needed to register the
+    /// proxy_event_binding at the proxy_binding.
+    /// \param proxy_event_binding The binding that shall be associated with this proxy event.
+    /// \param event_name Event name of the event.
     ProxyEventBase(ProxyBase& proxy_base,
+                   ProxyBinding* proxy_binding_ptr,
                    std::unique_ptr<ProxyEventBindingBase> proxy_event_binding,
                    std::string_view event_name) noexcept;
 
@@ -77,6 +84,11 @@ class ProxyEventBase
     ProxyEventBase& operator=(ProxyEventBase&&) noexcept;
 
     virtual ~ProxyEventBase() noexcept;
+
+    void UpdateProxyReference(ProxyBase& proxy_base) noexcept
+    {
+        proxy_base_ = proxy_base;
+    }
 
     /// Subscribe to the event.
     ///
@@ -159,6 +171,10 @@ class ProxyEventBase
     // GenericProxyEvent.
     // coverity[autosar_cpp14_m11_0_1_violation]
     std::unique_ptr<ProxyEventBindingBase> binding_base_;
+    // coverity[autosar_cpp14_m11_0_1_violation]
+    std::reference_wrapper<ProxyBase> proxy_base_;
+    // coverity[autosar_cpp14_m11_0_1_violation]
+    std::string_view event_name_;
     // coverity[autosar_cpp14_m11_0_1_violation]
     std::unique_ptr<SampleReferenceTracker> tracker_;
     // coverity[autosar_cpp14_m11_0_1_violation]

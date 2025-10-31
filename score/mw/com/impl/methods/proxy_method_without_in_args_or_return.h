@@ -51,13 +51,13 @@ class ProxyMethod<void()> final : public ProxyMethodBase
 
     ~ProxyMethod() final = default;
 
-    /// \brief A ProxyMethod shall not be copyable. (Exactly like impl::ProxyBase and impl:ProxyEventBase)
+    /// \brief A ProxyMethod shall not be copyable.
     ProxyMethod(const ProxyMethod&) = delete;
     ProxyMethod& operator=(const ProxyMethod&) = delete;
 
-    /// \brief A ProxyMethod shall be moveable. (Exactly like impl::ProxyBase and impl:ProxyEventBase)
-    ProxyMethod(ProxyMethod&&) = default;
-    ProxyMethod& operator=(ProxyMethod&&) = default;
+    /// \brief A ProxyMethod shall be moveable.
+    ProxyMethod(ProxyMethod&&) noexcept;
+    ProxyMethod& operator=(ProxyMethod&&) noexcept;
 
     /// \brief This is the call-operator of ProxyMethod with no arguments and a void ReturnType.
     score::ResultBlank operator()();
@@ -73,6 +73,26 @@ class ProxyMethod<void()> final : public ProxyMethodBase
     /// specialization. The access via ProxyMethodView remains the same.
     static constexpr std::optional<memory::shared::DataTypeSizeInfo> type_erased_return_type_{};
 };
+
+ProxyMethod<void()>::ProxyMethod(ProxyMethod&& other) noexcept : ProxyMethodBase(std::move(other))
+{
+    // Since the address of this method has changed, we need update the address stored in the parent proxy.
+    ProxyBaseView proxy_base_view{proxy_base_.get()};
+    proxy_base_view.UpdateMethod(method_name_, *this);
+}
+
+auto ProxyMethod<void()>::operator=(ProxyMethod&& other) noexcept -> ProxyMethod<void()>&
+{
+    if (this != &other)
+    {
+        ProxyMethod::operator=(std::move(other));
+
+        // Since the address of this method has changed, we need update the address stored in the parent proxy.
+        ProxyBaseView proxy_base_view{proxy_base_.get()};
+        proxy_base_view.UpdateMethod(method_name_, *this);
+    }
+    return *this;
+}
 
 score::ResultBlank ProxyMethod<void()>::operator()()
 {

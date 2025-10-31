@@ -10,10 +10,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-///
-/// @file
-/// @copyright Copyright (C) 2023, Bayerische Motoren Werke Aktiengesellschaft (BMW AG)
-///
 #include "score/mw/com/impl/generic_proxy_event.h"
 
 #include "score/mw/com/impl/plumbing/proxy_event_binding_factory.h"
@@ -24,15 +20,30 @@ namespace score::mw::com::impl
 {
 
 GenericProxyEvent::GenericProxyEvent(ProxyBase& base, const std::string_view event_name)
-    : ProxyEventBase{base, GenericProxyEventBindingFactory::Create(base, event_name), event_name}
+    : ProxyEventBase{base,
+                     ProxyBaseView{base}.GetBinding(),
+                     GenericProxyEventBindingFactory::Create(base, event_name),
+                     event_name}
 {
+    ProxyBaseView proxy_base_view{base};
+    if (!binding_base_)
+    {
+        proxy_base_view.MarkServiceElementBindingInvalid();
+        return;
+    }
 }
 
 GenericProxyEvent::GenericProxyEvent(ProxyBase& base,
                                      std::unique_ptr<GenericProxyEventBinding> proxy_binding,
                                      const std::string_view event_name)
-    : ProxyEventBase{base, std::move(proxy_binding), event_name}
+    : ProxyEventBase{base, ProxyBaseView{base}.GetBinding(), std::move(proxy_binding), event_name}
 {
+    ProxyBaseView proxy_base_view{base};
+    if (!binding_base_)
+    {
+        proxy_base_view.MarkServiceElementBindingInvalid();
+        return;
+    }
 }
 
 std::size_t GenericProxyEvent::GetSampleSize() const noexcept

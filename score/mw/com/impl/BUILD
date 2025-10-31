@@ -312,7 +312,10 @@ cc_library(
     deps = [
         ":find_service_handle",
         ":find_service_handler",
+        ":proxy_event_base",
+        ":proxy_field_base",
         ":runtime",
+        "//score/mw/com/impl/methods:proxy_method_base",
         "//score/mw/com/impl/plumbing",
         "@score_baselibs//score/language/futurecpp",
         "@score_baselibs//score/result",
@@ -334,7 +337,7 @@ cc_library(
     ],
     deps = [
         ":error",
-        ":proxy_base",
+        ":proxy_binding",
         ":proxy_event_binding",
         ":sample_reference_tracker",
         "//score/mw/com/impl/mocking:i_proxy_event",
@@ -946,6 +949,22 @@ cc_gtest_unit_test(
     ],
 )
 
+cc_gtest_unit_test(
+    name = "proxy_base_test",
+    srcs = ["proxy_base_test.cpp"],
+    deps = [
+        ":error",
+        ":impl",
+        ":runtime_mock",
+        ":service_discovery_mock",
+        "//score/mw/com/impl/bindings/mock_binding",
+        "//score/mw/com/impl/configuration/test:configuration_store",
+        "//score/mw/com/impl/test:runtime_mock_guard",
+        "@score_baselibs//score/language/futurecpp",
+        "@score_baselibs//score/language/safecpp/scoped_function:scope",
+    ],
+)
+
 cc_test(
     name = "unit_test",
     # TODO: Investigate why this unit tests takes more than 1 minute under memcheck (Ticket-141169)
@@ -957,7 +976,6 @@ cc_test(
         "handle_type_test.cpp",
         "instance_identifier_test.cpp",
         "instance_specifier_test.cpp",
-        "proxy_base_test.cpp",
         "proxy_binding_test.cpp",
         "proxy_event_base_test.cpp",
         "proxy_event_binding_base_test.cpp",
@@ -1016,6 +1034,7 @@ cc_unit_test_suites_for_host_and_qnx(
         ":generic_proxy_test",
         ":proxy_field_test",
         ":runtime_test",
+        ":proxy_base_test",
         ":sample_reference_tracker_test",
         ":service_discovery_test",
         ":service_element_type_test",

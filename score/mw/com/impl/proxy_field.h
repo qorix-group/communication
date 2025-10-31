@@ -72,7 +72,7 @@ class ProxyField final : public ProxyFieldBase
 
     /// \brief Constructs a ProxyField
     ///
-    /// \param base Proxy that contains this field
+    /// \param proxy_base Proxy that contains this field
     /// \param field_name Field name of the field, taken from the AUTOSAR model
     ProxyField(ProxyBase& proxy_base, const std::string_view field_name)
         : ProxyField{proxy_base,
@@ -90,8 +90,8 @@ class ProxyField final : public ProxyFieldBase
     ProxyField& operator=(const ProxyField&) = delete;
 
     /// \brief A ProxyField shall be moveable
-    ProxyField(ProxyField&&) noexcept = default;
-    ProxyField& operator=(ProxyField&&) noexcept = default;
+    ProxyField(ProxyField&&) noexcept;
+    ProxyField& operator=(ProxyField&&) & noexcept;
 
     ~ProxyField() noexcept = default;
 
@@ -132,6 +132,9 @@ class ProxyField final : public ProxyFieldBase
     {
         // Defensive programming: This assertion is also in the constructor of ProxyFieldBase.
         SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD(proxy_event_dispatch_ != nullptr);
+
+        ProxyBaseView proxy_base_view{proxy_base};
+        proxy_base_view.RegisterField(field_name, *this);
     }
 
     // All public event-related calls to ProxyField will dispatch to proxy_event_dispatch_. It is a unique_ptr since we
@@ -139,6 +142,35 @@ class ProxyField final : public ProxyFieldBase
     // avoid dangling references.
     std::unique_ptr<ProxyEvent<FieldType>> proxy_event_dispatch_;
 };
+
+template <typename FieldType>
+ProxyField<FieldType>::ProxyField(ProxyField&& other) noexcept
+    : ProxyFieldBase(std::move(other)), proxy_event_dispatch_(std::move(other.proxy_event_dispatch_))
+{
+    // Since the address of this field has changed, we need update the address stored in the parent proxy.
+    ProxyBaseView proxy_base_view{proxy_base_.get()};
+    proxy_base_view.UpdateField(field_name_, *this);
+}
+
+template <typename FieldType>
+// Suppress "AUTOSAR C++14 A6-2-1" rule violation. The rule states "Move and copy assignment operators shall either move
+// or respectively copy base classes and data members of a class, without any side effects."
+// Rationale: The parent proxy stores a reference to the ProxyEvent. The address that is pointed to must be
+// updated when the ProxyField is moved. Therefore, side effects are required.
+// coverity[autosar_cpp14_a6_2_1_violation]
+auto ProxyField<FieldType>::operator=(ProxyField&& other) & noexcept -> ProxyField<FieldType>&
+{
+    if (this != &other)
+    {
+        ProxyField::operator=(std::move(other));
+
+        // Since the address of this field has changed, we need update the address stored in the parent proxy.
+        ProxyBaseView proxy_base_view{proxy_base_.get()};
+        proxy_base_view.UpdateField(field_name_, *this);
+        proxy_event_dispatch_ = std::move(other.proxy_event_dispatch_);
+    }
+    return *this;
+}
 
 }  // namespace score::mw::com::impl
 

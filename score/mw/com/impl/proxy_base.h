@@ -19,7 +19,6 @@
 #include "score/mw/com/impl/instance_identifier.h"
 #include "score/mw/com/impl/instance_specifier.h"
 #include "score/mw/com/impl/proxy_binding.h"
-#include "score/mw/com/impl/proxy_event_binding.h"
 
 #include "score/result/result.h"
 
@@ -95,8 +94,8 @@ class ProxyBase
 
     /// \brief A Proxy shall be movable
     /// \requirement SWS_CM_00137
-    ProxyBase(ProxyBase&& other) = default;
-    ProxyBase& operator=(ProxyBase&& other) = default;
+    ProxyBase(ProxyBase&& other) noexcept;
+    ProxyBase& operator=(ProxyBase&& other) noexcept;
 
     bool AreBindingsValid() const noexcept
     {
@@ -171,7 +170,7 @@ class ProxyBaseView final
         {
             score::mw::log::LogError("lola")
                 << "ProxyBaseView::UpdateEvent failed to update, because the requested event " << event_name
-                << " doesn't exist";
+                << " doesn't exist!";
             std::terminate();
         }
 

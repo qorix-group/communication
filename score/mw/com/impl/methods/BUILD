@@ -37,15 +37,8 @@ cc_library(
         "//score/mw/com:__subpackages__",
     ],
     deps = [
-        ":method_signature_element_ptr",
         ":proxy_method_binding",
-        "//score/mw/com/impl:error",
-        "//score/mw/com/impl:proxy_base",
-        "//score/mw/com/impl/util:type_erased_storage",
         "@score_baselibs//score/containers:dynamic_array",
-        "@score_baselibs//score/language/futurecpp",
-        "@score_baselibs//score/memory/shared:data_type_size_info",
-        "@score_baselibs//score/mw/log",
         "@score_baselibs//score/result",
     ],
 )

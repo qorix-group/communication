@@ -61,13 +61,13 @@ class ProxyMethod<ReturnType(ArgTypes...)> final : public ProxyMethodBase
 
     ~ProxyMethod() final = default;
 
-    /// \brief A ProxyMethod shall not be copyable. (Exactly like impl::ProxyBase and impl:ProxyEventBase)
+    /// \brief A ProxyMethod shall not be copyable.
     ProxyMethod(const ProxyMethod&) = delete;
     ProxyMethod& operator=(const ProxyMethod&) = delete;
 
-    /// \brief A ProxyMethod shall be moveable. (Exactly like impl::ProxyBase and impl:ProxyEventBase)
-    ProxyMethod(ProxyMethod&&) = default;
-    ProxyMethod& operator=(ProxyMethod&&) = default;
+    /// \brief A ProxyMethod shall be moveable.
+    ProxyMethod(ProxyMethod&&) noexcept;
+    ProxyMethod& operator=(ProxyMethod&&) noexcept;
 
     /// \brief Allocates the necessary storage for the argument values and the return value of a method call.
     /// \return On success, a tuple of MethodInArgPtr for each argument type is returned. On failure, an error code is
@@ -109,6 +109,29 @@ class ProxyMethod<ReturnType(ArgTypes...)> final : public ProxyMethodBase
     /// pointer passed to the zero-copy call-operator is active.
     containers::DynamicArray<std::array<bool, sizeof...(ArgTypes)>> are_in_arg_ptrs_active_;
 };
+
+template <typename ReturnType, typename... ArgTypes>
+ProxyMethod<ReturnType(ArgTypes...)>::ProxyMethod(ProxyMethod&& other) noexcept : ProxyMethodBase(std::move(other))
+{
+    // Since the address of this method has changed, we need update the address stored in the parent proxy.
+    ProxyBaseView proxy_base_view{proxy_base_.get()};
+    proxy_base_view.UpdateMethod(method_name_, *this);
+}
+
+template <typename ReturnType, typename... ArgTypes>
+auto ProxyMethod<ReturnType(ArgTypes...)>::operator=(ProxyMethod&& other) noexcept
+    -> ProxyMethod<ReturnType(ArgTypes...)>&
+{
+    if (this != &other)
+    {
+        ProxyMethod::operator=(std::move(other));
+
+        // Since the address of this method has changed, we need update the address stored in the parent proxy.
+        ProxyBaseView proxy_base_view{proxy_base_.get()};
+        proxy_base_view.UpdateMethod(method_name_, *this);
+    }
+    return *this;
+}
 
 template <typename ReturnType, typename... ArgTypes>
 score::Result<MethodReturnTypePtr<ReturnType>> ProxyMethod<ReturnType(ArgTypes...)>::operator()(const ArgTypes&... args)

@@ -25,13 +25,38 @@ class Proxy : public ProxyBinding
 {
   public:
     Proxy() = default;
-    ~Proxy() = default;
+    ~Proxy() override = default;
 
     MOCK_METHOD(bool, IsEventProvided, (const std::string_view), (const, noexcept, override));
     MOCK_METHOD(void, RegisterEventBinding, (std::string_view, ProxyEventBindingBase&), (noexcept, override));
     MOCK_METHOD(void, UnregisterEventBinding, (std::string_view), (noexcept, override));
 };
 
+class ProxyFacade : public ProxyBinding
+{
+  public:
+    ProxyFacade(Proxy& proxy) : ProxyBinding{}, proxy_{proxy} {}
+    ~ProxyFacade() override = default;
+
+    bool IsEventProvided(const std::string_view event_name) const noexcept override
+    {
+        return proxy_.IsEventProvided(event_name);
+    }
+
+    void RegisterEventBinding(const std::string_view service_element_name,
+                              ProxyEventBindingBase& proxy_event_binding) noexcept override
+    {
+        proxy_.RegisterEventBinding(service_element_name, proxy_event_binding);
+    }
+
+    void UnregisterEventBinding(const std::string_view service_element_name) noexcept override
+    {
+        proxy_.UnregisterEventBinding(service_element_name);
+    }
+
+  private:
+    Proxy& proxy_;
+};
 }  // namespace score::mw::com::impl::mock_binding
 
 #endif  // SCORE_MW_COM_IMPL_BINDINGS_MOCK_BINDING_PROXY_H
