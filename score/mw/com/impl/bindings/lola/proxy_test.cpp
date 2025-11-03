@@ -210,7 +210,7 @@ TEST_F(ProxyCreationFixture, ProxyCreationSucceedsWhenSharedLockOnUsageMarkerFil
 }
 
 using ProxyCreationDeathTest = ProxyCreationFixture;
-TEST_F(ProxyCreationDeathTest, CreatingProxyWithoutLolaInstanceDeploymentReturnsNullptr)
+TEST_F(ProxyCreationDeathTest, CreatingProxyWithoutLolaInstanceDeploymentTerminates)
 {
     // Given a deployment information which contains an instance deployment with blank binding
     const ServiceInstanceDeployment service_instance_deployment_with_blank_binding{
@@ -224,7 +224,7 @@ TEST_F(ProxyCreationDeathTest, CreatingProxyWithoutLolaInstanceDeploymentReturns
                  ".*");
 }
 
-TEST_F(ProxyCreationDeathTest, CreatingProxyWithoutLolaTypeDeploymentReturnsNullptr)
+TEST_F(ProxyCreationDeathTest, CreatingProxyWithoutLolaTypeDeploymentTerminates)
 {
     // Given a deployment information which contains a type deployment with blank binding
     const ServiceTypeDeployment service_type_deployment_with_blank_binding{score::cpp::blank{}};
@@ -237,7 +237,7 @@ TEST_F(ProxyCreationDeathTest, CreatingProxyWithoutLolaTypeDeploymentReturnsNull
                  ".*");
 }
 
-TEST_F(ProxyCreationDeathTest, CreatingProxyWithoutLolaServiceInstanceIdReturnsNullptr)
+TEST_F(ProxyCreationDeathTest, CreatingProxyWithoutLolaServiceInstanceIdTerminates)
 {
     // Given a deployment information which contains a lola instance deployment which has no instance ID
     const ServiceInstanceDeployment service_instance_deployment_without_instance_id{
