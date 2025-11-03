@@ -13,14 +13,16 @@
 #ifndef SCORE_MW_COM_IMPL_PROXY_METHOD_H
 #define SCORE_MW_COM_IMPL_PROXY_METHOD_H
 
-#include "score/containers/dynamic_array.h"
-#include "score/result/result.h"
 #include "score/mw/com/impl/com_error.h"
 #include "score/mw/com/impl/method_signature_element_ptr.h"
 #include "score/mw/com/impl/proxy_base.h"
 #include "score/mw/com/impl/proxy_method_base.h"
 #include "score/mw/com/impl/proxy_method_binding.h"
 #include "score/mw/com/impl/util/type_erased_storage.h"
+
+#include "score/containers/dynamic_array.h"
+#include "score/memory/shared/data_type_size_info.h"
+#include "score/result/result.h"
 
 #include <algorithm>
 #include <optional>
@@ -108,7 +110,7 @@ score::Result<std::tuple<impl::MethodInArgPtr<ArgTypes>...>> Allocate(
     SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(allocated_in_args_storage.has_value(),
                            "ProxyMethod::Allocate: AllocateInArgs failed unexpectedly.");
     score::cpp::span<std::byte> in_args_buffer{(allocated_in_args_storage.value().data()),
-                                                 allocated_in_args_storage.value().size()};
+                                        allocated_in_args_storage.value().size()};
     const auto deserialized_arg_pointers = impl::Deserialize<ArgTypes...>(in_args_buffer);
     auto method_in_arg_ptr_tuple = detail::CreateMethodInArgPtrTuple(
         deserialized_arg_pointers, in_arg_ptr_flags, queue_index, std::make_index_sequence<sizeof...(ArgTypes)>());
@@ -193,12 +195,12 @@ class ProxyMethod<void()> final : public ProxyMethodBase
     /// \brief Empty optional as in this class template specialization we do not have in-arguments.
     /// \details We still keep this member for interface consistency with the general ProxyMethod template
     /// specialization. The access via ProxyMethodView remains the same.
-    static constexpr std::optional<TypeErasedDataTypeInfo> type_erased_in_args_{};
+    static constexpr std::optional<memory::shared::DataTypeSizeInfo> type_erased_in_args_{};
 
     /// \brief Empty optional as in this class template specialization we do not have a return type.
     /// \details We still keep this member for interface consistency with the general ProxyMethod template
     /// specialization. The access via ProxyMethodView remains the same.
-    static constexpr std::optional<TypeErasedDataTypeInfo> type_erased_return_type_{};
+    static constexpr std::optional<memory::shared::DataTypeSizeInfo> type_erased_return_type_{};
 };
 
 /// \brief Partial specialization of ProxyMethod for function signatures with no arguments and non-void return
@@ -235,13 +237,13 @@ class ProxyMethod<ReturnType()> final : public ProxyMethodBase
     /// \brief Empty optional as in this class template specialization we do not have in-arguments.
     /// \details We still keep this member for interface consistency with the general ProxyMethod template
     /// specialization. The access via ProxyMethodView remains the same.
-    static constexpr std::optional<TypeErasedDataTypeInfo> type_erased_in_args_{};
+    static constexpr std::optional<memory::shared::DataTypeSizeInfo> type_erased_in_args_{};
 
-    /// \brief Compile-time initialized TypeErasedDataTypeInfo for the return type of this ProxyMethod.
+    /// \brief Compile-time initialized memory::shared::DataTypeSizeInfo for the return type of this ProxyMethod.
     /// \details This is the only information about the return type of this Proxy Method, which is available at
     /// runtime. It is handed down to the binding layer, which then does the type agnostic transport.
-    static constexpr std::optional<TypeErasedDataTypeInfo> type_erased_return_type_ =
-        CreateTypeErasedDataTypeInfoFromTypes<ReturnType>();
+    static constexpr std::optional<memory::shared::DataTypeSizeInfo> type_erased_return_type_ =
+        CreateDataTypeSizeInfoFromTypes<ReturnType>();
 };
 
 /// \brief Partial specialization of ProxyMethod for function signatures with arguments and non-void return
@@ -293,18 +295,18 @@ class ProxyMethod<ReturnType(ArgTypes...)> final : public ProxyMethodBase
     score::Result<MethodReturnTypePtr<ReturnType>> operator()(MethodInArgPtr<ArgTypes>... args);
 
   private:
-    /// \brief Compile-time initialized TypeErasedDataTypeInfo for the argument types of this ProxyMethod.
+    /// \brief Compile-time initialized memory::shared::DataTypeSizeInfo for the argument types of this ProxyMethod.
     /// \details This is the only information about the argument types of this Proxy Method, which is available at
     /// runtime. It is handed down to the binding layer, which then does the type agnostic transport.
     /// \remark If there are no arguments, this is std::nullopt.
-    static constexpr std::optional<TypeErasedDataTypeInfo> type_erased_in_args_ =
-        CreateTypeErasedDataTypeInfoFromTypes<ArgTypes...>();
+    static constexpr std::optional<memory::shared::DataTypeSizeInfo> type_erased_in_args_ =
+        CreateDataTypeSizeInfoFromTypes<ArgTypes...>();
 
-    /// \brief Compile-time initialized TypeErasedDataTypeInfo for the return type of this ProxyMethod.
+    /// \brief Compile-time initialized memory::shared::DataTypeSizeInfo for the return type of this ProxyMethod.
     /// \details This is the only information about the return type of this Proxy Method, which is available at
     /// runtime. It is handed down to the binding layer, which then does the type agnostic transport.
-    static constexpr std::optional<TypeErasedDataTypeInfo> type_erased_return_type_ =
-        CreateTypeErasedDataTypeInfoFromTypes<ReturnType>();
+    static constexpr std::optional<memory::shared::DataTypeSizeInfo> type_erased_return_type_ =
+        CreateDataTypeSizeInfoFromTypes<ReturnType>();
 
     /// \brief Outer dynamic array: one entry per call-queue position, inner array: one entry per argument.
     /// \details This array of arrays contains bool flags, which indicate, if the corresponding argument pointer
@@ -361,16 +363,16 @@ class ProxyMethod<void(ArgTypes...)> final : public ProxyMethodBase
     score::ResultBlank operator()(MethodInArgPtr<ArgTypes>... args);
 
   private:
-    /// \brief Compile-time initialized TypeErasedDataTypeInfo for the argument types of this ProxyMethod.
+    /// \brief Compile-time initialized memory::shared::DataTypeSizeInfo for the argument types of this ProxyMethod.
     /// \details This is the only information about the argument types of this Proxy Method, which is available at
     /// runtime. It is handed down to the binding layer, which then does the type agnostic transport.
-    static constexpr std::optional<TypeErasedDataTypeInfo> type_erased_in_args_ =
-        CreateTypeErasedDataTypeInfoFromTypes<ArgTypes...>();
+    static constexpr std::optional<memory::shared::DataTypeSizeInfo> type_erased_in_args_ =
+        CreateDataTypeSizeInfoFromTypes<ArgTypes...>();
 
     /// \brief Empty optional as in this class template specialization we do not have a return type.
     /// \details We still keep this member for interface consistency with the general ProxyMethod template
     /// specialization. The access via ProxyMethodView remains the same.
-    static constexpr std::optional<TypeErasedDataTypeInfo> type_erased_return_type_{};
+    static constexpr std::optional<memory::shared::DataTypeSizeInfo> type_erased_return_type_{};
 
     /// \brief Outer dynamic array: one entry per call-queue position, inner array: one entry per argument.
     /// \details This array of arrays contains bool flags, which indicate, if the corresponding argument pointer
@@ -520,12 +522,12 @@ class ProxyMethodView
   public:
     explicit ProxyMethodView(ProxyMethod<ReturnType(ArgTypes...)>& proxy_method) : proxy_method_{proxy_method} {}
 
-    std::optional<TypeErasedDataTypeInfo> GetTypeErasedReturnType() const noexcept
+    std::optional<memory::shared::DataTypeSizeInfo> GetTypeErasedReturnType() const noexcept
     {
         return proxy_method_.type_erased_return_type_;
     }
 
-    std::optional<TypeErasedDataTypeInfo> GetTypeErasedInAgs() const noexcept
+    std::optional<memory::shared::DataTypeSizeInfo> GetTypeErasedInAgs() const noexcept
     {
         return proxy_method_.type_erased_in_args_;
     }

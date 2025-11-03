@@ -73,7 +73,7 @@ The "aggregation" of N in-args data types into a type erased representation is d
 
 ```cpp
 template <typename... Args>
-constexpr TypeErasedDataTypeInfo CreateTypeErasedDataTypeInfoFromTypes()
+constexpr DataTypeSizeInfo CreateDataTypeSizeInfoFromTypes()
 ```
 
 What it technically does is to create a C++ struct from the provided `Args...` types, where each type is a member of the struct.

@@ -30,7 +30,7 @@ namespace score::mw::com::impl::mock_binding
 class ProxyMethod : public ProxyMethodBinding
 {
   public:
-    ProxyMethod() : ProxyMethodBinding{TypeErasedDataTypeInfo{}, TypeErasedDataTypeInfo{}} {}
+    ProxyMethod() : ProxyMethodBinding{memory::shared::DataTypeSizeInfo{}, memory::shared::DataTypeSizeInfo{}} {}
     ~ProxyMethod() override = default;
 
     MOCK_METHOD(score::Result<score::cpp::span<std::byte>>, AllocateInArgs, (std::size_t), (override));
