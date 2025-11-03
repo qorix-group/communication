@@ -82,8 +82,8 @@ template <template <typename, typename...> class FnMutHandler, typename R = void
 class RustFnMutCallable : public RustFnMutCallableBase<FnMutHandler, R, Args...>
 {
   public:
-    using Base = RustFnMutCallableBase<FnMutHandler, void, Args...>;
-    using RustFnMutCallableBase<FnMutHandler, void, Args...>::RustFnMutCallableBase;
+    using Base = RustFnMutCallableBase<FnMutHandler, R, Args...>;
+    using RustFnMutCallableBase<FnMutHandler, R, Args...>::RustFnMutCallableBase;
 
     template <typename... CallArgs>
     R operator()(CallArgs&&... call_args) noexcept
