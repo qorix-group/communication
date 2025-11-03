@@ -799,8 +799,8 @@ cc_unit_test(
         "@score_baselibs//score/containers:dynamic_array",
         "@score_baselibs//score/language/futurecpp:futurecpp_test_support",
         "@score_baselibs//score/language/safecpp/coverage_termination_handler",
-        "@score_baselibs//score/memory/shared:fake_memory_resources",
         "@score_baselibs//score/memory/shared:polymorphic_offset_ptr_allocator",
+        "@score_baselibs//score/memory/shared/fake:fake_memory_resources",
         "@score_baselibs//score/mw/log",
     ],
 )
