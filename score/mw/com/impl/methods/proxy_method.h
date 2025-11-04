@@ -136,9 +136,7 @@ score::Result<std::tuple<impl::MethodInArgPtr<ArgTypes>...>> AllocateImpl(
     auto allocated_in_args_storage = binding.AllocateInArgs(queue_index);
     SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(allocated_in_args_storage.has_value(),
                            "ProxyMethod::Allocate: AllocateInArgs failed unexpectedly.");
-    score::cpp::span<std::byte> in_args_buffer{(allocated_in_args_storage.value().data()),
-                                        allocated_in_args_storage.value().size()};
-    const auto deserialized_arg_pointers = impl::Deserialize<ArgTypes...>(in_args_buffer);
+    const auto deserialized_arg_pointers = impl::Deserialize<ArgTypes...>(allocated_in_args_storage.value());
     auto method_in_arg_ptr_tuple = CreateMethodInArgPtrTuple(
         deserialized_arg_pointers, in_arg_ptr_flags, queue_index, std::make_index_sequence<sizeof...(ArgTypes)>());
 
