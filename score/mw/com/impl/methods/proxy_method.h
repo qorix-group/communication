@@ -527,7 +527,7 @@ class ProxyMethodView
         return proxy_method_.type_erased_return_type_;
     }
 
-    std::optional<memory::shared::DataTypeSizeInfo> GetTypeErasedInAgs() const noexcept
+    std::optional<memory::shared::DataTypeSizeInfo> GetTypeErasedInArgs() const noexcept
     {
         return proxy_method_.type_erased_in_args_;
     }

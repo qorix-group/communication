@@ -365,8 +365,8 @@ TEST_F(ProxyMethodWithInArgsAndReturnFixture, ProxyMethodView_ReturnsTypeErasedI
     // and given a ProxyMethodView created with the ProxyMethod
     ProxyMethodView proxy_method_view{*this->unit_};
 
-    // When we call GetTypeErasedInAgs
-    auto type_erased_in_args = proxy_method_view.GetTypeErasedInAgs();
+    // When we call GetTypeErasedInArgs
+    auto type_erased_in_args = proxy_method_view.GetTypeErasedInArgs();
 
     // Then we get a valid TypeErasedDataTypeInfo
     EXPECT_TRUE(type_erased_in_args.has_value());
@@ -393,8 +393,8 @@ TEST_F(ProxyMethodWithInArgsOnlyFixture, ProxyMethodView_ReturnsTypeErasedInArgs
     // and given a ProxyMethodView created with the ProxyMethod
     ProxyMethodView proxy_method_view{*this->unit_};
 
-    // When we call GetTypeErasedInAgs
-    auto type_erased_in_args = proxy_method_view.GetTypeErasedInAgs();
+    // When we call GetTypeErasedInArgs
+    auto type_erased_in_args = proxy_method_view.GetTypeErasedInArgs();
 
     // Then we get a valid TypeErasedDataTypeInfo
     EXPECT_TRUE(type_erased_in_args.has_value());
@@ -422,8 +422,8 @@ TEST_F(ProxyMethodWithReturnOnlyFixture, ProxyMethodView_DoesNotReturnTypeErased
     // and given a ProxyMethodView created with the ProxyMethod
     ProxyMethodView proxy_method_view{*this->unit_};
 
-    // When we call GetTypeErasedInAgs
-    auto type_erased_in_args = proxy_method_view.GetTypeErasedInAgs();
+    // When we call GetTypeErasedInArgs
+    auto type_erased_in_args = proxy_method_view.GetTypeErasedInArgs();
 
     // Then we don't get a valid TypeErasedDataTypeInfo
     EXPECT_FALSE(type_erased_in_args.has_value());
@@ -451,8 +451,8 @@ TEST_F(ProxyMethodWithNoInArgsOrReturnFixture, ProxyMethodView_DoesNotReturnType
     // and given a ProxyMethodView created with the ProxyMethod
     ProxyMethodView proxy_method_view{*this->unit_};
 
-    // When we call GetTypeErasedInAgs
-    auto type_erased_in_args = proxy_method_view.GetTypeErasedInAgs();
+    // When we call GetTypeErasedInArgs
+    auto type_erased_in_args = proxy_method_view.GetTypeErasedInArgs();
 
     // Then we don't get a valid TypeErasedDataTypeInfo
     EXPECT_FALSE(type_erased_in_args.has_value());
