@@ -13,17 +13,13 @@
 #ifndef SCORE_MW_COM_IMPL_BINDINGS_LOLA_MESSAGEPASSINGCLIENTCACHE_H
 #define SCORE_MW_COM_IMPL_BINDINGS_LOLA_MESSAGEPASSINGCLIENTCACHE_H
 
-#include "score/mw/com/impl/configuration/quality_type.h"
-
-#include "score/message_passing/i_client_connection.h"
 #include "score/message_passing/i_client_factory.h"
+#include "score/mw/com/impl/bindings/lola/messaging/client_quality_type.h"
 
-#include <cstdint>
 #include <memory>
 #include <mutex>
 #include <string>
 #include <unordered_map>
-#include <utility>
 
 namespace score::mw::com::impl::lola
 {
@@ -31,13 +27,6 @@ namespace score::mw::com::impl::lola
 class MessagePassingClientCache
 {
   public:
-    enum class ClientQualityType : std::uint8_t
-    {
-        kASIL_QM,
-        kASIL_QMfromB,
-        kASIL_B,
-    };
-
     MessagePassingClientCache(const ClientQualityType asil_level,
                               score::message_passing::IClientFactory& client_factory) noexcept;
 

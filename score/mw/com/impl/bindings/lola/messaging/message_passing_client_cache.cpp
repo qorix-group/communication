@@ -19,7 +19,6 @@
 #include "score/mw/log/logging.h"
 
 #include <score/assert.hpp>
-#include <score/utility.hpp>
 
 #include <memory>
 #include <sstream>

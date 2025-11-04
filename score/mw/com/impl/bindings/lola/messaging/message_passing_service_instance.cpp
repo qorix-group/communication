@@ -95,13 +95,15 @@ auto SerializeToMessage(const std::uint8_t message_id, const T& t) noexcept -> s
 namespace score::mw::com::impl::lola
 {
 
-MessagePassingServiceInstance::MessagePassingServiceInstance(
-    const ClientQualityType asil_level,
-    const AsilSpecificCfg /*config*/,
-    score::message_passing::IServerFactory& server_factory,
-    score::message_passing::IClientFactory& client_factory,
-    score::concurrency::Executor& local_event_thread_pool) noexcept
-    : cur_registration_no_{0U}, client_cache_{asil_level, client_factory}, thread_pool_{local_event_thread_pool}
+MessagePassingServiceInstance::MessagePassingServiceInstance(const ClientQualityType asil_level,
+                                                             AsilSpecificCfg /*config*/,
+                                                             score::message_passing::IServerFactory& server_factory,
+                                                             score::message_passing::IClientFactory& client_factory,
+                                                             score::concurrency::Executor& local_event_executor) noexcept
+    : IMessagePassingServiceInstance(),
+      cur_registration_no_{0U},
+      client_cache_{asil_level, client_factory},
+      executor_{local_event_executor}
 {
     // TODO: PMR
 
@@ -517,7 +519,7 @@ void MessagePassingServiceInstance::NotifyEvent(const ElementFqId event_id) noex
         // throws on allocation failure but this throw directly leads to a termination based on a compiler hook.
         // and the whole function scope doesn't lead to any exception.
         // coverity[autosar_cpp14_a15_4_2_violation]
-        thread_pool_.Post(
+        executor_.Post(
             [this](const score::cpp::stop_token& /*token*/, const ElementFqId element_id) noexcept {
                 // ignoring the result (number of actually notified local proxy-events),
                 // as we don't have any expectation, how many are there.

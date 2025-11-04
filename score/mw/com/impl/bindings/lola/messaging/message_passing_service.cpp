@@ -11,6 +11,8 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 #include "score/mw/com/impl/bindings/lola/messaging/message_passing_service.h"
+#include "score/mw/com/impl/bindings/lola/messaging/message_passing_service_instance.h"
+#include "score/mw/com/impl/bindings/lola/messaging/message_passing_service_instance_factory.h"
 
 #include "score/mw/com/impl/bindings/lola/messaging/thread_abstraction.h"
 
@@ -18,7 +20,6 @@
 #include "score/os/errno_logging.h"
 #include "score/mw/log/logging.h"
 
-#include <cstdio>
 #include <memory>
 #include <optional>
 
@@ -37,10 +38,11 @@ namespace score::mw::com::impl::lola
 // Suppress autosar_cpp14_a15_5_3_violation
 // Rationale: Calling std::terminate() if any exceptions are thrown is expected as per safety requirements
 // coverity[autosar_cpp14_a15_5_3_violation]
-MessagePassingService::MessagePassingService(const AsilSpecificCfg config_asil_qm,
-                                             const std::optional<AsilSpecificCfg> config_asil_b) noexcept
+MessagePassingService::MessagePassingService(
+    const AsilSpecificCfg& config_asil_qm,
+    const std::optional<AsilSpecificCfg>& config_asil_b,
+    const std::unique_ptr<IMessagePassingServiceInstanceFactory>& factory) noexcept
     : IMessagePassingService{},
-      server_factory_{},
       client_factory_{},
       // Suppress "AUTOSAR C++14 A15-4-2" rule findings. This rule states: "Throwing an exception in a
       // "noexcept" function." In this case it is ok, because the system anyways forces the process to
@@ -50,38 +52,35 @@ MessagePassingService::MessagePassingService(const AsilSpecificCfg config_asil_q
       qm_{},
       asil_b_{}
 {
-    score::cpp::ignore = server_factory_.emplace();
-    score::cpp::ignore = client_factory_.emplace(server_factory_->GetEngine());
+    // Suppress "AUTOSAR C++14 A16-0-1" rule findings.
+    // This is the standard way to determine if it runs on QNX or Unix
+    // coverity[autosar_cpp14_a16_0_1_violation]
+#ifdef __QNX__
+    score::message_passing::QnxDispatchServerFactory server_factory{client_factory_.GetEngine()};
+    // coverity[autosar_cpp14_a16_0_1_violation]
+#else
+    score::message_passing::UnixDomainServerFactory server_factory{client_factory_.GetEngine()};
+    // coverity[autosar_cpp14_a16_0_1_violation]
+#endif
+
+    const auto qm_client_quality_type =
+        config_asil_b.has_value() ? ClientQualityType::kASIL_QMfromB : ClientQualityType::kASIL_QM;
 
     if (config_asil_b.has_value())
     {
-        score::cpp::ignore = asil_b_.emplace(MessagePassingServiceInstance::ClientQualityType::kASIL_B,
-                                      *config_asil_b,
-                                      *server_factory_,
-                                      *client_factory_,
-                                      local_event_thread_pool_);
-        score::cpp::ignore = qm_.emplace(MessagePassingServiceInstance::ClientQualityType::kASIL_QMfromB,
-                                  config_asil_qm,
-                                  *server_factory_,
-                                  *client_factory_,
-                                  local_event_thread_pool_);
+        asil_b_ = factory->Create(
+            ClientQualityType::kASIL_B, *config_asil_b, server_factory, client_factory_, local_event_thread_pool_);
     }
-    else
-    {
-        score::cpp::ignore = qm_.emplace(MessagePassingServiceInstance::ClientQualityType::kASIL_QM,
-                                  config_asil_qm,
-                                  *server_factory_,
-                                  *client_factory_,
-                                  local_event_thread_pool_);
-    }
+
+    qm_ = factory->Create(
+        qm_client_quality_type, config_asil_qm, server_factory, client_factory_, local_event_thread_pool_);
 }
 
 void MessagePassingService::NotifyEvent(const QualityType asil_level, const ElementFqId event_id) noexcept
 {
-    auto& instance = asil_level == QualityType::kASIL_QM ? qm_ : asil_b_;
-    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(instance.has_value(), "Invalid asil level.");
+    auto& instance = GetMessagePassingServiceInstance(asil_level);
 
-    instance->NotifyEvent(event_id);
+    instance.NotifyEvent(event_id);
 }
 
 IMessagePassingService::HandlerRegistrationNoType MessagePassingService::RegisterEventNotification(
@@ -90,20 +89,18 @@ IMessagePassingService::HandlerRegistrationNoType MessagePassingService::Registe
     std::weak_ptr<ScopedEventReceiveHandler> callback,
     const pid_t target_node_id) noexcept
 {
-    auto& instance = asil_level == QualityType::kASIL_QM ? qm_ : asil_b_;
-    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(instance.has_value(), "Invalid asil level.");
+    auto& instance = GetMessagePassingServiceInstance(asil_level);
 
-    return instance->RegisterEventNotification(event_id, std::move(callback), target_node_id);
+    return instance.RegisterEventNotification(event_id, std::move(callback), target_node_id);
 }
 
 void MessagePassingService::ReregisterEventNotification(const QualityType asil_level,
                                                         const ElementFqId event_id,
                                                         const pid_t target_node_id) noexcept
 {
-    auto& instance = asil_level == QualityType::kASIL_QM ? qm_ : asil_b_;
-    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(instance.has_value(), "Invalid asil level.");
+    auto& instance = GetMessagePassingServiceInstance(asil_level);
 
-    instance->ReregisterEventNotification(event_id, target_node_id);
+    instance.ReregisterEventNotification(event_id, target_node_id);
 }
 
 void MessagePassingService::UnregisterEventNotification(
@@ -112,20 +109,33 @@ void MessagePassingService::UnregisterEventNotification(
     const IMessagePassingService::HandlerRegistrationNoType registration_no,
     const pid_t target_node_id) noexcept
 {
-    auto& instance = asil_level == QualityType::kASIL_QM ? qm_ : asil_b_;
-    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(instance.has_value(), "Invalid asil level.");
+    auto& instance = GetMessagePassingServiceInstance(asil_level);
 
-    instance->UnregisterEventNotification(event_id, registration_no, target_node_id);
+    instance.UnregisterEventNotification(event_id, registration_no, target_node_id);
 }
 
 void MessagePassingService::NotifyOutdatedNodeId(const QualityType asil_level,
                                                  const pid_t outdated_node_id,
                                                  const pid_t target_node_id) noexcept
 {
-    auto& instance = asil_level == QualityType::kASIL_QM ? qm_ : asil_b_;
-    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(instance.has_value(), "Invalid asil level.");
+    auto& instance = GetMessagePassingServiceInstance(asil_level);
 
-    instance->NotifyOutdatedNodeId(outdated_node_id, target_node_id);
+    instance.NotifyOutdatedNodeId(outdated_node_id, target_node_id);
+}
+
+IMessagePassingServiceInstance& MessagePassingService::GetMessagePassingServiceInstance(
+    const QualityType asil_level) const
+{
+    switch (asil_level)
+    {
+        case QualityType::kASIL_QM:
+            return *qm_;
+        case QualityType::kASIL_B:
+            return *asil_b_;
+        default:
+        case QualityType::kInvalid:
+            SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(false, "Invalid asil level");
+    }
 }
 
 ResultBlank MessagePassingService::RegisterOnServiceMethodSubscribedHandler(
@@ -146,19 +156,17 @@ void MessagePassingService::RegisterEventNotificationExistenceChangedCallback(
     const ElementFqId event_id,
     HandlerStatusChangeCallback callback) noexcept
 {
-    auto& instance = asil_level == QualityType::kASIL_QM ? qm_ : asil_b_;
-    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(instance.has_value(), "Invalid asil level.");
+    auto& instance = GetMessagePassingServiceInstance(asil_level);
 
-    instance->RegisterEventNotificationExistenceChangedCallback(event_id, std::move(callback));
+    instance.RegisterEventNotificationExistenceChangedCallback(event_id, std::move(callback));
 }
 
 void MessagePassingService::UnregisterEventNotificationExistenceChangedCallback(const QualityType asil_level,
                                                                                 const ElementFqId event_id) noexcept
 {
-    auto& instance = asil_level == QualityType::kASIL_QM ? qm_ : asil_b_;
-    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(instance.has_value(), "Invalid asil level.");
+    auto& instance = GetMessagePassingServiceInstance(asil_level);
 
-    instance->UnregisterEventNotificationExistenceChangedCallback(event_id);
+    instance.UnregisterEventNotificationExistenceChangedCallback(event_id);
 }
 
 ResultBlank MessagePassingService::CallServiceMethodSubscribed(

@@ -1,4 +1,4 @@
-#include "message_passing_service_instance.h"
+#include "score/mw/com/impl/bindings/lola/messaging/message_passing_service_instance.h"
 #include "score/message_passing/mock/client_connection_mock.h"
 #include "score/message_passing/mock/client_factory_mock.h"
 #include "score/message_passing/mock/server_connection_mock.h"
@@ -90,8 +90,8 @@ class MessagePassingServiceInstanceTest : public ::testing::Test
     score::cpp::pmr::unique_ptr<score::concurrency::Task> executor_task_{};
     score::cpp::stop_token stop_token_{};
 
-    MessagePassingServiceInstance::AsilSpecificCfg asil_cfg_{};
-    MessagePassingClientCache::ClientQualityType quality_type_{MessagePassingClientCache::ClientQualityType::kASIL_B};
+    AsilSpecificCfg asil_cfg_{};
+    ClientQualityType quality_type_{ClientQualityType::kASIL_B};
 
     score::cpp::pmr::unique_ptr<::testing::NiceMock<ClientConnectionMock>> client_connection_mock_{
         score::cpp::pmr::make_unique<::testing::NiceMock<ClientConnectionMock>>(score::cpp::pmr::new_delete_resource())};

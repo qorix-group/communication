@@ -19,6 +19,10 @@
 #include "score/message_passing/i_client_factory.h"
 #include "score/message_passing/i_server.h"
 #include "score/message_passing/i_server_factory.h"
+#include "score/mw/com/impl/bindings/lola/messaging/asil_specific_cfg.h"
+#include "score/mw/com/impl/bindings/lola/messaging/i_message_passing_service.h"
+#include "score/mw/com/impl/bindings/lola/messaging/i_message_passing_service_instance.h"
+#include "score/mw/com/impl/bindings/lola/messaging/message_passing_client_cache.h"
 
 // TODO: PMR
 #include "score/concurrency/thread_pool.h"
@@ -40,53 +44,40 @@ namespace score::mw::com::impl::lola
 
 class MessagePassingServiceInstanceAttorney;
 
-class MessagePassingServiceInstance
+class MessagePassingServiceInstance : public IMessagePassingServiceInstance
 {
   public:
     // required exclusively for testing purposes
     // coverity[autosar_cpp14_a11_3_1_violation]
     friend class MessagePassingServiceInstanceAttorney;
 
-    using ClientQualityType = MessagePassingClientCache::ClientQualityType;
-
-    /// \brief Aggregation of ASIL level specific/dependent config properties.
-    struct AsilSpecificCfg
-    {
-        // Suppress "AUTOSAR C++14 M11-0-1" rule findings. This rule states: "Member data in non-POD class types shall
-        // be private.". We need these data elements to be organized into a coherent organized data structure.
-        // coverity[autosar_cpp14_m11_0_1_violation]
-        std::int32_t message_queue_rx_size_;
-        // coverity[autosar_cpp14_m11_0_1_violation]
-        std::vector<uid_t> allowed_user_ids_;
-    };
-
     MessagePassingServiceInstance(const ClientQualityType asil_level,
-                                  const AsilSpecificCfg config,
+                                  AsilSpecificCfg config,
                                   score::message_passing::IServerFactory& server_factory,
                                   score::message_passing::IClientFactory& client_factory,
-                                  score::concurrency::Executor& local_event_thread_pool) noexcept;
+                                  score::concurrency::Executor& local_event_executor) noexcept;
 
     MessagePassingServiceInstance(const MessagePassingServiceInstance&) = delete;
     MessagePassingServiceInstance(MessagePassingServiceInstance&&) = delete;
     MessagePassingServiceInstance& operator=(const MessagePassingServiceInstance&) = delete;
     MessagePassingServiceInstance& operator=(MessagePassingServiceInstance&&) = delete;
 
-    ~MessagePassingServiceInstance() noexcept = default;
+    ~MessagePassingServiceInstance() noexcept override = default;
 
-    void NotifyEvent(const ElementFqId event_id) noexcept;
+    void NotifyEvent(const ElementFqId event_id) noexcept override;
 
     IMessagePassingService::HandlerRegistrationNoType RegisterEventNotification(
         const ElementFqId event_id,
         std::weak_ptr<ScopedEventReceiveHandler> callback,
-        const pid_t target_node_id) noexcept;
+        const pid_t target_node_id) noexcept override;
 
-    void ReregisterEventNotification(const ElementFqId event_id, const pid_t target_node_id) noexcept;
+    void ReregisterEventNotification(const ElementFqId event_id, const pid_t target_node_id) noexcept override;
 
     void UnregisterEventNotification(const ElementFqId event_id,
                                      const IMessagePassingService::HandlerRegistrationNoType registration_no,
-                                     const pid_t target_node_id) noexcept;
+                                     const pid_t target_node_id) noexcept override;
 
-    void NotifyOutdatedNodeId(const pid_t outdated_node_id, const pid_t target_node_id) noexcept;
+    void NotifyOutdatedNodeId(const pid_t outdated_node_id, const pid_t target_node_id) noexcept override;
 
     /// \brief Registers a callback for event notification existence changes.
     /// \details This callback is invoked when the existence of event notification registrations changes:
@@ -99,13 +90,13 @@ class MessagePassingServiceInstance
     /// \param callback The callback to invoke when event notification existence changes.
     void RegisterEventNotificationExistenceChangedCallback(
         const ElementFqId event_id,
-        IMessagePassingService::HandlerStatusChangeCallback callback) noexcept;
+        IMessagePassingService::HandlerStatusChangeCallback callback) noexcept override;
 
     /// \brief Unregisters the callback for event notification existence changes.
     /// \details After unregistration, no further callbacks will be invoked for event notification
     ///          existence changes of this event.
     /// \param event_id The event to stop monitoring.
-    void UnregisterEventNotificationExistenceChangedCallback(const ElementFqId event_id) noexcept;
+    void UnregisterEventNotificationExistenceChangedCallback(const ElementFqId event_id) noexcept override;
 
   private:
     enum class MessageType : std::uint8_t
@@ -278,10 +269,10 @@ class MessagePassingServiceInstance
 
     std::shared_mutex event_update_remote_registrations_mutex_;
 
-    /// \brief thread pool for processing local event update notification.
+    /// \brief executor for processing local event update notification.
     /// \detail local update notification leads to a user provided receive handler callout, whose
     ///         runtime is unknown, so we decouple with worker threads.
-    score::concurrency::Executor& thread_pool_;
+    score::concurrency::Executor& executor_;
 };
 
 }  // namespace score::mw::com::impl::lola

@@ -11,7 +11,7 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
-#include "message_passing_client_cache.h"
+#include "score/mw/com/impl/bindings/lola/messaging/message_passing_client_cache.h"
 #include "score/message_passing/mock/client_connection_mock.h"
 #include "score/message_passing/mock/client_factory_mock.h"
 
@@ -23,7 +23,7 @@ namespace
 {
 using namespace message_passing;
 
-class MessagePassingClientCacheTest : public ::testing::TestWithParam<MessagePassingClientCache::ClientQualityType>
+class MessagePassingClientCacheTest : public ::testing::TestWithParam<ClientQualityType>
 {
   public:
     static constexpr pid_t pid_{21};
@@ -37,9 +37,9 @@ class MessagePassingClientCacheTest : public ::testing::TestWithParam<MessagePas
 
 INSTANTIATE_TEST_SUITE_P(ClientQualityType,
                          MessagePassingClientCacheTest,
-                         ::testing::Values(MessagePassingClientCache::ClientQualityType::kASIL_QM,
-                                           MessagePassingClientCache::ClientQualityType::kASIL_B,
-                                           MessagePassingClientCache::ClientQualityType::kASIL_QMfromB));
+                         ::testing::Values(ClientQualityType::kASIL_QM,
+                                           ClientQualityType::kASIL_B,
+                                           ClientQualityType::kASIL_QMfromB));
 
 TEST_P(MessagePassingClientCacheTest, GetMessagePassingClientCreatesNewClientConnection)
 {
@@ -179,7 +179,7 @@ TEST(MessagePassingClientCacheDeathTest, RemoveMessagePassingClientTerminatesWhe
         .WillOnce(::testing::Return(::testing::ByMove(std::move(client_connection_mock))));
 
     // and an empty MessagePassingClientCache
-    MessagePassingClientCache client_cache{MessagePassingClientCache::ClientQualityType::kASIL_B, client_factory_mock};
+    MessagePassingClientCache client_cache{ClientQualityType::kASIL_B, client_factory_mock};
     client_cache.GetMessagePassingClient(target_node_id);
 
     // When RemoveMessagePassingClient is called with the same target_node_id

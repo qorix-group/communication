@@ -173,8 +173,8 @@ TEST_F(RuntimeFixture, GetMessagePassingCfgWithPredefinedTwoLolaServiceConfig)
     // when creating a LoLa runtime with this configuration
     Runtime unit{configuration, long_running_threads_, nullptr};
     // and reading out the ASIL_QM and ASIL_B specific message passing cfgs
-    MessagePassingServiceInstance::AsilSpecificCfg cfg_qm = unit.GetMessagePassingCfg(QualityType::kASIL_QM);
-    MessagePassingServiceInstance::AsilSpecificCfg cfg_b = unit.GetMessagePassingCfg(QualityType::kASIL_B);
+    AsilSpecificCfg cfg_qm = unit.GetMessagePassingCfg(QualityType::kASIL_QM);
+    AsilSpecificCfg cfg_b = unit.GetMessagePassingCfg(QualityType::kASIL_B);
 
     // expect that the queue sizes correspond to the sizes set in the configuration
     EXPECT_EQ(cfg_qm.message_queue_rx_size_, 5);
@@ -247,8 +247,8 @@ TEST_F(RuntimeFixture, GetMessagePassingCfgOneEmptyQMProvider)
     // when creating a LoLa runtime with this configuration
     Runtime unit{configuration, long_running_threads_, nullptr};
     // and reading out the ASIL_QM and ASIL_B specific message passing cfgs
-    MessagePassingServiceInstance::AsilSpecificCfg cfg_qm = unit.GetMessagePassingCfg(QualityType::kASIL_QM);
-    MessagePassingServiceInstance::AsilSpecificCfg cfg_b = unit.GetMessagePassingCfg(QualityType::kASIL_B);
+    AsilSpecificCfg cfg_qm = unit.GetMessagePassingCfg(QualityType::kASIL_QM);
+    AsilSpecificCfg cfg_b = unit.GetMessagePassingCfg(QualityType::kASIL_B);
 
     // expect that the queue sizes correspond to the sizes set in the configuration
     EXPECT_EQ(cfg_qm.message_queue_rx_size_, 5);
@@ -316,8 +316,8 @@ TEST_F(RuntimeFixture, GetMessagePassingCfgOneEmptyQMConsumer)
     Runtime unit{configuration, long_running_threads_, nullptr};
 
     // and reading out the ASIL_QM and ASIL_B specific message passing cfgs
-    MessagePassingServiceInstance::AsilSpecificCfg cfg_qm = unit.GetMessagePassingCfg(QualityType::kASIL_QM);
-    MessagePassingServiceInstance::AsilSpecificCfg cfg_b = unit.GetMessagePassingCfg(QualityType::kASIL_B);
+    AsilSpecificCfg cfg_qm = unit.GetMessagePassingCfg(QualityType::kASIL_QM);
+    AsilSpecificCfg cfg_b = unit.GetMessagePassingCfg(QualityType::kASIL_B);
 
     // expect that the queue sizes correspond to the sizes set in the configuration
     EXPECT_EQ(cfg_qm.message_queue_rx_size_, 5);
@@ -364,7 +364,7 @@ TEST_F(RuntimeFixture, GetMessagePassingCfgMissingConsumer)
     Runtime unit{configuration, long_running_threads_, nullptr};
 
     // and reading out the ASIL_QM specific message passing cfgs
-    MessagePassingService::AsilSpecificCfg cfg_qm = unit.GetMessagePassingCfg(QualityType::kASIL_QM);
+    AsilSpecificCfg cfg_qm = unit.GetMessagePassingCfg(QualityType::kASIL_QM);
 
     // expect that the user_ids allowed as senders for the QM are empty
     std::set<uid_t> expected_userids_qm = {};

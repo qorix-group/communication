@@ -24,6 +24,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "score/mw/com/impl/bindings/lola/messaging/message_passing_service_instance_factory.h"
+
 namespace score::mw::com::impl::lola
 {
 
@@ -59,14 +61,13 @@ Runtime::Runtime(const Configuration& config,
       configuration_{config},
       long_running_threads_{long_running_threads},
       lola_messaging_stop_source_{},
-      lola_messaging_service_{
-          // LCOV_EXCL_START Tooling issue - Lines before and after are covered Ticket-184253
-          Runtime::GetMessagePassingCfg(QualityType::kASIL_QM),
-          // LCOV_EXCL_STOP
-          Runtime::HasAsilBSupport()
-              ? std::optional<MessagePassingServiceInstance::AsilSpecificCfg>{Runtime::GetMessagePassingCfg(
-                    QualityType::kASIL_B)}
-              : std::nullopt},
+      lola_messaging_service_{// LCOV_EXCL_START Tooling issue - Lines before and after are covered Ticket-184253
+                              Runtime::GetMessagePassingCfg(QualityType::kASIL_QM),
+                              // LCOV_EXCL_STOP
+                              Runtime::HasAsilBSupport()
+                                  ? std::optional<AsilSpecificCfg>{Runtime::GetMessagePassingCfg(QualityType::kASIL_B)}
+                                  : std::nullopt,
+                              std::make_unique<MessagePassingServiceInstanceFactory>()},
       service_discovery_client_{long_running_threads_},
       tracing_runtime_{std::move(lola_tracing_runtime)},
       rollback_data_{},
@@ -105,7 +106,7 @@ impl::tracing::ITracingRuntimeBinding* Runtime::GetTracingRuntime() noexcept
     return tracing_runtime_.get();
 }
 
-MessagePassingServiceInstance::AsilSpecificCfg Runtime::GetMessagePassingCfg(const QualityType asil_level) const
+AsilSpecificCfg Runtime::GetMessagePassingCfg(const QualityType asil_level) const
 {
     SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(((asil_level == QualityType::kASIL_B) || (asil_level == QualityType::kASIL_QM)),
                            "Asil level must be asil_qm or asil_b.");

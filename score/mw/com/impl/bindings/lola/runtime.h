@@ -72,7 +72,7 @@ class Runtime final : public IRuntime
     /// \param asil_level either QM or B. If parameter is set to B although the app/process has been configured to
     ///        be QM, std::terminate() will be called.
     /// \return ASIL level specific message passing cfg.
-    MessagePassingServiceInstance::AsilSpecificCfg GetMessagePassingCfg(const QualityType asil_level) const;
+    AsilSpecificCfg GetMessagePassingCfg(const QualityType asil_level) const;
 
     ShmSizeCalculationMode GetShmSizeCalculationMode() const noexcept override;
 
