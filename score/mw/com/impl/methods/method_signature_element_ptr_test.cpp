@@ -10,7 +10,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#include "score/mw/com/impl/method_signature_element_ptr.h"
+#include "score/mw/com/impl/methods/method_signature_element_ptr.h"
 
 #include <gtest/gtest.h>
 

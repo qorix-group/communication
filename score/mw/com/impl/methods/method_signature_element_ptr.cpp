@@ -10,4 +10,4 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#include "score/mw/com/impl/proxy_method_binding.h"
+#include "score/mw/com/impl/methods/method_signature_element_ptr.h"

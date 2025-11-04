@@ -30,10 +30,10 @@ cc_library(
         ":generic_proxy_event",
         ":proxy_event",
         ":proxy_field",
-        ":proxy_method",
         ":skeleton_event",
         ":skeleton_field",
         ":traits",
+        "//score/mw/com/impl/methods:proxy_method",
     ],
 )
 
@@ -103,65 +103,6 @@ cc_library(
         "//score/mw/com/impl/mocking:i_proxy_event",
         "//score/mw/com/impl/plumbing:event",
         "//score/mw/com/impl/tracing:proxy_event_tracing",
-        "@score_baselibs//score/language/futurecpp",
-        "@score_baselibs//score/mw/log",
-        "@score_baselibs//score/result",
-    ],
-)
-
-cc_library(
-    name = "method_signature_element_ptr",
-    srcs = ["method_signature_element_ptr.cpp"],
-    hdrs = ["method_signature_element_ptr.h"],
-    features = COMPILER_WARNING_FEATURES,
-    tags = ["FFI"],
-    visibility = [
-        "//score/mw/com:__subpackages__",
-    ],
-    deps = [
-    ],
-)
-
-cc_library(
-    name = "proxy_method_base",
-    srcs = ["proxy_method_base.cpp"],
-    hdrs = ["proxy_method_base.h"],
-    features = COMPILER_WARNING_FEATURES,
-    tags = ["FFI"],
-    visibility = [
-        "//score/mw/com:__subpackages__",
-    ],
-    deps = [
-        ":error",
-        ":method_signature_element_ptr",
-        ":proxy_base",
-        ":proxy_method_binding",
-        "//score/mw/com/impl/util:type_erased_storage",
-        "@score_baselibs//score/containers:dynamic_array",
-        "@score_baselibs//score/language/futurecpp",
-        "@score_baselibs//score/memory/shared:data_type_size_info",
-        "@score_baselibs//score/mw/log",
-        "@score_baselibs//score/result",
-    ],
-)
-
-cc_library(
-    name = "proxy_method",
-    srcs = ["proxy_method.cpp"],
-    hdrs = ["proxy_method.h"],
-    features = COMPILER_WARNING_FEATURES,
-    tags = ["FFI"],
-    visibility = [
-        "//score/mw/com:__subpackages__",
-    ],
-    deps = [
-        ":error",
-        ":method_signature_element_ptr",
-        ":proxy_base",
-        ":proxy_method_base",
-        ":proxy_method_binding",
-        "//score/mw/com/impl/util:type_erased_storage",
-        "@score_baselibs//score/containers:dynamic_array",
         "@score_baselibs//score/language/futurecpp",
         "@score_baselibs//score/mw/log",
         "@score_baselibs//score/result",
@@ -497,28 +438,6 @@ cc_library(
         "//score/mw/com/impl/plumbing:sample_ptr",
         "//score/mw/com/impl/tracing:i_tracing_runtime",
         "@score_baselibs//score/language/futurecpp",
-        "@score_baselibs//score/result",
-    ],
-)
-
-cc_library(
-    name = "proxy_method_binding",
-    srcs = [
-        "proxy_method_binding.cpp",
-    ],
-    hdrs = [
-        "proxy_method_binding.h",
-    ],
-    features = COMPILER_WARNING_FEATURES,
-    tags = ["FFI"],
-    visibility = [
-        "//score/mw/com/impl/bindings/lola:__pkg__",
-        "//score/mw/com/impl/bindings/mock_binding:__pkg__",
-        "//score/mw/com/impl/plumbing:__subpackages__",
-    ],
-    deps = [
-        "//score/mw/com/impl/util:type_erased_storage",
-        "@score_baselibs//score/memory/shared:data_type_size_info",
         "@score_baselibs//score/result",
     ],
 )
@@ -942,24 +861,6 @@ cc_gtest_unit_test(
 )
 
 cc_gtest_unit_test(
-    name = "method_signature_element_ptr_test",
-    srcs = ["method_signature_element_ptr_test.cpp"],
-    deps = [
-        ":method_signature_element_ptr",
-    ],
-)
-
-cc_gtest_unit_test(
-    name = "proxy_method_test",
-    srcs = ["proxy_method_test.cpp"],
-    deps = [
-        ":proxy_method",
-        "//score/mw/com/impl/bindings/mock_binding",
-        "//score/mw/com/impl/configuration/test:configuration_store",
-    ],
-)
-
-cc_gtest_unit_test(
     name = "flag_owner_test",
     srcs = ["flag_owner_test.cpp"],
     deps = [
@@ -1077,8 +978,6 @@ cc_unit_test_suites_for_host_and_qnx(
         ":service_discovery_test",
         ":unit_test",
         ":runtime_test",
-        ":method_signature_element_ptr_test",
-        ":proxy_method_test",
         ":unit_test_runtime_single_exec",
     ],
     test_suites_from_sub_packages = [
@@ -1087,6 +986,7 @@ cc_unit_test_suites_for_host_and_qnx(
         "//score/mw/com/impl/plumbing:unit_test_suite",
         "//score/mw/com/impl/tracing:unit_test_suite",
         "//score/mw/com/impl/util:unit_test_suite",
+        "//score/mw/com/impl/methods:unit_test_suite",
         "//score/mw/com/impl/mocking:unit_test_suite",
     ],
     visibility = ["//score/mw/com:__pkg__"],

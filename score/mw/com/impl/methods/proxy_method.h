@@ -10,14 +10,14 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#ifndef SCORE_MW_COM_IMPL_PROXY_METHOD_H
-#define SCORE_MW_COM_IMPL_PROXY_METHOD_H
+#ifndef SCORE_MW_COM_IMPL_METHODS_PROXY_METHOD_H
+#define SCORE_MW_COM_IMPL_METHODS_PROXY_METHOD_H
 
 #include "score/mw/com/impl/com_error.h"
-#include "score/mw/com/impl/method_signature_element_ptr.h"
+#include "score/mw/com/impl/methods/method_signature_element_ptr.h"
 #include "score/mw/com/impl/proxy_base.h"
-#include "score/mw/com/impl/proxy_method_base.h"
-#include "score/mw/com/impl/proxy_method_binding.h"
+#include "score/mw/com/impl/methods/proxy_method_base.h"
+#include "score/mw/com/impl/methods/proxy_method_binding.h"
 #include "score/mw/com/impl/util/type_erased_storage.h"
 
 #include "score/containers/dynamic_array.h"
@@ -538,4 +538,4 @@ class ProxyMethodView
 
 }  // namespace score::mw::com::impl
 
-#endif  // SCORE_MW_COM_IMPL_PROXY_METHOD_H
+#endif  // SCORE_MW_COM_IMPL_METHODS_PROXY_METHOD_H

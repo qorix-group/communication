@@ -11,14 +11,17 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
-#ifndef SCORE_MW_COM_IMPL_PROXY_METHOD_BASE_H
-#define SCORE_MW_COM_IMPL_PROXY_METHOD_BASE_H
+#ifndef SCORE_MW_COM_IMPL_METHODS_PROXY_METHOD_BASE_H
+#define SCORE_MW_COM_IMPL_METHODS_PROXY_METHOD_BASE_H
+
+#include "score/mw/com/impl/methods/proxy_method_binding.h"
+#include "score/mw/com/impl/proxy_base.h"
 
 #include "score/containers/dynamic_array.h"
-#include "score/mw/com/impl/proxy_base.h"
-#include "score/mw/com/impl/proxy_method_binding.h"
 
+#include <memory>
 #include <string_view>
+#include <utility>
 
 namespace score::mw::com::impl
 {
@@ -71,4 +74,4 @@ class ProxyMethodBase
 
 }  // namespace score::mw::com::impl
 
-#endif  // SCORE_MW_COM_IMPL_PROXY_METHOD_BASE_H
+#endif  // SCORE_MW_COM_IMPL_METHODS_PROXY_METHOD_BASE_H

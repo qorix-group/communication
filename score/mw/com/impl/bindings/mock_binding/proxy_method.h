@@ -13,7 +13,7 @@
 #ifndef SCORE_MW_COM_IMPL_BINDINGS_MOCK_BINDING_PROXY_METHOD_H
 #define SCORE_MW_COM_IMPL_BINDINGS_MOCK_BINDING_PROXY_METHOD_H
 
-#include "score/mw/com/impl/proxy_method_binding.h"
+#include "score/mw/com/impl/methods/proxy_method_binding.h"
 
 #include <score/assert.hpp>
 

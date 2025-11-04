@@ -10,8 +10,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#ifndef SCORE_MW_COM_IMPL_METHOD_SIGNATURE_ELEMENT_PTR_H
-#define SCORE_MW_COM_IMPL_METHOD_SIGNATURE_ELEMENT_PTR_H
+#ifndef SCORE_MW_COM_IMPL_METHODS_METHOD_SIGNATURE_ELEMENT_PTR_H
+#define SCORE_MW_COM_IMPL_METHODS_METHOD_SIGNATURE_ELEMENT_PTR_H
 
 #include <cstddef>
 
@@ -94,4 +94,4 @@ using MethodReturnTypePtr = MethodSignatureElementPtr<Type>;
 
 }  // namespace score::mw::com::impl
 
-#endif
+#endif  // SCORE_MW_COM_IMPL_METHODS_METHOD_SIGNATURE_ELEMENT_PTR_H

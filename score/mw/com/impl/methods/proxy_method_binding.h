@@ -10,14 +10,15 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#ifndef SCORE_MW_COM_IMPL_PROXY_METHOD_BINDING_H
-#define SCORE_MW_COM_IMPL_PROXY_METHOD_BINDING_H
+#ifndef SCORE_MW_COM_IMPL_METHODS_PROXY_METHOD_BINDING_H
+#define SCORE_MW_COM_IMPL_METHODS_PROXY_METHOD_BINDING_H
 
 #include "score/memory/shared/data_type_size_info.h"
 #include "score/result/result.h"
 
 #include <score/span.hpp>
 #include <score/stop_token.hpp>
+
 #include <optional>
 
 namespace score::mw::com::impl
@@ -71,4 +72,4 @@ class ProxyMethodBinding
 
 }  // namespace score::mw::com::impl
 
-#endif  // SCORE_MW_COM_IMPL_PROXY_METHOD_BINDING_H
+#endif  // SCORE_MW_COM_IMPL_METHODS_PROXY_METHOD_BINDING_H
