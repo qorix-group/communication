@@ -11,7 +11,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
 
-load("@score_baselibs//:bazel/unit_tests.bzl", "cc_gtest_unit_test", "cc_unit_test_suites_for_host_and_qnx")
+load("@score_baselibs//:bazel/unit_tests.bzl", "cc_gtest_unit_test", "cc_unit_test", "cc_unit_test_suites_for_host_and_qnx")
 load("//score/mw:common_features.bzl", "COMPILER_WARNING_FEATURES")
 
 cc_library(
@@ -103,13 +103,20 @@ cc_gtest_unit_test(
     ],
 )
 
-cc_gtest_unit_test(
+cc_unit_test(
     name = "proxy_method_test",
     srcs = ["proxy_method_test.cpp"],
+    features = COMPILER_WARNING_FEATURES + [
+        # These tests catch exceptions instead of using gtest EXPECT_DEATH so we disable aborts_upon_exception.
+        "-aborts_upon_exception",
+    ],
     deps = [
         ":proxy_method",
         "//score/mw/com/impl/bindings/mock_binding",
         "//score/mw/com/impl/configuration/test:configuration_store",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "@score_baselibs//score/language/futurecpp:futurecpp_test_support",
     ],
 )
 

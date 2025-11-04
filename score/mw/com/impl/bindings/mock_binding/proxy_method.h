@@ -38,6 +38,35 @@ class ProxyMethod : public ProxyMethodBinding
     MOCK_METHOD(ResultBlank, DoCall, (std::size_t, score::cpp::stop_token), (override));
 };
 
+class ProxyMethodFacade : public ProxyMethodBinding
+{
+  public:
+    ProxyMethodFacade(ProxyMethod& proxy_method)
+        : ProxyMethodBinding{memory::shared::DataTypeSizeInfo{}, memory::shared::DataTypeSizeInfo{}},
+          proxy_method_{proxy_method}
+    {
+    }
+    ~ProxyMethodFacade() override = default;
+
+    score::Result<score::cpp::span<std::byte>> AllocateInArgs(std::size_t queue_position) override
+    {
+        return proxy_method_.AllocateInArgs(queue_position);
+    }
+
+    score::Result<score::cpp::span<std::byte>> AllocateReturnType(std::size_t queue_position) override
+    {
+        return proxy_method_.AllocateReturnType(queue_position);
+    }
+
+    score::ResultBlank DoCall(std::size_t queue_position, score::cpp::stop_token stop_token) override
+    {
+        return proxy_method_.DoCall(queue_position, stop_token);
+    }
+
+  private:
+    ProxyMethod& proxy_method_;
+};
+
 }  // namespace score::mw::com::impl::mock_binding
 
 #endif  // SCORE_MW_COM_IMPL_BINDINGS_MOCK_BINDING_PROXY_METHOD_H

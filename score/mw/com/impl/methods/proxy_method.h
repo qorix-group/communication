@@ -15,9 +15,9 @@
 
 #include "score/mw/com/impl/com_error.h"
 #include "score/mw/com/impl/methods/method_signature_element_ptr.h"
-#include "score/mw/com/impl/proxy_base.h"
 #include "score/mw/com/impl/methods/proxy_method_base.h"
 #include "score/mw/com/impl/methods/proxy_method_binding.h"
+#include "score/mw/com/impl/proxy_base.h"
 #include "score/mw/com/impl/util/type_erased_storage.h"
 
 #include "score/containers/dynamic_array.h"
@@ -81,7 +81,7 @@ template <typename... ArgTypes, std::size_t... I>
 std::tuple<impl::MethodInArgPtr<ArgTypes>...> CreateMethodInArgPtrTuple(
     const std::tuple<ArgTypes*...>& ptrs,
     containers::DynamicArray<std::array<bool, sizeof...(ArgTypes)>>& in_arg_ptr_flags,
-    int queue_index,
+    std::size_t queue_index,
     std::index_sequence<I...>)
 {
     return std::make_tuple(
@@ -105,7 +105,7 @@ score::Result<std::tuple<impl::MethodInArgPtr<ArgTypes>...>> Allocate(
     {
         return Unexpected(available_queue_slot.error());
     }
-    const int queue_index = available_queue_slot.value();
+    const std::size_t queue_index = available_queue_slot.value();
     auto allocated_in_args_storage = binding.AllocateInArgs(queue_index);
     SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(allocated_in_args_storage.has_value(),
                            "ProxyMethod::Allocate: AllocateInArgs failed unexpectedly.");

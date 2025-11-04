@@ -16,275 +16,459 @@
 #include "score/mw/com/impl/bindings/mock_binding/proxy_method.h"
 #include "score/mw/com/impl/configuration/test/configuration_store.h"
 
+#include "score/memory/shared/pointer_arithmetic_util.h"
+#include "score/result/result.h"
+
+#include <score/assert_support.hpp>
+#include <score/utility.hpp>
+
 #include <gtest/gtest.h>
+
+#include <memory>
+#include <string_view>
+#include <tuple>
 
 namespace score::mw::com::impl
 {
 namespace
 {
-using testing::Return;
 
-const auto kMethodName{"DummyMethod"};
+using namespace ::testing;
 
+const std::string_view kMethodName{"DummyMethod"};
+
+constexpr int kDummyArg1{42};
+constexpr double kDummyArg2{3.14};
+constexpr char kDummyArg3{'a'};
+
+template <typename ProxyMethodType>
 class ProxyMethodTestFixture : public ::testing::Test
 {
   public:
     void SetUp() override
     {
-        proxy_method_binding_mock_ = std::make_unique<mock_binding::ProxyMethod>();
-        proxy_method_binding_mock_ptr_ = proxy_method_binding_mock_.get();
-        ON_CALL(*proxy_method_binding_mock_ptr_, AllocateInArgs(0))
+        ON_CALL(proxy_method_binding_mock_, AllocateInArgs(0))
             .WillByDefault(Return(score::Result<score::cpp::span<std::byte>>{
                 score::cpp::span{method_in_args_buffer_.data(), method_in_args_buffer_.size()}}));
-
-        config_store_ = std::make_unique<ConfigurationStore>(
-            InstanceSpecifier::Create(std::string{"/my_dummy_instance_specifier"}).value(),
-            make_ServiceIdentifierType("foo"),
-            QualityType::kASIL_QM,
-            LolaServiceTypeDeployment{42U},
-            LolaServiceInstanceDeployment{1U});
-        proxy_base_ptr_ =
-            std::make_unique<ProxyBase>(std::make_unique<mock_binding::Proxy>(), config_store_->GetHandle());
+        ON_CALL(proxy_method_binding_mock_, AllocateReturnType(0))
+            .WillByDefault(Return(score::Result<score::cpp::span<std::byte>>{
+                score::cpp::span{method_return_type_buffer_.data(), method_return_type_buffer_.size()}}));
     }
 
-  protected:
-    std::unique_ptr<mock_binding::ProxyMethod> proxy_method_binding_mock_;
-    mock_binding::ProxyMethod* proxy_method_binding_mock_ptr_;
+    ProxyMethodTestFixture& GivenAValidProxyMethod()
+    {
+        unit_ = std::make_unique<ProxyMethodType>(
+            proxy_base_, std::make_unique<mock_binding::ProxyMethodFacade>(proxy_method_binding_mock_), kMethodName);
+        return *this;
+    }
+
     alignas(8) std::array<std::byte, 1024> method_in_args_buffer_{};
-    std::unique_ptr<ConfigurationStore> config_store_{nullptr};
-    std::unique_ptr<ProxyBase> proxy_base_ptr_{nullptr};
+    alignas(8) std::array<std::byte, 1024> method_return_type_buffer_{};
+    ConfigurationStore config_store_{InstanceSpecifier::Create(std::string{"/my_dummy_instance_specifier"}).value(),
+                                     make_ServiceIdentifierType("foo"),
+                                     QualityType::kASIL_QM,
+                                     LolaServiceTypeDeployment{42U},
+                                     LolaServiceInstanceDeployment{1U}};
+
+    mock_binding::ProxyMethod proxy_method_binding_mock_;
+    ProxyBase proxy_base_{std::make_unique<mock_binding::Proxy>(), config_store_.GetHandle()};
+
+    std::unique_ptr<ProxyMethodType> unit_{nullptr};
 };
 
-TEST_F(ProxyMethodTestFixture, Construction_withVoidReturnAndArgsSucceeds)
+using ProxyMethodWithInArgsAndReturn = ProxyMethod<bool(int, double, char)>;
+using ProxyMethodWithInArgsOnly = ProxyMethod<void(int, double, char)>;
+using ProxyMethodWithReturnOnly = ProxyMethod<int()>;
+using ProxyMethodWithNoInArgsOrReturn = ProxyMethod<void()>;
+using AllArgCombinations = ::testing::Types<ProxyMethodWithInArgsAndReturn,
+                                            ProxyMethodWithInArgsOnly,
+                                            ProxyMethodWithReturnOnly,
+                                            ProxyMethodWithNoInArgsOrReturn>;
+using WithInArgs = ::testing::Types<ProxyMethodWithInArgsAndReturn, ProxyMethodWithInArgsOnly>;
+using WithOutInArgs = ::testing::Types<ProxyMethodWithReturnOnly, ProxyMethodWithNoInArgsOrReturn>;
+using WithResult = ::testing::Types<ProxyMethodWithInArgsAndReturn, ProxyMethodWithReturnOnly>;
+
+template <typename T>
+using ProxyMethodAllArgCombinationsTestFixture = ProxyMethodTestFixture<T>;
+TYPED_TEST_SUITE(ProxyMethodAllArgCombinationsTestFixture, AllArgCombinations, );
+
+template <typename T>
+using ProxyMethodWithInArgsTestFixture = ProxyMethodTestFixture<T>;
+TYPED_TEST_SUITE(ProxyMethodWithInArgsTestFixture, WithInArgs, );
+
+template <typename T>
+using ProxyMethodWithoutInArgsTestFixture = ProxyMethodTestFixture<T>;
+TYPED_TEST_SUITE(ProxyMethodWithoutInArgsTestFixture, WithOutInArgs, );
+
+template <typename T>
+using ProxyMethodWithResultTestFixture = ProxyMethodTestFixture<T>;
+TYPED_TEST_SUITE(ProxyMethodWithResultTestFixture, WithResult, );
+
+using ProxyMethodWithInArgsAndReturnFixture = ProxyMethodTestFixture<ProxyMethodWithInArgsAndReturn>;
+using ProxyMethodWithReturnOnlyFixture = ProxyMethodTestFixture<ProxyMethodWithReturnOnly>;
+using ProxyMethodWithNoInArgsOrReturnFixture = ProxyMethodTestFixture<ProxyMethodWithNoInArgsOrReturn>;
+using ProxyMethodWithInArgsOnlyFixture = ProxyMethodTestFixture<ProxyMethodWithInArgsOnly>;
+
+TYPED_TEST(ProxyMethodAllArgCombinationsTestFixture, Construction)
 {
-    // Given a method signature with a void return type and three arguments: int, double, char, then we can construct
-    // a ProxyMethod instance without errors.
-    ProxyMethod<void(int, double, char)> unit{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
+    // When constructing a ProxyMethod with all combinations of InArgs / return types
+    // Then the ProxyMethod can be constructed
+    using ProxyMethodType = TypeParam;
+    ProxyMethodType{this->proxy_base_,
+                    std::make_unique<mock_binding::ProxyMethodFacade>(this->proxy_method_binding_mock_),
+                    kMethodName};
 }
 
-TEST_F(ProxyMethodTestFixture, Construction_withNonVoidReturnAndArgsSucceeds)
+TYPED_TEST(ProxyMethodWithInArgsTestFixture, AllocateInArgs_ReturnsInArgPointersPointingToQueuePositionZero)
 {
-    // Given a method signature with a non-void return type and three arguments: int, double, char, then we can
-    // construct a ProxyMethod instance without errors.
-    ProxyMethod<bool(int, double, char)> unit{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
-}
+    this->GivenAValidProxyMethod();
 
-TEST_F(ProxyMethodTestFixture, Construction_withVoidReturnAndNoArgsSucceeds)
-{
-    // Given a method signature with a void return type and no arguments, then we can
-    // construct a ProxyMethod instance without errors.
-    ProxyMethod<void()> unit{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
-}
+    // Expecting that AllocateInArgs is called once for queue position 0 on the binding mock
+    EXPECT_CALL(this->proxy_method_binding_mock_, AllocateInArgs(0U));
 
-TEST_F(ProxyMethodTestFixture, Construction_withNonVoidReturnAndNoArgsSucceeds)
-{
-    // Given a method signature with a non-void return type and no arguments, then we can
-    // construct a ProxyMethod instance without errors.
-    ProxyMethod<int()> unit{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
-}
+    // When Allocate is called on the ProxyMethod
+    auto method_in_arg_ptr_tuple = this->unit_->Allocate();
 
-TEST_F(ProxyMethodTestFixture, AllocateInArgs_ReturnsInArgPointersPointingToInArgsAllocatedByBinding)
-{
-    // Given a ProxyMethod with a return type of void and three arguments: int, double, char
-    ProxyMethod<void(int, double, char)> unit{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
+    // Then a valid tuple of MethodInArgPtrs is returned
+    ASSERT_TRUE(method_in_arg_ptr_tuple.has_value());
 
-    // Expect that AllocateInArgs is called once for queue position 0 on the binding mock and returns a pointer to our
-    // buffer
-    EXPECT_CALL(*proxy_method_binding_mock_ptr_, AllocateInArgs(0))
-        .WillOnce(Return(score::Result<score::cpp::span<std::byte>>{
-            score::cpp::span{method_in_args_buffer_.data(), method_in_args_buffer_.size()}}));
+    // and the first MethodInArgPtr points to queue position 0 of the buffer
+    auto& pointer0 = std::get<0>(method_in_arg_ptr_tuple.value());
+    EXPECT_EQ(pointer0.GetQueuePosition(), 0);
 
-    // when Allocate is called on the ProxyMethod
-    auto method_in_arg_ptr_tuple = unit.Allocate();
-
-    // then no error is returned and the returned MethodInArgPtr relate all to queue position 0 and point to the correct
-    // locations in the buffer
-    auto& pointer1 = std::get<0>(method_in_arg_ptr_tuple.value());
+    // and the second MethodInArgPtr points to queue position 0 of the buffer
+    auto& pointer1 = std::get<1>(method_in_arg_ptr_tuple.value());
     EXPECT_EQ(pointer1.GetQueuePosition(), 0);
-    // then the 2nd argument pointer is after the 1st argument pointer in the buffer (detailed position is not
-    // checked here as this is done/verified in TypeErasedStorage tests)
-    EXPECT_EQ(reinterpret_cast<std::byte*>(pointer1.get()), &(method_in_args_buffer_[0]));
-    auto& pointer2 = std::get<1>(method_in_arg_ptr_tuple.value());
+
+    // and the third MethodInArgPtr points to queue position 0 of the buffer
+    auto& pointer2 = std::get<2>(method_in_arg_ptr_tuple.value());
     EXPECT_EQ(pointer2.GetQueuePosition(), 0);
-    // and the 3rd argument pointer is after the 1st argument pointer in the buffer (detailed position is not
-    // checked here as this is done/verified in TypeErasedStorage tests)
-    EXPECT_GT(reinterpret_cast<std::byte*>(pointer2.get()), reinterpret_cast<std::byte*>(pointer1.get()));
-    auto& pointer3 = std::get<2>(method_in_arg_ptr_tuple.value());
-    EXPECT_EQ(pointer3.GetQueuePosition(), 0);
 }
 
-TEST_F(ProxyMethodTestFixture, AllocateInArgs_QueueFullError)
+TYPED_TEST(ProxyMethodWithInArgsTestFixture, AllocateInArgs_ReturnsInArgPointersPointingToInArgsAllocatedByBinding)
 {
-    // Given a ProxyMethod with a return type of void and three arguments: int, double, char
-    ProxyMethod<void(int, double, char)> unit{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
+    auto* const buffer_start_address = &(this->method_in_args_buffer_[0]);
+    const auto method_in_args_buffer_size = std::tuple_size<decltype(this->method_in_args_buffer_)>{};
+    auto* const buffer_end_address =
+        memory::shared::AddOffsetToPointer(buffer_start_address, method_in_args_buffer_size);
 
-    // when Allocate is called on the ProxyMethod for the 1st time
-    auto method_in_arg_ptr_tuple = unit.Allocate();
+    this->GivenAValidProxyMethod();
 
-    // expect that no error is returned
-    EXPECT_TRUE(method_in_arg_ptr_tuple.has_value());
+    // Expecting that AllocateInArgs is called once for queue position 0 on the binding mock and returns a pointer to
+    // our buffer
+    EXPECT_CALL(this->proxy_method_binding_mock_, AllocateInArgs(0U));
+
+    // When Allocate is called on the ProxyMethod
+    auto method_in_arg_ptr_tuple = this->unit_->Allocate();
+
+    // Then a valid tuple of MethodInArgPtrs is returned
+    ASSERT_TRUE(method_in_arg_ptr_tuple.has_value());
+
+    // and the first MethodInArgPtr points to the start of the buffer returned by the AllocateInArgs
+    auto& pointer0 = std::get<0>(method_in_arg_ptr_tuple.value());
+    auto* const pointed_to_address_0 = reinterpret_cast<std::byte*>(pointer0.get());
+    EXPECT_EQ(pointed_to_address_0, buffer_start_address);
+
+    // and the second MethodInArgPtr points to an address in the buffer after the address pointed to by the first
+    // MethodInArgPtr (detailed position is not checked in TypeErasedCallQueue tests)
+    auto& pointer1 = std::get<1>(method_in_arg_ptr_tuple.value());
+    auto* const pointed_to_address_1 = reinterpret_cast<std::byte*>(pointer1.get());
+    EXPECT_GT(pointed_to_address_1, pointed_to_address_0);
+    EXPECT_LT(pointed_to_address_1, buffer_end_address);
+
+    // and the third MethodInArgPtr points to an address in the buffer after the address pointed to by the second
+    // MethodInArgPtr
+    auto& pointer2 = std::get<2>(method_in_arg_ptr_tuple.value());
+    auto* const pointed_to_address_2 = reinterpret_cast<std::byte*>(pointer2.get());
+    EXPECT_GT(pointed_to_address_2, pointed_to_address_1);
+    EXPECT_LT(pointed_to_address_2, buffer_end_address);
+}
+
+TYPED_TEST(ProxyMethodWithInArgsTestFixture, AllocateInArgs_QueueFullError)
+{
+    this->GivenAValidProxyMethod();
+
+    // and given that Allocate was called once
+    auto method_in_arg_ptr_tuple = this->unit_->Allocate();
+    ASSERT_TRUE(method_in_arg_ptr_tuple.has_value());
 
     // when Allocate is called a 2nd time on the ProxyMethod (while still holding the method in arg pointers from the
     // 1st call)
-    auto method_in_arg_ptr_tuple_2 = unit.Allocate();
+    auto method_in_arg_ptr_tuple_2 = this->unit_->Allocate();
 
-    // then a CallQueueFull error is returned
-    EXPECT_FALSE(method_in_arg_ptr_tuple_2.has_value());
+    // Then a CallQueueFull error is returned
+    ASSERT_FALSE(method_in_arg_ptr_tuple_2.has_value());
     EXPECT_EQ(method_in_arg_ptr_tuple_2.error(), ComErrc::kCallQueueFull);
 }
 
-TEST_F(ProxyMethodTestFixture, AllocateInArgs_BindingError)
+TYPED_TEST(ProxyMethodWithInArgsTestFixture, AllocateInArgs_BindingError)
 {
-    // Given a ProxyMethod with a return type of void and three arguments: int, double, char
-    auto unit =
-        ProxyMethod<void(int, double, char)>{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
+    this->GivenAValidProxyMethod();
 
-    auto allocate_with_binding_error = [this, &unit]() {
-        // Expect that AllocateInArgs is called once for queue position 0 on the binding mock and returns an error.
-        EXPECT_CALL(*proxy_method_binding_mock_ptr_, AllocateInArgs(0))
-            .WillOnce(Return(MakeUnexpected(ComErrc::kBindingFailure)));
-        unit.Allocate();
-    };
+    // Expect that AllocateInArgs is called once for queue position 0 on the binding mock and returns an error.
+    EXPECT_CALL(this->proxy_method_binding_mock_, AllocateInArgs(0U))
+        .WillOnce(Return(MakeUnexpected(ComErrc::kBindingFailure)));
 
-    // expect that the program terminates, because of the SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE in ProxyMethodBinding::Allocate().
-    // An allocation failure from the binding is unexpected here as we already checked for available queue slots on
-    // binding independent level.
-    EXPECT_DEATH(allocate_with_binding_error(), ".*");
+    // When calling Allocate()
+    // Then the program terminates (An allocation failure from the binding is unexpected here as we already checked for
+    // available queue slots on binding independent level)
+    SCORE_LANGUAGE_FUTURECPP_EXPECT_CONTRACT_VIOLATED(score::cpp::ignore = this->unit_->Allocate());
 }
 
-TEST_F(ProxyMethodTestFixture, CallOperator_VoidReturn_WithCopy)
+TYPED_TEST(ProxyMethodWithInArgsTestFixture, CallOperator_WithCopy)
 {
-    // Given a ProxyMethod with a return type of void and three arguments: int, double, char
-    ProxyMethod<void(int, double, char)> unit{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
+    this->GivenAValidProxyMethod();
 
-    // when call operator is called on the ProxyMethod
-    int arg1 = 42;
-    double arg2 = 3.14;
-    char arg3 = 'a';
-    auto call_result = unit(arg1, arg2, arg3);
+    // Expecting that DoCall will be called on the binding
+    EXPECT_CALL(this->proxy_method_binding_mock_, DoCall(0U, _));
+
+    // When call operator is called on the ProxyMethod
+    auto& proxy_method = *(this->unit_);
+    auto call_result = proxy_method(kDummyArg1, kDummyArg2, kDummyArg3);
+
+    // Then no error is returned
+    EXPECT_TRUE(call_result.has_value());
+}
+
+TYPED_TEST(ProxyMethodWithInArgsTestFixture, CallOperator_WithCopyTemporary)
+{
+    this->GivenAValidProxyMethod();
+
+    // Expecting that DoCall will be called on the binding
+    EXPECT_CALL(this->proxy_method_binding_mock_, DoCall(0U, _));
+
+    // When call operator is called on the ProxyMethod handing the arg over as temporaries
+    auto& proxy_method = *(this->unit_);
+    auto call_result = proxy_method(42, 3.14, 'a');
+
+    // Then no error is returned
+    EXPECT_TRUE(call_result.has_value());
+}
+
+TYPED_TEST(ProxyMethodWithInArgsTestFixture, CallOperator_PropagatesBindingError)
+{
+    this->GivenAValidProxyMethod();
+
+    // Expecting that DoCall will be called on the binding which returns an error
+    const auto binding_error_code = ComErrc::kBindingFailure;
+    EXPECT_CALL(this->proxy_method_binding_mock_, DoCall(0U, _)).WillOnce(Return(MakeUnexpected(binding_error_code)));
+
+    // When call operator is called on the ProxyMethod
+    auto& proxy_method = *(this->unit_);
+    auto call_result = proxy_method(42, 3.14, 'a');
+
+    // Then the same error is returned
+    ASSERT_FALSE(call_result.has_value());
+    EXPECT_EQ(call_result.error(), ComErrc::kBindingFailure);
+}
+
+TYPED_TEST(ProxyMethodWithoutInArgsTestFixture, CallOperator_NoArgs)
+{
+    this->GivenAValidProxyMethod();
+
+    // When call operator is called on the ProxyMethod
+    auto& proxy_method = *(this->unit_);
+    auto call_result = proxy_method();
+
     // then no error is returned
     EXPECT_TRUE(call_result.has_value());
 }
 
-TEST_F(ProxyMethodTestFixture, CallOperator_NonVoidReturn_WithCopy)
+TYPED_TEST(ProxyMethodWithoutInArgsTestFixture, CallOperator_PropagatesBindingError)
 {
-    // Given a ProxyMethod with a return type of int and three arguments: int, double, char
-    ProxyMethod<int(int, double, char)> unit{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
+    this->GivenAValidProxyMethod();
 
-    // when call operator is called on the ProxyMethod
-    int arg1 = 42;
-    double arg2 = 3.14;
-    char arg3 = 'a';
-    auto call_result = unit(arg1, arg2, arg3);
-    // then no error is returned
-    EXPECT_TRUE(call_result.has_value());
+    // Expecting that DoCall will be called on the binding which returns an error
+    const auto binding_error_code = ComErrc::kBindingFailure;
+    EXPECT_CALL(this->proxy_method_binding_mock_, DoCall(0U, _)).WillOnce(Return(MakeUnexpected(binding_error_code)));
+
+    // When call operator is called on the ProxyMethod
+    auto& proxy_method = *(this->unit_);
+    auto call_result = proxy_method();
+
+    // Then the same error is returned
+    ASSERT_FALSE(call_result.has_value());
+    EXPECT_EQ(call_result.error(), ComErrc::kBindingFailure);
 }
 
-TEST_F(ProxyMethodTestFixture, CallOperator_VoidReturn_WithCopyTemporary)
+TYPED_TEST(ProxyMethodWithInArgsTestFixture, CallOperator_ZeroCopy)
 {
-    // Given a ProxyMethod with a return type of void and one argument: int
-    ProxyMethod<void(int)> unit{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
+    this->GivenAValidProxyMethod();
 
-    // when call operator is called on the ProxyMethod handing the arg over as temporary
-    auto call_result = unit(42);
-    // expect, that no error is returned
-    EXPECT_TRUE(call_result.has_value());
-}
+    // and given that Allocate was called on the ProxyMethod
+    auto& proxy_method = *(this->unit_);
+    auto method_in_arg_ptr_tuple = proxy_method.Allocate();
 
-TEST_F(ProxyMethodTestFixture, CallOperator_VoidReturn_NoArgs)
-{
-    // Given a ProxyMethod with a return type of void and no arguments
-    ProxyMethod<void()> unit{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
+    // Expecting that DoCall will be called on the binding
+    EXPECT_CALL(this->proxy_method_binding_mock_, DoCall(0U, _));
 
-    // when call operator is called on the ProxyMethod
-    auto call_result = unit();
-    // then no error is returned
-    EXPECT_TRUE(call_result.has_value());
-}
-
-TEST_F(ProxyMethodTestFixture, CallOperator_NonVoidReturn_NoArgs)
-{
-    // Given a ProxyMethod with a return type of non-void and no arguments
-    ProxyMethod<int()> unit{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
-
-    // when call operator is called on the ProxyMethod
-    auto call_result = unit();
-    // then no error is returned
-    EXPECT_TRUE(call_result.has_value());
-}
-
-TEST_F(ProxyMethodTestFixture, CallOperator_NonVoidReturn_ZeroCopy)
-{
-    // Given a ProxyMethod with a return type of int and three arguments: int, double, char
-    ProxyMethod<int(int, double, char)> unit{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
-
-    // when Allocate is called on the ProxyMethod
-    auto method_in_arg_ptr_tuple = unit.Allocate();
-    // expect that no error is returned
-    ASSERT_TRUE(method_in_arg_ptr_tuple.has_value());
-
-    // when filling the allocated argument storage and calling the call operator with the allocated argument pointers
+    // When filling the allocated argument storage and calling the call operator with the allocated argument pointers
     auto [method_in_arg_ptr_0, method_in_arg_ptr_1, method_in_arg_ptr_2] = std::move(method_in_arg_ptr_tuple.value());
     *method_in_arg_ptr_0 = 42;
     *method_in_arg_ptr_1 = 3.14;
     *method_in_arg_ptr_2 = 'a';
     auto call_result =
-        unit(std::move(method_in_arg_ptr_0), std::move(method_in_arg_ptr_1), std::move(method_in_arg_ptr_2));
-    // then no error is returned
+        proxy_method(std::move(method_in_arg_ptr_0), std::move(method_in_arg_ptr_1), std::move(method_in_arg_ptr_2));
+
+    // Then no error is returned
     EXPECT_TRUE(call_result.has_value());
 }
 
-TEST_F(ProxyMethodTestFixture, ProxyMethodView_WithInArgsAndNonVoidReturnType)
+TEST_F(ProxyMethodWithInArgsAndReturnFixture, CallOperator_ReturnsReturnTypePointerPointingToQueuePositionZeroOfBuffer)
 {
-    // Given a ProxyMethod with a return type of int and three arguments: int, double, char
-    ProxyMethod<int(int, double, char)> unit{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
+    auto* const return_buffer_start_address = &(this->method_return_type_buffer_[0]);
 
-    // then we can create a view on the ProxyMethod
-    ProxyMethodView proxy_method_view{unit};
+    this->GivenAValidProxyMethod();
 
-    // and when we call GetTypeErasedInAgs
+    // Expecting that AllocateReturnType will be called on the binding
+    EXPECT_CALL(this->proxy_method_binding_mock_, AllocateReturnType(0U));
+
+    // When call operator is called on the ProxyMethod
+    auto& proxy_method = *(this->unit_);
+    auto method_in_arg_ptr = proxy_method(kDummyArg1, kDummyArg2, kDummyArg3);
+
+    // Then a valid MethodReturnTypePtr is returned
+    ASSERT_TRUE(method_in_arg_ptr.has_value());
+
+    // and the MethodReturnTypePtr points to queue position 0 of the buffer
+    EXPECT_EQ(method_in_arg_ptr.value().GetQueuePosition(), 0);
+    auto* const pointed_to_address = reinterpret_cast<std::byte*>(method_in_arg_ptr.value().get());
+    EXPECT_EQ(pointed_to_address, return_buffer_start_address);
+}
+
+TEST_F(ProxyMethodWithReturnOnlyFixture, CallOperator_ReturnsReturnTypePointerPointingToQueuePositionZeroOfBuffer)
+{
+    auto* const return_buffer_start_address = &(this->method_return_type_buffer_[0]);
+
+    this->GivenAValidProxyMethod();
+
+    // Expecting that AllocateReturnType will be called on the binding
+    EXPECT_CALL(this->proxy_method_binding_mock_, AllocateReturnType(0U));
+
+    // When call operator is called on the ProxyMethod
+    auto& proxy_method = *(this->unit_);
+    auto method_in_arg_ptr = proxy_method();
+
+    // Then a valid MethodReturnTypePtr is returned
+    ASSERT_TRUE(method_in_arg_ptr.has_value());
+
+    // and the MethodReturnTypePtr points to queue position 0 of the buffer
+    EXPECT_EQ(method_in_arg_ptr.value().GetQueuePosition(), 0);
+    auto* const pointed_to_address = reinterpret_cast<std::byte*>(method_in_arg_ptr.value().get());
+    EXPECT_EQ(pointed_to_address, return_buffer_start_address);
+}
+
+TEST_F(ProxyMethodWithInArgsAndReturnFixture, ProxyMethodView_ReturnsTypeErasedInArgs)
+{
+    this->GivenAValidProxyMethod();
+
+    // and given a ProxyMethodView created with the ProxyMethod
+    ProxyMethodView proxy_method_view{*this->unit_};
+
+    // When we call GetTypeErasedInAgs
     auto type_erased_in_args = proxy_method_view.GetTypeErasedInAgs();
-    // then we get a valid TypeErasedDataTypeInfo
+
+    // Then we get a valid TypeErasedDataTypeInfo
     EXPECT_TRUE(type_erased_in_args.has_value());
-    // and when we call GetTypeErasedReturnType
+}
+
+TEST_F(ProxyMethodWithInArgsAndReturnFixture, ProxyMethodView_ReturnsTypeErasedReturnType)
+{
+    this->GivenAValidProxyMethod();
+
+    // and given a ProxyMethodView created with the ProxyMethod
+    ProxyMethodView proxy_method_view{*this->unit_};
+
+    // When we call GetTypeErasedReturnType
     auto type_erased_return_type = proxy_method_view.GetTypeErasedReturnType();
-    // then we get a valid TypeErasedDataTypeInfo
+
+    // Then we get a valid TypeErasedDataTypeInfo
     EXPECT_TRUE(type_erased_return_type.has_value());
 }
 
-TEST_F(ProxyMethodTestFixture, ProxyMethodView_WithoutInArgs)
+TEST_F(ProxyMethodWithInArgsOnlyFixture, ProxyMethodView_ReturnsTypeErasedInArgs)
 {
-    // Given a ProxyMethod with a return type of int and no arguments.
-    ProxyMethod<int()> unit{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
+    this->GivenAValidProxyMethod();
 
-    // then we can create a view on the ProxyMethod
-    ProxyMethodView proxy_method_view{unit};
+    // and given a ProxyMethodView created with the ProxyMethod
+    ProxyMethodView proxy_method_view{*this->unit_};
 
-    // and when we call GetTypeErasedInAgs
+    // When we call GetTypeErasedInAgs
     auto type_erased_in_args = proxy_method_view.GetTypeErasedInAgs();
-    // then we get no TypeErasedDataTypeInfo for in-arguments
+
+    // Then we get a valid TypeErasedDataTypeInfo
+    EXPECT_TRUE(type_erased_in_args.has_value());
+}
+
+TEST_F(ProxyMethodWithInArgsOnlyFixture, ProxyMethodView_DoesNotReturnTypeErasedReturnType)
+{
+    this->GivenAValidProxyMethod();
+
+    // and given a ProxyMethodView created with the ProxyMethod
+    ProxyMethodView proxy_method_view{*this->unit_};
+
+    // When we call GetTypeErasedReturnType
+    auto type_erased_return_type = proxy_method_view.GetTypeErasedReturnType();
+
+    // Then we don't get a valid TypeErasedDataTypeInfo
+    EXPECT_FALSE(type_erased_return_type.has_value());
+}
+
+using ProxyMethodWithReturnOnlyFixture = ProxyMethodTestFixture<ProxyMethodWithReturnOnly>;
+TEST_F(ProxyMethodWithReturnOnlyFixture, ProxyMethodView_DoesNotReturnTypeErasedInArgs)
+{
+    this->GivenAValidProxyMethod();
+
+    // and given a ProxyMethodView created with the ProxyMethod
+    ProxyMethodView proxy_method_view{*this->unit_};
+
+    // When we call GetTypeErasedInAgs
+    auto type_erased_in_args = proxy_method_view.GetTypeErasedInAgs();
+
+    // Then we don't get a valid TypeErasedDataTypeInfo
     EXPECT_FALSE(type_erased_in_args.has_value());
-    // and when we call GetTypeErasedReturnType
+}
+
+TEST_F(ProxyMethodWithReturnOnlyFixture, ProxyMethodView_ReturnsTypeErasedReturnType)
+{
+    this->GivenAValidProxyMethod();
+
+    // and given a ProxyMethodView created with the ProxyMethod
+    ProxyMethodView proxy_method_view{*this->unit_};
+
+    // When we call GetTypeErasedReturnType
     auto type_erased_return_type = proxy_method_view.GetTypeErasedReturnType();
-    // then we get a valid TypeErasedDataTypeInfo
+
+    // Then we get a valid TypeErasedDataTypeInfo
     EXPECT_TRUE(type_erased_return_type.has_value());
 }
 
-TEST_F(ProxyMethodTestFixture, ProxyMethodView_WithVoidReturnType)
+using ProxyMethodWithNoInArgsOrReturnFixture = ProxyMethodTestFixture<ProxyMethodWithNoInArgsOrReturn>;
+TEST_F(ProxyMethodWithNoInArgsOrReturnFixture, ProxyMethodView_DoesNotReturnTypeErasedInArgs)
 {
-    // Given a ProxyMethod with a return type of void and three arguments: int, double, char
-    ProxyMethod<void(int, double, char)> unit{*proxy_base_ptr_, std::move(proxy_method_binding_mock_), kMethodName};
+    this->GivenAValidProxyMethod();
 
-    // then we can create a view on the ProxyMethod
-    ProxyMethodView proxy_method_view{unit};
+    // and given a ProxyMethodView created with the ProxyMethod
+    ProxyMethodView proxy_method_view{*this->unit_};
 
-    // and when we call GetTypeErasedInAgs
+    // When we call GetTypeErasedInAgs
     auto type_erased_in_args = proxy_method_view.GetTypeErasedInAgs();
-    // then we get a valid TypeErasedDataTypeInfo for in-arguments
-    EXPECT_TRUE(type_erased_in_args.has_value());
-    // and when we call GetTypeErasedReturnType
+
+    // Then we don't get a valid TypeErasedDataTypeInfo
+    EXPECT_FALSE(type_erased_in_args.has_value());
+}
+
+TEST_F(ProxyMethodWithNoInArgsOrReturnFixture, ProxyMethodView_DoesNotReturnTypeErasedReturnType)
+{
+    this->GivenAValidProxyMethod();
+
+    // and given a ProxyMethodView created with the ProxyMethod
+    ProxyMethodView proxy_method_view{*this->unit_};
+
+    // When we call GetTypeErasedReturnType
     auto type_erased_return_type = proxy_method_view.GetTypeErasedReturnType();
-    // then we get no TypeErasedDataTypeInfo for return type
+
+    // Then we don't get a valid TypeErasedDataTypeInfo
     EXPECT_FALSE(type_erased_return_type.has_value());
 }
 
