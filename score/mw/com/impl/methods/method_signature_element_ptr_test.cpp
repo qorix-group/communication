@@ -13,11 +13,15 @@
 #include "score/mw/com/impl/methods/method_signature_element_ptr.h"
 
 #include <gtest/gtest.h>
+#include <memory>
 
 namespace score::mw::com::impl
 {
 namespace
 {
+
+static constexpr int kTestElementValue = 42;
+static constexpr std::size_t kDefaultQueuePosition = 2;
 
 struct TestElementType
 {
@@ -28,61 +32,67 @@ struct TestElementType
 class MethodSignatureElementPtrTestFixture : public ::testing::Test
 {
   public:
-    static constexpr int kTestElementValue = 42;
-    static constexpr std::size_t kDefaultQueuePosition = 2;
+    MethodSignatureElementPtrTestFixture& GivenAValidMethodSignatureElementPtr()
+    {
+        unit_ = std::make_unique<MethodSignatureElementPtr<TestElementType>>(
+            test_element_, active_flag_, kDefaultQueuePosition);
+        return *this;
+    }
 
-  protected:
-    MethodSignatureElementPtrTestFixture() = default;
-    ~MethodSignatureElementPtrTestFixture() override = default;
     bool active_flag_{false};
     TestElementType test_element_{kTestElementValue};
+    std::unique_ptr<MethodSignatureElementPtr<TestElementType>> unit_{nullptr};
 };
 
 TEST_F(MethodSignatureElementPtrTestFixture, Construction_SetsActiveFlag)
 {
-    // When constructing a MethodSignatureElementPtr with a TestElementType pointer and an active flag reference
-    MethodSignatureElementPtr<TestElementType> ptr(test_element_, active_flag_, kDefaultQueuePosition);
+    // When constructing a MethodSignatureElementPtr with active flag reference which is initially false
+    ASSERT_FALSE(active_flag_);
+    MethodSignatureElementPtr<TestElementType> unit{test_element_, active_flag_, kDefaultQueuePosition};
+
     // Then the active flag is set to true after construction
     EXPECT_TRUE(active_flag_);
 }
 
 TEST_F(MethodSignatureElementPtrTestFixture, Construction_PointsToElement)
 {
-    // Given a MethodSignatureElementPtr constructed with a TestElementType pointer and an active flag reference
-    MethodSignatureElementPtr<TestElementType> ptr(test_element_, active_flag_, kDefaultQueuePosition);
+    // Given a MethodSignatureElementPtr constructed with a pointer to test_element_
+    MethodSignatureElementPtr<TestElementType> unit{test_element_, active_flag_, kDefaultQueuePosition};
+
     // When calling get(), then the internal pointer points to the given TestElementType instance, the unit was
     // constructed with
-    ASSERT_TRUE(ptr.get() != nullptr);
-    EXPECT_EQ(ptr.get(), &test_element_);
+    // Then the returned pointer is the same as the pointer provided to the constructor
+    ASSERT_TRUE(unit.get() != nullptr);
+    EXPECT_EQ(unit.get(), &test_element_);
 }
 
 TEST_F(MethodSignatureElementPtrTestFixture, Construction_CorrectQueuePosition)
 {
-    // Given a MethodSignatureElementPtr constructed with a TestElementType pointer and an active flag reference
-    MethodSignatureElementPtr<TestElementType> ptr(test_element_, active_flag_, kDefaultQueuePosition);
-    // when calling GetQueuePosition(), then the internal queue position is set correctly
-    EXPECT_EQ(ptr.GetQueuePosition(), kDefaultQueuePosition);
+    GivenAValidMethodSignatureElementPtr();
+
+    // When calling GetQueuePosition()
+    // Then the internal queue position is set correctly
+    EXPECT_EQ(unit_->GetQueuePosition(), kDefaultQueuePosition);
 }
 
 TEST_F(MethodSignatureElementPtrTestFixture, Destruction_ClearsActiveFlag)
 {
-    {
-        // Given a MethodSignatureElementPtr constructed with a TestElementType pointer and an active flag reference
-        MethodSignatureElementPtr<TestElementType> ptr(test_element_, active_flag_, kDefaultQueuePosition);
-        // Expect, that the active flag is set to true after construction
-        EXPECT_TRUE(active_flag_);
-    }
-    // When the MethodSignatureElementPtr goes out of scope and is destroyed
+    GivenAValidMethodSignatureElementPtr();
+    ASSERT_TRUE(active_flag_);
+
+    // When the MethodSignatureElementPtr is destroyed
+    unit_.reset();
+
     // then the active flag is set to false after destruction
     EXPECT_FALSE(active_flag_);
 }
 
 TEST_F(MethodSignatureElementPtrTestFixture, MoveConstruction_ActiveFlagSet_BeforeMovedFromInstanceDestroyed)
 {
-    MethodSignatureElementPtr<TestElementType> ptr(test_element_, active_flag_, kDefaultQueuePosition);
+    GivenAValidMethodSignatureElementPtr();
 
     // When move-constructing a new MethodSignatureElementPtr from another MethodSignatureElementPtr
-    MethodSignatureElementPtr<TestElementType> ptr_from_temporary(std::move(ptr));
+    MethodSignatureElementPtr<TestElementType> move_constructed_unit(std::move(*unit_));
 
     // then the active flag is (still) set to true before the moved-from instance is destroyed
     EXPECT_TRUE(active_flag_);
@@ -90,72 +100,77 @@ TEST_F(MethodSignatureElementPtrTestFixture, MoveConstruction_ActiveFlagSet_Befo
 
 TEST_F(MethodSignatureElementPtrTestFixture, MoveConstruction_ActiveFlagSet_AfterMovedFromInstanceDestroyed)
 {
-    std::optional<MethodSignatureElementPtr<TestElementType>> ptr_optional{};
-    ptr_optional.emplace(test_element_, active_flag_, kDefaultQueuePosition);
+    GivenAValidMethodSignatureElementPtr();
 
     // Given that a new MethodSignatureElementPtr was move-constructed from another MethodSignatureElementPtr
-    MethodSignatureElementPtr<TestElementType> ptr_from_temporary(std::move(ptr_optional.value()));
+    MethodSignatureElementPtr<TestElementType> move_constructed_unit(std::move(*unit_));
 
     // when destroying the moved-from instance
-    ptr_optional.reset();
+    unit_.reset();
+
     // then the active flag is (still) set to true after the moved-from instance is destroyed
     EXPECT_TRUE(active_flag_);
 }
 
 TEST_F(MethodSignatureElementPtrTestFixture, MoveConstruction_ActiveFlagCleared_AfterMoveConstructedInstanceDestroyed)
 {
-    // Given a MethodSignatureElementPtr
-    MethodSignatureElementPtr<TestElementType> ptr(test_element_, active_flag_, kDefaultQueuePosition);
+    GivenAValidMethodSignatureElementPtr();
+
     {
-        // when we move construct a new MethodSignatureElementPtr from it
-        MethodSignatureElementPtr<TestElementType> ptr_from_temporary(std::move(ptr));
+        // and given a new MethodSignatureElementPtr which is move constructed from the original one
+        MethodSignatureElementPtr<TestElementType> moved_constructed_unit(std::move(*unit_));
+
+        // when the move-constructed instance is destroyed and the moved-from instance still exists
     }
-    // when the move-constructed instance is destroyed and the moved-from instance still exists, then the active flag is
-    // false afterward
+
+    // Then the active flag is false
     EXPECT_FALSE(active_flag_);
 }
 
 TEST_F(MethodSignatureElementPtrTestFixture, MoveConstruction_CorrectQueuePosition)
 {
-    // Given a MethodSignatureElementPtr constructed with a TestElementType pointer and an active flag reference
-    MethodSignatureElementPtr<TestElementType> ptr(test_element_, active_flag_, kDefaultQueuePosition);
+    GivenAValidMethodSignatureElementPtr();
 
-    // When move-constructing a new MethodSignatureElementPtr from the first one
-    MethodSignatureElementPtr<TestElementType> moved_ptr(std::move(ptr));
-    // then the internal queue position is set correctly
-    EXPECT_EQ(ptr.GetQueuePosition(), kDefaultQueuePosition);
+    // and given a new MethodSignatureElementPtr which is move constructed from the original one
+    MethodSignatureElementPtr<TestElementType> moved_constructed_unit(std::move(*unit_));
+
+    // When calling GetQueuePosition
+    // Then the internal queue position is set correctly
+    EXPECT_EQ(unit_->GetQueuePosition(), kDefaultQueuePosition);
 }
 
 TEST_F(MethodSignatureElementPtrTestFixture, MoveConstruction_CorrectElementValue)
 {
-    // Given a MethodSignatureElementPtr constructed with a TestElementType pointer and an active flag reference
-    MethodSignatureElementPtr<TestElementType> ptr(test_element_, active_flag_, kDefaultQueuePosition);
+    GivenAValidMethodSignatureElementPtr();
 
-    // When move-constructing a new MethodSignatureElementPtr from the first one
-    MethodSignatureElementPtr<TestElementType> moved_ptr(std::move(ptr));
-    // when calling get(), then the returned pointer points to the correct TestElementType instance
-    EXPECT_EQ(moved_ptr.get(), &test_element_);
+    // and given a new MethodSignatureElementPtr which is move constructed from the original one
+    MethodSignatureElementPtr<TestElementType> moved_constructed_unit(std::move(*unit_));
+
+    // when calling get()
+    // Then the returned pointer points to the correct TestElementType instance
+    EXPECT_EQ(moved_constructed_unit.get(), &test_element_);
 }
 
 TEST_F(MethodSignatureElementPtrTestFixture, DereferenceOperator_WorksCorrectly)
 {
-    // Given a MethodSignatureElementPtr constructed with a TestElementType pointer and an active flag reference
-    MethodSignatureElementPtr<TestElementType> ptr(test_element_, active_flag_, kDefaultQueuePosition);
+    GivenAValidMethodSignatureElementPtr();
 
     // When dereferencing the MethodSignatureElementPtr
-    TestElementType& element_ref = *ptr;
+    MethodSignatureElementPtr<TestElementType>& unit_ref{*unit_};
+    TestElementType& element_ref = *unit_ref;
+
     // then the returned reference points to the correct TestElementType instance
     EXPECT_EQ(element_ref.value, kTestElementValue);
 }
 
 TEST_F(MethodSignatureElementPtrTestFixture, ArrowOperator_WorksCorrectly)
 {
-    // Given a MethodSignatureElementPtr constructed with a TestElementType pointer and an active flag reference
-    MethodSignatureElementPtr<TestElementType> ptr(test_element_, active_flag_, kDefaultQueuePosition);
+    GivenAValidMethodSignatureElementPtr();
 
     // When using the arrow operator on the MethodSignatureElementPtr
     // Then it returns the correct value
-    EXPECT_EQ(ptr->value, kTestElementValue);
+    MethodSignatureElementPtr<TestElementType>& unit_ref{*unit_};
+    EXPECT_EQ(unit_ref->value, kTestElementValue);
 }
 
 }  // namespace
