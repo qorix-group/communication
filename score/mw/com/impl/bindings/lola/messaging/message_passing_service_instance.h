@@ -36,6 +36,8 @@ class MessagePassingServiceInstanceAttorney;
 class MessagePassingServiceInstance
 {
   public:
+    // required exclusively for testing purposes
+    // coverity[autosar_cpp14_a11_3_1_violation]
     friend class MessagePassingServiceInstanceAttorney;
 
     using ClientQualityType = MessagePassingClientCache::ClientQualityType;
