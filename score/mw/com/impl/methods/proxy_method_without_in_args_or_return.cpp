@@ -10,21 +10,4 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#include "score/mw/com/impl/methods/proxy_method.h"
-
-namespace score::mw::com::impl::detail
-{
-
-score::Result<std::size_t> DetermineNextAvailableQueueSlot(containers::DynamicArray<bool>& return_type_ptr_flags)
-{
-    for (std::size_t i = 0U; i < return_type_ptr_flags.size(); ++i)
-    {
-        if (!return_type_ptr_flags[i])
-        {
-            return i;
-        }
-    }
-    return score::MakeUnexpected(ComErrc::kCallQueueFull);
-}
-
-}  // namespace score::mw::com::impl::detail
+#include "score/mw/com/impl/methods/proxy_method_without_in_args_or_return.h"

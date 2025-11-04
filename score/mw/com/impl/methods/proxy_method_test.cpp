@@ -11,6 +11,10 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 #include "score/mw/com/impl/methods/proxy_method.h"
+#include "score/mw/com/impl/methods/proxy_method_with_in_args.h"
+#include "score/mw/com/impl/methods/proxy_method_with_in_args_and_return.h"
+#include "score/mw/com/impl/methods/proxy_method_with_return_type.h"
+#include "score/mw/com/impl/methods/proxy_method_without_in_args_or_return.h"
 
 #include "score/mw/com/impl/bindings/mock_binding/proxy.h"
 #include "score/mw/com/impl/bindings/mock_binding/proxy_method.h"

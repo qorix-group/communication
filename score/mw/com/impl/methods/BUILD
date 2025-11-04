@@ -52,8 +52,20 @@ cc_library(
 
 cc_library(
     name = "proxy_method",
-    srcs = ["proxy_method.cpp"],
-    hdrs = ["proxy_method.h"],
+    srcs = [
+        "proxy_method.cpp",
+        "proxy_method_with_in_args.cpp",
+        "proxy_method_with_in_args_and_return.cpp",
+        "proxy_method_with_return_type.cpp",
+        "proxy_method_without_in_args_or_return.cpp",
+    ],
+    hdrs = [
+        "proxy_method.h",
+        "proxy_method_with_in_args.h",
+        "proxy_method_with_in_args_and_return.h",
+        "proxy_method_with_return_type.h",
+        "proxy_method_without_in_args_or_return.h",
+    ],
     features = COMPILER_WARNING_FEATURES,
     tags = ["FFI"],
     visibility = [
