@@ -129,7 +129,10 @@ cc_test(
     features = COMPILER_WARNING_FEATURES + [
         "aborts_upon_exception",
     ],
-    tags = ["unit"],
+    tags = [
+        "exclusive",  # Sandboxing is not properly working with LoLa message passing 2.0 (Ticket-217341)
+        "unit",
+    ],
     visibility = [
         "//score/mw/com/impl/bindings/lola:__subpackages__",
     ],
@@ -152,7 +155,10 @@ cc_test(
     features = COMPILER_WARNING_FEATURES + [
         "aborts_upon_exception",
     ],
-    tags = ["unit"],
+    tags = [
+        "exclusive",  # Sandboxing is not properly working with LoLa message passing 2.0 (Ticket-217341)
+        "unit",
+    ],
     visibility = [
         "//score/mw/com/impl/bindings/lola:__subpackages__",
     ],
