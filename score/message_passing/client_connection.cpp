@@ -363,6 +363,13 @@ void ClientConnection::TryConnect() noexcept
         auto os_code = error.GetOsDependentErrorCode();
         if (((os_code != EAGAIN) && (os_code != ECONNREFUSED)) && (os_code != ENOENT))
         {
+            // Suppress AUTOSAR C++14 M8-4-4, rule finding: "A function identifier shall either be used to call the
+            // function or it shall be preceded by &".
+            // We deviate from this rule (which is also gone in Misra C++23).
+            // Passing std::endl to std::cerr is the idiomatic way to print an error in C++.
+            // coverity[autosar_cpp14_m8_4_4_violation]
+            std::cerr << "TryOpenClientConnection " << identifier_ << " non-retry OS error code " << os_code
+                      << std::endl;
             StopReason stop_reason = os_code == EACCES ? StopReason::kPermission : StopReason::kIoError;
             if (TrySetStopReason(stop_reason))
             {
@@ -556,6 +563,13 @@ void ClientConnection::SwitchToStopState() noexcept
 
 bool ClientConnection::TrySetStopReason(const StopReason stop_reason) noexcept
 {
+    // Suppress AUTOSAR C++14 M8-4-4, rule finding: "A function identifier shall either be used to call the
+    // function or it shall be preceded by &".
+    // We deviate from this rule (which is also gone in Misra C++23).
+    // Passing std::endl to std::cerr is the idiomatic way to print an error in C++.
+    // coverity[autosar_cpp14_m8_4_4_violation]
+    std::cerr << "TrySetStopReason " << static_cast<std::uint32_t>(score::cpp::to_underlying(stop_reason)) << std::endl;
+
     // can happen via 2 paths: from callback thread and from Stop() call; if happens concurrently, the later attempt
     // needs to be ignored and its consequent attempt to switch to stop state needs to be suppressed
     StopReason old_stop_reason = stop_reason_.load();

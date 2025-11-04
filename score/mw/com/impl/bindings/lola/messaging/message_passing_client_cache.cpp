@@ -90,15 +90,24 @@ std::shared_ptr<score::message_passing::IClientConnection> MessagePassingClientC
                       score::message_passing::IClientConnection::NotifyCallback{});
     for (std::uint32_t try_attempt{0U}; try_attempt < kStateTryAttempts; ++try_attempt)
     {
-        if (new_sender->GetState() == score::message_passing::IClientConnection::State::kReady)
+        const auto state = new_sender->GetState();
+        if (state == score::message_passing::IClientConnection::State::kReady)
         {
+            return new_sender;
+        }
+        if (state != score::message_passing::IClientConnection::State::kStarting)
+        {
+            score::mw::log::LogError("lola")
+                << "MessagePassingClientCache: Connection for " << service_identifier
+                << " has failed to create, the reason is "
+                << static_cast<std::uint32_t>(score::cpp::to_underlying(new_sender->GetStopReason()));
             return new_sender;
         }
         std::this_thread::sleep_for(kStateRetryDelay);
     }
 
     score::mw::log::LogError("lola") << "MessagePassingClientCache: Connection for " << service_identifier
-                                   << " takes too long co create, might be not working";
+                                   << " takes too long to create, might be not working";
     return new_sender;
 }
 
