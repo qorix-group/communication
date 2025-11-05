@@ -22,11 +22,11 @@
 #include "score/mw/com/impl/instance_identifier.h"
 #include "score/mw/com/impl/plumbing/sample_allocatee_ptr.h"
 #include "score/mw/com/impl/service_element_type.h"
+#include "score/mw/com/impl/test/runtime_mock_guard.h"
 #include "score/mw/com/impl/tracing/common_event_tracing.h"
 #include "score/mw/com/impl/tracing/configuration/skeleton_field_trace_point_type.h"
 #include "score/mw/com/impl/tracing/configuration/tracing_filter_config_mock.h"
 #include "score/mw/com/impl/tracing/skeleton_event_tracing_data.h"
-#include "score/mw/com/impl/test/runtime_mock_guard.h"
 #include "score/mw/com/impl/tracing/trace_error.h"
 #include "score/mw/com/impl/tracing/tracing_runtime_mock.h"
 

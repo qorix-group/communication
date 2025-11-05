@@ -17,9 +17,9 @@
 #include "score/mw/com/impl/skeleton_event.h"
 #include "score/mw/com/impl/skeleton_field.h"
 #include "score/mw/com/impl/test/binding_factory_resources.h"
+#include "score/mw/com/impl/test/runtime_mock_guard.h"
 #include "score/mw/com/impl/tracing/configuration/tracing_filter_config_mock.h"
 #include "score/mw/com/impl/tracing/skeleton_event_tracing_data.h"
-#include "score/mw/com/impl/test/runtime_mock_guard.h"
 #include "score/mw/com/impl/tracing/tracing_runtime_mock.h"
 
 #include <gmock/gmock.h>

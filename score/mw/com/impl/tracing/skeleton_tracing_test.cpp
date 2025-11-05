@@ -20,8 +20,8 @@
 #include "score/mw/com/impl/skeleton_base.h"
 #include "score/mw/com/impl/skeleton_event_base.h"
 #include "score/mw/com/impl/skeleton_field_base.h"
-#include "score/mw/com/impl/tracing/skeleton_event_tracing_data.h"
 #include "score/mw/com/impl/test/runtime_mock_guard.h"
+#include "score/mw/com/impl/tracing/skeleton_event_tracing_data.h"
 #include "score/mw/com/impl/tracing/tracing_runtime_mock.h"
 
 #include "score/result/result.h"

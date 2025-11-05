@@ -14,8 +14,8 @@
 
 #include "score/mw/com/impl/configuration/config_parser.h"
 
-#include "score/mw/com/impl/tracing/configuration/tracing_filter_config_mock.h"
 #include "score/mw/com/impl/test/runtime_mock_guard.h"
+#include "score/mw/com/impl/tracing/configuration/tracing_filter_config_mock.h"
 
 #include "tracing_filter_config.h"
 #include <gmock/gmock.h>
