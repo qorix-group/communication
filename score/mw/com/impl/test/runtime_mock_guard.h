@@ -10,4 +10,30 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#include "score/mw/com/impl/tracing/test/runtime_mock_guard.h"
+#ifndef SCORE_MW_COM_IMPL_TEST_RUNTIME_MOCK_GUARD_H
+#define SCORE_MW_COM_IMPL_TEST_RUNTIME_MOCK_GUARD_H
+
+#include "score/mw/com/impl/runtime.h"
+#include "score/mw/com/impl/runtime_mock.h"
+
+namespace score::mw::com::impl
+{
+
+class RuntimeMockGuard
+{
+  public:
+    RuntimeMockGuard()
+    {
+        Runtime::InjectMock(&runtime_mock_);
+    }
+    ~RuntimeMockGuard()
+    {
+        Runtime::InjectMock(nullptr);
+    }
+
+    RuntimeMock runtime_mock_;
+};
+
+}  // namespace score::mw::com::impl
+
+#endif  // SCORE_MW_COM_IMPL_TEST_RUNTIME_MOCK_GUARD_H

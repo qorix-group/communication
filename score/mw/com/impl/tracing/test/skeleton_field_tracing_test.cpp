@@ -18,7 +18,7 @@
 #include "score/mw/com/impl/skeleton_field.h"
 #include "score/mw/com/impl/test/binding_factory_resources.h"
 #include "score/mw/com/impl/tracing/configuration/tracing_filter_config_mock.h"
-#include "score/mw/com/impl/tracing/test/runtime_mock_guard.h"
+#include "score/mw/com/impl/test/runtime_mock_guard.h"
 #include "score/mw/com/impl/tracing/trace_error.h"
 #include "score/mw/com/impl/tracing/tracing_runtime_mock.h"
 
@@ -78,7 +78,7 @@ class MyDummySkeleton : public SkeletonBase
 
 TEST(SkeletonFieldTracingTest, TracePointsAreDisabledIfConfigNotReturnedByRuntime)
 {
-    tracing::RuntimeMockGuard runtime_mock_guard{};
+    RuntimeMockGuard runtime_mock_guard{};
 
     SkeletonFieldBindingFactoryMockGuard<TestSampleType> skeleton_field_binding_factory_mock_guard{};
 
@@ -108,7 +108,7 @@ TEST_P(SkeletonFieldTracingParamaterisedFixture, TracePointsAreCorrectlySet)
 {
     const SkeletonEventTracingData expected_enabled_trace_points = GetParam();
 
-    tracing::RuntimeMockGuard runtime_mock_guard{};
+    RuntimeMockGuard runtime_mock_guard{};
     tracing::TracingFilterConfigMock tracing_mock{};
     tracing::TracingRuntimeMock tracing_runtime_mock{};
 
@@ -245,7 +245,7 @@ class SkeletonFieldTracingFixture : public ::testing::Test
 
     SkeletonFieldBindingFactoryMockGuard<TestSampleType> skeleton_field_binding_factory_mock_guard_{};
     std::unique_ptr<MyDummySkeleton> skeleton_{nullptr};
-    tracing::RuntimeMockGuard runtime_mock_guard_{};
+    RuntimeMockGuard runtime_mock_guard_{};
     tracing::TracingFilterConfigMock tracing_filter_config_mock_{};
     mock_binding::SkeletonEvent<TestSampleType>* mock_skeleton_field_binding_{nullptr};
 };

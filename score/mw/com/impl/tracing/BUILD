@@ -319,7 +319,7 @@ cc_gtest_unit_test(
         "//score/mw/com/impl",
         "//score/mw/com/impl/bindings/mock_binding",
         "//score/mw/com/impl/configuration/test:configuration_store",
-        "//score/mw/com/impl/tracing/test:runtime_mock_guard",
+        "//score/mw/com/impl/test:runtime_mock_guard",
     ],
 )
 
@@ -349,7 +349,7 @@ cc_gtest_unit_test(
         ":common_event_tracing",
         ":tracing_runtime_mock",
         "//score/mw/com/impl/configuration/test:configuration_store",
-        "//score/mw/com/impl/tracing/test:runtime_mock_guard",
+        "//score/mw/com/impl/test:runtime_mock_guard",
     ],
 )
 
@@ -362,8 +362,8 @@ cc_gtest_unit_test(
         ":tracing_runtime_mock",
         "//score/mw/com/impl/bindings/mock_binding",
         "//score/mw/com/impl/configuration/test:configuration_store",
+        "//score/mw/com/impl/test:runtime_mock_guard",
         "//score/mw/com/impl/tracing/configuration:tracing_filter_config_mock",
-        "//score/mw/com/impl/tracing/test:runtime_mock_guard",
     ],
 )
 
@@ -375,7 +375,7 @@ cc_gtest_unit_test(
         ":proxy_event_tracing",
         ":tracing_runtime_mock",
         "//score/mw/com/impl/bindings/mock_binding",
-        "//score/mw/com/impl/tracing/test:runtime_mock_guard",
+        "//score/mw/com/impl/test:runtime_mock_guard",
     ],
 )
 

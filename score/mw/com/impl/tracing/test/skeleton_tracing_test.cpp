@@ -19,7 +19,7 @@
 #include "score/mw/com/impl/test/binding_factory_resources.h"
 #include "score/mw/com/impl/tracing/configuration/tracing_filter_config_mock.h"
 #include "score/mw/com/impl/tracing/skeleton_event_tracing_data.h"
-#include "score/mw/com/impl/tracing/test/runtime_mock_guard.h"
+#include "score/mw/com/impl/test/runtime_mock_guard.h"
 #include "score/mw/com/impl/tracing/tracing_runtime_mock.h"
 
 #include <gmock/gmock.h>
@@ -150,7 +150,7 @@ class SkeletonBaseTracingFixture : public ::testing::Test
     }
 
     RuntimeMock runtime_mock_{};
-    tracing::RuntimeMockGuard runtime_mock_guard_{runtime_mock_};
+    RuntimeMockGuard runtime_mock_guard_{runtime_mock_};
     ServiceDiscoveryMock service_discovery_mock_{};
 
     mock_binding::Skeleton* binding_mock_{nullptr};

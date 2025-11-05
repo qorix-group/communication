@@ -49,10 +49,25 @@ cc_library(
 
 cc_library(
     name = "dummy_instance_identifier_builder",
+    testonly = True,
     srcs = ["dummy_instance_identifier_builder.cpp"],
     hdrs = ["dummy_instance_identifier_builder.h"],
     features = COMPILER_WARNING_FEATURES,
     implementation_deps = ["@score_baselibs//score/language/futurecpp"],
     visibility = ["//score/mw/com/impl:__subpackages__"],
     deps = ["//score/mw/com/impl"],
+)
+
+cc_library(
+    name = "runtime_mock_guard",
+    testonly = True,
+    srcs = ["runtime_mock_guard.cpp"],
+    hdrs = ["runtime_mock_guard.h"],
+    features = COMPILER_WARNING_FEATURES,
+    implementation_deps = [],
+    visibility = ["//score/mw/com/impl:__subpackages__"],
+    deps = [
+        "//score/mw/com/impl:runtime",
+        "//score/mw/com/impl:runtime_mock",
+    ],
 )

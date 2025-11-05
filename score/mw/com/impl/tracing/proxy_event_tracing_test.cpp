@@ -18,7 +18,7 @@
 #include "score/mw/com/impl/plumbing/sample_ptr.h"
 #include "score/mw/com/impl/service_element_type.h"
 #include "score/mw/com/impl/tracing/proxy_event_tracing_data.h"
-#include "score/mw/com/impl/tracing/test/runtime_mock_guard.h"
+#include "score/mw/com/impl/test/runtime_mock_guard.h"
 #include "score/mw/com/impl/tracing/trace_error.h"
 #include "score/mw/com/impl/tracing/tracing_runtime_mock.h"
 

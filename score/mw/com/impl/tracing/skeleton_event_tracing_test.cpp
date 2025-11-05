@@ -26,7 +26,7 @@
 #include "score/mw/com/impl/tracing/configuration/skeleton_field_trace_point_type.h"
 #include "score/mw/com/impl/tracing/configuration/tracing_filter_config_mock.h"
 #include "score/mw/com/impl/tracing/skeleton_event_tracing_data.h"
-#include "score/mw/com/impl/tracing/test/runtime_mock_guard.h"
+#include "score/mw/com/impl/test/runtime_mock_guard.h"
 #include "score/mw/com/impl/tracing/trace_error.h"
 #include "score/mw/com/impl/tracing/tracing_runtime_mock.h"
 

@@ -359,7 +359,7 @@ cc_gtest_unit_test(
     deps = [
         ":tracing_filter_config_mock",
         ":tracing_filter_config_parser",
-        "//score/mw/com/impl/tracing/test:runtime_mock_guard",
+        "//score/mw/com/impl/test:runtime_mock_guard",
     ],
 )
 

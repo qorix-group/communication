@@ -17,7 +17,7 @@
 #include "score/mw/com/impl/test/binding_factory_resources.h"
 #include "score/mw/com/impl/test/proxy_resources.h"
 #include "score/mw/com/impl/tracing/configuration/tracing_filter_config_mock.h"
-#include "score/mw/com/impl/tracing/test/runtime_mock_guard.h"
+#include "score/mw/com/impl/test/runtime_mock_guard.h"
 #include "score/mw/com/impl/tracing/trace_error.h"
 #include "score/mw/com/impl/tracing/tracing_runtime_mock.h"
 
@@ -206,7 +206,7 @@ class ProxyEventTracingFixture : public ::testing::Test
 
     ProxyServiceElementBindingFactoryMockGuard proxy_service_element_binding_factory_mock_guard_{};
     std::unique_ptr<ProxyType> proxy_{nullptr};
-    tracing::RuntimeMockGuard runtime_mock_guard_{};
+    RuntimeMockGuard runtime_mock_guard_{};
     tracing::TracingFilterConfigMock tracing_filter_config_mock_{};
     mock_binding::ProxyEvent<TestSampleType>* mock_proxy_event_binding_{nullptr};
 };
