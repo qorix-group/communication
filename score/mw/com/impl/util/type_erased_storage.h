@@ -105,14 +105,39 @@ auto Deserialize(MemoryBufferAccessor& src_buffer) -> std::tuple<typename std::a
 template <typename T>
 void SerializeArgs(MemoryBufferAccessor& target_buffer, T arg)
 {
-    auto dest_ptr =
+    auto* dest_ptr =
         static_cast<void*>(score::memory::shared::AddOffsetToPointer(target_buffer.buffer.data(), target_buffer.offset));
     const std::size_t buffer_space_before_align = target_buffer.buffer.size() - target_buffer.offset;
     std::size_t buffer_space_after_align = buffer_space_before_align;
     dest_ptr = std::align(alignof(T), sizeof(T), dest_ptr, buffer_space_after_align);
-    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(dest_ptr, "Buffer too small");
+
+    const auto AreRegionsOverlapping = [](MemoryBufferAccessor& destination_buffer, T source_object) {
+        using memory::shared::CastPointerToInteger;
+        using memory::shared::AddOffsetToPointer;
+        const auto target_buffer_start_address = CastPointerToInteger(destination_buffer.buffer.data());
+        const auto target_buffer_end_address = CastPointerToInteger(
+            AddOffsetToPointer(destination_buffer.buffer.data(), destination_buffer.buffer.size()));
+        const auto arg_start_address = CastPointerToInteger(&source_object);
+        const auto arg_end_address = CastPointerToInteger(AddOffsetToPointer(&source_object, sizeof(source_object)));
+
+        const bool is_arg_before_target_buffer = arg_end_address < target_buffer_start_address;
+        const bool is_arg_after_target_buffer = arg_start_address > target_buffer_end_address;
+        return !(is_arg_before_target_buffer || is_arg_after_target_buffer);
+    };
+    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(dest_ptr != nullptr, "Buffer too small");
+    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(!AreRegionsOverlapping(target_buffer, arg), "arg is already inside target_buffer!");
     static_assert(std::is_trivially_copyable_v<T>, "std::memcpy assumes that type T is trivially copyable!");
+    // NOLINTBEGIN(score-banned-function): Since the output buffer is type erased, we must do a memcpy rather than an
+    // explicit copy using the copy constructor of type T.
+    // - We have a static assert that T is trivially copyable to ensure that there are no side effects of a copy
+    // constructor which are missed by using memcpy.
+    // - We have an assertion that dest_ptr is not a nullptr. The source pointer is the address of arg so cannot be a
+    // nullptr.
+    // - We ensure that dest_ptr is aligned with T above (in std::align).
+    // - We ensure that arg will fit inside the destination buffer (in std::align).
+    // - We ensure that the destination buffer and source object don't overlap (in AreRegionsOverlapping).
     std::memcpy(dest_ptr, &arg, sizeof(T));
+    // NOLINTEND(score-banned-function)
 
     const auto additional_buffer_used = buffer_space_before_align - buffer_space_after_align;
     target_buffer.offset += sizeof(T) + additional_buffer_used;
