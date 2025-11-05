@@ -21,9 +21,11 @@
 #include <score/span.hpp>
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdlib>
 #include <cstring>
 #include <memory>
+#include <tuple>
 #include <type_traits>
 
 namespace score::mw::com::impl
@@ -38,9 +40,10 @@ namespace detail
 // another struct or class, (4) not inherit from another struct or class.".
 // Rationale: No point of this rule is violated. We are providing a specific ctor, not the default ctor!
 // coverity[autosar_cpp14_a11_0_2_violation]
-struct MemoryBufferAccessor
+class MemoryBufferAccessor
 {
-    MemoryBufferAccessor(score::cpp::span<std::byte> input_buffer) : buffer{input_buffer}, offset{0U} {}
+  public:
+    explicit MemoryBufferAccessor(const score::cpp::span<std::byte> input_buffer) : buffer{input_buffer}, offset{0U} {}
     // Suppress "AUTOSAR C++14 M11-0-1" rule findings. This rule states: "Member data in non-POD class types
     // shall be private.". This struct is a POD class!
     // coverity[autosar_cpp14_m11_0_1_violation]
