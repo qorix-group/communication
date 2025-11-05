@@ -776,6 +776,7 @@ cc_gtest_unit_test(
         "//score/mw/com/impl:runtime",
         "//score/mw/com/impl:runtime_mock",
         "//score/mw/com/impl/bindings/mock_binding/tracing:tracing_runtime",
+        "//score/mw/com/impl/test:runtime_mock_guard",
         "//score/mw/com/impl/tracing:tracing_runtime_mock",
     ],
 )
@@ -914,6 +915,7 @@ cc_gtest_unit_test(
         "//score/mw/com/impl:runtime_mock",
         "//score/mw/com/impl/bindings/lola/messaging:message_passing_service_mock",
         "//score/mw/com/impl/bindings/lola/test:transaction_log_test_resources",
+        "//score/mw/com/impl/test:runtime_mock_guard",
         "@score_baselibs//score/memory/shared:shared_memory_resource_heap_allocator_mock",
     ],
 )
@@ -1140,6 +1142,7 @@ cc_gtest_unit_test(
     deps = [
         "//score/mw/com/impl/bindings/lola:runtime_mock",
         "//score/mw/com/impl/bindings/lola/test:transaction_log_test_resources",
+        "//score/mw/com/impl/test:runtime_mock_guard",
     ],
 )
 

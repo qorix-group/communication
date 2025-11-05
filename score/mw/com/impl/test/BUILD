@@ -65,7 +65,7 @@ cc_library(
     hdrs = ["runtime_mock_guard.h"],
     features = COMPILER_WARNING_FEATURES,
     implementation_deps = [],
-    visibility = ["//score/mw/com/impl:__subpackages__"],
+    visibility = ["//score/mw/com:__subpackages__"],
     deps = [
         "//score/mw/com/impl:runtime",
         "//score/mw/com/impl:runtime_mock",

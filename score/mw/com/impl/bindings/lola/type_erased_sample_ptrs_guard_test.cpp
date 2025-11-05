@@ -15,6 +15,7 @@
 #include "score/mw/com/impl/bindings/mock_binding/tracing/tracing_runtime.h"
 #include "score/mw/com/impl/runtime.h"
 #include "score/mw/com/impl/runtime_mock.h"
+#include "score/mw/com/impl/test/runtime_mock_guard.h"
 #include "score/mw/com/impl/tracing/tracing_runtime_mock.h"
 
 #include <gtest/gtest.h>
@@ -34,32 +35,17 @@ TracingSlotSizeType kNumberOfServiceElementTracingSlots{10U};
 const impl::tracing::ServiceElementTracingData kDummyServiceElementTracingData{kSamplePointerIndex,
                                                                                kNumberOfServiceElementTracingSlots};
 
-class RuntimeMockGuard
-{
-  public:
-    RuntimeMockGuard() noexcept
-    {
-        impl::Runtime::InjectMock(&mock_);
-    }
-    ~RuntimeMockGuard() noexcept
-    {
-        impl::Runtime::InjectMock(nullptr);
-    }
-
-    NiceMock<impl::RuntimeMock> mock_{};
-};
-
 class TypeErasedSamplePtrsGuardFixture : public ::testing::Test
 {
   public:
     TypeErasedSamplePtrsGuardFixture()
     {
-        ON_CALL(runtime_mock_.mock_, GetTracingRuntime()).WillByDefault(Return(&tracing_runtime_mock_));
+        ON_CALL(runtime_mock_guard_.runtime_mock_, GetTracingRuntime()).WillByDefault(Return(&tracing_runtime_mock_));
         ON_CALL(tracing_runtime_mock_, GetTracingRuntimeBinding(BindingType::kLoLa))
             .WillByDefault(ReturnRef(tracing_runtime_binding_mock_));
     }
 
-    RuntimeMockGuard runtime_mock_{};
+    RuntimeMockGuard runtime_mock_guard_{};
     NiceMock<impl::tracing::TracingRuntimeMock> tracing_runtime_mock_{};
     impl::tracing::mock_binding::TracingRuntime tracing_runtime_binding_mock_{};
 };
@@ -81,7 +67,7 @@ TEST_F(TypeErasedSamplePtrsGuardFixture, WillNotCallClearTypeErasedSamplePtrsOnD
     TypeErasedSamplePtrsGuard unit{kDummyServiceElementTracingData};
 
     // Expecting that GetTracingRuntime is called once and returns a nullptr
-    EXPECT_CALL(runtime_mock_.mock_, GetTracingRuntime()).WillOnce(Return(nullptr));
+    EXPECT_CALL(runtime_mock_guard_.runtime_mock_, GetTracingRuntime()).WillOnce(Return(nullptr));
 
     // Expecting that ClearTypeErasedSamplePtrs won't be called on the TracingRuntime
     EXPECT_CALL(tracing_runtime_binding_mock_, ClearTypeErasedSamplePtrs(kDummyServiceElementTracingData)).Times(0);

@@ -29,6 +29,7 @@
 #include "score/mw/com/impl/runtime.h"
 #include "score/mw/com/impl/runtime_mock.h"
 #include "score/mw/com/impl/service_discovery_mock.h"
+#include "score/mw/com/impl/test/runtime_mock_guard.h"
 #include "score/mw/com/impl/tracing/i_tracing_runtime_binding.h"
 
 #include "score/memory/shared/shared_memory_factory.h"
@@ -141,21 +142,6 @@ class LolaRuntimeMock : public IRuntime
 
   private:
     MessagePassingPtr<IMessagePassingService> message_passing_service_{};
-};
-
-class RuntimeMockGuard
-{
-  public:
-    RuntimeMockGuard()
-    {
-        impl::Runtime::InjectMock(&mock_);
-    }
-    ~RuntimeMockGuard()
-    {
-        impl::Runtime::InjectMock(nullptr);
-    }
-
-    ::testing::NiceMock<impl::RuntimeMock> mock_;
 };
 
 class SharedMemoryFactoryGuard

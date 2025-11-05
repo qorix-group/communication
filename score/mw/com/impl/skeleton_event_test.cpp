@@ -15,6 +15,7 @@
 #include "score/mw/com/impl/runtime.h"
 #include "score/mw/com/impl/runtime_mock.h"
 #include "score/mw/com/impl/test/binding_factory_resources.h"
+#include "score/mw/com/impl/test/runtime_mock_guard.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -59,21 +60,6 @@ class MyDummySkeleton final : public SkeletonBase
     using SkeletonBase::SkeletonBase;
 
     SkeletonEvent<TestSampleType> my_dummy_event_{*this, kEventName};
-};
-
-class RuntimeMockGuard
-{
-  public:
-    RuntimeMockGuard()
-    {
-        Runtime::InjectMock(&runtime_mock_);
-    }
-    ~RuntimeMockGuard()
-    {
-        Runtime::InjectMock(nullptr);
-    }
-
-    RuntimeMock runtime_mock_;
 };
 
 TEST(SkeletonEventTest, NotCopyable)

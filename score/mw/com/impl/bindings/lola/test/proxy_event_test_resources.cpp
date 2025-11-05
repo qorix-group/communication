@@ -57,10 +57,10 @@ void ProxyEventCommonAttorney::InjectSlotCollector(SlotCollector&& slot_collecto
 
 ProxyMockedMemoryFixture::ProxyMockedMemoryFixture() noexcept
 {
-    ON_CALL(runtime_mock_.mock_, GetBindingRuntime(BindingType::kLoLa))
+    ON_CALL(runtime_mock_.runtime_mock_, GetBindingRuntime(BindingType::kLoLa))
         .WillByDefault(::testing::Return(&binding_runtime_));
     ON_CALL(binding_runtime_, GetPid()).WillByDefault(::testing::Return(kDummyPid));
-    ON_CALL(runtime_mock_.mock_, GetServiceDiscovery()).WillByDefault(ReturnRef(service_discovery_mock_));
+    ON_CALL(runtime_mock_.runtime_mock_, GetServiceDiscovery()).WillByDefault(ReturnRef(service_discovery_mock_));
 
     ExpectControlSegmentOpened();
     ExpectDataSegmentOpened();

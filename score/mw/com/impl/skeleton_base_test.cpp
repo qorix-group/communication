@@ -19,6 +19,7 @@
 #include "score/mw/com/impl/skeleton_event.h"
 #include "score/mw/com/impl/skeleton_field.h"
 #include "score/mw/com/impl/test/binding_factory_resources.h"
+#include "score/mw/com/impl/test/runtime_mock_guard.h"
 
 #include <score/utility.hpp>
 
@@ -59,22 +60,6 @@ class MyDummySkeleton final : public SkeletonBase
     SkeletonField<TestSampleType> dummy_field{*this, kDummyFieldName};
 };
 
-class RuntimeMockGuard
-{
-  public:
-    RuntimeMockGuard(RuntimeMock& runtime_mock) noexcept : runtime_mock_{runtime_mock}
-    {
-        Runtime::InjectMock(&runtime_mock_);
-    }
-
-    ~RuntimeMockGuard()
-    {
-        Runtime::InjectMock(nullptr);
-    }
-
-    RuntimeMock& runtime_mock_;
-};
-
 mock_binding::Skeleton* GetMockBinding(MyDummySkeleton& skeleton) noexcept
 {
     auto* const binding_mock_raw = SkeletonBaseView{skeleton}.GetBinding();
@@ -86,7 +71,8 @@ class SkeletonBaseFixture : public ::testing::Test
   public:
     void SetUp() override
     {
-        ON_CALL(runtime_mock_, GetServiceDiscovery()).WillByDefault(ReturnRef(service_discovery_mock_));
+        ON_CALL(runtime_mock_guard_.runtime_mock_, GetServiceDiscovery())
+            .WillByDefault(ReturnRef(service_discovery_mock_));
     }
 
     InstanceIdentifier GetInstanceIdentifierWithValidBinding()
@@ -131,7 +117,7 @@ class SkeletonBaseFixture : public ::testing::Test
 
     void CreateSkeleton(const InstanceIdentifier& instance_identifier) noexcept
     {
-        ON_CALL(runtime_mock_, GetTracingFilterConfig()).WillByDefault(Return(nullptr));
+        ON_CALL(runtime_mock_guard_.runtime_mock_, GetTracingFilterConfig()).WillByDefault(Return(nullptr));
 
         // Expect that both events and the field are created with mock bindings
         ExpectEventCreation(instance_identifier);
@@ -182,8 +168,7 @@ class SkeletonBaseFixture : public ::testing::Test
         InstanceSpecifier::Create("abc/abc/TirePressurePort/invalid_instance").value()};
 
     ServiceDiscoveryMock service_discovery_mock_{};
-    RuntimeMock runtime_mock_{};
-    RuntimeMockGuard runtime_mock_guard_{runtime_mock_};
+    RuntimeMockGuard runtime_mock_guard_{};
 
     mock_binding::Skeleton* binding_mock_{nullptr};
     mock_binding::SkeletonEvent<TestSampleType>* event_binding_mock_1_{nullptr};

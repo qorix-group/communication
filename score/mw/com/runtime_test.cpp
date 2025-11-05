@@ -16,12 +16,14 @@
 #include "score/mw/com/impl/instance_identifier.h"
 #include "score/mw/com/impl/runtime.h"
 #include "score/mw/com/impl/runtime_mock.h"
+#include "score/mw/com/impl/test/runtime_mock_guard.h"
 
 #include "score/mw/com/types.h"
 #include <score/jthread.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <cstdint>
+#include <string>
 #include <thread>
 
 #include <fstream>
@@ -36,7 +38,7 @@ using ::testing::Contains;
 using ::testing::Return;
 
 const auto kServiceSpecifierString = "abc/abc/TirePressurePort";
-const auto kInstanceSpecifier = InstanceSpecifier::Create(kServiceSpecifierString).value();
+const auto kInstanceSpecifier = InstanceSpecifier::Create(std::string{kServiceSpecifierString}).value();
 const auto kServiceIdentifier = impl::make_ServiceIdentifierType("foo", 13, 37);
 impl::LolaServiceInstanceId kLolaInstanceId{23U};
 impl::ServiceInstanceId kInstanceId{kLolaInstanceId};
@@ -48,25 +50,10 @@ std::uint16_t kServiceId{34U};
 const impl::ServiceTypeDeployment kTypeDeployment{impl::LolaServiceTypeDeployment{kServiceId}};
 const auto kInstanceIdWithLolaBinding = make_InstanceIdentifier(kDeploymentInfo, kTypeDeployment);
 
-class RuntimeMockGuard
-{
-  public:
-    RuntimeMockGuard() noexcept
-    {
-        impl::Runtime::InjectMock(&runtime_mock_);
-    }
-    ~RuntimeMockGuard() noexcept
-    {
-        impl::Runtime::InjectMock(nullptr);
-    }
-
-    impl::RuntimeMock runtime_mock_{};
-};
-
 class RuntimeTestFixture : public ::testing::Test
 {
   public:
-    RuntimeMockGuard runtime_mock_guard_{};
+    impl::RuntimeMockGuard runtime_mock_guard_{};
 };
 
 class RuntimeTestExternalJsonFixture : public ::testing::Test
@@ -167,7 +154,7 @@ TEST_F(RuntimeTestExternalJsonFixture, ResolveInstanceIdsIsThreadSafe)
     InitializeRuntime(num_test_args, test_args);
 
     // and an instance identifier and InstanceSpecifier derived from the configuration
-    const auto instance_specifier = InstanceSpecifier::Create("abc/abc/TirePressurePort").value();
+    const auto instance_specifier = InstanceSpecifier::Create(std::string{"abc/abc/TirePressurePort"}).value();
     auto instance_identifiers_result = score::mw::com::runtime::ResolveInstanceIDs(instance_specifier);
     ASSERT_TRUE(instance_identifiers_result.has_value());
     ASSERT_EQ(instance_identifiers_result.value().size(), 1);

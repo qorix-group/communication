@@ -23,6 +23,7 @@
 #include "score/mw/com/impl/runtime_mock.h"
 #include "score/mw/com/impl/scoped_event_receive_handler.h"
 #include "score/mw/com/impl/service_discovery_mock.h"
+#include "score/mw/com/impl/test/runtime_mock_guard.h"
 
 #include "score/language/safecpp/scoped_function/scope.h"
 
@@ -55,21 +56,6 @@ const ServiceInstanceDeployment kDeploymentInfo{kServiceIdentifier,
 std::uint16_t kServiceId{34U};
 const ServiceTypeDeployment kTypeDeployment{LolaServiceTypeDeployment{kServiceId}};
 const auto kInstanceIdWithLolaBinding = make_InstanceIdentifier(kDeploymentInfo, kTypeDeployment);
-
-class RuntimeMockGuard
-{
-  public:
-    RuntimeMockGuard()
-    {
-        Runtime::InjectMock(&runtime_mock_);
-    }
-    ~RuntimeMockGuard()
-    {
-        Runtime::InjectMock(nullptr);
-    }
-
-    RuntimeMock runtime_mock_;
-};
 
 class ProxyBaseFixture : public ::testing::Test
 {

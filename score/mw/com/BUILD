@@ -113,6 +113,7 @@ cc_gtest_unit_test(
         ":runtime",
         ":types",
         "//score/mw/com/impl:runtime_mock",
+        "//score/mw/com/impl/test:runtime_mock_guard",
         "@score_baselibs//score/mw/log",
     ],
 )

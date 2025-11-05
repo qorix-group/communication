@@ -22,6 +22,7 @@
 #include "score/mw/com/impl/bindings/lola/test/transaction_log_test_resources.h"
 #include "score/mw/com/impl/runtime.h"
 #include "score/mw/com/impl/runtime_mock.h"
+#include "score/mw/com/impl/test/runtime_mock_guard.h"
 
 #include "score/memory/shared/shared_memory_resource_heap_allocator_mock.h"
 
@@ -52,27 +53,12 @@ constexpr std::size_t kNumberOfSlots{20U};
 constexpr std::size_t kMaxSubscribers{20U};
 const SkeletonEventProperties kDummySkeletonEventProperties{kNumberOfSlots, kMaxSubscribers, true};
 
-class RuntimeMockGuard
-{
-  public:
-    RuntimeMockGuard()
-    {
-        impl::Runtime::InjectMock(&mock_);
-    }
-    ~RuntimeMockGuard()
-    {
-        impl::Runtime::InjectMock(nullptr);
-    }
-
-    impl::RuntimeMock mock_;
-};
-
 class TransactionLogRollbackExecutorFixture : public ::testing::Test
 {
   protected:
     TransactionLogRollbackExecutorFixture() noexcept
     {
-        ON_CALL(runtime_mock_guard_.mock_, GetBindingRuntime(BindingType::kLoLa))
+        ON_CALL(runtime_mock_guard_.runtime_mock_, GetBindingRuntime(BindingType::kLoLa))
             .WillByDefault(Return(&lola_runtime_mock_));
         ON_CALL(lola_runtime_mock_, GetPid()).WillByDefault(Return(kDummyCurrentConsumerPid));
         ON_CALL(lola_runtime_mock_, GetLolaMessaging).WillByDefault(ReturnRef(message_passing_service_mock_));
@@ -338,7 +324,7 @@ TEST_F(TransactionLogRollbackExecutorMarkNeedRollbackDeathTest, FailingToGetLola
 {
     WithTransactionLogRollbackExecutor();
 
-    ON_CALL(runtime_mock_guard_.mock_, GetBindingRuntime(BindingType::kLoLa)).WillByDefault(Return(nullptr));
+    ON_CALL(runtime_mock_guard_.runtime_mock_, GetBindingRuntime(BindingType::kLoLa)).WillByDefault(Return(nullptr));
     EXPECT_DEATH(unit_->RollbackTransactionLogs(), ".*");
 }
 

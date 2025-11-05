@@ -21,6 +21,7 @@
 #include "score/mw/com/impl/runtime_mock.h"
 #include "score/mw/com/impl/test/binding_factory_resources.h"
 #include "score/mw/com/impl/test/proxy_resources.h"
+#include "score/mw/com/impl/test/runtime_mock_guard.h"
 
 #include <gtest/gtest.h>
 #include <memory>
@@ -111,21 +112,6 @@ class ProxyEventFixture : public ::testing::Test
     std::unique_ptr<MockProxyEventType> mock_proxy_event_ptr_;
     MockProxyEventType& mock_proxy_event_;
     ProxyEventType proxy_event_;
-};
-
-class RuntimeMockGuard
-{
-  public:
-    RuntimeMockGuard()
-    {
-        Runtime::InjectMock(&runtime_mock_);
-    }
-    ~RuntimeMockGuard()
-    {
-        Runtime::InjectMock(nullptr);
-    }
-
-    RuntimeMock runtime_mock_;
 };
 
 // Gtest will run all tests in the LolaProxyEventFixture once for every type, t, in MyTypes, such that TypeParam

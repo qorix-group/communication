@@ -32,6 +32,7 @@
 #include "score/mw/com/impl/service_discovery_mock.h"
 #include "score/mw/com/impl/test/binding_factory_resources.h"
 #include "score/mw/com/impl/test/dummy_instance_identifier_builder.h"
+#include "score/mw/com/impl/test/runtime_mock_guard.h"
 
 #include <score/utility.hpp>
 
@@ -104,21 +105,6 @@ ServiceTypeDeployment CreateServiceTypeDeploymentWithLolaBinding(const std::vect
     }
     return ServiceTypeDeployment{lola_service_type_deployment};
 }
-
-class RuntimeMockGuard
-{
-  public:
-    RuntimeMockGuard()
-    {
-        Runtime::InjectMock(&runtime_mock_);
-    }
-    ~RuntimeMockGuard()
-    {
-        Runtime::InjectMock(nullptr);
-    }
-
-    RuntimeMock runtime_mock_;
-};
 
 TEST(GenericProxyTest, NotCopyable)
 {

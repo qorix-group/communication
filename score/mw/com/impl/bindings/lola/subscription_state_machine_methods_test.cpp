@@ -59,7 +59,8 @@ class StateMachineMethodsFixture : public LolaProxyEventResources
 
     void SetUp() override
     {
-        ON_CALL(runtime_mock_.mock_, GetBindingRuntime(BindingType::kLoLa)).WillByDefault(Return(&binding_runtime_));
+        ON_CALL(runtime_mock_.runtime_mock_, GetBindingRuntime(BindingType::kLoLa))
+            .WillByDefault(Return(&binding_runtime_));
         EXPECT_EQ(state_machine_.GetCurrentState(), SubscriptionStateMachineState::NOT_SUBSCRIBED_STATE);
     }
 

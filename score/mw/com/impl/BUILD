@@ -837,6 +837,7 @@ cc_gtest_unit_test(
         "//score/mw/com/impl/bindings/mock_binding",
         "//score/mw/com/impl/test:binding_factory_resources",
         "//score/mw/com/impl/test:dummy_instance_identifier_builder",
+        "//score/mw/com/impl/test:runtime_mock_guard",
         "@score_baselibs//score/language/futurecpp",
     ],
 )
@@ -945,6 +946,7 @@ cc_test(
         "//score/mw/com/impl/plumbing:skeleton_field_binding_factory_mock",
         "//score/mw/com/impl/test:binding_factory_resources",
         "//score/mw/com/impl/test:proxy_resources",
+        "//score/mw/com/impl/test:runtime_mock_guard",
         "//score/mw/com/impl/tracing:tracing_test_resources",
         "@googletest//:gtest_main",
         "@score_baselibs//score/analysis/tracing/generic_trace_library/mock:trace_library_mock",

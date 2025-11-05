@@ -84,7 +84,7 @@ class ProxyWithRealMemFixture : public ::testing::Test
 
     void SetUp() override
     {
-        EXPECT_CALL(runtime_mock_.mock_, GetBindingRuntime(BindingType::kLoLa))
+        EXPECT_CALL(runtime_mock_.runtime_mock_, GetBindingRuntime(BindingType::kLoLa))
             .WillRepeatedly(::testing::Return(&lola_runtime_mock_));
         ON_CALL(lola_runtime_mock_, GetRollbackSynchronization())
             .WillByDefault(::testing::ReturnRef(rollback_synchronization_));
@@ -101,7 +101,7 @@ class ProxyWithRealMemFixture : public ::testing::Test
 
     ProxyWithRealMemFixture& WithAMockedServiceDiscovery()
     {
-        ON_CALL(runtime_mock_.mock_, GetServiceDiscovery())
+        ON_CALL(runtime_mock_.runtime_mock_, GetServiceDiscovery())
             .WillByDefault(::testing::ReturnRef(service_discovery_mock_));
         return *this;
     }
@@ -243,7 +243,7 @@ class ProxyServiceDiscoveryFixture : public ProxyWithRealMemFixture
 
     ProxyWithRealMemFixture& WithARealServiceDiscovery()
     {
-        ON_CALL(runtime_mock_.mock_, GetServiceDiscovery()).WillByDefault(ReturnRef(service_discovery_));
+        ON_CALL(runtime_mock_.runtime_mock_, GetServiceDiscovery()).WillByDefault(ReturnRef(service_discovery_));
         ON_CALL(lola_runtime_mock_, GetServiceDiscoveryClient()).WillByDefault(ReturnRef(service_discovery_client_));
 
         return *this;
@@ -265,7 +265,7 @@ class ProxyServiceDiscoveryFixture : public ProxyWithRealMemFixture
                                                      std::make_unique<os::InotifyInstanceImpl>(),
                                                      std::make_unique<os::internal::UnistdImpl>(),
                                                      filesystem_};
-    ServiceDiscovery service_discovery_{runtime_mock_.mock_};
+    ServiceDiscovery service_discovery_{runtime_mock_.runtime_mock_};
 };
 
 // Test to check that race condition in Ticket-169333 does not occur.

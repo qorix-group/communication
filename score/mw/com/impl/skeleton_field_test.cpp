@@ -15,6 +15,7 @@
 #include "score/mw/com/impl/runtime.h"
 #include "score/mw/com/impl/runtime_mock.h"
 #include "score/mw/com/impl/test/binding_factory_resources.h"
+#include "score/mw/com/impl/test/runtime_mock_guard.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -61,21 +62,6 @@ class MyDummySkeleton : public SkeletonBase
     using SkeletonBase::SkeletonBase;
 
     SkeletonField<TestSampleType> my_dummy_field_{*this, kFieldName};
-};
-
-class RuntimeMockGuard
-{
-  public:
-    RuntimeMockGuard()
-    {
-        Runtime::InjectMock(&runtime_mock_);
-    }
-    ~RuntimeMockGuard()
-    {
-        Runtime::InjectMock(nullptr);
-    }
-
-    RuntimeMock runtime_mock_;
 };
 
 TEST(SkeletonFieldTest, NotCopyable)

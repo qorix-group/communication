@@ -15,6 +15,7 @@
 #include "score/mw/com/impl/bindings/lola/runtime_mock.h"
 #include "score/mw/com/impl/bindings/lola/test/transaction_log_test_resources.h"
 #include "score/mw/com/impl/com_error.h"
+#include "score/mw/com/impl/test/runtime_mock_guard.h"
 
 #include "score/memory/shared/shared_memory_resource_heap_allocator_mock.h"
 
@@ -36,21 +37,6 @@ const std::size_t kNumberOfLogs{5U};
 const TransactionLog::MaxSampleCountType kSubscriptionMaxSampleCount{5U};
 const std::size_t kDummyNumberOfSlots{5U};
 const TransactionLogId kDummyTransactionLogId{10U};
-
-class RuntimeMockGuard
-{
-  public:
-    RuntimeMockGuard()
-    {
-        impl::Runtime::InjectMock(&mock_);
-    }
-    ~RuntimeMockGuard()
-    {
-        impl::Runtime::InjectMock(nullptr);
-    }
-
-    impl::RuntimeMock mock_;
-};
 
 class TransactionLogSetFixture : public TransactionLogSetHelperFixture
 {

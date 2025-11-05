@@ -10,23 +10,26 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#include "score/mw/com/impl/bindings/lola/event_data_control_composite.h"
 #include "score/mw/com/impl/bindings/lola/skeleton_event.h"
-#include "score/mw/com/impl/bindings/lola/test/skeleton_test_resources.h"
 
-#include "score/memory/shared/memory_resource_registry.h"
-#include "score/memory/shared/shared_memory_factory.h"
+#include "score/mw/com/impl/bindings/lola/event_data_control_composite.h"
 #include "score/mw/com/impl/bindings/lola/messaging/message_passing_service_mock.h"
 #include "score/mw/com/impl/bindings/lola/runtime_mock.h"
 #include "score/mw/com/impl/bindings/lola/shm_path_builder.h"
+#include "score/mw/com/impl/bindings/lola/test/skeleton_test_resources.h"
 #include "score/mw/com/impl/bindings/mock_binding/tracing/tracing_runtime.h"
 #include "score/mw/com/impl/runtime.h"
 #include "score/mw/com/impl/runtime_mock.h"
 #include "score/mw/com/impl/service_discovery_mock.h"
+#include "score/mw/com/impl/test/runtime_mock_guard.h"
 #include "score/mw/com/impl/tracing/tracing_runtime_mock.h"
+
+#include "score/memory/shared/memory_resource_registry.h"
+#include "score/memory/shared/shared_memory_factory.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+
 #include <memory>
 #include <string>
 #include <utility>
@@ -58,21 +61,6 @@ namespace
 {
 
 using SkeletonEventSampleType = std::uint32_t;
-
-class RuntimeMockGuard
-{
-  public:
-    RuntimeMockGuard() noexcept
-    {
-        impl::Runtime::InjectMock(&runtime_mock_);
-    }
-    ~RuntimeMockGuard() noexcept
-    {
-        impl::Runtime::InjectMock(nullptr);
-    }
-
-    impl::RuntimeMock runtime_mock_{};
-};
 
 template <std::size_t MaxSamples>
 class SkeletonEventComponentTestTemplateFixture : public ::testing::Test

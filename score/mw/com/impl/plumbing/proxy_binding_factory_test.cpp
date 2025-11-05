@@ -22,6 +22,7 @@
 #include "score/mw/com/impl/runtime_mock.h"
 #include "score/mw/com/impl/service_discovery_mock.h"
 #include "score/mw/com/impl/test/dummy_instance_identifier_builder.h"
+#include "score/mw/com/impl/test/runtime_mock_guard.h"
 
 #include <gtest/gtest.h>
 #include <memory>
@@ -36,37 +37,21 @@ namespace
 using ::testing::_;
 using ::testing::Return;
 
-class RuntimeMockGuard
-{
-  public:
-    RuntimeMockGuard(impl::RuntimeMock& runtime_mock) noexcept : runtime_mock_{runtime_mock}
-    {
-        impl::Runtime::InjectMock(&runtime_mock_);
-    }
-
-    ~RuntimeMockGuard()
-    {
-        impl::Runtime::InjectMock(nullptr);
-    }
-
-    impl::RuntimeMock& runtime_mock_;
-};
-
 class ProxyBindingFactoryRealMemoryFixture : public ::testing::Test
 {
   public:
     void SetUp() override
     {
-        score::mw::com::impl::Runtime::InjectMock(&runtime_mock_);
-        EXPECT_CALL(runtime_mock_, GetBindingRuntime(BindingType::kLoLa)).WillRepeatedly(Return(&lola_runtime_mock_));
+        score::mw::com::impl::Runtime::InjectMock(&runtime_mock_guard_.runtime_mock_);
+        EXPECT_CALL(runtime_mock_guard_.runtime_mock_, GetBindingRuntime(BindingType::kLoLa))
+            .WillRepeatedly(Return(&lola_runtime_mock_));
     }
 
     DummyInstanceIdentifierBuilder instance_identifier_builder_;
 
   protected:
     ProxyBindingFactoryMock proxy_binding_factory_mock_{};
-    impl::RuntimeMock runtime_mock_{};
-    RuntimeMockGuard runtime_mock_guard_{runtime_mock_};
+    RuntimeMockGuard runtime_mock_guard_{};
     lola::RuntimeMock lola_runtime_mock_{};
     os::MockGuard<os::FcntlMock> fcntl_mock_{};
 };
