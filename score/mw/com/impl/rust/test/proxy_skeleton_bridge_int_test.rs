@@ -68,7 +68,7 @@ fn test_skeleton_offer_service_integration() {
 
         // Initialize mw_com with the config file
         let config_path =
-            std::path::Path::new("score/mw/com/impl/rust/test/etc/mw_com_config.json");
+            std::path::Path::new("score/mw/com/example/ipc_bridge/etc/mw_com_config.json");
         proxy_bridge_rs::initialize(Some(config_path));
 
         println!("[Skeleton Thread] Creating instance specifier...");
@@ -134,7 +134,7 @@ fn test_proxy_subscribe_integration() {
     let proxy_thread = thread::spawn(|| {
         println!("[Proxy Thread] Initializing mw_com...");
         let config_path =
-            std::path::Path::new("score/mw/com/impl/rust/test/etc/mw_com_config.json");
+            std::path::Path::new("score/mw/com/example/ipc_bridge/etc/mw_com_config.json");
         proxy_bridge_rs::initialize(Some(config_path));
 
         println!("[Proxy Thread] Creating instance specifier...");
@@ -235,7 +235,7 @@ fn test_proxy_subscribe_with_handler_integration() {
     let proxy_thread = thread::spawn(|| {
         println!("[Handler Thread] Initializing mw_com...");
         let config_path =
-            std::path::Path::new("score/mw/com/impl/rust/test/etc/mw_com_config.json");
+            std::path::Path::new("score/mw/com/example/ipc_bridge/etc/mw_com_config.json");
         proxy_bridge_rs::initialize(Some(config_path));
 
         println!("[Handler Thread] Creating instance specifier...");
@@ -351,7 +351,7 @@ fn test_multiple_proxies_subscribe_integration() {
         let proxy_thread = thread::spawn(|| {
             println!("[Proxy Thread] Initializing mw_com...");
             let config_path =
-                std::path::Path::new("score/mw/com/impl/rust/test/etc/mw_com_config.json");
+                std::path::Path::new("score/mw/com/example/ipc_bridge/etc/mw_com_config.json");
             proxy_bridge_rs::initialize(Some(config_path));
 
             println!("[Proxy Thread] Creating instance specifier...");

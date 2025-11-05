@@ -16,7 +16,7 @@ load("@rules_rust//rust:defs.bzl", "rust_test")
 rust_test(
     name = "proxy_bridge_integration_test",
     srcs = ["proxy_skeleton_bridge_int_test.rs"],
-    data = ["etc/mw_com_config.json"],
+    data = ["//score/mw/com/example/ipc_bridge:etc/mw_com_config.json"],
     tags = ["manual"],
     visibility = [
         "//score/mw/com:__subpackages__",

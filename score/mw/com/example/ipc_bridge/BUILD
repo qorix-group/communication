@@ -99,3 +99,7 @@ cc_library(
         "//score/mw/com/impl/rust:bridge_macros",
     ],
 )
+
+exports_files([
+    "etc/mw_com_config.json",
+])

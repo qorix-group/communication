@@ -20,7 +20,7 @@ bazel test --config=spp_host_gcc --test_output=streamed --nocache_test_results -
 
 The tests require a configuration file located at:
 ```
-score/mw/com/impl/rust/test/etc/mw_com_config.json
+score/mw/com/example/ipc_bridge/etc/mw_com_config.json
 ```
 
 Make sure this file exists and has appropriate permissions before running the tests.
