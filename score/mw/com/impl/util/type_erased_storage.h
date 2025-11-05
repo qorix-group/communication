@@ -108,6 +108,7 @@ void SerializeArgs(MemoryBufferAccessor& target_buffer, T arg)
     std::size_t buffer_space_after_align = buffer_space_before_align;
     dest_ptr = std::align(alignof(T), sizeof(T), dest_ptr, buffer_space_after_align);
     SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(dest_ptr, "Buffer too small");
+    static_assert(std::is_trivially_copyable_v<T>, "std::memcpy assumes that type T is trivially copyable!");
     std::memcpy(dest_ptr, &arg, sizeof(T));
 
     const auto additional_buffer_used = buffer_space_before_align - buffer_space_after_align;
