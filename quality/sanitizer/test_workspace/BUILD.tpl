@@ -15,3 +15,8 @@ cc_test(
     name = "asan_fail_heap_out_of_bounds",
     srcs = ["asan_fail_heap_out_of_bounds.cpp"],
 )
+
+cc_test(
+    name = "tsan_fail_data_race",
+    srcs = ["tsan_fail_data_race.cpp"],
+)

@@ -19,6 +19,7 @@ sh_test(
         "test_workspace/BUILD.tpl",
         "test_workspace/MODULE.bazel",
         "test_workspace/asan_fail_heap_out_of_bounds.cpp",
+        "test_workspace/tsan_fail_data_race.cpp",
     ],
     env_inherit = [
         "PATH",
@@ -27,7 +28,7 @@ sh_test(
     ],
     tags = [
         "local",  # Test marked local because it uses bazel.
-        "manual", # Due to long-runtime and local dependencies
+        "manual",  # Due to long-runtime and local dependencies
     ],
     deps = ["@bazel_tools//tools/bash/runfiles"],
 )
