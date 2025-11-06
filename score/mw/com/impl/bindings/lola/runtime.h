@@ -22,6 +22,7 @@
 
 #include "score/concurrency/executor.h"
 
+#include "score/mw/com/impl/configuration/global_configuration.h"
 #include <score/stop_token.hpp>
 
 #include <memory>
@@ -81,7 +82,7 @@ class Runtime final : public IRuntime
 
     pid_t GetPid() const noexcept override;
 
-    std::uint32_t GetApplicationId() const noexcept override;
+    GlobalConfiguration::ApplicationId GetApplicationId() const noexcept override;
 
   private:
     const Configuration& configuration_;

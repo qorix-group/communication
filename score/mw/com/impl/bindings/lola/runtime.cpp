@@ -194,7 +194,7 @@ pid_t Runtime::GetPid() const noexcept
     return pid_;
 }
 
-std::uint32_t Runtime::GetApplicationId() const noexcept
+GlobalConfiguration::ApplicationId Runtime::GetApplicationId() const noexcept
 {
     return application_id_;
 }

@@ -15,6 +15,7 @@
 
 #include "score/mw/com/impl/bindings/lola/messaging/i_message_passing_service.h"
 #include "score/mw/com/impl/bindings/lola/rollback_synchronization.h"
+#include "score/mw/com/impl/configuration/global_configuration.h"
 #include "score/mw/com/impl/configuration/shm_size_calc_mode.h"
 #include "score/mw/com/impl/i_runtime_binding.h"
 
@@ -45,8 +46,9 @@ class IRuntime : public impl::IRuntimeBinding
 
     /// \brief We need our PID in several locations/frequently. So the runtime shall provide/cache it.
     virtual pid_t GetPid() const noexcept = 0;
+
     /// \brief We need our Application ID in several locations/frequently. So the runtime shall provide/cache it.
-    virtual std::uint32_t GetApplicationId() const noexcept = 0;
+    virtual GlobalConfiguration::ApplicationId GetApplicationId() const noexcept = 0;
 
   protected:
     IRuntime(IRuntime&&) noexcept = default;

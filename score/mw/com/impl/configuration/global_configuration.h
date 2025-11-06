@@ -27,6 +27,8 @@ namespace score::mw::com::impl
 class GlobalConfiguration final
 {
   public:
+    using ApplicationId = std::uint32_t;
+
     // default value for ASIL-QM and ASIL-B receive message queue sizes.
     static constexpr std::int32_t DEFAULT_MIN_NUM_MESSAGES_RX_QUEUE{10};
     // default value for ASIL-B send message queue sizes.
@@ -70,12 +72,12 @@ class GlobalConfiguration final
         return process_asil_level_;
     }
 
-    void SetApplicationId(const std::uint32_t application_id)
+    void SetApplicationId(const ApplicationId application_id)
     {
         application_id_ = application_id;
     }
 
-    score::cpp::optional<std::uint32_t> GetApplicationId() const
+    score::cpp::optional<ApplicationId> GetApplicationId() const
     {
         return application_id_;
     }
