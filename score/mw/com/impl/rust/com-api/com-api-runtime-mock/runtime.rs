@@ -28,20 +28,17 @@ use std::path::Path;
 use std::sync::atomic::AtomicUsize;
 
 use com_api_concept::{
-    Builder, ConsumerBuilder, ConsumerDescriptor, InstanceSpecifier, Interface, Reloc, Runtime,
+    Builder, Consumer, ConsumerBuilder, ConsumerDescriptor, InstanceSpecifier, Interface, Reloc, Runtime,
     SampleContainer, ServiceDiscovery, Subscriber, Subscription,
 };
 
 pub struct MockRuntimeImpl {}
 
 impl Runtime for MockRuntimeImpl {
-    type Sample<'a, T: Reloc + Send + 'a + std::fmt::Debug> = Sample<'a, T>;
-}
+    type ConsumerDiscovery<I: Interface> = SampleConsumerDiscovery<I>;
+    type Subscriber<T: Reloc + Send> = SubscribableImpl<T>;
 
-impl MockRuntimeImpl {
-    // TODO: Any chance that these can be moved to a trait so that this becomes more testable?
-    // If yes, this trait is certainly located here since
-    pub fn find_service<I: Interface>(
+    fn find_service<I: Interface>(
         &self,
         _instance_specifier: InstanceSpecifier,
     ) -> SampleConsumerDiscovery<I> {
@@ -49,7 +46,10 @@ impl MockRuntimeImpl {
             _interface: PhantomData,
         }
     }
+}
 
+impl MockRuntimeImpl {
+  // This one also need to move to the com-api-concept crate
     pub fn producer_builder<I: Interface>(
         &self,
         instance_specifier: InstanceSpecifier,
@@ -235,7 +235,9 @@ impl<T> Default for SubscribableImpl<T> {
 
 impl<T: Reloc + Send> Subscriber<T> for SubscribableImpl<T> {
     type Subscription = SubscriberImpl<T>;
-
+    fn new() -> Self {
+        todo!()
+    }
     fn subscribe(self, _max_num_samples: usize) -> com_api_concept::Result<Self::Subscription> {
         Ok(SubscriberImpl::new())
     }
@@ -391,6 +393,14 @@ pub struct SampleConsumerBuilder<I: Interface> {
 impl<I: Interface> ConsumerDescriptor<MockRuntimeImpl> for SampleConsumerBuilder<I> {
     fn get_instance_id(&self) -> usize {
         todo!()
+    }
+}
+
+impl<I: Interface> ConsumerBuilder<I, MockRuntimeImpl> for SampleConsumerBuilder<I> {}
+
+impl<I: Interface> Builder<I::Consumer<MockRuntimeImpl>> for SampleConsumerBuilder<I> {
+    fn build(self) -> com_api_concept::Result<I::Consumer<MockRuntimeImpl>> {
+        Ok(Consumer::new(self.instance_specifier))
     }
 }
 

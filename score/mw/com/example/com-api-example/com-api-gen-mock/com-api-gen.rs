@@ -25,7 +25,6 @@
 //! ```
 
 use com_api::*;
-use com_api_runtime_mock::{MockRuntimeImpl, SampleConsumerBuilder, SampleProducerBuilder};
 
 #[derive(Debug)]
 pub struct Tire {}
@@ -37,11 +36,25 @@ unsafe impl Reloc for Exhaust {}
 pub struct VehicleInterface {}
 
 /// Generic
-impl Interface for VehicleInterface {}
+impl Interface for VehicleInterface {
+    type Consumer<R: Runtime + ?Sized> = VehicleConsumer<R>;
+}
+
+pub struct VehicleConsumer<R: Runtime + ?Sized> {
+    pub left_tire: R::Subscriber<Tire>,
+    pub exhaust: R::Subscriber<Exhaust>,
+}
+
+impl<R: Runtime + ?Sized> Consumer for VehicleConsumer<R> {
+    fn new(_instance_specifier: com_api::InstanceSpecifier) -> Self {
+        VehicleConsumer {
+            left_tire: R::Subscriber::new(),
+            exhaust: R::Subscriber::new(),
+        }
+    }
+}
 
 pub struct AnotherInterface {}
-
-impl Interface for AnotherInterface {}
 
 pub struct VehicleProducer {}
 
@@ -67,7 +80,7 @@ impl OfferedProducer for VehicleOfferedProducer {
         VehicleProducer {}
     }
 }
-
+/*
 impl Builder<VehicleProducer> for SampleProducerBuilder<VehicleInterface> {
     fn build(self) -> com_api::Result<VehicleProducer> {
         todo!()
@@ -93,3 +106,4 @@ impl Builder<VehicleConsumer> for SampleConsumerBuilder<VehicleInterface> {
         todo!()
     }
 }
+*/

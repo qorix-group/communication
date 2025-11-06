@@ -29,9 +29,8 @@ rust_test(
     crate = ":com-api-example",
     tags = ["manual"],
     deps = [
-        "//score/mw/com/impl/rust/com-api",
-        "//score/mw/com/impl/rust/com-api-gen",
-        "//score/mw/com/impl/rust/com-api-runtime",
+        "//score/mw/com/example/com-api-example/com-api-gen:com-api-gen-mock-variant",
+        "//score/mw/com/impl/rust/com-api/com-api:com-api-mock",
         "@crate_index//:tokio",
     ],
 )

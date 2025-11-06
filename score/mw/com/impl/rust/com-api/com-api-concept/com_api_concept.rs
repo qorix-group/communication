@@ -72,7 +72,13 @@ pub trait Builder<Output> {
 /// This represents the com implementation and acts as a root for all types and objects provided by
 /// the implementation.
 pub trait Runtime {
-    type Sample<'a, T: Reloc + Send + std::fmt::Debug + 'a>: Sample<T>;
+    type ConsumerDiscovery<I: Interface>: ServiceDiscovery<I, Self>;
+    type Subscriber<T: Reloc + Send>: Subscriber<T>;
+
+    fn find_service<I: Interface>(
+        &self,
+        _instance_specifier: InstanceSpecifier,
+    ) -> Self::ConsumerDiscovery<I>;
 }
 
 pub trait RuntimeBuilder<B>: Builder<B>
@@ -126,7 +132,10 @@ impl TryFrom<&str> for InstanceSpecifier {
 
 impl AsRef<str> for InstanceSpecifier {
     fn as_ref(&self) -> &str {
-        self.specifier.as_ref().map(String::as_str).unwrap_or("[ANY]")
+        self.specifier
+            .as_ref()
+            .map(String::as_str)
+            .unwrap_or("[ANY]")
     }
 }
 
@@ -215,7 +224,9 @@ where
     fn as_mut_ptr(&mut self) -> *mut T;
 }
 
-pub trait Interface {}
+pub trait Interface {
+    type Consumer<R: Runtime + ?Sized>: Consumer;
+}
 
 #[must_use = "if a service is offered it will be unoffered and dropped immediately, causing unexpected behavior in the system"]
 pub trait OfferedProducer {
@@ -249,14 +260,16 @@ where
     }
 }
 
-pub trait Consumer {}
+pub trait Consumer {
+    fn new(instance: InstanceSpecifier) -> Self;
+}
 
 pub trait ProducerBuilder<I: Interface, R: Runtime, P: Producer<Interface = I>>:
     Builder<P>
 {
 }
 
-pub trait ServiceDiscovery<I: Interface, R: Runtime> {
+pub trait ServiceDiscovery<I: Interface, R: Runtime + ?Sized> {
     type ConsumerBuilder: ConsumerBuilder<I, R>;
     type ServiceEnumerator: IntoIterator<Item = Self::ConsumerBuilder>;
 
@@ -264,15 +277,18 @@ pub trait ServiceDiscovery<I: Interface, R: Runtime> {
     // TODO: Provide an async stream for newly available services / ServiceDescriptors
 }
 
-pub trait ConsumerDescriptor<R: Runtime> {
+pub trait ConsumerDescriptor<R: Runtime + ?Sized> {
     fn get_instance_id(&self) -> usize; // TODO: Turn return type into separate type
 }
 
-pub trait ConsumerBuilder<I: Interface, R: Runtime>: ConsumerDescriptor<R> {}
+pub trait ConsumerBuilder<I: Interface, R: Runtime + ?Sized>:
+    ConsumerDescriptor<R> + Builder<I::Consumer<R>>
+{
+}
 
 pub trait Subscriber<T: Reloc + Send> {
     type Subscription: Subscription<T>;
-
+    fn new() -> Self;
     fn subscribe(self, max_num_samples: usize) -> Result<Self::Subscription>;
 }
 

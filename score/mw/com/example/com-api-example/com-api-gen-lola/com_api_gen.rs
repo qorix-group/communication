@@ -24,12 +24,7 @@
 //!
 //! ```
 
-use com_api::{
-    Builder, Consumer, ConsumerBuilder, Interface, OfferedProducer, Producer, ProducerBuilder,
-    Reloc,
-};
-use com_api_runtime_lola::LolaRuntimeImpl;
-use com_api_runtime_lola::{SampleConsumerBuilder, SampleProducerBuilder};
+use com_api::{Consumer, Interface, OfferedProducer, Producer, Reloc, Runtime, Subscriber};
 
 #[derive(Debug)]
 pub struct Tire {}
@@ -41,11 +36,25 @@ unsafe impl Reloc for Exhaust {}
 pub struct VehicleInterface {}
 
 /// Generic
-impl Interface for VehicleInterface {}
+impl Interface for VehicleInterface {
+    type Consumer<R: Runtime + ?Sized> = VehicleConsumer<R>;
+}
+
+pub struct VehicleConsumer<R: Runtime + ?Sized> {
+    pub left_tire: R::Subscriber<Tire>,
+    pub exhaust: R::Subscriber<Exhaust>,
+}
+
+impl<R: Runtime + ?Sized> Consumer for VehicleConsumer<R> {
+    fn new(_instance_specifier: com_api::InstanceSpecifier) -> Self {
+        VehicleConsumer {
+            left_tire: R::Subscriber::new(),
+            exhaust: R::Subscriber::new(),
+        }
+    }
+}
 
 pub struct AnotherInterface {}
-
-impl Interface for AnotherInterface {}
 
 pub struct VehicleProducer {}
 
@@ -59,8 +68,8 @@ impl Producer for VehicleProducer {
 }
 
 pub struct VehicleOfferedProducer {
-    pub left_tire: com_api_runtime_lola::Publisher<Tire>,
-    pub exhaust: com_api_runtime_lola::Publisher<Exhaust>,
+    // pub left_tire: com_api_runtime_lola::Publisher<Tire>,
+    // pub exhaust: com_api_runtime_lola::Publisher<Exhaust>,
 }
 
 impl OfferedProducer for VehicleOfferedProducer {
@@ -72,7 +81,7 @@ impl OfferedProducer for VehicleOfferedProducer {
     }
 }
 
-impl Builder<VehicleProducer> for SampleProducerBuilder<VehicleInterface> {
+/*impl Builder<VehicleProducer> for SampleProducerBuilder<VehicleInterface> {
     fn build(self) -> com_api::Result<VehicleProducer> {
         todo!()
     }
@@ -97,3 +106,4 @@ impl Builder<VehicleConsumer> for SampleConsumerBuilder<VehicleInterface> {
         todo!()
     }
 }
+*/

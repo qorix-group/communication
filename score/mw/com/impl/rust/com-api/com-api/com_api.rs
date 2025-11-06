@@ -14,17 +14,17 @@
 #[cfg(not(any(feature = "mock", feature = "lola")))]
 compile_error!("You must enable at least one feature: `mock` or `lola`!");
 
-#[cfg(feature = "mock")]
-pub use com_api_runtime_mock::RuntimeBuilderImpl;
-#[cfg(feature = "mock")]
-pub use com_api_runtime_mock::MockRuntimeImpl;
-#[cfg(feature = "lola")]
-pub use com_api_runtime_lola::RuntimeBuilderImpl;
 #[cfg(feature = "lola")]
 pub use com_api_runtime_lola::LolaRuntimeImpl;
+#[cfg(feature = "lola")]
+pub use com_api_runtime_lola::RuntimeBuilderImpl;
+#[cfg(feature = "mock")]
+pub use com_api_runtime_mock::MockRuntimeImpl;
+#[cfg(feature = "mock")]
+pub use com_api_runtime_mock::RuntimeBuilderImpl;
 
 pub use com_api_concept::{
     Builder, Consumer, ConsumerBuilder, ConsumerDescriptor, InstanceSpecifier, Interface,
-    OfferedProducer, Producer, ProducerBuilder, Publisher, Reloc, Result, SampleContainer, SampleMaybeUninit,
-    SampleMut, ServiceDiscovery, Subscriber, Subscription,
+    OfferedProducer, Producer, ProducerBuilder, Publisher, Reloc, Result, Runtime, SampleContainer,
+    SampleMaybeUninit, SampleMut, ServiceDiscovery, Subscriber, Subscription,
 };

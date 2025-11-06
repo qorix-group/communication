@@ -14,18 +14,28 @@
 use com_api::*;
 use com_api_gen::*;
 
-fn main() {
-    let runtime_builder = RuntimeBuilderImpl::new();
-    let runtime = Builder::<MockRuntimeImpl>::build(runtime_builder).unwrap();
-    let producer_builder = runtime.producer_builder::<VehicleInterface>(InstanceSpecifier::new("My/Funk/ServiceName").unwrap());
-    let producer = producer_builder.build().unwrap();
-    let offered_producer = producer.offer().unwrap();
+ fn use_vehicle_interface<R: Runtime>(consumer: VehicleConsumer<R>)
+ {
+    // Subscribe to one event
+    let subscribed = consumer.left_tire.subscribe(3).unwrap();
 
-    // Business logic
-    let uninit_sample = offered_producer.left_tire.allocate().unwrap();
-    let sample = uninit_sample.write(Tire {});
-    sample.send().unwrap();
+    // Create sample buffer to be used during receive
+    let mut sample_buf = SampleContainer::new();
+    for _ in 0..10 {
+        match subscribed.try_receive(&mut sample_buf, 1) {
+            Ok(0) => panic!("No sample received"),
+            Ok(x) => {
+                let sample = sample_buf.pop_front().unwrap();
+                println!("{} samples received: sample[0] = {:?}", x, *sample)
+            }
+            Err(e) => panic!("{:?}", e),
+        }
+    }
 
+ }
+
+fn use_consumer<R: Runtime>(runtime: R)
+{
     // Create service discovery
     let consumer_discovery = runtime.find_service::<VehicleInterface>(InstanceSpecifier::new("My/Funk/ServiceName").unwrap());
     let available_service_instances = consumer_discovery.get_available_instances().unwrap();
@@ -36,25 +46,23 @@ fn main() {
         .find(|desc| desc.get_instance_id() == 42)
         .unwrap();
     let consumer = consumer_builder.build().unwrap();
+    use_vehicle_interface(consumer);
+}
 
-    // Subscribe to one event
-    let subscribed = consumer.left_tire.subscribe(3).unwrap();
+fn main() {
+    let runtime_builder = RuntimeBuilderImpl::new();
+    let runtime = Builder::<MockRuntimeImpl>::build(runtime_builder).unwrap();
+    // let producer_builder = runtime.producer_builder::<VehicleInterface>(InstanceSpecifier::new("My/Funk/ServiceName").unwrap());
+    // let producer = producer_builder.build().unwrap();
+    // let offered_producer = producer.offer().unwrap();
 
-    // Create sample buffer to be used during receive
-    let mut sample_buf = SampleContainer::new();
-    for _ in 0..10 {
-        let uninit_sample = offered_producer.left_tire.allocate().unwrap();
-        let sample = uninit_sample.write(Tire {});
-        sample.send().unwrap();
-        match subscribed.try_receive(&mut sample_buf, 1) {
-            Ok(0) => panic!("No sample received"),
-            Ok(x) => {
-                let sample = sample_buf.pop_front().unwrap();
-                println!("{} sample received: sample[0] = {:?}", x, *sample)
-            }
-            Err(e) => panic!("{:?}", e),
-        }
-    }
+    // // Business logic
+    // let uninit_sample = offered_producer.left_tire.allocate().unwrap();
+    // let sample = uninit_sample.write(Tire {});
+    // sample.send().unwrap();
+
+    // Create service discovery
+    use_consumer(runtime);
 }
 
 #[cfg(test)]
@@ -64,18 +72,18 @@ mod test {
     #[test]
     fn create_producer() {
         // Factory
-        let runtime_builder = RuntimeBuilderImpl::new();
-        let runtime = runtime_builder.build().unwrap();
-        let producer_builder = runtime.producer_builder::<VehicleInterface>(InstanceSpecifier::new("My/Funk/ServiceName").unwrap());
-        let producer = producer_builder.build().unwrap();
-        let offered_producer = producer.offer().unwrap();
+        // let runtime_builder = RuntimeBuilderImpl::new();
+        // let runtime = runtime_builder.build().unwrap();
+        // let producer_builder = runtime.producer_builder::<VehicleInterface>(InstanceSpecifier::new("My/Funk/ServiceName").unwrap());
+        // let producer = producer_builder.build().unwrap();
+        // let offered_producer = producer.offer().unwrap();
 
-        // Business logic
-        let uninit_sample = offered_producer.left_tire.allocate().unwrap();
-        let sample = uninit_sample.write(Tire {});
-        sample.send().unwrap();
+        // // Business logic
+        // let uninit_sample = offered_producer.left_tire.allocate().unwrap();
+        // let sample = uninit_sample.write(Tire {});
+        // sample.send().unwrap();
 
-        offered_producer.unoffer();
+        // offered_producer.unoffer();
 
     }
 
@@ -86,31 +94,7 @@ mod test {
         let runtime = runtime_builder.build().unwrap();
 
         // Create service discovery
-        let consumer_discovery = runtime.find_service::<VehicleInterface>(InstanceSpecifier::new("My/Funk/ServiceName").unwrap());
-        let available_service_instances = consumer_discovery.get_available_instances().unwrap();
-
-        // Create consumer from first discovered service
-        let consumer_builder = available_service_instances
-            .into_iter()
-            .find(|desc| desc.get_instance_id() == 42)
-            .unwrap();
-        let consumer = consumer_builder.build().unwrap();
-
-        // Subscribe to one event
-        let subscribed = consumer.left_tire.subscribe(3).unwrap();
-
-        // Create sample buffer to be used during receive
-        let mut sample_buf = SampleContainer::new();
-        for _ in 0..10 {
-            match subscribed.try_receive(&mut sample_buf, 1) {
-                Ok(0) => panic!("No sample received"),
-                Ok(x) => {
-                    let sample = sample_buf.pop_front().unwrap();
-                    println!("{} samples received: sample[0] = {:?}", x, *sample)
-                }
-                Err(e) => panic!("{:?}", e),
-            }
-        }
+        use_consumer(runtime);
     }
 
     async fn async_data_processor_fn(subscribed: impl Subscription<Tire>) {
