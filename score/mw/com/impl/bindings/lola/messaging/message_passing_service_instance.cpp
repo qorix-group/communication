@@ -446,6 +446,8 @@ void score::mw::com::impl::lola::MessagePassingServiceInstance::NotifyEvent(cons
     if ((search != event_update_handlers_.end()) && (search->second.empty() == false))
     {
         read_lock.unlock();
+        // .Post() can only throw on allocation failure
+        // coverity[autosar_cpp14_a15_4_2_violation]
         thread_pool_.Post(
             [this](const score::cpp::stop_token& /*token*/, const ElementFqId element_id) noexcept {
                 // ignoring the result (number of actually notified local proxy-events),
