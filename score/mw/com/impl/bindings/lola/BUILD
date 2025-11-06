@@ -246,11 +246,13 @@ cc_library(
         "skeleton.cpp",
         "skeleton_event.cpp",
         "skeleton_event_properties.cpp",
+        "skeleton_method.cpp",
     ],
     hdrs = [
         "skeleton.h",
         "skeleton_event.h",
         "skeleton_event_properties.h",
+        "skeleton_method.h",
     ],
     features = COMPILER_WARNING_FEATURES,
     tags = ["FFI"],
@@ -271,17 +273,26 @@ cc_library(
         "//score/mw/com/impl:runtime",
         "//score/mw/com/impl:skeleton_binding",
         "//score/mw/com/impl:skeleton_event_binding",
+        "//score/mw/com/impl/bindings/lola/methods:method_data",
+        "//score/mw/com/impl/bindings/lola/methods:proxy_instance_identifier",
+        "//score/mw/com/impl/bindings/lola/methods:skeleton_instance_identifier",
+        "//score/mw/com/impl/bindings/lola/methods:type_erased_call_queue",
         "//score/mw/com/impl/configuration",
+        "//score/mw/com/impl/methods:skeleton_method_binding",
         "//score/mw/com/impl/plumbing:sample_allocatee_ptr",
         "//score/mw/com/impl/tracing:skeleton_event_tracing",
         "//score/mw/com/impl/util:arithmetic_utils",
         "@score_baselibs//score/filesystem",
+        "@score_baselibs//score/language/futurecpp",
         "@score_baselibs//score/language/safecpp/safe_math",
+        "@score_baselibs//score/language/safecpp/scoped_function:scope",
+        "@score_baselibs//score/memory:data_type_size_info",
         "@score_baselibs//score/memory/shared",
         "@score_baselibs//score/memory/shared:lock_file",
         "@score_baselibs//score/memory/shared:new_delete_delegate_resource",
         "@score_baselibs//score/memory/shared/flock:exclusive_flock_mutex",
         "@score_baselibs//score/memory/shared/flock:flock_mutex_and_lock",
+        "@score_baselibs//score/result",
     ],
 )
 
@@ -774,6 +785,23 @@ cc_gtest_unit_test(
     deps = [
         ":proxy",
         "//score/mw/com/impl/bindings/lola/test:proxy_event_test_resources",
+    ],
+)
+
+cc_unit_test(
+    name = "skeleton_method_test",
+    srcs = ["skeleton_method_test.cpp"],
+    features = COMPILER_WARNING_FEATURES + [
+        # These tests catch exceptions instead of using gtest EXPECT_DEATH so we disable aborts_upon_exception.
+        "-aborts_upon_exception",
+    ],
+    deps = [
+        ":skeleton",
+        "//score/mw/com/impl/bindings/lola/test:skeleton_test_resources",
+        "//score/mw/com/impl/configuration/test:configuration_store",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "@score_baselibs//score/language/futurecpp:futurecpp_test_support",
     ],
 )
 
@@ -1280,6 +1308,7 @@ cc_unit_test_suites_for_host_and_qnx(
         ":proxy_test",
         ":shm_path_builder_test",
         ":skeleton_test",
+        ":skeleton_method_test",
         ":slot_decrementer_test",
         ":transaction_log_rollback_executor_test",
         ":type_erased_sample_ptrs_guard_test",
