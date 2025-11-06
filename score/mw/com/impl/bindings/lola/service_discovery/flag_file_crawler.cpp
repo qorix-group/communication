@@ -334,7 +334,7 @@ auto FlagFileCrawler::AddWatchToInotifyInstance(const EnrichedInstanceIdentifier
     }
 
     const auto search_path = std::move(directory_creation_result).value();
-    const auto event_mask = os::Inotify::EventMask::kInCreate | os::Inotify::EventMask::kInDelete;
+    constexpr auto event_mask = os::Inotify::EventMask::kInCreate | os::Inotify::EventMask::kInDelete;
 
     const auto watch_descriptor = inotify_instance_.AddWatch(search_path.Native(), event_mask);
     if (!(watch_descriptor.has_value()))
