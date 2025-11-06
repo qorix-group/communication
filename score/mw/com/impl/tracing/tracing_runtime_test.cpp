@@ -10,6 +10,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
+
+/**
+ * @brief Unit tests for core TracingRuntime functionality and lifecycle management.
+ */
+
 #include "score/mw/com/impl/tracing/tracing_runtime.h"
 
 #include "score/mw/com/impl/binding_type.h"

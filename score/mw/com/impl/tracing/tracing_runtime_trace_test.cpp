@@ -10,6 +10,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
+
+/**
+ * @brief Unit tests for TracingRuntime::Trace() method functionality.
+ */
+
 #include "score/mw/com/impl/tracing/configuration/proxy_event_trace_point_type.h"
 #include "score/mw/com/impl/tracing/configuration/proxy_field_trace_point_type.h"
 #include "score/mw/com/impl/tracing/configuration/skeleton_field_trace_point_type.h"
@@ -25,10 +30,15 @@
 #include "score/analysis/tracing/generic_trace_library/interface_types/error_code/error_code.h"
 #include "score/analysis/tracing/generic_trace_library/mock/trace_library_mock.h"
 
+#include "score/mw/log/logging.h"
+#include "score/mw/log/recorder_mock.h"
+
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <utility>
 
 namespace score::mw::com::impl::tracing
@@ -48,6 +58,10 @@ const analysis::tracing::ServiceInstanceElement::EventIdType kServiceInstanceEle
 const analysis::tracing::ServiceInstanceElement::VariantType kServiceInstanceElementVariant{
     kServiceInstanceElementEventId};
 const analysis::tracing::ServiceInstanceElement kServiceInstanceElement{25, 1, 0, 1, kServiceInstanceElementVariant};
+
+// Debouncing test constants
+constexpr std::uint8_t kDebounceThreshold = 10U;
+constexpr std::uint8_t kDebounceThresholdMinusOne = kDebounceThreshold - 1U;
 
 using testing::_;
 using testing::ByRef;
@@ -726,7 +740,7 @@ TEST_P(TracingRuntimeTraceShmParamaterisedFixture, TraceShmDataNOK_ConsecutiveRe
     EXPECT_TRUE(unit_under_test_->IsTracingEnabled());
     EXPECT_EQ(attorney.GetFailureCounter(), 0);
 
-    const auto kRetries{10};
+    const std::uint8_t kRetries{10U};
     static_assert(TracingRuntime::MAX_CONSECUTIVE_ACCEPTABLE_TRACE_FAILURES > kRetries);
     const auto kFailureCounterStart{TracingRuntime::MAX_CONSECUTIVE_ACCEPTABLE_TRACE_FAILURES - kRetries};
     attorney.SetFailureCounter(kFailureCounterStart);
@@ -744,9 +758,9 @@ TEST_P(TracingRuntimeTraceShmParamaterisedFixture, TraceShmDataNOK_ConsecutiveRe
     // error
     EXPECT_CALL(tracing_runtime_binding_mock_, SetDataLossFlag(true)).Times(kRetries);
 
-    for (unsigned i = 0; i < kRetries; i++)
+    for (std::uint8_t retry_count = 0; retry_count < kRetries; retry_count++)
     {
-        EXPECT_EQ(attorney.GetFailureCounter(), kFailureCounterStart + i);
+        EXPECT_EQ(attorney.GetFailureCounter(), kFailureCounterStart + retry_count);
         // when we call Trace on the UuT
         auto result = unit_under_test_->Trace(BindingType::kLoLa,
                                               service_element_tracing_data_,
@@ -757,7 +771,7 @@ TEST_P(TracingRuntimeTraceShmParamaterisedFixture, TraceShmDataNOK_ConsecutiveRe
                                               dummy_shm_data_ptr_,
                                               dummy_shm_data_size_);
 
-        if (i < kRetries - 1)
+        if (retry_count < kRetries - 1)
         {
             EXPECT_TRUE(result.has_value());
             // expect that tracing is enabled
@@ -1332,6 +1346,210 @@ TEST_P(TracingRuntimeTraceDataLossFlagParameterisedFixture, CallingLocalTraceWil
 
     // expect, that there was no error
     EXPECT_TRUE(result.has_value());
+}
+
+class TracingRuntimeDebounceFixture : public TracingRuntimeTraceFixture
+{
+  public:
+    void SetUp() override
+    {
+        // Set up the log recorder mock before creating TracingRuntime
+        original_recorder_ = &score::mw::log::GetDefaultLogRecorder();
+        score::mw::log::SetLogRecorder(&log_recorder_mock_);
+
+        // Now set up the parent fixture (which creates TracingRuntime)
+        TracingRuntimeTraceFixture::SetUp();
+
+        // Set up default behaviors common to all debounce tests
+        ON_CALL(tracing_runtime_binding_mock_, GetShmObjectHandle(testing::_))
+            .WillByDefault(Return(analysis::tracing::ShmObjectHandle{}));
+
+        ON_CALL(tracing_runtime_binding_mock_, GetShmRegionStartAddress(testing::_))
+            .WillByDefault(Return(dummy_shm_object_start_address_));
+
+        ON_CALL(tracing_runtime_binding_mock_, GetDataLossFlag()).WillByDefault(Return(false));
+
+        ON_CALL(tracing_runtime_binding_mock_, ConvertToTracingServiceInstanceElement(testing::_))
+            .WillByDefault(Return(kServiceInstanceElement));
+
+        ON_CALL(log_recorder_mock_, StartRecord(testing::_, testing::_))
+            .WillByDefault(Return(score::cpp::optional<score::mw::log::SlotHandle>{score::mw::log::SlotHandle{}}));
+
+        ON_CALL(tracing_runtime_binding_mock_, SetDataLossFlag(testing::_)).WillByDefault(Return());
+    }
+
+    void TearDown() override
+    {
+        // Restore the original recorder
+        score::mw::log::SetLogRecorder(original_recorder_);
+        TracingRuntimeTraceFixture::TearDown();
+    }
+
+    score::mw::log::RecorderMock log_recorder_mock_{};
+    score::mw::log::Recorder* original_recorder_{nullptr};
+};
+
+TEST_F(TracingRuntimeDebounceFixture, TraceFailingLessThanDebounceThresholdTimesLogsInfo)
+{
+    // Given a TracingRuntime with mocked bindings that return no available tracing slots which called less times than
+    // the debounce threshold.
+    EXPECT_CALL(tracing_runtime_binding_mock_, EmplaceTypeErasedSamplePtr(testing::_, testing::_))
+        .Times(kDebounceThresholdMinusOne)
+        .WillRepeatedly(Return(std::optional<impl::tracing::ITracingRuntimeBinding::TraceContextId>{}));
+
+    // Expecting that an info level log message is called for the first 9 failures (all "no slot available" error
+    // messages)
+    EXPECT_CALL(log_recorder_mock_, StartRecord(std::string_view{"lola"}, score::mw::log::LogLevel::kInfo))
+        .Times(kDebounceThresholdMinusOne);
+
+    // When calling Trace multiple times below debounce threshold
+    for (std::uint8_t failure_count = 0U; failure_count < kDebounceThresholdMinusOne; ++failure_count)
+    {
+        auto result = unit_under_test_->Trace(BindingType::kLoLa,
+                                              service_element_tracing_data_,
+                                              dummy_service_element_instance_identifier_view_,
+                                              SkeletonEventTracePointType::SEND,
+                                              dummy_data_id_,
+                                              CreateDummySamplePtr(),
+                                              dummy_shm_data_ptr_,
+                                              dummy_shm_data_size_);
+        EXPECT_TRUE(result.has_value());
+    }
+}
+
+TEST_F(TracingRuntimeDebounceFixture, TraceFailingDebounceThresholdTimesSwitchesToDebugLogging)
+{
+    // Given a TracingRuntime with mocked bindings that return no available tracing slots
+    EXPECT_CALL(tracing_runtime_binding_mock_, EmplaceTypeErasedSamplePtr(testing::_, testing::_))
+        .Times(kDebounceThreshold)
+        .WillRepeatedly(Return(std::optional<impl::tracing::ITracingRuntimeBinding::TraceContextId>{}));
+
+    // Expecting that logging pattern as follows:
+    // - First 9 failures: Info level ("no slot available" error messages)
+    // - 10th failure: Info ("LogLevel changed to kDebug" transition) + Debug ("no slot available" error)
+    EXPECT_CALL(log_recorder_mock_, StartRecord(std::string_view{"lola"}, score::mw::log::LogLevel::kInfo))
+        .Times(kDebounceThreshold);  // 9 "no slot" errors + 1 "LogLevel changed" transition
+
+    EXPECT_CALL(log_recorder_mock_, StartRecord(std::string_view{"lola"}, score::mw::log::LogLevel::kDebug))
+        .Times(1U);  // 1 "no slot" error at threshold
+
+    // When calling Trace to reach exactly the debounce threshold
+    for (std::uint8_t failure_count = 0U; failure_count < kDebounceThreshold; ++failure_count)
+    {
+        auto result = unit_under_test_->Trace(BindingType::kLoLa,
+                                              service_element_tracing_data_,
+                                              dummy_service_element_instance_identifier_view_,
+                                              SkeletonEventTracePointType::SEND,
+                                              dummy_data_id_,
+                                              CreateDummySamplePtr(),
+                                              dummy_shm_data_ptr_,
+                                              dummy_shm_data_size_);
+        EXPECT_TRUE(result.has_value());
+    }
+}
+
+TEST_F(TracingRuntimeDebounceFixture, TraceFailingMoreThanDebounceThresholdTimesLogsDebug)
+{
+    constexpr std::uint8_t kTotalCalls = kDebounceThreshold + 3U;
+
+    // Given a TracingRuntime with mocked bindings that return no available tracing slots
+    EXPECT_CALL(tracing_runtime_binding_mock_, EmplaceTypeErasedSamplePtr(testing::_, testing::_))
+        .Times(kTotalCalls)
+        .WillRepeatedly(Return(std::optional<impl::tracing::ITracingRuntimeBinding::TraceContextId>{}));
+
+    // Expecting that logging pattern as follows:
+    // - Failures 1-9: Info level (9 "no slot available" error messages)
+    // - Failure 10: Info ("LogLevel changed to kDebug" transition) + Debug ("no slot available" error)
+    // - Failures 11-13: Debug level (3 "no slot available" error messages)
+    EXPECT_CALL(log_recorder_mock_, StartRecord(std::string_view{"lola"}, score::mw::log::LogLevel::kInfo))
+        .Times(kDebounceThreshold);  // 9 "no slot" errors + 1 "LogLevel changed" transition
+
+    EXPECT_CALL(log_recorder_mock_, StartRecord(std::string_view{"lola"}, score::mw::log::LogLevel::kDebug))
+        .Times(4U);  // 1 at threshold + 3 additional "no slot" errors
+
+    // When calling Trace beyond the debounce threshold multiple times
+    for (std::uint8_t failure_count = 0U; failure_count < kTotalCalls; ++failure_count)
+    {
+        auto result = unit_under_test_->Trace(BindingType::kLoLa,
+                                              service_element_tracing_data_,
+                                              dummy_service_element_instance_identifier_view_,
+                                              SkeletonEventTracePointType::SEND,
+                                              dummy_data_id_,
+                                              CreateDummySamplePtr(),
+                                              dummy_shm_data_ptr_,
+                                              dummy_shm_data_size_);
+        EXPECT_TRUE(result.has_value());
+    }
+}
+
+TEST_F(TracingRuntimeDebounceFixture, SuccessfulTraceAfterDebounceResetsToInfoLogging)
+{
+    // Given a TracingRuntime with mocked bindings that first return no available slots (triggering debounce),
+    // then return a slot (success), then return no slots again (should reset to Info logging)
+    constexpr std::uint8_t kFailuresBeforeSuccess = kDebounceThreshold + 2U;
+    constexpr std::uint8_t kTotalFailures = kFailuresBeforeSuccess + 1U;  // +1 failure after success
+    constexpr std::uint8_t kSuccessfulCalls = 1U;
+    constexpr std::uint8_t kTotalCalls = kTotalFailures + kSuccessfulCalls;
+
+    // Mock EmplaceTypeErasedSamplePtr to return empty for failures (calls 1-12 and 14), and trace_context_id_ for
+    // success (call 13)
+    {
+        testing::InSequence emplace_type_erased_sample_ptr_seq;
+        EXPECT_CALL(tracing_runtime_binding_mock_, EmplaceTypeErasedSamplePtr(testing::_, testing::_))
+            .Times(kFailuresBeforeSuccess)
+            .WillRepeatedly(Return(std::optional<impl::tracing::ITracingRuntimeBinding::TraceContextId>{}));
+
+        EXPECT_CALL(tracing_runtime_binding_mock_, EmplaceTypeErasedSamplePtr(testing::_, testing::_))
+            .WillOnce(Return(trace_context_id_));  // Success!
+
+        EXPECT_CALL(tracing_runtime_binding_mock_, EmplaceTypeErasedSamplePtr(testing::_, testing::_))
+            .WillOnce(Return(std::optional<impl::tracing::ITracingRuntimeBinding::TraceContextId>{}));  // Final failure
+    }
+
+    EXPECT_CALL(tracing_runtime_binding_mock_, GetTraceClientId())
+        .Times(kSuccessfulCalls)
+        .WillOnce(Return(trace_client_id_));
+
+    EXPECT_CALL(*generic_trace_api_mock_.get(), Trace(trace_client_id_, _, _, trace_context_id_))
+        .Times(kSuccessfulCalls)
+        .WillOnce(Return(analysis::tracing::TraceResult{}));
+
+    // Expecting logging pattern with strict sequencing to verify reset behavior:
+    // - Failures 1-9: Info level (9 "no slot" errors)
+    // - Failure 10: Info ("LogLevel changed" transition) + Debug ("no slot" error)
+    // - Failures 11-12: Debug level (2 "no slot" errors)
+    // - Success: resets counters
+    // - Failure 13: Info level (1 "no slot" error - proves reset worked)
+    testing::Sequence log_sequence;
+
+    // Failures 1-9 + Failure 10 transition: Info level (10 calls total)
+    EXPECT_CALL(log_recorder_mock_, StartRecord(std::string_view{"lola"}, score::mw::log::LogLevel::kInfo))
+        .Times(kDebounceThreshold)
+        .InSequence(log_sequence);
+
+    // Failure 10 "no slot" error + Failures 11-12: Debug level (3 calls total)
+    EXPECT_CALL(log_recorder_mock_, StartRecord(std::string_view{"lola"}, score::mw::log::LogLevel::kDebug))
+        .Times(3U)
+        .InSequence(log_sequence);
+
+    // Failure 13 (after reset): Info level - this is the key verification
+    EXPECT_CALL(log_recorder_mock_, StartRecord(std::string_view{"lola"}, score::mw::log::LogLevel::kInfo))
+        .Times(1U)
+        .InSequence(log_sequence);
+
+    // When calling Trace to trigger debounce, then success, then one more failure
+    for (std::uint8_t i = 0U; i < kTotalCalls; ++i)
+    {
+        auto result = unit_under_test_->Trace(BindingType::kLoLa,
+                                              service_element_tracing_data_,
+                                              dummy_service_element_instance_identifier_view_,
+                                              SkeletonEventTracePointType::SEND,
+                                              dummy_data_id_,
+                                              CreateDummySamplePtr(),
+                                              dummy_shm_data_ptr_,
+                                              dummy_shm_data_size_);
+        EXPECT_TRUE(result.has_value());
+    }
 }
 
 }  // namespace
