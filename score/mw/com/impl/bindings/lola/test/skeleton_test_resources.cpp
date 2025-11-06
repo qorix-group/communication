@@ -147,6 +147,9 @@ SkeletonMockedMemoryFixture::SkeletonMockedMemoryFixture()
     ON_CALL(tracing_runtime_mock_, GetBindingTracingRuntime(BindingType::kLoLa))
         .WillByDefault(ReturnRef(binding_tracing_runtime_mock_));
 
+    ON_CALL(lola_runtime_mock_, GetApplicationId()).WillByDefault(::testing::Return(kDummyApplicationId));
+    ON_CALL(lola_runtime_mock_, GetLolaMessaging()).WillByDefault(::testing::ReturnRef(message_passing_mock_));
+
     ON_CALL(filesystem_fake_.GetUtils(), CreateDirectories(_, _)).WillByDefault(Return(score::ResultBlank{}));
 
     // Default behaviour for path builders

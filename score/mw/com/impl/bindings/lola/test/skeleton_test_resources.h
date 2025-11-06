@@ -14,6 +14,7 @@
 #define SCORE_MW_COM_IMPL_BINDINGS_LOLA_SKELETON_TEST_RESOURCES_H
 
 #include "score/mw/com/impl/bindings/lola/event_control.h"
+#include "score/mw/com/impl/bindings/lola/messaging/message_passing_service_mock.h"
 #include "score/mw/com/impl/bindings/lola/partial_restart_path_builder.h"
 #include "score/mw/com/impl/bindings/lola/partial_restart_path_builder_mock.h"
 #include "score/mw/com/impl/bindings/lola/runtime_mock.h"
@@ -327,6 +328,8 @@ class SkeletonAttorney
 class SkeletonMockedMemoryFixture : public ::testing::Test
 {
   public:
+    static constexpr GlobalConfiguration::ApplicationId kDummyApplicationId{6543};
+
     // Use constructor / destructor instead of SetUp() / TearDown() so that they will always be called when
     // instantiating fixtures deriving from this class. Using SetUp() / TearDown() requires that child classes manually
     // call this classes SetUp() / TearDown() methods if they implement their own SetUp() / TearDown().
@@ -399,6 +402,7 @@ class SkeletonMockedMemoryFixture : public ::testing::Test
     ::testing::NiceMock<filesystem::FilesystemFactoryFake> filesystem_fake_{};
     ::testing::NiceMock<impl::tracing::TracingRuntimeMock> tracing_runtime_mock_{};
     ::testing::NiceMock<impl::tracing::mock_binding::TracingRuntime> binding_tracing_runtime_mock_{};
+    ::testing::NiceMock<MessagePassingServiceMock> message_passing_mock_{};
 
     ::testing::NiceMock<memory::shared::SharedMemoryFactoryMock> shared_memory_factory_mock_{};
     ::testing::NiceMock<ShmPathBuilderMock> shm_path_builder_mock_{};
