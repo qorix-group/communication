@@ -275,6 +275,7 @@ Skeleton::Skeleton(const InstanceIdentifier& identifier,
       service_instance_existence_marker_file_{std::move(service_instance_existence_marker_file)},
       service_instance_usage_marker_file_{},
       service_instance_existence_flock_mutex_and_lock_{std::move(service_instance_existence_flock_mutex_and_lock)},
+      skeleton_methods_{},
       was_old_shm_region_reopened_{false},
       filesystem_{std::move(filesystem)}
 {
@@ -850,6 +851,12 @@ void Skeleton::DisconnectQmConsumers()
             << __func__ << __LINE__
             << "Disconnecting unsafe QM consumers via StopOffer of ASIL-QM part of service instance failed.";
     }
+}
+
+void Skeleton::RegisterMethod(const LolaMethodId method_id, SkeletonMethod& skeleton_method)
+{
+    const auto [_, was_inserted] = skeleton_methods_.insert({method_id, skeleton_method});
+    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(was_inserted, "Method IDs must be unique!");
 }
 
 // Suppress "AUTOSAR C++14 A15-5-3" rule findings. This rule states: "The std::terminate() function shall not be called

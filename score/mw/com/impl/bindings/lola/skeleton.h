@@ -22,7 +22,9 @@
 #include "score/mw/com/impl/bindings/lola/service_data_control.h"
 #include "score/mw/com/impl/bindings/lola/service_data_storage.h"
 #include "score/mw/com/impl/bindings/lola/skeleton_event_properties.h"
+#include "score/mw/com/impl/bindings/lola/skeleton_method.h"
 #include "score/mw/com/impl/configuration/lola_event_id.h"
+#include "score/mw/com/impl/configuration/lola_method_id.h"
 #include "score/mw/com/impl/configuration/lola_service_instance_deployment.h"
 #include "score/mw/com/impl/instance_identifier.h"
 #include "score/mw/com/impl/runtime.h"
@@ -40,9 +42,11 @@
 #include <score/assert.hpp>
 #include <score/optional.hpp>
 
+#include <functional>
 #include <memory>
 #include <string>
 #include <tuple>
+#include <unordered_map>
 #include <utility>
 
 namespace score::mw::com::impl::lola
@@ -126,6 +130,8 @@ class Skeleton final : public SkeletonBinding
     ///          QualityType::kASIL_B. Calling it for a skeleton, which returns QualityType::kASIL_QM, will lead to
     ///          an assert/termination.
     void DisconnectQmConsumers();
+
+    void RegisterMethod(const LolaMethodId method_id, SkeletonMethod& skeleton_method);
 
   private:
     ResultBlank OpenExistingSharedMemory(
@@ -212,6 +218,8 @@ class Skeleton final : public SkeletonBinding
 
     std::unique_ptr<score::memory::shared::FlockMutexAndLock<score::memory::shared::ExclusiveFlockMutex>>
         service_instance_existence_flock_mutex_and_lock_;
+
+    std::unordered_map<LolaMethodId, std::reference_wrapper<SkeletonMethod>> skeleton_methods_;
 
     bool was_old_shm_region_reopened_;
 

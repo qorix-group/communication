@@ -36,9 +36,10 @@
 namespace score::mw::com::impl::lola
 {
 
-SkeletonMethod::SkeletonMethod(Skeleton& /* skeleton */, const ElementFqId /* element_fq_id */)
+SkeletonMethod::SkeletonMethod(Skeleton& skeleton, const ElementFqId element_fq_id)
     : type_erased_callback_{}, method_call_handler_scope_{}
 {
+    skeleton.RegisterMethod(element_fq_id.element_id_, *this);
 }
 
 ResultBlank SkeletonMethod::Register(SkeletonMethodBinding::TypeErasedCallback&& type_erased_callback)
