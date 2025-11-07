@@ -999,5 +999,378 @@ TEST_F(MessagePassingServiceInstanceTest, NotifyOutdatedNodeDoesntTerminateOnFai
     // When NotifyOutdatedNodeId() is called for a previously unused target_node_id
     instance.NotifyOutdatedNodeId(remote_pid_, remote_pid_ + 2);
 }
+
+TEST_F(MessagePassingServiceInstanceTest, RegisterCallbackWithNoExistingHandlersCallbackNotInvoked)
+{
+    // Given service instance
+    MessagePassingServiceInstance instance{
+        quality_type_, asil_cfg_, server_factory_mock_, client_factory_mock_, executor_mock_};
+
+    std::atomic<bool> callback_invoked{false};
+
+    // When registering a callback with no existing handlers
+    instance.RegisterEventNotificationExistenceChangedCallback(
+        event_id_, [&callback_invoked]([[maybe_unused]] bool has_handlers) noexcept {
+            callback_invoked.store(true);
+        });
+
+    // Then callback should NOT be invoked (optimization: no callback when no handlers exist)
+    EXPECT_FALSE(callback_invoked.load());
+}
+
+TEST_F(MessagePassingServiceInstanceTest, RegisterCallbackWithExistingLocalHandlersCallbackInvokedWithTrue)
+{
+    // Given service instance with existing local handler
+    MessagePassingServiceInstance instance{
+        quality_type_, asil_cfg_, server_factory_mock_, client_factory_mock_, executor_mock_};
+
+    auto handler = std::make_shared<ScopedEventReceiveHandler>(scope_, []() noexcept {});
+    instance.RegisterEventNotification(event_id_, handler, local_pid_);
+
+    std::atomic<bool> callback_invoked{false};
+    std::atomic<bool> callback_value{false};
+
+    // When registering a callback with existing local handlers
+    instance.RegisterEventNotificationExistenceChangedCallback(event_id_, [&](bool has_handlers) noexcept {
+        callback_invoked.store(true);
+        callback_value.store(has_handlers);
+    });
+
+    // Then callback should be invoked with true
+    EXPECT_TRUE(callback_invoked.load());
+    EXPECT_TRUE(callback_value.load());
+}
+
+TEST_F(MessagePassingServiceInstanceTest, RegisterCallbackWithExistingRemoteHandlersCallbackInvokedWithTrue)
+{
+    // Given service instance with existing remote handler
+    MessagePassingServiceInstance instance{
+        quality_type_, asil_cfg_, server_factory_mock_, client_factory_mock_, executor_mock_};
+
+    // Setup client connection mock for remote registration
+    EXPECT_CALL(*client_connection_mock_, Send(::testing::_))
+        .WillOnce(testing::Return(score::cpp::expected_blank<score::os::Error>{}));
+    EXPECT_CALL(client_factory_mock_, Create(::testing::_, ::testing::_))
+        .WillOnce(::testing::Return(::testing::ByMove(std::move(client_connection_mock_))));
+
+    instance.RegisterEventNotification(event_id_, {}, remote_pid_);
+
+    std::atomic<bool> callback_invoked{false};
+    std::atomic<bool> callback_value{false};
+
+    // When registering a callback with existing remote handlers
+    instance.RegisterEventNotificationExistenceChangedCallback(event_id_, [&](bool has_handlers) noexcept {
+        callback_invoked.store(true);
+        callback_value.store(has_handlers);
+    });
+
+    // Then callback should be invoked with true
+    EXPECT_TRUE(callback_invoked.load());
+    EXPECT_TRUE(callback_value.load());
+}
+
+TEST_F(MessagePassingServiceInstanceTest, RegisterLocalHandlerCallbackInvokedWithTrue)
+{
+    // Given service instance with registered callback
+    MessagePassingServiceInstance instance{
+        quality_type_, asil_cfg_, server_factory_mock_, client_factory_mock_, executor_mock_};
+
+    std::atomic<bool> callback_invoked{false};
+    std::atomic<bool> callback_value{false};
+
+    instance.RegisterEventNotificationExistenceChangedCallback(event_id_, [&](bool has_handlers) noexcept {
+        callback_invoked.store(true);
+        callback_value.store(has_handlers);
+    });
+
+    // When registering first local handler
+    auto handler = std::make_shared<ScopedEventReceiveHandler>(scope_, []() noexcept {});
+    instance.RegisterEventNotification(event_id_, handler, local_pid_);
+
+    // Then callback should be invoked with true
+    EXPECT_TRUE(callback_invoked.load());
+    EXPECT_TRUE(callback_value.load());
+}
+
+TEST_F(MessagePassingServiceInstanceTest, UnregisterLastLocalHandlerCallbackInvokedWithFalse)
+{
+    // Given service instance with one local handler and registered callback
+    MessagePassingServiceInstance instance{
+        quality_type_, asil_cfg_, server_factory_mock_, client_factory_mock_, executor_mock_};
+
+    auto handler = std::make_shared<ScopedEventReceiveHandler>(scope_, []() noexcept {});
+    auto handler_id = instance.RegisterEventNotification(event_id_, handler, local_pid_);
+
+    std::atomic<int> callback_count{0};
+    std::atomic<bool> last_callback_value{true};
+
+    instance.RegisterEventNotificationExistenceChangedCallback(event_id_, [&](bool has_handlers) noexcept {
+        callback_count.fetch_add(1);
+        last_callback_value.store(has_handlers);
+    });
+
+    callback_count.store(0);  // Reset after registration callback
+
+    // When unregistering the last handler
+    instance.UnregisterEventNotification(event_id_, handler_id, local_pid_);
+
+    // Then callback should be invoked with false
+    EXPECT_EQ(callback_count.load(), 1);
+    EXPECT_FALSE(last_callback_value.load());
+}
+
+TEST_F(MessagePassingServiceInstanceTest, MultipleLocalHandlersCallbackOnlyOnFirstAndLast)
+{
+    // Given service instance with registered callback
+    MessagePassingServiceInstance instance{
+        quality_type_, asil_cfg_, server_factory_mock_, client_factory_mock_, executor_mock_};
+
+    std::atomic<int> callback_count{0};
+
+    instance.RegisterEventNotificationExistenceChangedCallback(event_id_,
+                                                               [&]([[maybe_unused]] bool has_handlers) noexcept {
+                                                                   callback_count.fetch_add(1);
+                                                               });
+
+    // When registering multiple handlers
+    auto handler1 = std::make_shared<ScopedEventReceiveHandler>(scope_, []() noexcept {});
+    auto handler_id1 = instance.RegisterEventNotification(event_id_, handler1, local_pid_);
+    EXPECT_EQ(callback_count.load(), 1);  // Called on first handler
+
+    auto handler2 = std::make_shared<ScopedEventReceiveHandler>(scope_, []() noexcept {});
+    auto handler_id2 = instance.RegisterEventNotification(event_id_, handler2, local_pid_);
+    EXPECT_EQ(callback_count.load(), 1);  // Not called on second handler
+
+    // When unregistering handlers
+    instance.UnregisterEventNotification(event_id_, handler_id1, local_pid_);
+    EXPECT_EQ(callback_count.load(), 1);  // Not called, still have one handler
+
+    instance.UnregisterEventNotification(event_id_, handler_id2, local_pid_);
+    EXPECT_EQ(callback_count.load(), 2);  // Called on last handler removal
+}
+
+TEST_F(MessagePassingServiceInstanceTest, UnregisterCallbackNoMoreCallbacksInvoked)
+{
+    // Given service instance with registered callback
+    MessagePassingServiceInstance instance{
+        quality_type_, asil_cfg_, server_factory_mock_, client_factory_mock_, executor_mock_};
+
+    std::atomic<int> callback_count{0};
+
+    instance.RegisterEventNotificationExistenceChangedCallback(event_id_,
+                                                               [&]([[maybe_unused]] bool has_handlers) noexcept {
+                                                                   callback_count.fetch_add(1);
+                                                               });
+
+    // When unregistering the callback
+    instance.UnregisterEventNotificationExistenceChangedCallback(event_id_);
+
+    // And then registering a handler
+    auto handler = std::make_shared<ScopedEventReceiveHandler>(scope_, []() noexcept {});
+    instance.RegisterEventNotification(event_id_, handler, local_pid_);
+
+    // Then callback should not be invoked
+    EXPECT_EQ(callback_count.load(), 0);
+}
+
+TEST_F(MessagePassingServiceInstanceTest, LocalAndRemoteHandlersMixedCallbackRespectsOverallState)
+{
+    // Given service instance with registered callback
+    MessagePassingServiceInstance instance{
+        quality_type_, asil_cfg_, server_factory_mock_, client_factory_mock_, executor_mock_};
+
+    std::atomic<int> callback_count{0};
+    std::atomic<bool> last_callback_value{false};
+
+    instance.RegisterEventNotificationExistenceChangedCallback(event_id_, [&](bool has_handlers) noexcept {
+        callback_count.fetch_add(1);
+        last_callback_value.store(has_handlers);
+    });
+
+    // When registering both local and remote handlers
+    auto handler = std::make_shared<ScopedEventReceiveHandler>(scope_, []() noexcept {});
+    auto handler_id = instance.RegisterEventNotification(event_id_, handler, local_pid_);
+    EXPECT_EQ(callback_count.load(), 1);  // Called on first handler
+    EXPECT_TRUE(last_callback_value.load());
+
+    // Setup client connection mock for remote registration
+    auto client_conn_mock =
+        score::cpp::pmr::make_unique<::testing::NiceMock<ClientConnectionMock>>(score::cpp::pmr::new_delete_resource());
+    EXPECT_CALL(*client_conn_mock, Send(::testing::_))
+        .WillRepeatedly(testing::Return(score::cpp::expected_blank<score::os::Error>{}));
+    EXPECT_CALL(*client_conn_mock, GetState()).WillRepeatedly(testing::Return(IClientConnection::State::kReady));
+    EXPECT_CALL(client_factory_mock_, Create(::testing::_, ::testing::_))
+        .WillOnce(::testing::Return(::testing::ByMove(std::move(client_conn_mock))));
+
+    auto remote_handler_id = instance.RegisterEventNotification(event_id_, {}, remote_pid_);
+    EXPECT_EQ(callback_count.load(), 1);  // Not called, already have handlers
+
+    // When removing local handler (remote still exists)
+    instance.UnregisterEventNotification(event_id_, handler_id, local_pid_);
+    EXPECT_EQ(callback_count.load(), 1);  // Not called, still have remote handler
+
+    // When removing remote handler (no handlers left)
+    instance.UnregisterEventNotification(event_id_, remote_handler_id, remote_pid_);
+    EXPECT_EQ(callback_count.load(), 2);  // Called when last handler removed
+    EXPECT_FALSE(last_callback_value.load());
+}
+
+TEST_F(MessagePassingServiceInstanceTest, UnregisterNonExistentCallbackLogsWarning)
+{
+    // Given service instance without registered callback
+    MessagePassingServiceInstance instance{
+        quality_type_, asil_cfg_, server_factory_mock_, client_factory_mock_, executor_mock_};
+
+    // When unregistering a non-existent callback
+    // Then it should log a warning but not crash
+    instance.UnregisterEventNotificationExistenceChangedCallback(event_id_);
+}
+
+TEST_F(MessagePassingServiceInstanceTest, RemoteHandlerRegistrationInvokesCallback)
+{
+    // Given service instance with registered callback
+    MessagePassingServiceInstance instance{
+        quality_type_, asil_cfg_, server_factory_mock_, client_factory_mock_, executor_mock_};
+
+    std::atomic<bool> callback_invoked{false};
+    std::atomic<bool> callback_value{false};
+
+    instance.RegisterEventNotificationExistenceChangedCallback(event_id_, [&](bool has_handlers) noexcept {
+        callback_invoked.store(true);
+        callback_value.store(has_handlers);
+    });
+
+    // Setup client connection mock for remote registration
+    EXPECT_CALL(*client_connection_mock_, Send(::testing::_))
+        .WillOnce(testing::Return(score::cpp::expected_blank<score::os::Error>{}));
+    EXPECT_CALL(client_factory_mock_, Create(::testing::_, ::testing::_))
+        .WillOnce(::testing::Return(::testing::ByMove(std::move(client_connection_mock_))));
+
+    // When registering first remote handler
+    instance.RegisterEventNotification(event_id_, {}, remote_pid_);
+
+    // Then callback should be invoked with true
+    EXPECT_TRUE(callback_invoked.load());
+    EXPECT_TRUE(callback_value.load());
+}
+
+TEST_F(MessagePassingServiceInstanceTest, RemoteHandlerUnregistrationInvokesCallback)
+{
+    // Given service instance with one remote handler and registered callback
+    MessagePassingServiceInstance instance{
+        quality_type_, asil_cfg_, server_factory_mock_, client_factory_mock_, executor_mock_};
+
+    // Setup client connection mock for remote registration
+    auto client_conn_mock =
+        score::cpp::pmr::make_unique<::testing::NiceMock<ClientConnectionMock>>(score::cpp::pmr::new_delete_resource());
+    EXPECT_CALL(*client_conn_mock, Send(::testing::_))
+        .WillRepeatedly(testing::Return(score::cpp::expected_blank<score::os::Error>{}));
+    EXPECT_CALL(*client_conn_mock, GetState()).WillRepeatedly(testing::Return(IClientConnection::State::kReady));
+    EXPECT_CALL(client_factory_mock_, Create(::testing::_, ::testing::_))
+        .WillOnce(::testing::Return(::testing::ByMove(std::move(client_conn_mock))));
+
+    auto registration_no = instance.RegisterEventNotification(event_id_, {}, remote_pid_);
+
+    std::atomic<int> callback_count{0};
+    std::atomic<bool> last_callback_value{true};
+
+    instance.RegisterEventNotificationExistenceChangedCallback(event_id_, [&](bool has_handlers) noexcept {
+        callback_count.fetch_add(1);
+        last_callback_value.store(has_handlers);
+    });
+
+    callback_count.store(0);  // Reset after registration callback
+
+    // When unregistering the last remote handler
+    instance.UnregisterEventNotification(event_id_, registration_no, remote_pid_);
+
+    // Then callback should be invoked with false
+    EXPECT_EQ(callback_count.load(), 1);
+    EXPECT_FALSE(last_callback_value.load());
+}
+
+// Additional tests to cover missing branches
+
+TEST_F(MessagePassingServiceInstanceTest, RemoteHandlerRegistrationViaMessageInvokesCallbackWhenNoLocalHandlers)
+{
+    // Given service instance with registered callback but no handlers
+    MessagePassingServiceInstance instance{
+        quality_type_, asil_cfg_, server_factory_mock_, client_factory_mock_, executor_mock_};
+
+    std::atomic<int> callback_count{0};
+    std::atomic<bool> callback_value{false};
+
+    instance.RegisterEventNotificationExistenceChangedCallback(event_id_, [&](bool has_handlers) noexcept {
+        callback_count.fetch_add(1);
+        callback_value.store(has_handlers);
+    });
+
+    callback_count.store(0);  // Reset after registration
+
+    // When receiving RegisterEventNotification message from remote node
+    // This simulates a remote proxy registering for event notifications
+    const auto message = Serialize(event_id_, MessageType::kRegisterEventNotifier);
+
+    // Invoke the message callback via server connection (simulating remote registration)
+    score::cpp::ignore = received_send_message_callback_(*server_connection_mock_, message);
+
+    // Then callback should be invoked with true (covers line 282)
+    EXPECT_EQ(callback_count.load(), 1);
+    EXPECT_TRUE(callback_value.load());
+}
+
+TEST_F(MessagePassingServiceInstanceTest, RemoteHandlerUnregistrationViaMessageInvokesCallbackWhenNoLocalHandlers)
+{
+    // Given service instance with registered callback and one remote handler
+    MessagePassingServiceInstance instance{
+        quality_type_, asil_cfg_, server_factory_mock_, client_factory_mock_, executor_mock_};
+
+    // First register a remote handler via message
+    const auto register_message = Serialize(event_id_, MessageType::kRegisterEventNotifier);
+    score::cpp::ignore = received_send_message_callback_(*server_connection_mock_, register_message);
+
+    std::atomic<int> callback_count{0};
+    std::atomic<bool> callback_value{true};
+
+    instance.RegisterEventNotificationExistenceChangedCallback(event_id_, [&](bool has_handlers) noexcept {
+        callback_count.fetch_add(1);
+        callback_value.store(has_handlers);
+    });
+
+    callback_count.store(0);  // Reset after registration
+
+    // When receiving UnregisterEventNotification message from remote node
+    const auto unregister_message = Serialize(event_id_, MessageType::kUnregisterEventNotifier);
+    score::cpp::ignore = received_send_message_callback_(*server_connection_mock_, unregister_message);
+
+    // Then callback should be invoked with false (covers line 363)
+    EXPECT_EQ(callback_count.load(), 1);
+    EXPECT_FALSE(callback_value.load());
+}
+
+TEST_F(MessagePassingServiceInstanceTest, UnregisterEventNotificationWithNonExistingHandlerNoHandler)
+{
+    IMessagePassingService::HandlerRegistrationNoType registration_no{1U};
+    // Given service instance WITHOUT any registered handler for event_id_
+    MessagePassingServiceInstance instance{
+        quality_type_, asil_cfg_, server_factory_mock_, client_factory_mock_, executor_mock_};
+
+    // Register a callback to verify it's NOT invoked when no handlers exist
+    std::atomic<int> callback_count{0};
+    std::atomic<bool> callback_value{false};
+    instance.RegisterEventNotificationExistenceChangedCallback(event_id_, [&](bool has_handlers) noexcept {
+        callback_count.fetch_add(1);
+        callback_value.store(has_handlers);
+    });
+
+    callback_count.store(0);  // Reset after registration (callback not invoked since no handlers exist)
+
+    // When trying to unregister a handler that was never registered
+    instance.UnregisterEventNotification(event_id_, registration_no, local_pid_);
+
+    // Then status change callback is NOT invoked (no actual state change occurred)
+    EXPECT_EQ(callback_count.load(), 0);  // Callback should not be invoked
+}
+
 }  // namespace
 }  // namespace score::mw::com::impl::lola

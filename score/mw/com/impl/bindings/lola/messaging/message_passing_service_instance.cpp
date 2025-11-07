@@ -877,7 +877,12 @@ void MessagePassingServiceInstance::RegisterEventNotificationExistenceChangedCal
     {
         std::shared_lock<std::shared_mutex> callback_read_lock(handler_status_change_callbacks_mutex_);
         auto callback_search = handler_status_change_callbacks_.find(event_id);
+
+        // LCOV_EXCL_BR_START: Defensive programming: false branch is unreachable in practice. The code inserts a
+        // callback into the map, then immediately looks it up. Between these two operations (both protected by
+        // mutexes), there's no way for the callback to be removed.
         if (callback_search != handler_status_change_callbacks_.end())
+        // LCOV_EXCL_BR_STOP
         {
             callback_search->second(true);
         }
