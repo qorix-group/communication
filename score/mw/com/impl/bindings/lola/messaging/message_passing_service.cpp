@@ -128,10 +128,13 @@ IMessagePassingServiceInstance& MessagePassingService::GetMessagePassingServiceI
 {
     switch (asil_level)
     {
+        // coverity[autosar_cpp14_m6_4_5_violation] return instead of break
         case QualityType::kASIL_QM:
             return *qm_;
+        // coverity[autosar_cpp14_m6_4_5_violation] return instead of break
         case QualityType::kASIL_B:
             return *asil_b_;
+        // coverity[autosar_cpp14_m6_4_5_violation] SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE will terminate this switch clause
         default:
         case QualityType::kInvalid:
             SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(false, "Invalid asil level");
