@@ -13,6 +13,7 @@
 #include "score/mw/com/impl/bindings/lola/shm_path_builder.h"
 
 #include "score/mw/com/impl/bindings/lola/i_shm_path_builder.h"
+#include "score/mw/com/impl/bindings/lola/methods/proxy_instance_identifier.h"
 #include "score/mw/com/impl/configuration/global_configuration.h"
 #include "score/mw/com/impl/configuration/lola_service_instance_id.h"
 #include "score/mw/com/impl/configuration/quality_type.h"
@@ -43,10 +44,8 @@ class ShmPathBuilderDataParamaterizedTestFixture
 };
 
 class ShmPathBuilderMethodParamaterizedTestFixture
-    : public ::testing::TestWithParam<std::tuple<LolaServiceInstanceId::InstanceId,
-                                                 GlobalConfiguration::ApplicationId,
-                                                 IShmPathBuilder::MethodUniqueIdentifier,
-                                                 std::string>>
+    : public ::testing::TestWithParam<
+          std::tuple<LolaServiceInstanceId::InstanceId, ProxyInstanceIdentifier, std::string>>
 {
 };
 
@@ -112,13 +111,13 @@ INSTANTIATE_TEST_SUITE_P(
 
 TEST_P(ShmPathBuilderMethodParamaterizedTestFixture, TestBuildingMethodChannelShmNamePath)
 {
-    const auto [instance_id, application_id, unique_identifier, expected_path] = GetParam();
+    const auto [instance_id, proxy_instance_identifier, expected_path] = GetParam();
 
     // Given a ShmPathBuilder
     ShmPathBuilder builder{kServiceId};
 
     // When creating the method channel shm name
-    const auto actual_path = builder.GetMethodChannelShmName(instance_id, application_id, unique_identifier);
+    const auto actual_path = builder.GetMethodChannelShmName(instance_id, proxy_instance_identifier);
 
     // Then the returned path should be equal to the expected path
     EXPECT_EQ(expected_path, actual_path);
@@ -128,19 +127,17 @@ INSTANTIATE_TEST_SUITE_P(
     ShmPathBuilderMethodTests,
     ShmPathBuilderMethodParamaterizedTestFixture,
     ::testing::Values(std::make_tuple(LolaServiceInstanceId::InstanceId{1},
-                                      GlobalConfiguration::ApplicationId{2U},
-                                      IShmPathBuilder::MethodUniqueIdentifier{3U},
+                                      ProxyInstanceIdentifier{2U, 3U},
                                       "/lola-methods-0000000000004660-00001-00002-00003"),
 
                       std::make_tuple(LolaServiceInstanceId::InstanceId{43981},
-                                      GlobalConfiguration::ApplicationId{12345U},
-                                      IShmPathBuilder::MethodUniqueIdentifier{56789U},
+                                      ProxyInstanceIdentifier{12345U, 56789U},
                                       "/lola-methods-0000000000004660-43981-12345-56789"),
 
                       std::make_tuple(LolaServiceInstanceId::InstanceId{std::numeric_limits<std::uint16_t>::max()},
-                                      GlobalConfiguration::ApplicationId{32768U},
-                                      IShmPathBuilder::MethodUniqueIdentifier{
-                                          std::numeric_limits<IShmPathBuilder::MethodUniqueIdentifier>::max()},
+                                      ProxyInstanceIdentifier{
+                                          32768U,
+                                          std::numeric_limits<ProxyInstanceIdentifier::ProxyInstanceCounter>::max()},
                                       "/lola-methods-0000000000004660-65535-32768-65535")));
 
 }  // namespace

@@ -17,6 +17,8 @@
 #include "score/mw/com/impl/configuration/lola_service_instance_id.h"
 #include "score/mw/com/impl/configuration/quality_type.h"
 
+#include "score/mw/com/impl/bindings/lola/methods/proxy_instance_identifier.h"
+
 #include <sys/types.h>
 #include <cstdint>
 #include <string>
@@ -39,8 +41,6 @@ namespace score::mw::com::impl::lola
 class IShmPathBuilder
 {
   public:
-    using MethodUniqueIdentifier = std::uint16_t;
-
     IShmPathBuilder() noexcept = default;
 
     virtual ~IShmPathBuilder() noexcept = default;
@@ -64,9 +64,9 @@ class IShmPathBuilder
     ///        configuration)
     /// \param unique_identifier a unique identifier that will be appended to the shm name
     /// \return The shm file name
-    virtual std::string GetMethodChannelShmName(const LolaServiceInstanceId::InstanceId instance_id,
-                                                const GlobalConfiguration::ApplicationId application_id,
-                                                const MethodUniqueIdentifier unique_identifier) const noexcept = 0;
+    virtual std::string GetMethodChannelShmName(
+        const LolaServiceInstanceId::InstanceId instance_id,
+        const ProxyInstanceIdentifier& proxy_instance_identifier) const noexcept = 0;
 
   protected:
     IShmPathBuilder(IShmPathBuilder&&) noexcept = default;

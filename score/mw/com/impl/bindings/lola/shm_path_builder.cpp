@@ -96,15 +96,14 @@ void EmitDataFileName(std::ostream& out,
 void EmitMethodFileName(std::ostream& out,
                         const std::uint16_t service_id,
                         const LolaServiceInstanceId::InstanceId instance_id,
-                        const GlobalConfiguration::ApplicationId application_id,
-                        const ShmPathBuilder::MethodUniqueIdentifier unique_identifier) noexcept
+                        const ProxyInstanceIdentifier& proxy_instance_identifier) noexcept
 {
     out << kMethodChannelPrefix;
     AppendServiceAndInstance(out, service_id, instance_id);
 
     out << '-';
-    out << std::setfill('0') << std::setw(5) << application_id << '-';
-    out << std::setfill('0') << std::setw(5) << unique_identifier;
+    out << std::setfill('0') << std::setw(5) << proxy_instance_identifier.process_identifier << '-';
+    out << std::setfill('0') << std::setw(5) << proxy_instance_identifier.proxy_instance_counter;
 }
 
 }  // namespace
@@ -124,12 +123,12 @@ std::string ShmPathBuilder::GetControlChannelShmName(const LolaServiceInstanceId
     });
 }
 
-std::string ShmPathBuilder::GetMethodChannelShmName(const LolaServiceInstanceId::InstanceId instance_id,
-                                                    const GlobalConfiguration::ApplicationId application_id,
-                                                    const MethodUniqueIdentifier unique_identifier) const noexcept
+std::string ShmPathBuilder::GetMethodChannelShmName(
+    const LolaServiceInstanceId::InstanceId instance_id,
+    const ProxyInstanceIdentifier& proxy_instance_identifier) const noexcept
 {
-    return EmitWithPrefix('/', [this, instance_id, application_id, unique_identifier](auto& out) noexcept {
-        EmitMethodFileName(out, service_id_, instance_id, application_id, unique_identifier);
+    return EmitWithPrefix('/', [this, instance_id, proxy_instance_identifier](auto& out) noexcept {
+        EmitMethodFileName(out, service_id_, instance_id, proxy_instance_identifier);
     });
 }
 

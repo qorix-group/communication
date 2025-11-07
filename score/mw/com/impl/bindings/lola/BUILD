@@ -96,6 +96,7 @@ cc_library(
         "//score/mw/com/impl:__subpackages__",
     ],
     deps = [
+        "//score/mw/com/impl/bindings/lola/methods:proxy_instance_identifier",
         "//score/mw/com/impl/configuration",
         "@score_baselibs//score/language/futurecpp",
     ],
@@ -1223,6 +1224,7 @@ cc_unit_test_suites_for_host_and_qnx(
     ],
     test_suites_from_sub_packages = [
         "//score/mw/com/impl/bindings/lola/messaging:unit_test_suite",
+        "//score/mw/com/impl/bindings/lola/methods:unit_test_suite",
         "//score/mw/com/impl/bindings/lola/service_discovery:unit_test_suite",
         "//score/mw/com/impl/bindings/lola/tracing:unit_test_suite",
     ],

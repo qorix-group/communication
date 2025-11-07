@@ -35,8 +35,7 @@ class ShmPathBuilderMock : public IShmPathBuilder
     MOCK_METHOD(std::string,
                 GetMethodChannelShmName,
                 (const LolaServiceInstanceId::InstanceId instance_id,
-                 const GlobalConfiguration::ApplicationId application_id,
-                 const MethodUniqueIdentifier unique_identifier),
+                 const ProxyInstanceIdentifier& proxy_instance_identifier),
                 (const, noexcept, override));
 };
 
