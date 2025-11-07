@@ -126,6 +126,7 @@ void MessagePassingService::NotifyOutdatedNodeId(const QualityType asil_level,
 IMessagePassingServiceInstance& MessagePassingService::GetMessagePassingServiceInstance(
     const QualityType asil_level) const
 {
+    // coverity[autosar_cpp14_m6_4_3_violation] kInvalid and default branches are the same
     switch (asil_level)
     {
         // coverity[autosar_cpp14_m6_4_5_violation] return instead of break
@@ -135,8 +136,8 @@ IMessagePassingServiceInstance& MessagePassingService::GetMessagePassingServiceI
         case QualityType::kASIL_B:
             return *asil_b_;
         // coverity[autosar_cpp14_m6_4_5_violation] SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE will terminate this switch clause
-        default:
         case QualityType::kInvalid:
+        default:
             SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(false, "Invalid asil level");
     }
 }
