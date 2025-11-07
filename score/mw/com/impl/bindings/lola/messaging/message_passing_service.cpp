@@ -41,6 +41,7 @@ namespace score::mw::com::impl::lola
 MessagePassingService::MessagePassingService(
     const AsilSpecificCfg& config_asil_qm,
     const std::optional<AsilSpecificCfg>& config_asil_b,
+    // coverity[autosar_cpp14_a8_4_12_violation] Function only uses the object without affecting ownership
     const std::unique_ptr<IMessagePassingServiceInstanceFactory>& factory) noexcept
     : IMessagePassingService{},
       client_factory_{},
