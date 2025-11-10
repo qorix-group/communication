@@ -23,6 +23,7 @@ cc_library(
         "proxy_method.cpp",
         "skeleton.cpp",
         "skeleton_event.cpp",
+        "skeleton_method.cpp",
     ],
     hdrs = [
         "generic_proxy_event.h",
@@ -31,6 +32,7 @@ cc_library(
         "proxy_method.h",
         "skeleton.h",
         "skeleton_event.h",
+        "skeleton_method.h",
     ],
     features = COMPILER_WARNING_FEATURES,
     visibility = [
@@ -44,6 +46,7 @@ cc_library(
         "//score/mw/com/impl:proxy_event_binding",
         "//score/mw/com/impl:skeleton_binding",
         "//score/mw/com/impl:skeleton_event_binding",
+        "//score/mw/com/impl:skeleton_method_binding",
         "//score/mw/com/impl/methods:proxy_method_binding",
         "//score/mw/com/impl/plumbing:sample_allocatee_ptr",
         "@googletest//:gtest",
