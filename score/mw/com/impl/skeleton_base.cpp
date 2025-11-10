@@ -88,6 +88,7 @@ SkeletonBase::SkeletonBase(std::unique_ptr<SkeletonBinding> skeleton_binding,
     : binding_{std::move(skeleton_binding)},
       events_{},
       fields_{},
+      methods_{},
       instance_id_{std::move(instance_id)},
       skeleton_mock_{nullptr},
       service_offered_flag_{}
@@ -125,6 +126,7 @@ SkeletonBase::SkeletonBase(SkeletonBase&& other) noexcept
     : binding_{std::move(other.binding_)},
       events_{std::move(other.events_)},
       fields_{std::move(other.fields_)},
+      methods_{std::move(other.methods_)},
       instance_id_{std::move(other.instance_id_)},
       skeleton_mock_{std::move(other.skeleton_mock_)},
       service_offered_flag_{std::move(other.service_offered_flag_)}
@@ -139,6 +141,11 @@ SkeletonBase::SkeletonBase(SkeletonBase&& other) noexcept
     for (auto& field : fields_)
     {
         field.second.get().UpdateSkeletonReference(*this);
+    }
+
+    for (auto& method : methods_)
+    {
+        method.second.get().UpdateSkeletonReference(*this);
     }
 }
 
@@ -155,6 +162,7 @@ SkeletonBase& SkeletonBase::operator=(SkeletonBase&& other) noexcept
         binding_ = std::move(other.binding_);
         events_ = std::move(other.events_);
         fields_ = std::move(other.fields_);
+        methods_ = std::move(other.methods_);
         instance_id_ = std::move(other.instance_id_);
         skeleton_mock_ = std::move(other.skeleton_mock_);
         service_offered_flag_ = std::move(other.service_offered_flag_);
@@ -169,6 +177,10 @@ SkeletonBase& SkeletonBase::operator=(SkeletonBase&& other) noexcept
         for (auto& field : fields_)
         {
             field.second.get().UpdateSkeletonReference(*this);
+        }
+        for (auto& method : methods_)
+        {
+            method.second.get().UpdateSkeletonReference(*this);
         }
     }
     return *this;

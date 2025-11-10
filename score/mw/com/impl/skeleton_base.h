@@ -18,6 +18,7 @@
 #include "score/mw/com/impl/instance_specifier.h"
 #include "score/mw/com/impl/skeleton_binding.h"
 #include "score/mw/com/impl/skeleton_event_binding.h"
+#include "score/mw/com/impl/skeleton_method_base.h"
 
 #include "score/mw/com/impl/mocking/i_skeleton_base.h"
 
@@ -40,6 +41,7 @@ namespace score::mw::com::impl
 
 class SkeletonEventBase;
 class SkeletonFieldBase;
+class SkeletonMethodBase;
 
 /// \api
 /// \brief Defines the processing modes for the service implementation side.
@@ -60,6 +62,7 @@ class SkeletonBase
   public:
     using SkeletonEvents = std::map<std::string_view, std::reference_wrapper<SkeletonEventBase>>;
     using SkeletonFields = std::map<std::string_view, std::reference_wrapper<SkeletonFieldBase>>;
+    using SkeletonMethods = std::map<std::string_view, std::reference_wrapper<SkeletonMethodBase>>;
 
     /// \brief Creation of service skeleton with provided Skeleton binding
     ///
@@ -110,10 +113,11 @@ class SkeletonBase
     SkeletonBase(SkeletonBase&& other) noexcept;
     SkeletonBase& operator=(SkeletonBase&& other) noexcept;
 
-  private:
+    // private:
     std::unique_ptr<SkeletonBinding> binding_;
     SkeletonEvents events_;
     SkeletonFields fields_;
+    SkeletonMethods methods_;
     InstanceIdentifier instance_id_;
 
     ISkeletonBase* skeleton_mock_;
@@ -157,6 +161,13 @@ class SkeletonBaseView
         SCORE_LANGUAGE_FUTURECPP_ASSERT_MESSAGE(was_field_inserted, "Field cannot be registered as it already exists.");
     }
 
+    void RegisterMethod(const std::string_view method_name, SkeletonMethodBase& method)
+    {
+        const auto result = skeleton_base_.methods_.emplace(method_name, method);
+        const bool was_method_inserted = result.second;
+        SCORE_LANGUAGE_FUTURECPP_ASSERT_MESSAGE(was_method_inserted, "Method cannot be registered as it already exists.");
+    }
+
     // Suppress "AUTOSAR C++14 A15-5-3" rule findings. This rule states: "The std::terminate() function shall not be
     // called implicitly". std::terminate() is implicitly called from std::map::at in case the container doesn't
     // have the mapped element. This function is called by the move constructor and as we register the event name in
@@ -187,6 +198,18 @@ class SkeletonBaseView
         field_name_it->second = field;
     }
 
+    void UpdateMethod(const std::string_view method_name, SkeletonMethodBase& method) noexcept
+    {
+        auto method_name_it = skeleton_base_.methods_.find(method_name);
+        if (method_name_it == skeleton_base_.methods_.cend())
+        {
+            score::mw::log::LogError("lola")
+                << "SkeletonBaseView::UpdateMethod failed to update method because the requested method doesn't exist";
+            std::terminate();
+        }
+        method_name_it->second = method;
+    }
+
     const SkeletonBase::SkeletonEvents& GetEvents() const noexcept
     {
         return skeleton_base_.events_;
@@ -195,6 +218,11 @@ class SkeletonBaseView
     const SkeletonBase::SkeletonFields& GetFields() const noexcept
     {
         return skeleton_base_.fields_;
+    }
+
+    const SkeletonBase::SkeletonMethods& GetMethods() const noexcept
+    {
+        return skeleton_base_.methods_;
     }
 
   private:

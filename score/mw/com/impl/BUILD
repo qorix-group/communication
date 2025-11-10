@@ -32,6 +32,7 @@ cc_library(
         ":proxy_field",
         ":skeleton_event",
         ":skeleton_field",
+        ":skeleton_method",
         ":traits",
         "//score/mw/com/impl/methods:proxy_method",
     ],
@@ -155,6 +156,38 @@ cc_library(
 )
 
 cc_library(
+    name = "skeleton_method_base",
+    srcs = ["skeleton_method_base.cpp"],
+    hdrs = ["skeleton_method_base.h"],
+    features = COMPILER_WARNING_FEATURES,
+    tags = ["FFI"],
+    visibility = [
+        "//score/mw/com:__subpackages__",
+    ],
+    deps = [
+        ":skeleton_method_binding",
+        "//score/mw/com/impl/util:type_erased_storage",
+    ],
+)
+
+cc_library(
+    name = "skeleton_method",
+    srcs = ["skeleton_method.cpp"],
+    hdrs = ["skeleton_method.h"],
+    features = COMPILER_WARNING_FEATURES,
+    tags = ["FFI"],
+    visibility = [
+        "//score/mw/com/impl:__subpackages__",
+    ],
+    deps = [
+        ":instance_identifier",
+        ":skeleton_base",
+        ":skeleton_method_binding",
+        "@score_baselibs//score/result",
+    ],
+)
+
+cc_library(
     name = "traits",
     srcs = ["traits.cpp"],
     hdrs = ["traits.h"],
@@ -170,6 +203,7 @@ cc_library(
         ":skeleton_base",
         ":skeleton_event",
         ":skeleton_field",
+        ":skeleton_method",
         "//score/mw/com/impl/plumbing:event",
     ],
 )
@@ -264,6 +298,7 @@ cc_library(
         ":skeleton_binding",
         ":skeleton_event_base",
         ":skeleton_field_base",
+        ":skeleton_method_base",
         "//score/mw/com/impl/mocking:i_skeleton_base",
         "//score/mw/com/impl/plumbing",
         "//score/mw/com/impl/tracing:skeleton_tracing",
