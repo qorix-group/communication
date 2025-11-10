@@ -69,6 +69,28 @@ TEST_P(MessagePassingClientCacheTest, GetMessagePassingClientCreatesNewClientCon
     auto client_connection = client_cache_.GetMessagePassingClient(pid_);
 }
 
+TEST_P(MessagePassingClientCacheTest, GetMessagePassingClientCreatesNewClientConnectionIsStoppedState)
+{
+    // Given an empty MessagePassingClientCache
+    // expect that GetState is called at the client connection, which will return kStopped
+    EXPECT_CALL(*client_connection_mock_, GetState()).WillOnce(::testing::Return(IClientConnection::State::kStopped));
+    // and expect that GetStopReason is called at the client connection, which will return kIoError
+    EXPECT_CALL(*client_connection_mock_, GetStopReason())
+        .WillOnce(::testing::Return(IClientConnection::StopReason::kIoError));
+
+    // Expect that factory will be invoked to create a new client connection
+    // and factory returns the client connection mock expecting the above
+    // (the order is changed because ByMoveWrapper invalidates the original unique_ptr)
+    EXPECT_CALL(client_factory_mock_, Create(::testing::_, ::testing::_))
+        .WillOnce(::testing::Return(::testing::ByMove(std::move(client_connection_mock_))));
+
+    // When GetMessagePassingClient is called
+    auto client_connection = client_cache_.GetMessagePassingClient(pid_);
+
+    // then the returned shared_ptr is valid
+    EXPECT_TRUE(client_connection);
+}
+
 TEST_P(MessagePassingClientCacheTest,
        GetMessagePassingClientCreatesDistinctClientConnectionsProvidedDifferentTargetNodeIds)
 {
