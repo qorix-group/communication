@@ -28,7 +28,11 @@ cc_library(
     deps = [
         "//score/mw/com/impl:scoped_event_receive_handler",
         "//score/mw/com/impl/bindings/lola:element_fq_id",
+        "//score/mw/com/impl/bindings/lola/methods:proxy_instance_identifier",
+        "//score/mw/com/impl/bindings/lola/methods:skeleton_instance_identifier",
         "//score/mw/com/impl/configuration:quality_type",
+        "@score_baselibs//score/language/futurecpp",
+        "@score_baselibs//score/result",
     ],
 )
 

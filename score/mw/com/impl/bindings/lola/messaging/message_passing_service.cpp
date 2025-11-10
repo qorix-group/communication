@@ -128,6 +128,19 @@ void MessagePassingService::NotifyOutdatedNodeId(const QualityType asil_level,
     instance->NotifyOutdatedNodeId(outdated_node_id, target_node_id);
 }
 
+ResultBlank MessagePassingService::RegisterOnServiceMethodSubscribedHandler(
+    SkeletonInstanceIdentifier /* skeleton_instance_identifier */,
+    ServiceMethodSubscribedHandler /* subscribed_callback */)
+{
+    return {};
+}
+
+ResultBlank MessagePassingService::RegisterMethodCallHandler(ProxyInstanceIdentifier /* proxy_instance_identifier */,
+                                                             MethodCallHandler /* method_call_callback */)
+{
+    return {};
+}
+
 void MessagePassingService::RegisterEventNotificationExistenceChangedCallback(
     const QualityType asil_level,
     const ElementFqId event_id,
@@ -146,6 +159,18 @@ void MessagePassingService::UnregisterEventNotificationExistenceChangedCallback(
     SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(instance.has_value(), "Invalid asil level.");
 
     instance->UnregisterEventNotificationExistenceChangedCallback(event_id);
+}
+
+ResultBlank MessagePassingService::CallServiceMethodSubscribed(
+    const SkeletonInstanceIdentifier& /* skeleton_instance_identifier */)
+{
+    return {};
+}
+
+ResultBlank MessagePassingService::CallMethod(const ProxyInstanceIdentifier& /* proxy_instance_identifier */,
+                                              std::size_t /* queue_position */)
+{
+    return {};
 }
 
 }  // namespace score::mw::com::impl::lola

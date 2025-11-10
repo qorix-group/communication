@@ -16,6 +16,9 @@
 #include "score/mw/com/impl/bindings/lola/messaging/i_message_passing_service.h"
 
 #include "score/mw/com/impl/bindings/lola/messaging/message_passing_service_instance.h"
+#include "score/mw/com/impl/bindings/lola/methods/proxy_instance_identifier.h"
+#include "score/mw/com/impl/bindings/lola/methods/skeleton_instance_identifier.h"
+#include "score/mw/com/impl/configuration/global_configuration.h"
 
 // TODO: dependency injection?
 #ifdef __QNX__
@@ -97,6 +100,17 @@ class MessagePassingService final : public IMessagePassingService
                                      const HandlerRegistrationNoType registration_no,
                                      const pid_t target_node_id) noexcept override;
 
+    /// \brief Register a handler on Skeleton side which will be called when CallServiceMethodSubscribed is called by a
+    /// Proxy.
+    /// \details see IMessagePassingService::RegisterOnServiceMethodSubscribedHandler
+    ResultBlank RegisterOnServiceMethodSubscribedHandler(SkeletonInstanceIdentifier skeleton_instance_identifier,
+                                                         ServiceMethodSubscribedHandler subscribed_callback) override;
+
+    /// \brief Register a handler on Skeleton side which will be called when CallMethod is called by a Proxy.
+    /// \details see IMessagePassingService::RegisterMethodCallHandler
+    ResultBlank RegisterMethodCallHandler(ProxyInstanceIdentifier proxy_instance_identifier,
+                                          MethodCallHandler method_call_callback) override;
+
     /// \brief Notifies target node about outdated_node_id being an old/outdated node id, not being used anymore.
     /// \details see IMessagePassingService::NotifyOutdatedNodeId
     void NotifyOutdatedNodeId(const QualityType asil_level,
@@ -115,6 +129,19 @@ class MessagePassingService final : public IMessagePassingService
     /// documentation.
     void UnregisterEventNotificationExistenceChangedCallback(const QualityType asil_level,
                                                              const ElementFqId event_id) noexcept override;
+
+    /// \brief Blocking call which is called on Proxy side to notify the Skeleton that a Proxy has setup the
+    /// method shared memory region and wants to subscribe. The callback registered with RegisterMethodCall will be
+    /// called on the Skeleton side and a response will be returned.
+    /// \details see IMessagePassingService::CallServiceMethodSubscribed
+    ResultBlank CallServiceMethodSubscribed(const SkeletonInstanceIdentifier& skeleton_instance_identifier) override;
+
+    /// \brief Blocking call which is called on Proxy side to trigger the Skeleton to process a method call. The
+    /// callback registered with RegisterOnServiceMethodSubscribed will be called on the Skeleton side and a response
+    /// will be returned.
+    /// \details see IMessagePassingService::CallMethod
+    ResultBlank CallMethod(const ProxyInstanceIdentifier& proxy_instance_identifier,
+                           std::size_t queue_position) override;
 
   private:
 // TODO: dependency injection?

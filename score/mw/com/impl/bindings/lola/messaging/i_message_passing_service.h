@@ -14,11 +14,19 @@
 #define SCORE_MW_COM_IMPL_BINDINGS_LOLA_IMESSAGEPASSINGSERVICE_H
 
 #include "score/mw/com/impl/bindings/lola/element_fq_id.h"
+#include "score/mw/com/impl/bindings/lola/methods/proxy_instance_identifier.h"
+#include "score/mw/com/impl/bindings/lola/methods/skeleton_instance_identifier.h"
+#include "score/mw/com/impl/configuration/lola_service_id.h"
+#include "score/mw/com/impl/configuration/lola_service_instance_id.h"
 #include "score/mw/com/impl/configuration/quality_type.h"
 #include "score/mw/com/impl/scoped_event_receive_handler.h"
 
-#include <score/callback.hpp>
+#include "score/result/result.h"
 
+#include <score/callback.hpp>
+#include <score/stop_token.hpp>
+
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 
@@ -39,6 +47,10 @@ class IMessagePassingService
     ///          and false when no handlers are registered (transition from >0 to 0).
     ///          The callback is invoked synchronously during handler registration/unregistration.
     using HandlerStatusChangeCallback = score::cpp::callback<void(bool)>;
+
+    using ServiceMethodSubscribedHandler =
+        score::cpp::callback<score::ResultBlank(ProxyInstanceIdentifier proxy_instance_identifier)>;
+    using MethodCallHandler = score::cpp::callback<void(std::size_t queue_position)>;
 
     IMessagePassingService() noexcept = default;
 
@@ -101,6 +113,40 @@ class IMessagePassingService
                                              const HandlerRegistrationNoType registration_no,
                                              const pid_t target_node_id) noexcept = 0;
 
+    /// \brief Register a handler on Skeleton side which will be called when CallServiceMethodSubscribed is called by a
+    /// Proxy.
+    ///
+    /// When a Proxy is created, it will create a method shared memory region and perform some setup steps. It will then
+    /// send a notification to the connected Skeleton via CallServiceMethodSubscribed. When this message is received in
+    /// the Skeleton process, the handler registered in this function will be called.
+    ///
+    /// Each Skeleton containing at least one method must register a handler with this function. Since we have one
+    /// IMessagePassingService per process, the incoming message must identify which Skeleton's handler should be
+    /// called.
+    ///
+    /// \param skeleton_instance_identifier to identify which ServiceMethodSubscribedHandler to call when
+    /// CallServiceMethodSubscribed is called on the Proxy side
+    /// \param subscribed_callback callback that will be called when CallServiceMethodSubscribed is called
+    virtual ResultBlank RegisterOnServiceMethodSubscribedHandler(
+        SkeletonInstanceIdentifier skeleton_instance_identifier,
+        ServiceMethodSubscribedHandler subscribed_callback) = 0;
+
+    /// \brief Register a handler on Skeleton side which will be called when CallMethod is called by a Proxy.
+    ///
+    /// When a user calls a method on a Proxy, it will put the InArgs in shared memory (if there are any) and then send
+    /// a notification to the Skeleton via CallMethod. The registered MethodCallCallback in the Skeleton process will
+    /// then be called which calls the actual method and puts the return value in shared memory (if there is one).
+    ///
+    /// A Skeleton opens a shared memory region for each connected Proxy which contains a method. The provided
+    /// ProxyInstanceIdentifier is required to identify which of the connected proxies the provided callback corresponds
+    /// to.
+    ///
+    /// \param proxy_instance_identifier to identify which MethodCallHandler to call when CallMethod is called on the
+    /// Proxy side
+    /// \param method_call_callback callback that will be called when CallMethod is called
+    virtual ResultBlank RegisterMethodCallHandler(ProxyInstanceIdentifier proxy_instance_identifier,
+                                                  MethodCallHandler method_call_callback) = 0;
+
     /// \brief Notify given target_node_id about outdated_node_id being an old/not to be used node identifier.
     /// \details This is used by LoLa proxy instances during creation, when they detect, that they are re-starting
     ///          (regularly or after crash) and are re-using a certain service instance, which they had used before, but
@@ -139,6 +185,28 @@ class IMessagePassingService
     /// \param event_id The event to stop monitoring.
     virtual void UnregisterEventNotificationExistenceChangedCallback(const QualityType asil_level,
                                                                      const ElementFqId event_id) noexcept = 0;
+
+    /// \brief Blocking call which is called on Proxy side to notify the Skeleton that a Proxy has setup the
+    /// method shared memory region and wants to subscribe. The callback registered with RegisterMethodCall will be
+    /// called on the Skeleton side and a response will be returned.
+    ///
+    /// The provided SkeletonInstanceIdentifier is required so that MessagePassingService can find the correct
+    /// ServiceMethodSubscribed handler corresponding to the correct Skeleton.
+    ///
+    /// \param skeleton_instance_identifier identification of the Skeleton corresponding to the Proxy which is calling
+    /// this method.
+    virtual ResultBlank CallServiceMethodSubscribed(const SkeletonInstanceIdentifier& skeleton_instance_identifier) = 0;
+
+    /// \brief Blocking call which is called on Proxy side to trigger the Skeleton to process a method call. The
+    /// callback registered with RegisterOnServiceMethodSubscribed will be called on the Skeleton side and a response
+    /// will be returned
+    ///
+    /// A Skeleton opens a shared memory region for each connected Proxy which contains a method. The provided
+    /// ProxyInstanceIdentifier is required to identify which of the connected proxies has called the method.
+    ///
+    /// \param proxy_instance_identifier identification of the specific Proxy which is calling this method.
+    virtual ResultBlank CallMethod(const ProxyInstanceIdentifier& proxy_instance_identifier,
+                                   std::size_t queue_position) = 0;
 };
 
 }  // namespace score::mw::com::impl::lola

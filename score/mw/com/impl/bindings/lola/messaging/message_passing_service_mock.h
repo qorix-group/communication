@@ -46,6 +46,14 @@ class MessagePassingServiceMock : public IMessagePassingService
                 UnregisterEventNotificationExistenceChangedCallback,
                 (QualityType, ElementFqId),
                 (noexcept, override));
+
+    MOCK_METHOD(ResultBlank,
+                RegisterOnServiceMethodSubscribedHandler,
+                (SkeletonInstanceIdentifier, ServiceMethodSubscribedHandler),
+                (override));
+    MOCK_METHOD(ResultBlank, RegisterMethodCallHandler, (ProxyInstanceIdentifier, MethodCallHandler), (override));
+    MOCK_METHOD(ResultBlank, CallServiceMethodSubscribed, (const SkeletonInstanceIdentifier&), (override));
+    MOCK_METHOD(ResultBlank, CallMethod, (const ProxyInstanceIdentifier&, std::size_t), (override));
 };
 
 }  // namespace score::mw::com::impl::lola
