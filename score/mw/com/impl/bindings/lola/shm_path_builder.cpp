@@ -13,6 +13,7 @@
 #include "score/mw/com/impl/bindings/lola/shm_path_builder.h"
 
 #include "score/mw/com/impl/bindings/lola/path_builder.h"
+#include "score/mw/com/impl/configuration/global_configuration.h"
 #include <sched.h>
 
 #include <iomanip>
@@ -95,14 +96,14 @@ void EmitDataFileName(std::ostream& out,
 void EmitMethodFileName(std::ostream& out,
                         const std::uint16_t service_id,
                         const LolaServiceInstanceId::InstanceId instance_id,
-                        const pid_t pid,
+                        const GlobalConfiguration::ApplicationId application_id,
                         const ShmPathBuilder::MethodUniqueIdentifier unique_identifier) noexcept
 {
     out << kMethodChannelPrefix;
     AppendServiceAndInstance(out, service_id, instance_id);
 
     out << '-';
-    out << std::setfill('0') << std::setw(5) << pid << '-';
+    out << std::setfill('0') << std::setw(5) << application_id << '-';
     out << std::setfill('0') << std::setw(5) << unique_identifier;
 }
 
@@ -124,11 +125,11 @@ std::string ShmPathBuilder::GetControlChannelShmName(const LolaServiceInstanceId
 }
 
 std::string ShmPathBuilder::GetMethodChannelShmName(const LolaServiceInstanceId::InstanceId instance_id,
-                                                    const pid_t pid,
+                                                    const GlobalConfiguration::ApplicationId application_id,
                                                     const MethodUniqueIdentifier unique_identifier) const noexcept
 {
-    return EmitWithPrefix('/', [this, instance_id, pid, unique_identifier](auto& out) noexcept {
-        EmitMethodFileName(out, service_id_, instance_id, pid, unique_identifier);
+    return EmitWithPrefix('/', [this, instance_id, application_id, unique_identifier](auto& out) noexcept {
+        EmitMethodFileName(out, service_id_, instance_id, application_id, unique_identifier);
     });
 }
 

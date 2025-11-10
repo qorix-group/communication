@@ -13,6 +13,7 @@
 #ifndef SCORE_MW_COM_IMPL_BINDINGS_LOLA_I_SHM_PATH_BUILDER_H
 #define SCORE_MW_COM_IMPL_BINDINGS_LOLA_I_SHM_PATH_BUILDER_H
 
+#include "score/mw/com/impl/configuration/global_configuration.h"
 #include "score/mw/com/impl/configuration/lola_service_instance_id.h"
 #include "score/mw/com/impl/configuration/quality_type.h"
 
@@ -59,11 +60,12 @@ class IShmPathBuilder
     /// Returns the path suitable for shm_open to the method shared memory.
     ///
     /// \param instance_id InstanceId of path to be created
-    /// \param pid of the process which will create the shm region
+    /// \param application_id which uniquely identifies a process (which defaults to user ID but can be set in
+    ///        configuration)
     /// \param unique_identifier a unique identifier that will be appended to the shm name
     /// \return The shm file name
     virtual std::string GetMethodChannelShmName(const LolaServiceInstanceId::InstanceId instance_id,
-                                                const pid_t pid,
+                                                const GlobalConfiguration::ApplicationId application_id,
                                                 const MethodUniqueIdentifier unique_identifier) const noexcept = 0;
 
   protected:

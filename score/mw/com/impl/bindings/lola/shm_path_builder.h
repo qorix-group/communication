@@ -24,45 +24,19 @@ namespace score::mw::com::impl::lola
 
 /// Utility class to generate paths to the shm files.
 ///
-/// There are up to three files per instance:
-/// - The QM control file
-/// - The ASIL B control file
-/// - The data storage file
-///
-/// This class should be used to generate the paths to the files so that they can be mapped
-/// into the processes address space for further usage.
-///
-/// The instance is identified by its service_id and instance_id.
+/// See IShmPathBuilder for details
 class ShmPathBuilder : public IShmPathBuilder
 {
   public:
-    /// Create a path builder.
-    ///
-    /// \param service_id ServiceId of path to be created
     explicit ShmPathBuilder(const std::uint16_t service_id) noexcept : IShmPathBuilder{}, service_id_{service_id} {}
 
-    /// Returns the path suitable for shm_open to the data shared memory.
-    ///
-    /// \param instance_id InstanceId of path to be created
-    /// \return The shm file name
     std::string GetDataChannelShmName(const LolaServiceInstanceId::InstanceId instance_id) const noexcept override;
 
-    /// Returns the path suitable for shm_open to the control shared memory.
-    ///
-    /// \param instance_id InstanceId of path to be created
-    /// \param channel_type Whether to return the ASIL QM or ASIL B name.
-    /// \return The shm file name
     std::string GetControlChannelShmName(const LolaServiceInstanceId::InstanceId instance_id,
                                          const QualityType channel_type) const noexcept override;
 
-    /// Returns the path suitable for shm_open to the method shared memory.
-    ///
-    /// \param instance_id InstanceId of path to be created
-    /// \param pid of the process which will create the shm region
-    /// \param unique_identifier a unique identifier that will be appended to the shm name
-    /// \return The shm file name
     std::string GetMethodChannelShmName(const LolaServiceInstanceId::InstanceId instance_id,
-                                        const pid_t pid,
+                                        const GlobalConfiguration::ApplicationId application_id,
                                         const MethodUniqueIdentifier unique_identifier) const noexcept override;
 
   private:
