@@ -188,6 +188,20 @@ cc_library(
 )
 
 cc_library(
+    name = "skeleton_method_binding",
+    srcs = ["skeleton_method_binding.cpp"],
+    hdrs = ["skeleton_method_binding.h"],
+    features = COMPILER_WARNING_FEATURES,
+    tags = ["FFI"],
+    visibility = [
+        "//score/mw/com/impl:__subpackages__",
+    ],
+    deps = [
+        "@score_baselibs//score/result",
+    ],
+)
+
+cc_library(
     name = "traits",
     srcs = ["traits.cpp"],
     hdrs = ["traits.h"],
