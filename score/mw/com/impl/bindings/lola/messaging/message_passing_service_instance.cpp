@@ -448,7 +448,8 @@ void score::mw::com::impl::lola::MessagePassingServiceInstance::NotifyEvent(cons
         read_lock.unlock();
         // Suppress "AUTOSAR C++14 A15-4-2" rule finding. This rule states: "If a function is declared to be noexcept,
         // noexcept(true) or noexcept(<true condition>), then it shall not exit with an exception.". the function Post
-        // doesn't throw any exception, and the whole function scope doesn't lead to any exception.
+        // throws on allocation failure but this throw directly leads to a termination based on a compiler hook.
+        // and the whole function scope doesn't lead to any exception.
         // coverity[autosar_cpp14_a15_4_2_violation]
         thread_pool_.Post(
             [this](const score::cpp::stop_token& /*token*/, const ElementFqId element_id) noexcept {
