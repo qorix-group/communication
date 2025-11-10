@@ -1038,6 +1038,9 @@ cc_test(
         "skeleton_event_test.cpp",
         "skeleton_field_base_test.cpp",
         "skeleton_field_test.cpp",
+        "skeleton_method_base_test.cpp",
+        "skeleton_method_binding_test.cpp",
+        "skeleton_method_test.cpp",
         "traits_test.cpp",
     ],
     features = COMPILER_WARNING_FEATURES + [
@@ -1050,6 +1053,8 @@ cc_test(
         ":runtime_mock",
         ":service_discovery_mock",
         ":service_element_map",
+        ":skeleton_method",
+        ":skeleton_method_binding",
         "//score/mw/com:types",
         "//score/mw/com/impl/bindings/lola:runtime_mock",
         "//score/mw/com/impl/bindings/lola/test_doubles",

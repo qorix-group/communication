@@ -13,6 +13,7 @@
 #ifndef SCORE_MW_COM_IMPL_BINDINGS_MOCK_BINDING_SKELETON_H
 #define SCORE_MW_COM_IMPL_BINDINGS_MOCK_BINDING_SKELETON_H
 
+#include "score/result/result.h"
 #include "score/mw/com/impl/skeleton_binding.h"
 
 #include "gmock/gmock.h"
@@ -35,6 +36,32 @@ class Skeleton : public SkeletonBinding
     MOCK_METHOD(BindingType, GetBindingType, (), (const, noexcept, override, final));
 };
 
+class SkeletonFacade : public SkeletonBinding
+{
+  public:
+    SkeletonFacade(Skeleton& skeleton) : SkeletonBinding{}, skeleton_{skeleton} {}
+    ~SkeletonFacade() override = default;
+
+    ResultBlank PrepareOffer(SkeletonEventBindings& skeleton_event_binding,
+                             SkeletonFieldBindings& skeleton_field_binding,
+                             std::optional<RegisterShmObjectTraceCallback> callback) noexcept override final
+    {
+        return skeleton_.PrepareOffer(skeleton_event_binding, skeleton_field_binding, std::move(callback));
+    }
+
+    void PrepareStopOffer(std::optional<UnregisterShmObjectTraceCallback> callback) noexcept override final
+    {
+        return skeleton_.PrepareStopOffer(std::move(callback));
+    }
+
+    BindingType GetBindingType() const noexcept override final
+    {
+        return skeleton_.GetBindingType();
+    }
+
+  private:
+    Skeleton& skeleton_;
+};
 }  // namespace score::mw::com::impl::mock_binding
 
 #endif  // SCORE_MW_COM_IMPL_BINDINGS_MOCK_BINDING_SKELETON_H

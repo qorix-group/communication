@@ -12,12 +12,19 @@
  ********************************************************************************/
 #include "score/mw/com/impl/skeleton_base.h"
 
+#include "score/result/result.h"
+#include "score/mw/com/impl/bindings/mock_binding/skeleton.h"
+#include "score/mw/com/impl/bindings/mock_binding/skeleton_method.h"
 #include "score/mw/com/impl/com_error.h"
+#include "score/mw/com/impl/configuration/test/configuration_store.h"
 #include "score/mw/com/impl/runtime.h"
 #include "score/mw/com/impl/runtime_mock.h"
 #include "score/mw/com/impl/service_discovery_mock.h"
 #include "score/mw/com/impl/skeleton_event.h"
+#include "score/mw/com/impl/skeleton_event_base.h"
 #include "score/mw/com/impl/skeleton_field.h"
+#include "score/mw/com/impl/skeleton_field_base.h"
+#include "score/mw/com/impl/skeleton_method_base.h"
 #include "score/mw/com/impl/test/binding_factory_resources.h"
 #include "score/mw/com/impl/test/runtime_mock_guard.h"
 
@@ -25,6 +32,7 @@
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <memory>
 #include <utility>
 
 namespace score::mw::com::impl
@@ -45,7 +53,7 @@ const auto kDummyEventName{"DummyEvent"};
 const auto kDummyEventName2{"DummyEvent2"};
 const auto kDummyFieldName{"DummyField"};
 
-const auto kInstanceSpecifier = InstanceSpecifier::Create("abc/abc/TirePressurePort").value();
+const auto kInstanceSpecifier = InstanceSpecifier::Create(std::string{"abc/abc/TirePressurePort"}).value();
 
 const TestSampleType kInitialFieldValue(10);
 
@@ -155,17 +163,17 @@ class SkeletonBaseFixture : public ::testing::Test
         service_,
         score::cpp::blank{},
         QualityType::kASIL_QM,
-        InstanceSpecifier::Create("abc/abc/TirePressurePort/no_instance").value()};
+        InstanceSpecifier::Create(std::string{"abc/abc/TirePressurePort/no_instance"}).value()};
     const ServiceInstanceDeployment valid_instance_deployment_{
         service_,
         LolaServiceInstanceDeployment{LolaServiceInstanceId{0U}},
         QualityType::kASIL_QM,
-        InstanceSpecifier::Create("abc/abc/TirePressurePort/valid_instance").value()};
+        InstanceSpecifier::Create(std::string{"abc/abc/TirePressurePort/valid_instance"}).value()};
     const ServiceInstanceDeployment invalid_instance_deployment_{
         service_,
         LolaServiceInstanceDeployment{LolaServiceInstanceId{0U}},
         QualityType::kASIL_QM,
-        InstanceSpecifier::Create("abc/abc/TirePressurePort/invalid_instance").value()};
+        InstanceSpecifier::Create(std::string{"abc/abc/TirePressurePort/invalid_instance"}).value()};
 
     ServiceDiscoveryMock service_discovery_mock_{};
     RuntimeMockGuard runtime_mock_guard_{};
@@ -1007,6 +1015,200 @@ TEST_F(SkeletonBaseOfferFixture, NoStopOfferOnErrorIdentifier)
 
     // When stop offering a Service
     skeleton_->StopOfferService();
+}
+
+class MySkeleton : public SkeletonBase
+{
+  public:
+    using SkeletonBase::SkeletonBase;
+
+    const SkeletonBase::SkeletonEvents& GetEvents()
+    {
+        auto skeleton_view = SkeletonBaseView{*this};
+        return skeleton_view.GetEvents();
+    }
+
+    const SkeletonBase::SkeletonFields& GetFields()
+    {
+        auto skeleton_view = SkeletonBaseView{*this};
+        return skeleton_view.GetFields();
+    }
+
+    const SkeletonBase::SkeletonMethods& GetMethods()
+    {
+        auto skeleton_view = SkeletonBaseView{*this};
+        return skeleton_view.GetMethods();
+    }
+};
+
+class DummyField : public SkeletonFieldBase
+{
+  public:
+    using SkeletonFieldBase::SkeletonFieldBase;
+    bool IsInitialValueSaved() const noexcept override
+    {
+        return false;
+    };
+    ResultBlank DoDeferredUpdate() noexcept override
+    {
+        return ResultBlank{};
+    };
+};
+const auto kServiceIdentifier = make_ServiceIdentifierType("foo", 13, 37);
+const LolaServiceInstanceId kLolaInstanceId{23U};
+constexpr std::uint16_t kServiceId{34U};
+
+/// Note. Technically, these tests are testing internals of SkeletonBase. While we generally strive to test only the
+/// public interface, we make an exception in this case since the reference updating of service elements is complex and
+/// can lead to dangling references if not done correctly, which can be hard to test using the public interface alone.
+class SkeletonBaseServiceElementReferencesFixture : public ::testing::Test
+{
+  public:
+    const std::string event_name_0_{"event_name_0"};
+    const std::string event_name_1_{"event_name_1"};
+    std::string field_name_0_{"field_name_0"};
+    std::string field_name_1_{"field_name_1"};
+    std::string method_name_0_{"method_name_0"};
+    std::string method_name_1_{"method_name_1"};
+
+    ConfigurationStore config_store_{kInstanceSpecifier,
+                                     kServiceIdentifier,
+                                     QualityType::kASIL_QM,
+                                     kServiceId,
+                                     kLolaInstanceId};
+    InstanceIdentifier instance_identifier_{config_store_.GetInstanceIdentifier()};
+    HandleType handle_{config_store_.GetHandle()};
+
+    mock_binding::Skeleton skeleton_binding_mock_{};
+    MySkeleton skeleton_{std::make_unique<mock_binding::SkeletonFacade>(skeleton_binding_mock_), instance_identifier_};
+
+    SkeletonEventBase event_0_{skeleton_, event_name_0_, std::make_unique<mock_binding::SkeletonEventBase>()};
+    SkeletonEventBase event_1_{skeleton_, event_name_1_, std::make_unique<mock_binding::SkeletonEventBase>()};
+
+    std::unique_ptr<SkeletonEventBase> field_event_dispatch_0_{
+        std::make_unique<SkeletonEventBase>(skeleton_,
+                                            field_name_0_,
+                                            std::make_unique<mock_binding::SkeletonEventBase>())};
+    std::unique_ptr<SkeletonEventBase> field_event_dispatch_1_{
+        std::make_unique<SkeletonEventBase>(skeleton_,
+                                            field_name_1_,
+                                            std::make_unique<mock_binding::SkeletonEventBase>())};
+
+    DummyField field_0_{skeleton_, field_name_0_, std::move(field_event_dispatch_0_)};
+    DummyField field_1_{skeleton_, field_name_0_, std::move(field_event_dispatch_0_)};
+
+    SkeletonMethodBase method_0_{skeleton_, method_name_0_, std::make_unique<mock_binding::SkeletonMethod>()};
+    SkeletonMethodBase method_1_{skeleton_, method_name_1_, std::make_unique<mock_binding::SkeletonMethod>()};
+};
+
+TEST_F(SkeletonBaseServiceElementReferencesFixture, RegisteringServiceElementStoresReferenceInMap)
+{
+    // Given a valid MySkeleton object
+
+    // When registering 2 Events, Fields and Methods
+    SkeletonBaseView{skeleton_}.RegisterEvent(event_name_0_, event_0_);
+    SkeletonBaseView{skeleton_}.RegisterEvent(event_name_1_, event_1_);
+    SkeletonBaseView{skeleton_}.RegisterField(field_name_0_, field_0_);
+    SkeletonBaseView{skeleton_}.RegisterField(field_name_1_, field_1_);
+    SkeletonBaseView{skeleton_}.RegisterMethod(method_name_0_, method_0_);
+    SkeletonBaseView{skeleton_}.RegisterMethod(method_name_1_, method_1_);
+
+    // Then the skeleton's reference maps should contain references to the registered elements
+    const auto& events = skeleton_.GetEvents();
+    EXPECT_EQ(events.size(), 2U);
+    EXPECT_EQ(&events.at(event_name_0_).get(), &event_0_);
+    EXPECT_EQ(&events.at(event_name_1_).get(), &event_1_);
+
+    const auto& fields = skeleton_.GetFields();
+    EXPECT_EQ(fields.size(), 2U);
+    EXPECT_EQ(&fields.at(field_name_0_).get(), &field_0_);
+    EXPECT_EQ(&fields.at(field_name_1_).get(), &field_1_);
+
+    const auto& methods = skeleton_.GetMethods();
+    EXPECT_EQ(methods.size(), 2U);
+    EXPECT_EQ(&methods.at(method_name_0_).get(), &method_0_);
+    EXPECT_EQ(&methods.at(method_name_1_).get(), &method_1_);
+}
+
+TEST_F(SkeletonBaseServiceElementReferencesFixture, MoveConstructingUpdatesReferencesToServiceElements)
+{
+    // Given a valid MySkeleton object on which 2 Events, Fields and Methods were registered
+    SkeletonBaseView{skeleton_}.RegisterEvent(event_name_0_, event_0_);
+    SkeletonBaseView{skeleton_}.RegisterEvent(event_name_1_, event_1_);
+    SkeletonBaseView{skeleton_}.RegisterField(field_name_0_, field_0_);
+    SkeletonBaseView{skeleton_}.RegisterField(field_name_1_, field_1_);
+    SkeletonBaseView{skeleton_}.RegisterMethod(method_name_0_, method_0_);
+    SkeletonBaseView{skeleton_}.RegisterMethod(method_name_1_, method_1_);
+
+    // When move constructing a new MySkeleton object
+    MySkeleton moved_to_skeleton{std::move(skeleton_)};
+
+    // Then the moved-to skeleton's reference maps should still contain references to the registered elements
+    const auto& events = moved_to_skeleton.GetEvents();
+    ASSERT_EQ(events.size(), 2U);
+    EXPECT_EQ(&events.at(event_name_0_).get(), &event_0_);
+    EXPECT_EQ(&events.at(event_name_1_).get(), &event_1_);
+
+    const auto& fields = moved_to_skeleton.GetFields();
+    ASSERT_EQ(fields.size(), 2U);
+    EXPECT_EQ(&fields.at(field_name_0_).get(), &field_0_);
+    EXPECT_EQ(&fields.at(field_name_1_).get(), &field_1_);
+
+    const auto& methods = moved_to_skeleton.GetMethods();
+    EXPECT_EQ(methods.size(), 2U);
+    EXPECT_EQ(&methods.at(method_name_0_).get(), &method_0_);
+    EXPECT_EQ(&methods.at(method_name_1_).get(), &method_1_);
+}
+
+TEST_F(SkeletonBaseServiceElementReferencesFixture, MoveAssigningUpdatesReferencesToServiceElements)
+{
+    constexpr auto other_event_name{"other_event"};
+    constexpr auto other_field_name{"other_field"};
+    constexpr auto other_method_name{"other_method"};
+    mock_binding::Skeleton skeleton_binding_mock{};
+
+    // Given a valid MySkeleton object on which 2 Events, Fields and Methods were registered
+    SkeletonBaseView{skeleton_}.RegisterEvent(event_name_0_, event_0_);
+    SkeletonBaseView{skeleton_}.RegisterField(field_name_0_, field_0_);
+    SkeletonBaseView{skeleton_}.RegisterMethod(method_name_0_, method_0_);
+    SkeletonBaseView{skeleton_}.RegisterEvent(event_name_1_, event_1_);
+    SkeletonBaseView{skeleton_}.RegisterField(field_name_1_, field_1_);
+    SkeletonBaseView{skeleton_}.RegisterMethod(method_name_1_, method_1_);
+
+    // and given a second valid MySkeleton object
+    MySkeleton skeleton_2{std::make_unique<mock_binding::SkeletonFacade>(skeleton_binding_mock), instance_identifier_};
+
+    // and given that an Event, Field and Method were registered on the second skeleton
+    SkeletonEventBase event{skeleton_2, other_event_name, std::make_unique<mock_binding::SkeletonEventBase>()};
+
+    auto field_event_dispatch = std::make_unique<SkeletonEventBase>(
+        skeleton_2, other_field_name, std::make_unique<mock_binding::SkeletonEventBase>());
+
+    DummyField field{skeleton_2, other_field_name, std::move(field_event_dispatch)};
+
+    SkeletonMethodBase method{skeleton_2, other_method_name, std::make_unique<mock_binding::SkeletonMethod>()};
+    SkeletonBaseView{skeleton_2}.RegisterEvent(other_event_name, event);
+    SkeletonBaseView{skeleton_2}.RegisterField(other_field_name, field);
+    SkeletonBaseView{skeleton_2}.RegisterMethod(other_method_name, method);
+
+    // When move assigning the first MySkeleton object to the second
+    skeleton_2 = std::move(skeleton_);
+
+    // Then the second skeleton's reference maps should contain references to the first skeleton's registered elements
+    const auto& events = skeleton_2.GetEvents();
+    ASSERT_EQ(events.size(), 2U);
+    EXPECT_EQ(&events.at(event_name_0_).get(), &event_0_);
+    EXPECT_EQ(&events.at(event_name_1_).get(), &event_1_);
+
+    const auto& fields = skeleton_2.GetFields();
+    ASSERT_EQ(fields.size(), 2U);
+    EXPECT_EQ(&fields.at(field_name_0_).get(), &field_0_);
+    EXPECT_EQ(&fields.at(field_name_1_).get(), &field_1_);
+
+    const auto& methods = skeleton_2.GetMethods();
+    EXPECT_EQ(methods.size(), 2U);
+    EXPECT_EQ(&methods.at(method_name_0_).get(), &method_0_);
+    EXPECT_EQ(&methods.at(method_name_1_).get(), &method_1_);
 }
 
 }  // namespace
