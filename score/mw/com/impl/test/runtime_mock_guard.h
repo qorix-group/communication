@@ -16,6 +16,8 @@
 #include "score/mw/com/impl/runtime.h"
 #include "score/mw/com/impl/runtime_mock.h"
 
+#include <gmock/gmock.h>
+
 namespace score::mw::com::impl
 {
 
@@ -31,7 +33,7 @@ class RuntimeMockGuard
         Runtime::InjectMock(nullptr);
     }
 
-    RuntimeMock runtime_mock_;
+    ::testing::NiceMock<RuntimeMock> runtime_mock_;
 };
 
 }  // namespace score::mw::com::impl

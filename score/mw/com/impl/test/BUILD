@@ -69,5 +69,6 @@ cc_library(
     deps = [
         "//score/mw/com/impl:runtime",
         "//score/mw/com/impl:runtime_mock",
+        "@googletest//:gtest",
     ],
 )
