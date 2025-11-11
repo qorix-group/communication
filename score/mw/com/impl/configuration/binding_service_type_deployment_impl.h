@@ -187,7 +187,7 @@ auto GetServiceElementId(
     {
         score::mw::log::LogFatal() << service_element_type << "name \"" << service_element_name
                                  << "\" does not exist in BindingServiceTypeDeployment. Terminating.";
-        std::terminate();
+        SCORE_LANGUAGE_FUTURECPP_ASSERT(0);
     }
     return service_element_id_it->second;
 }
