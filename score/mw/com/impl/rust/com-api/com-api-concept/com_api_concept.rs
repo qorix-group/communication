@@ -73,10 +73,11 @@ pub trait Builder<Output> {
 /// the implementation.
 pub trait Runtime {
     type ConsumerDiscovery<I: Interface>: ServiceDiscovery<I, Self>;
-    type Subscriber<T: Reloc + Send>: Subscriber<T>;
+    type Subscriber<T: Reloc + Send>: Subscriber<Self, T>;
     type ProducerBuild<I: Interface, P: Producer<Interface = I>>: ProducerBuilder<I, Self, P>;
     type Publisher<T: Reloc + Send>: Publisher<T>;
-
+    type InstanceInfo: Send + Sync + Clone;
+    
     fn find_service<I: Interface>(
         &self,
         _instance_specifier: InstanceSpecifier,
@@ -86,6 +87,8 @@ pub trait Runtime {
         &self,
         instance_specifier: InstanceSpecifier,
     ) -> Self::ProducerBuild<I, P>;
+
+    //fn get_instance_info(&self) -> &Self::InstanceInfo;
 }
 
 pub trait RuntimeBuilder<B>: Builder<B>
@@ -143,6 +146,14 @@ impl AsRef<str> for InstanceSpecifier {
             .as_ref()
             .map(String::as_str)
             .unwrap_or("[ANY]")
+    }
+}
+
+impl Clone for InstanceSpecifier {
+    fn clone(&self) -> Self {
+        InstanceSpecifier {
+            specifier: self.specifier.clone(),
+        }
     }
 }
 
@@ -232,7 +243,7 @@ where
 }
 
 pub trait Interface {
-    type Consumer<R: Runtime + ?Sized>: Consumer;
+    type Consumer<R: Runtime + ?Sized>: Consumer<R>;
     type Producer<R: Runtime + ?Sized>: Producer;
 }
 
@@ -268,8 +279,8 @@ where
     }
 }
 
-pub trait Consumer {
-    fn new(instance: InstanceSpecifier) -> Self;
+pub trait Consumer<R: Runtime + ?Sized> {
+    fn new(instance_info: R::InstanceInfo) -> Self;
 }
 
 pub trait ProducerBuilder<I: Interface, R: Runtime + ?Sized, P: Producer<Interface = I>>:
@@ -294,9 +305,9 @@ pub trait ConsumerBuilder<I: Interface, R: Runtime + ?Sized>:
 {
 }
 
-pub trait Subscriber<T: Reloc + Send> {
-    type Subscription: Subscription<T>;
-    fn new() -> Self;
+pub trait Subscriber<R: Runtime + ?Sized, T: Reloc + Send> {
+    type Subscription: Subscription<R, T>;
+    fn new(identifier: &str ,instance_info: R::InstanceInfo) -> Self;
     fn subscribe(self, max_num_samples: usize) -> Result<Self::Subscription>;
 }
 
@@ -346,8 +357,8 @@ impl<S> SampleContainer<S> {
     }
 }
 
-pub trait Subscription<T: Reloc + Send> {
-    type Subscriber: Subscriber<T>;
+pub trait Subscription<R: Runtime + ?Sized, T: Reloc + Send> {
+    type Subscriber: Subscriber<R, T>;
     type Sample<'a>: Sample<T>
     where
         Self: 'a;

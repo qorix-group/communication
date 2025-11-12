@@ -46,11 +46,11 @@ pub struct VehicleConsumer<R: Runtime + ?Sized> {
     pub exhaust: R::Subscriber<Exhaust>,
 }
 
-impl<R: Runtime + ?Sized> Consumer for VehicleConsumer<R> {
-    fn new(_instance_specifier: com_api::InstanceSpecifier) -> Self {
+impl<R: Runtime + ?Sized> Consumer<R> for VehicleConsumer<R> {
+  fn new(instance_info: R::InstanceInfo) -> Self {
         VehicleConsumer {
-            left_tire: R::Subscriber::new(),
-            exhaust: R::Subscriber::new(),
+            left_tire: R::Subscriber::new("left_tire", instance_info.clone()),
+            exhaust: R::Subscriber::new("exhaust", instance_info.clone()),
         }
     }
 }

@@ -32,11 +32,17 @@ use com_api_concept::{
 
 pub struct LolaRuntimeImpl {}
 
+#[derive(Clone)]
+pub struct LolaInstanceInfo {
+    instance_specifier: InstanceSpecifier,
+}
+
 impl Runtime for LolaRuntimeImpl {
     type ConsumerDiscovery<I: Interface> = SampleConsumerDiscovery<I>;
     type Subscriber<T: Reloc + Send> = SubscribableImpl<T>;
     type ProducerBuild<I: Interface, P: Producer<Interface = I>> = SampleProducerBuilder<I>;
     type Publisher<T: Reloc + Send> = Publisher<T>;
+    type InstanceInfo = LolaInstanceInfo;
 
     fn find_service<I: Interface>(
         &self,
@@ -222,19 +228,31 @@ where
 }
 
 pub struct SubscribableImpl<T> {
+    identifier: String,
+    instance_info: LolaInstanceInfo,
     data: PhantomData<T>,
 }
 
 impl<T> Default for SubscribableImpl<T> {
     fn default() -> Self {
-        Self { data: PhantomData }
+        Self {  
+            identifier: String::new(),
+            instance_info: LolaInstanceInfo {
+                instance_specifier: InstanceSpecifier::new("default").unwrap(),
+            },
+            data: PhantomData,
+        }
     }
 }
 
-impl<T: Reloc + Send> Subscriber<T> for SubscribableImpl<T> {
+impl<T: Reloc + Send> Subscriber<LolaRuntimeImpl,T> for SubscribableImpl<T> {
     type Subscription = SubscriberImpl<T>;
-    fn new() -> Self {
-        todo!()
+    fn new(identifier: &str, instance_info: LolaInstanceInfo) -> Self {
+        Self {
+            identifier: identifier.to_string(),
+            instance_info,
+            data: PhantomData,
+        }
     }
     fn subscribe(self, _max_num_samples: usize) -> com_api_concept::Result<Self::Subscription> {
         Ok(SubscriberImpl::new())
@@ -264,7 +282,7 @@ where
     }
 }
 
-impl<T> Subscription<T> for SubscriberImpl<T>
+impl<T> Subscription<LolaRuntimeImpl,T> for SubscriberImpl<T>
 where
     T: Reloc + Send,
 {
@@ -361,7 +379,10 @@ impl<I: Interface> ConsumerBuilder<I, LolaRuntimeImpl> for SampleConsumerBuilder
 
 impl<I: Interface> Builder<I::Consumer<LolaRuntimeImpl>> for SampleConsumerBuilder<I> {
     fn build(self) -> com_api_concept::Result<I::Consumer<LolaRuntimeImpl>> {
-        Ok(Consumer::new(self.instance_specifier))
+        let instance_info = LolaInstanceInfo {
+            instance_specifier: self.instance_specifier.clone(),
+        };
+        Ok(Consumer::new(instance_info))
     }
 }
 
