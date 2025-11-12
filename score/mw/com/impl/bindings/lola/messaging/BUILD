@@ -179,8 +179,5 @@ cc_unit_test_suites_for_host_and_qnx(
         ":message_passing_service_instance_test",
         ":message_passing_client_cache_test",
     ],
-    test_suites_from_sub_packages = [
-        "//score/mw/com/impl/bindings/lola/messaging/messages:unit_test_suite",
-    ],
     visibility = ["//score/mw/com/impl/bindings/lola:__pkg__"],
 )

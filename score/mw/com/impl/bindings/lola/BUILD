@@ -28,7 +28,6 @@ cc_library(
         ":runtime",
         ":skeleton",
         "//score/mw/com/impl/configuration",
-        "//score/mw/com/message_passing",
         "@score_baselibs//score/concurrency",
         "@score_baselibs//score/language/futurecpp",
         "@score_baselibs//score/mw/log",
@@ -1011,7 +1010,6 @@ cc_gtest_unit_test(
     features = COMPILER_WARNING_FEATURES,
     deps = [
         ":runtime",
-        "//score/mw/com/message_passing:mock",
         "@score_baselibs//score/os/mocklib:unistd_mock",
     ],
 )

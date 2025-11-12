@@ -13,7 +13,10 @@
 #include "score/mw/com/impl/bindings/lola/messaging/message_passing_service_instance.h"
 #include "score/mw/com/impl/bindings/lola/messaging/thread_abstraction.h"
 
+#include "score/message_passing/i_client_factory.h"
 #include "score/message_passing/i_server_connection.h"
+#include "score/message_passing/i_server_factory.h"
+#include "score/message_passing/service_protocol_config.h"
 
 #include "score/language/safecpp/safe_math/safe_math.h"
 

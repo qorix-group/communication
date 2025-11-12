@@ -20,9 +20,6 @@
 #include "score/mw/com/impl/configuration/test/configuration_store.h"
 #include "score/mw/com/impl/test/dummy_instance_identifier_builder.h"
 
-#include "score/mw/com/message_passing/receiver_factory.h"
-#include "score/mw/com/message_passing/receiver_mock.h"
-
 #include "score/concurrency/long_running_threads_container.h"
 
 #include <gtest/gtest.h>
@@ -32,13 +29,6 @@
 
 namespace score::mw::com::impl
 {
-
-using ::testing::_;
-using ::testing::An;
-using ::testing::AnyNumber;
-using ::testing::Invoke;
-using ::testing::Matcher;
-using ::testing::Return;
 
 const LolaServiceId kServiceId{1U};
 const auto kInstanceSpecifierString1 = InstanceSpecifier::Create("/bla/blub/specifier1").value();
@@ -56,23 +46,6 @@ ConfigurationStore kConfigStoreQm2{
     QualityType::kASIL_QM,
     kServiceId,
     LolaServiceInstanceId{2U},
-};
-
-class ReceiverFactoryMockGuard
-{
-  public:
-    ReceiverFactoryMockGuard()
-    {
-        message_passing::ReceiverFactory::InjectReceiverMock(&receiver_mock_);
-    }
-
-    ~ReceiverFactoryMockGuard()
-    {
-
-        message_passing::ReceiverFactory::InjectReceiverMock(nullptr);
-    }
-
-    message_passing::ReceiverMock receiver_mock_{};
 };
 
 class RuntimeBindingFactoryFixture : public ::testing::Test
@@ -127,10 +100,6 @@ class RuntimeBindingFactoryFixture : public ::testing::Test
                                                          TracingConfiguration{});
         return *this;
     }
-
-    // creation of a LoLa runtime will lead to the creation of a message-passing-facade, which will directly from its
-    // ctor register some MessageReceiveCallbacks and start listening, so we inject a receiver mock into the factory
-    ReceiverFactoryMockGuard receiver_mock_guard_{};
 
     concurrency::LongRunningThreadsContainer long_running_threads_{};
     std::unique_ptr<Configuration> configuration_{nullptr};

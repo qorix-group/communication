@@ -13,8 +13,10 @@
 #ifndef SCORE_MW_COM_IMPL_BINDINGS_LOLA_MESSAGEPASSINGCLIENTCACHE_H
 #define SCORE_MW_COM_IMPL_BINDINGS_LOLA_MESSAGEPASSINGCLIENTCACHE_H
 
-#include "score/message_passing/i_client_factory.h"
 #include "score/mw/com/impl/configuration/quality_type.h"
+
+#include "score/message_passing/i_client_connection.h"
+#include "score/message_passing/i_client_factory.h"
 
 #include <cstdint>
 #include <memory>

@@ -11,16 +11,15 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 #include "score/mw/com/impl/bindings/lola/runtime.h"
-
-#include "score/os/mocklib/unistdmock.h"
 #include "score/mw/com/impl/configuration/configuration.h"
-#include "score/mw/com/message_passing/receiver_factory.h"
-#include "score/mw/com/message_passing/receiver_mock.h"
 
 #include "score/concurrency/long_running_threads_container.h"
 
+#include "score/os/mocklib/unistdmock.h"
+
 #include "gmock/gmock.h"
 #include <gtest/gtest.h>
+
 #include <memory>
 #include <set>
 
@@ -28,10 +27,6 @@ namespace score::mw::com::impl::lola
 {
 namespace
 {
-
-using ::testing::_;
-using ::testing::An;
-using ::testing::AnyNumber;
 
 const auto kInstanceSpecifier = InstanceSpecifier::Create("abc/abc/TirePressurePort").value();
 const auto kInstanceSpecifier2 = InstanceSpecifier::Create("abc/abc/TirePressurePort2").value();
@@ -43,27 +38,6 @@ class RuntimeFixture : public ::testing::Test
   public:
     void SetUp() override
     {
-        /// \todo QNX tests crashing, it happens when creating \c Runtime object by
-        /// SetUp() roughly at Receiver<>::StartListening call. Preliminary, caused by thread racing, e.i. if update the
-        /// kConcurrency = 1 the tests will pass. To abstract from the complex logic the solution is to provide Receiver
-        /// mock. Nontheless, the mock hides the issue, but unit test logic becomes pure. Hence, the crash must be
-        /// covered within component tests (or whatever) in follow up ticket. Currently, trying to avoid any impact on
-        /// production logic the Receiver mock is being injected. In fact, the better approach should be implemented as
-        /// follows: introduce stand alone parameter for passing it to \c Runtime constructor by pointer/reference and
-        /// assingning it to `MessagePassingServiceInstance& Runtime::lola_messaging_service_`, having that the mocked
-        /// object could be passed directly
-
-        // mock receiver creation for unit_ member
-        score::mw::com::message_passing::ReceiverFactory::InjectReceiverMock(&receiver_mock_);
-
-        using ShortMessageReceivedCallback = score::mw::com::message_passing::IReceiver::ShortMessageReceivedCallback;
-        using MediumMessageReceivedCallback = score::mw::com::message_passing::IReceiver::MediumMessageReceivedCallback;
-
-        EXPECT_CALL(receiver_mock_, Register(_, An<ShortMessageReceivedCallback>())).Times(AnyNumber());
-        EXPECT_CALL(receiver_mock_, Register(_, An<MediumMessageReceivedCallback>())).Times(AnyNumber());
-        EXPECT_CALL(receiver_mock_, StartListening)
-            .WillRepeatedly(::testing::Return(score::cpp::expected_blank<score::os::Error>{}));
-
         // mock unistd creation for unit_ member
         score::os::MockGuard<score::os::UnistdMock> unistd_mock{};
         EXPECT_CALL(*unistd_mock, getpid()).WillRepeatedly(::testing::Return(kOurPid));
@@ -79,7 +53,6 @@ class RuntimeFixture : public ::testing::Test
     {
         unit_.reset(nullptr);
         config_.reset(nullptr);
-        score::mw::com::message_passing::ReceiverFactory::InjectReceiverMock(nullptr);  // unmock receiver
     }
 
     void SetConfig(Configuration::ServiceTypeDeployments service_types,
@@ -97,7 +70,7 @@ class RuntimeFixture : public ::testing::Test
         unit_ = std::make_unique<Runtime>(*config_, long_running_threads_, std::move(tracing_runtime_));
     }
 
-    score::mw::com::message_passing::ReceiverMock receiver_mock_;
+  protected:
     std::unique_ptr<Configuration> config_;
     concurrency::LongRunningThreadsContainer long_running_threads_;
     std::unique_ptr<tracing::TracingRuntime> tracing_runtime_;

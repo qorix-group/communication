@@ -628,7 +628,6 @@ cc_gtest_unit_test(
         ":runtime_binding_factory",
         "//score/mw/com/impl/configuration/test:configuration_store",
         "//score/mw/com/impl/test:dummy_instance_identifier_builder",
-        "//score/mw/com/message_passing:mock",
     ],
 )
 
@@ -659,7 +658,6 @@ cc_test(
         "//score/mw/com/impl/bindings/mock_binding",
         "//score/mw/com/impl/test:dummy_instance_identifier_builder",
         "//score/mw/com/impl/test:runtime_mock_guard",
-        "//score/mw/com/message_passing:mock",
         "@googletest//:gtest_main",
         "@score_baselibs//score/language/safecpp/coverage_termination_handler",
         "@score_baselibs//score/mw/log",

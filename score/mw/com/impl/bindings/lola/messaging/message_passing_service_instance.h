@@ -13,10 +13,12 @@
 #ifndef SCORE_MW_COM_IMPL_BINDINGS_LOLA_MESSAGE_PASSING_SERVICE_INSTANCE_H
 #define SCORE_MW_COM_IMPL_BINDINGS_LOLA_MESSAGE_PASSING_SERVICE_INSTANCE_H
 
-#include "score/message_passing/i_client_factory.h"
-#include "score/message_passing/i_server_factory.h"
 #include "score/mw/com/impl/bindings/lola/messaging/i_message_passing_service.h"
 #include "score/mw/com/impl/bindings/lola/messaging/message_passing_client_cache.h"
+
+#include "score/message_passing/i_client_factory.h"
+#include "score/message_passing/i_server.h"
+#include "score/message_passing/i_server_factory.h"
 
 // TODO: PMR
 #include "score/concurrency/thread_pool.h"

@@ -12,6 +12,10 @@
  ********************************************************************************/
 #include "score/mw/com/impl/bindings/lola/messaging/message_passing_client_cache.h"
 
+#include "score/message_passing/i_client_connection.h"
+#include "score/message_passing/i_client_factory.h"
+#include "score/message_passing/service_protocol_config.h"
+
 #include "score/mw/log/logging.h"
 
 #include <score/assert.hpp>
