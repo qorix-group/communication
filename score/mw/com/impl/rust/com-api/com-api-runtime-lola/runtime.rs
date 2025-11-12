@@ -27,7 +27,7 @@ use std::sync::atomic::AtomicUsize;
 
 use com_api_concept::{
     Builder, Consumer,ConsumerBuilder, ConsumerDescriptor, InstanceSpecifier, Interface, Reloc, Runtime,
-    SampleContainer, ServiceDiscovery, Subscriber, Subscription,
+    SampleContainer, ServiceDiscovery, Subscriber, Subscription, Producer, ProducerBuilder, Result,
 };
 
 pub struct LolaRuntimeImpl {}
@@ -35,23 +35,21 @@ pub struct LolaRuntimeImpl {}
 impl Runtime for LolaRuntimeImpl {
     type ConsumerDiscovery<I: Interface> = SampleConsumerDiscovery<I>;
     type Subscriber<T: Reloc + Send> = SubscribableImpl<T>;
+     type ProducerBuild<I: Interface, P: Producer<Interface = I>> = SampleProducerBuilder<I>;
 
     fn find_service<I: Interface>(
         &self,
         _instance_specifier: InstanceSpecifier,
-    ) -> SampleConsumerDiscovery<I> {
+    ) -> Self::ConsumerDiscovery<I> {
         SampleConsumerDiscovery {
             _interface: PhantomData,
         }
     }
-}
 
-impl LolaRuntimeImpl {
-    //This one also need to move to the com-api-concept crate
-    pub fn producer_builder<I: Interface>(
+    fn producer_builder<I: Interface, P: Producer<Interface = I>>(
         &self,
         instance_specifier: InstanceSpecifier,
-    ) -> SampleProducerBuilder<I> {
+    ) -> Self::ProducerBuild<I, P> {
         SampleProducerBuilder::new(self, instance_specifier)
     }
 }
@@ -379,6 +377,15 @@ impl<I: Interface> SampleProducerBuilder<I> {
         }
     }
 }
+
+impl<I: Interface, P: Producer<Interface = I>> ProducerBuilder<I, LolaRuntimeImpl, P> for SampleProducerBuilder<I> {}
+
+impl<I: Interface, P: Producer<Interface = I>> Builder<P> for SampleProducerBuilder<I> {
+    fn build(self) -> Result<P> {
+        todo!()
+    }
+}
+
 
 pub struct SampleConsumerDescriptor<I: Interface> {
     _interface: PhantomData<I>,

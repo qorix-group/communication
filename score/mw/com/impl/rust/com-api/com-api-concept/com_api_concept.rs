@@ -74,11 +74,17 @@ pub trait Builder<Output> {
 pub trait Runtime {
     type ConsumerDiscovery<I: Interface>: ServiceDiscovery<I, Self>;
     type Subscriber<T: Reloc + Send>: Subscriber<T>;
+    type ProducerBuild<I: Interface, P: Producer<Interface = I>>: ProducerBuilder<I, Self, P>;
 
     fn find_service<I: Interface>(
         &self,
         _instance_specifier: InstanceSpecifier,
     ) -> Self::ConsumerDiscovery<I>;
+
+    fn producer_builder<I: Interface, P: Producer<Interface = I>>(
+        &self,
+        instance_specifier: InstanceSpecifier,
+    ) -> Self::ProducerBuild<I, P>;
 }
 
 pub trait RuntimeBuilder<B>: Builder<B>
@@ -264,7 +270,7 @@ pub trait Consumer {
     fn new(instance: InstanceSpecifier) -> Self;
 }
 
-pub trait ProducerBuilder<I: Interface, R: Runtime, P: Producer<Interface = I>>:
+pub trait ProducerBuilder<I: Interface, R: Runtime + ?Sized, P: Producer<Interface = I>>:
     Builder<P>
 {
 }
