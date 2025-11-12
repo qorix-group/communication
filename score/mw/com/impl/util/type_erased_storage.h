@@ -103,7 +103,7 @@ auto Deserialize(MemoryBufferAccessor& src_buffer) -> std::tuple<typename std::a
 /// \param target_buffer where to serialize to.
 /// \param arg argument value to serialize.
 template <typename T>
-void SerializeArgs(MemoryBufferAccessor& target_buffer, T arg)
+void SerializeArgs(MemoryBufferAccessor& target_buffer, T& arg)
 {
     auto* dest_ptr =
         static_cast<void*>(score::memory::shared::AddOffsetToPointer(target_buffer.buffer.data(), target_buffer.offset));
@@ -144,7 +144,7 @@ void SerializeArgs(MemoryBufferAccessor& target_buffer, T arg)
 }
 
 template <typename T, typename... Args>
-void SerializeArgs(MemoryBufferAccessor& target_buffer, T arg, Args... args)
+void SerializeArgs(MemoryBufferAccessor& target_buffer, T& arg, Args&... args)
 {
     SerializeArgs(target_buffer, arg);
     SerializeArgs(target_buffer, args...);
@@ -215,7 +215,7 @@ constexpr memory::shared::DataTypeSizeInfo CreateDataTypeSizeInfoFromValues(Args
 /// \param args Remaining argument values.
 /// \remarks Will assert/terminate, if buffer isn't sized large enough.
 template <typename T, typename... Args>
-void SerializeArgs(score::cpp::span<std::byte> target_buffer, T arg, Args... args)
+void SerializeArgs(score::cpp::span<std::byte> target_buffer, T& arg, Args&... args)
 {
     detail::MemoryBufferAccessor memory_buffer_accessor{target_buffer};
     detail::SerializeArgs(memory_buffer_accessor, arg, args...);
