@@ -27,22 +27,10 @@
 namespace score::mw::com::impl::lola
 {
 
-namespace
-{
-
-lola::IRuntime& GetLolaRuntime() noexcept
-{
-    auto* lola_runtime = dynamic_cast<lola::IRuntime*>(Runtime::getInstance().GetBindingRuntime(BindingType::kLoLa));
-    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(lola_runtime != nullptr, "Lola runtime does not exist.");
-    return *lola_runtime;
-}
-
-}  // namespace
-
 void EventReceiveHandlerManager::Register(std::weak_ptr<ScopedEventReceiveHandler> handler)
 {
     Unregister();
-    auto& lola_runtime = GetLolaRuntime();
+    auto& lola_runtime = GetBindingRuntime<lola::IRuntime>(BindingType::kLoLa);
     registration_number_ = lola_runtime.GetLolaMessaging().RegisterEventNotification(
         asil_level_, element_fq_id_, std::move(handler), event_source_pid_);
 }
@@ -56,7 +44,7 @@ void EventReceiveHandlerManager::Reregister(
     }
     else if (registration_number_.has_value())
     {
-        auto& lola_runtime = GetLolaRuntime();
+        auto& lola_runtime = GetBindingRuntime<lola::IRuntime>(BindingType::kLoLa);
         lola_runtime.GetLolaMessaging().ReregisterEventNotification(asil_level_, element_fq_id_, event_source_pid_);
     }
 }
@@ -65,7 +53,7 @@ void EventReceiveHandlerManager::Unregister() noexcept
 {
     if (registration_number_.has_value())
     {
-        auto& lola_runtime = GetLolaRuntime();
+        auto& lola_runtime = GetBindingRuntime<lola::IRuntime>(BindingType::kLoLa);
         lola_runtime.GetLolaMessaging().UnregisterEventNotification(
             asil_level_, element_fq_id_, registration_number_.value(), event_source_pid_);
         registration_number_ = score::cpp::nullopt;

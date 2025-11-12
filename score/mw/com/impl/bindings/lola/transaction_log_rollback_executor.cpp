@@ -12,6 +12,8 @@
  ********************************************************************************/
 #include "score/mw/com/impl/bindings/lola/transaction_log_rollback_executor.h"
 
+#include "score/mw/com/impl/binding_type.h"
+#include "score/mw/com/impl/bindings/lola/i_runtime.h"
 #include "score/mw/com/impl/bindings/lola/transaction_log_set.h"
 #include "score/mw/com/impl/runtime.h"
 
@@ -92,10 +94,8 @@ void TransactionLogRollbackExecutor::PrepareRollback(lola::IRuntime& lola_runtim
 // coverity[autosar_cpp14_a15_5_3_violation : FALSE]
 ResultBlank TransactionLogRollbackExecutor::RollbackTransactionLogs() noexcept
 {
-    auto* const lola_runtime =
-        dynamic_cast<lola::IRuntime*>(mw::com::impl::Runtime::getInstance().GetBindingRuntime(BindingType::kLoLa));
-    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(lola_runtime != nullptr, "Lola runtime does not exist!");
-    auto& rollback_synchronization = lola_runtime->GetRollbackSynchronization();
+    auto& lola_runtime = GetBindingRuntime<lola::IRuntime>(BindingType::kLoLa);
+    auto& rollback_synchronization = lola_runtime.GetRollbackSynchronization();
 
     auto [lock, mutex_existed] = rollback_synchronization.GetMutex(&service_data_control_);
     // Suppress Autosar C++14 A8-5-3 states that auto variables shall not be initialized using braced initialization.
@@ -110,7 +110,7 @@ ResultBlank TransactionLogRollbackExecutor::RollbackTransactionLogs() noexcept
     // service_data_control_
     if (!mutex_existed)
     {
-        PrepareRollback(*lola_runtime);
+        PrepareRollback(lola_runtime);
     }
 
     for (auto& element : service_data_control_.event_controls_)

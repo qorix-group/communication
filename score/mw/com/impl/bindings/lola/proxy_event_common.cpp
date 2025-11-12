@@ -21,25 +21,14 @@
 namespace score::mw::com::impl::lola
 {
 
-namespace
-{
-lola::IRuntime& GetBindingRuntime() noexcept
-{
-    auto* binding =
-        dynamic_cast<lola::IRuntime*>(mw::com::impl::Runtime::getInstance().GetBindingRuntime(BindingType::kLoLa));
-    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(binding != nullptr, "Binding is null");
-
-    return *binding;
-}
-}  // namespace
-
 ProxyEventCommon::ProxyEventCommon(Proxy& parent, const ElementFqId element_fq_id, const std::string_view event_name)
     : test_slot_collector_{},
       parent_{parent},
       event_fq_id_{element_fq_id},
       event_name_{event_name},
       // The transaction log is identified by the application's unique identifier.
-      transaction_log_id_{static_cast<TransactionLogId>(GetBindingRuntime().GetApplicationId())},
+      transaction_log_id_{
+          static_cast<TransactionLogId>(GetBindingRuntime<lola::IRuntime>(BindingType::kLoLa).GetApplicationId())},
       event_control_{parent_.GetEventControl(event_fq_id_)},
       subscription_event_state_machine_{parent_.GetQualityType(),
                                         event_fq_id_,

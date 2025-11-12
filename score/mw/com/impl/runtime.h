@@ -14,6 +14,7 @@
 #define SCORE_MW_COM_IMPL_RUNTIME_H
 
 #include "score/concurrency/long_running_threads_container.h"
+#include "score/mw/com/impl/binding_type.h"
 #include "score/mw/com/impl/configuration/configuration.h"
 #include "score/mw/com/impl/i_runtime.h"
 #include "score/mw/com/impl/instance_identifier.h"
@@ -23,6 +24,7 @@
 #include "score/mw/com/impl/tracing/tracing_runtime.h"
 #include "score/mw/com/runtime_configuration.h"
 
+#include <score/assert.hpp>
 #include <score/optional.hpp>
 #include <score/span.hpp>
 
@@ -166,6 +168,16 @@ class Runtime final : public IRuntime
     ///        Should stay last attribute so that it is destructed first
     concurrency::LongRunningThreadsContainer long_running_threads_;
 };
+
+template <typename RuntimeBinding>
+RuntimeBinding& GetBindingRuntime(const BindingType binding_type)
+{
+    auto& runtime = Runtime::getInstance();
+    auto* const i_runtime_binding = runtime.GetBindingRuntime(binding_type);
+    auto* const runtime_binding = dynamic_cast<RuntimeBinding*>(i_runtime_binding);
+    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(runtime_binding != nullptr, "Runtime binding does not exist.");
+    return *runtime_binding;
+}
 
 }  // namespace score::mw::com::impl
 

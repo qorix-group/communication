@@ -99,20 +99,6 @@ ServiceDataStorage* GetServiceDataStorageSkeletonSide(const memory::shared::Mana
     return service_data_storage;
 }
 
-/// \brief Get LoLa runtime needed to look up global LoLa specific configuration settings
-/// \return instance of LoLa runtime
-lola::IRuntime& GetLoLaRuntime() noexcept
-{
-    auto* const lola_runtime =
-        dynamic_cast<lola::IRuntime*>(impl::Runtime::getInstance().GetBindingRuntime(BindingType::kLoLa));
-    if (lola_runtime == nullptr)
-    {
-        ::score::mw::log::LogFatal("lola") << "Skeleton: No lola runtime available.";
-        std::terminate();
-    }
-    return *lola_runtime;
-}
-
 enum class ShmObjectType : std::uint8_t
 {
     kControl_QM = 0x00,
@@ -582,7 +568,7 @@ bool Skeleton::OpenSharedMemoryForData(
     storage_ = GetServiceDataStorageSkeletonSide(memory_resource_ref);
 
     // Our pid will have changed after re-start and we now have to update it in the re-opened DATA section.
-    const auto pid = GetLoLaRuntime().GetPid();
+    const auto pid = GetBindingRuntime<lola::IRuntime>(BindingType::kLoLa).GetPid();
     score::mw::log::LogDebug("lola") << "Updating PID of Skeleton (S: " << lola_service_id_ << " I:" << lola_instance_id_
                                    << ") with:" << pid;
     storage_->skeleton_pid_ = pid;
@@ -728,7 +714,8 @@ Skeleton::ShmResourceStorageSizes Skeleton::CalculateShmResourceStorageSizesBySi
 Skeleton::ShmResourceStorageSizes Skeleton::CalculateShmResourceStorageSizes(SkeletonEventBindings& events,
                                                                              SkeletonFieldBindings& fields) noexcept
 {
-    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(GetLoLaRuntime().GetShmSizeCalculationMode() == ShmSizeCalculationMode::kSimulation,
+    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(GetBindingRuntime<lola::IRuntime>(BindingType::kLoLa).GetShmSizeCalculationMode() ==
+                               ShmSizeCalculationMode::kSimulation,
                            "No other shm size calculation mode is currently suppored");
     if (lola_service_instance_deployment_.shared_memory_size_.has_value() &&
         lola_service_instance_deployment_.control_asil_b_memory_size_.has_value() &&

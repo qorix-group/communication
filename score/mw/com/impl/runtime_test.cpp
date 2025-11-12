@@ -14,6 +14,7 @@
 
 #include "score/analysis/tracing/common/interface_types/types.h"
 #include "score/mw/com/impl/binding_type.h"
+#include "score/mw/com/impl/bindings/lola/runtime.h"
 #include "score/mw/com/impl/bindings/lola/runtime_mock.h"
 #include "score/mw/com/impl/configuration/configuration.h"
 #include "score/mw/com/impl/configuration/global_configuration.h"
@@ -27,6 +28,7 @@
 
 #include "score/analysis/tracing/generic_trace_library/mock/trace_library_mock.h"
 
+#include <score/assert_support.hpp>
 #include <score/optional.hpp>
 #include <score/span.hpp>
 
@@ -156,6 +158,57 @@ TEST_F(RuntimeFixture, CanInjectMock)
     // Then the mocked runtime is returned
     EXPECT_EQ(&runtime, &mock_runtime);
 }
+
+/// Note. Since GetBindingRuntime calls getInstance() internally, we have to use a mocked runtime. Otherwise, we would
+/// have to initialise the runtime with a configuration file in these tests.
+using RuntimeGetBindingRuntimeFixture = RuntimeFixture;
+TEST_F(RuntimeFixture, ReturnsLolaBindingWhenCallingWithLolaTemplateAndLolaBindingType)
+{
+    // Given a mocked Runtime
+    RuntimeMock mock_runtime{};
+    Runtime::InjectMock(&mock_runtime);
+    lola::RuntimeMock lola_runtime_mock{};
+
+    // Expecting that GetBindingRuntime will be called which returns a pointer to a mocked lola Runtime
+    EXPECT_CALL(mock_runtime, GetBindingRuntime(BindingType::kLoLa)).WillOnce(Return(&lola_runtime_mock));
+
+    // When calling GetBindingRuntime with lola::Runtime template type and kLola binding type
+    const lola::IRuntime& lola_runtime = GetBindingRuntime<lola::IRuntime>(BindingType::kLoLa);
+
+    // Then the lola runtime returned by GetBindingRuntime should be returned
+    EXPECT_EQ(&lola_runtime, &lola_runtime_mock);
+}
+
+TEST_F(RuntimeFixture, TerminatesWhenCallingWithLolaTemplateAndNonLolaBindingType)
+{
+    // Given a mocked Runtime
+    RuntimeMock mock_runtime{};
+    Runtime::InjectMock(&mock_runtime);
+
+    // Expecting that GetBindingRuntime will be called which returns a null pointer since a fake binding was requested
+    // (we currently haven't implemented a fake runtime binding, so return a nullptr instead)
+    EXPECT_CALL(mock_runtime, GetBindingRuntime(BindingType::kFake)).WillOnce(Return(nullptr));
+
+    // When calling GetBindingRuntime with lola::Runtime template type and kLola binding type
+    // Then the program terminates
+    SCORE_LANGUAGE_FUTURECPP_EXPECT_CONTRACT_VIOLATED(score::cpp::ignore = GetBindingRuntime<lola::IRuntime>(BindingType::kFake));
+}
+
+/// Test to be enabled if we implement a fake runtime binding
+// TEST_F(RuntimeFixture, TerminatesWhenCallingWithNonLolaTemplateAndLolaBindingType)
+// {
+//     // Given a mocked Runtime
+//     RuntimeMock mock_runtime{};
+//     Runtime::InjectMock(&mock_runtime);
+//     lola::RuntimeMock lola_runtime_mock{};
+//
+//     // Expecting that GetBindingRuntime will be called which returns a pointer to a mocked lola Runtime
+//     EXPECT_CALL(mock_runtime, GetBindingRuntime(BindingType::kLola)).WillOnce(Return(&lola_runtime_mock));
+//
+//     // When calling GetBindingRuntime with  template type and kLola binding type
+//     // Then the program terminates
+//     SCORE_LANGUAGE_FUTURECPP_EXPECT_CONTRACT_VIOLATED(score::cpp::ignore = GetBindingRuntime<fake_binding::Runtime>(BindingType::kLoLa));
+// }
 
 using RuntimeTracingConfigTest = RuntimeFixture;
 TEST_F(RuntimeTracingConfigTest, GetTracingFilterConfigWillReturnEmptyOptionalIfNotSet)

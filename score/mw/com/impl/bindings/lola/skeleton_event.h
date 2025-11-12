@@ -111,8 +111,6 @@ class SkeletonEvent final : public SkeletonEventBinding<SampleType>
     };
 
   private:
-    static lola::IRuntime& GetLoLaRuntime();
-
     Skeleton& parent_;
     const ElementFqId event_fqn_;
     const std::string_view event_name_;
@@ -211,12 +209,16 @@ ResultBlank SkeletonEvent<SampleType>::Send(impl::SampleAllocateePtr<SampleType>
     // handler registration, the next Send() will pick it up.
     if (qm_event_update_notifications_registered_.load() && !qm_disconnect_)
     {
-        GetLoLaRuntime().GetLolaMessaging().NotifyEvent(QualityType::kASIL_QM, event_fqn_);
+        GetBindingRuntime<lola::IRuntime>(BindingType::kLoLa)
+            .GetLolaMessaging()
+            .NotifyEvent(QualityType::kASIL_QM, event_fqn_);
     }
     if (asil_b_event_update_notifications_registered_.load() &&
         parent_.GetInstanceQualityType() == QualityType::kASIL_B)
     {
-        GetLoLaRuntime().GetLolaMessaging().NotifyEvent(QualityType::kASIL_B, event_fqn_);
+        GetBindingRuntime<lola::IRuntime>(BindingType::kLoLa)
+            .GetLolaMessaging()
+            .NotifyEvent(QualityType::kASIL_B, event_fqn_);
     }
     return {};
 }
@@ -305,17 +307,21 @@ ResultBlank SkeletonEvent<SampleType>::PrepareOffer() noexcept
     // Separate callbacks for QM and ASIL-B update their respective atomic flags for lock-free access.
     if (parent_.GetInstanceQualityType() == QualityType::kASIL_QM)
     {
-        GetLoLaRuntime().GetLolaMessaging().RegisterEventNotificationExistenceChangedCallback(
-            QualityType::kASIL_QM, event_fqn_, [this](const bool has_handlers) noexcept {
-                qm_event_update_notifications_registered_.store(has_handlers);
-            });
+        GetBindingRuntime<lola::IRuntime>(BindingType::kLoLa)
+            .GetLolaMessaging()
+            .RegisterEventNotificationExistenceChangedCallback(
+                QualityType::kASIL_QM, event_fqn_, [this](const bool has_handlers) noexcept {
+                    qm_event_update_notifications_registered_.store(has_handlers);
+                });
     }
     if (parent_.GetInstanceQualityType() == QualityType::kASIL_B)
     {
-        GetLoLaRuntime().GetLolaMessaging().RegisterEventNotificationExistenceChangedCallback(
-            QualityType::kASIL_B, event_fqn_, [this](const bool has_handlers) noexcept {
-                asil_b_event_update_notifications_registered_.store(has_handlers);
-            });
+        GetBindingRuntime<lola::IRuntime>(BindingType::kLoLa)
+            .GetLolaMessaging()
+            .RegisterEventNotificationExistenceChangedCallback(
+                QualityType::kASIL_B, event_fqn_, [this](const bool has_handlers) noexcept {
+                    asil_b_event_update_notifications_registered_.store(has_handlers);
+                });
     }
 
     return {};
@@ -331,13 +337,15 @@ template <typename SampleType>
 void SkeletonEvent<SampleType>::PrepareStopOffer() noexcept
 {
     // Unregister event notification existence changed callbacks
-    GetLoLaRuntime().GetLolaMessaging().UnregisterEventNotificationExistenceChangedCallback(QualityType::kASIL_QM,
-                                                                                            event_fqn_);
+    GetBindingRuntime<lola::IRuntime>(BindingType::kLoLa)
+        .GetLolaMessaging()
+        .UnregisterEventNotificationExistenceChangedCallback(QualityType::kASIL_QM, event_fqn_);
 
     if (parent_.GetInstanceQualityType() == QualityType::kASIL_B)
     {
-        GetLoLaRuntime().GetLolaMessaging().UnregisterEventNotificationExistenceChangedCallback(QualityType::kASIL_B,
-                                                                                                event_fqn_);
+        GetBindingRuntime<lola::IRuntime>(BindingType::kLoLa)
+            .GetLolaMessaging()
+            .UnregisterEventNotificationExistenceChangedCallback(QualityType::kASIL_B, event_fqn_);
     }
 
     // Reset the flags to indicate no handlers are registered
@@ -349,15 +357,6 @@ void SkeletonEvent<SampleType>::PrepareStopOffer() noexcept
     {
         transaction_log_registration_guard_.reset();
     }
-}
-
-template <typename SampleType>
-lola::IRuntime& SkeletonEvent<SampleType>::GetLoLaRuntime()
-{
-    auto* const lola_runtime =
-        dynamic_cast<lola::IRuntime*>(mw::com::impl::Runtime::getInstance().GetBindingRuntime(BindingType::kLoLa));
-    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(lola_runtime != nullptr, "SkeletonEvent: No lola runtime available.");
-    return *lola_runtime;
 }
 
 }  // namespace score::mw::com::impl::lola
