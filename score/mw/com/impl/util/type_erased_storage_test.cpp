@@ -12,7 +12,7 @@
  ********************************************************************************/
 #include "score/mw/com/impl/util/type_erased_storage.h"
 
-#include "score/memory/shared/data_type_size_info.h"
+#include "score/memory/data_type_size_info.h"
 
 #include <gtest/gtest.h>
 
@@ -22,7 +22,7 @@ namespace score::mw::com::impl
 namespace
 {
 
-using memory::shared::DataTypeSizeInfo;
+using memory::DataTypeSizeInfo;
 
 std::array<std::byte, 1024> memory{};
 

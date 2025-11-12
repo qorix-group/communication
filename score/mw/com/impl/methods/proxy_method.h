@@ -19,7 +19,7 @@
 #include "score/mw/com/impl/util/type_erased_storage.h"
 
 #include "score/containers/dynamic_array.h"
-#include "score/memory/shared/data_type_size_info.h"
+#include "score/memory/data_type_size_info.h"
 #include "score/result/result.h"
 
 #include <score/assert.hpp>
@@ -54,12 +54,12 @@ class ProxyMethodView
   public:
     explicit ProxyMethodView(ProxyMethod<ReturnType(ArgTypes...)>& proxy_method) : proxy_method_{proxy_method} {}
 
-    std::optional<memory::shared::DataTypeSizeInfo> GetTypeErasedReturnType() const noexcept
+    std::optional<memory::DataTypeSizeInfo> GetTypeErasedReturnType() const noexcept
     {
         return proxy_method_.type_erased_return_type_;
     }
 
-    std::optional<memory::shared::DataTypeSizeInfo> GetTypeErasedInArgs() const noexcept
+    std::optional<memory::DataTypeSizeInfo> GetTypeErasedInArgs() const noexcept
     {
         return proxy_method_.type_erased_in_args_;
     }

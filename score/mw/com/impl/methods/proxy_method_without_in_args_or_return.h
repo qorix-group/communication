@@ -18,7 +18,7 @@
 #include "score/mw/com/impl/methods/proxy_method_binding.h"
 #include "score/mw/com/impl/proxy_base.h"
 
-#include "score/memory/shared/data_type_size_info.h"
+#include "score/memory/data_type_size_info.h"
 #include "score/result/result.h"
 
 #include <score/stop_token.hpp>
@@ -66,12 +66,12 @@ class ProxyMethod<void()> final : public ProxyMethodBase
     /// \brief Empty optional as in this class template specialization we do not have in-arguments.
     /// \details We still keep this member for interface consistency with the general ProxyMethod template
     /// specialization. The access via ProxyMethodView remains the same.
-    static constexpr std::optional<memory::shared::DataTypeSizeInfo> type_erased_in_args_{};
+    static constexpr std::optional<memory::DataTypeSizeInfo> type_erased_in_args_{};
 
     /// \brief Empty optional as in this class template specialization we do not have a return type.
     /// \details We still keep this member for interface consistency with the general ProxyMethod template
     /// specialization. The access via ProxyMethodView remains the same.
-    static constexpr std::optional<memory::shared::DataTypeSizeInfo> type_erased_return_type_{};
+    static constexpr std::optional<memory::DataTypeSizeInfo> type_erased_return_type_{};
 };
 
 ProxyMethod<void()>::ProxyMethod(ProxyMethod&& other) noexcept : ProxyMethodBase(std::move(other))

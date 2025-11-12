@@ -13,7 +13,7 @@
 #ifndef SCORE_MW_COM_IMPL_UTIL_TYPE_ERASED_STORAGE_H
 #define SCORE_MW_COM_IMPL_UTIL_TYPE_ERASED_STORAGE_H
 
-#include "score/memory/shared/data_type_size_info.h"
+#include "score/memory/data_type_size_info.h"
 
 #include "score/memory/shared/pointer_arithmetic_util.h"
 
@@ -59,7 +59,7 @@ class MemoryBufferAccessor
 /// \tparam Arg type of argument to be aggregated into existing DataTypeSizeInfo
 /// \param info existing DataTypeSizeInfo
 template <typename Arg>
-constexpr void AggregateArgType(memory::shared::DataTypeSizeInfo& info)
+constexpr void AggregateArgType(memory::DataTypeSizeInfo& info)
 {
     auto padding = (info.size % alignof(Arg)) == 0 ? 0 : alignof(Arg) - (info.size % alignof(Arg));
     info.size += sizeof(Arg) + padding;
@@ -167,9 +167,9 @@ void SerializeArgs(MemoryBufferAccessor& target_buffer, T& arg, Args&... args)
 /// \tparam Args argument types
 /// \return  DataTypeSizeInfo containing sizeof/alignof of the aggregated representation.
 template <typename... Args>
-constexpr memory::shared::DataTypeSizeInfo CreateDataTypeSizeInfoFromTypes()
+constexpr memory::DataTypeSizeInfo CreateDataTypeSizeInfoFromTypes()
 {
-    memory::shared::DataTypeSizeInfo result{};
+    memory::DataTypeSizeInfo result{};
 
     ((detail::AggregateArgType<Args>(result)), ...);
 
@@ -191,7 +191,7 @@ constexpr memory::shared::DataTypeSizeInfo CreateDataTypeSizeInfoFromTypes()
 /// \param ... values for the argument types, just used for type deduction.
 /// \return DataTypeSizeInfo containing sizeof/alignof of the aggregated representation.
 template <typename... Args>
-constexpr memory::shared::DataTypeSizeInfo CreateDataTypeSizeInfoFromValues(Args...)
+constexpr memory::DataTypeSizeInfo CreateDataTypeSizeInfoFromValues(Args...)
 {
     return CreateDataTypeSizeInfoFromTypes<Args...>();
 }

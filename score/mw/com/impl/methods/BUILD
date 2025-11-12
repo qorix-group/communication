@@ -39,6 +39,7 @@ cc_library(
     deps = [
         ":proxy_method_binding",
         "@score_baselibs//score/containers:dynamic_array",
+        "@score_baselibs//score/memory:data_type_size_info",
         "@score_baselibs//score/result",
     ],
 )
@@ -95,7 +96,7 @@ cc_library(
     ],
     deps = [
         "//score/mw/com/impl/util:type_erased_storage",
-        "@score_baselibs//score/memory/shared:data_type_size_info",
+        "@score_baselibs//score/memory:data_type_size_info",
         "@score_baselibs//score/result",
     ],
 )

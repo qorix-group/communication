@@ -13,7 +13,7 @@
 #ifndef SCORE_MW_COM_IMPL_METHODS_PROXY_METHOD_BINDING_H
 #define SCORE_MW_COM_IMPL_METHODS_PROXY_METHOD_BINDING_H
 
-#include "score/memory/shared/data_type_size_info.h"
+#include "score/memory/data_type_size_info.h"
 #include "score/result/result.h"
 
 #include <score/span.hpp>
@@ -35,8 +35,8 @@ class ProxyMethodBinding
     /// there are no in-arguments.
     /// \param return_type_type_erased_info Type-erased information about the return type of the method. std::nullopt,
     /// if the return type is void.
-    ProxyMethodBinding(std::optional<memory::shared::DataTypeSizeInfo> in_args_type_erased_info,
-                       std::optional<memory::shared::DataTypeSizeInfo> return_type_type_erased_info)
+    ProxyMethodBinding(std::optional<memory::DataTypeSizeInfo> in_args_type_erased_info,
+                       std::optional<memory::DataTypeSizeInfo> return_type_type_erased_info)
         : in_args_type_erased_info_(in_args_type_erased_info),
           return_type_type_erased_info_(return_type_type_erased_info)
     {
@@ -66,8 +66,8 @@ class ProxyMethodBinding
     virtual score::ResultBlank DoCall(std::size_t queue_position, score::cpp::stop_token stop_token) = 0;
 
   private:
-    std::optional<memory::shared::DataTypeSizeInfo> in_args_type_erased_info_;
-    std::optional<memory::shared::DataTypeSizeInfo> return_type_type_erased_info_;
+    std::optional<memory::DataTypeSizeInfo> in_args_type_erased_info_;
+    std::optional<memory::DataTypeSizeInfo> return_type_type_erased_info_;
 };
 
 }  // namespace score::mw::com::impl

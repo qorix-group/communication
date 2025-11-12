@@ -21,7 +21,7 @@
 #include "score/mw/com/impl/util/type_erased_storage.h"
 
 #include "score/containers/dynamic_array.h"
-#include "score/memory/shared/data_type_size_info.h"
+#include "score/memory/data_type_size_info.h"
 #include "score/result/result.h"
 
 #include <score/stop_token.hpp>
@@ -85,16 +85,16 @@ class ProxyMethod<void(ArgTypes...)> final : public ProxyMethodBase
     score::ResultBlank operator()(MethodInArgPtr<ArgTypes>... args);
 
   private:
-    /// \brief Compile-time initialized memory::shared::DataTypeSizeInfo for the argument types of this ProxyMethod.
+    /// \brief Compile-time initialized memory::DataTypeSizeInfo for the argument types of this ProxyMethod.
     /// \details This is the only information about the argument types of this Proxy Method, which is available at
     /// runtime. It is handed down to the binding layer, which then does the type agnostic transport.
-    static constexpr std::optional<memory::shared::DataTypeSizeInfo> type_erased_in_args_ =
+    static constexpr std::optional<memory::DataTypeSizeInfo> type_erased_in_args_ =
         CreateDataTypeSizeInfoFromTypes<ArgTypes...>();
 
     /// \brief Empty optional as in this class template specialization we do not have a return type.
     /// \details We still keep this member for interface consistency with the general ProxyMethod template
     /// specialization. The access via ProxyMethodView remains the same.
-    static constexpr std::optional<memory::shared::DataTypeSizeInfo> type_erased_return_type_{};
+    static constexpr std::optional<memory::DataTypeSizeInfo> type_erased_return_type_{};
 
     /// \brief Outer dynamic array: one entry per call-queue position, inner array: one entry per argument.
     /// \details This array of arrays contains bool flags, which indicate, if the corresponding argument pointer
