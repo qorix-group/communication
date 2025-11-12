@@ -38,6 +38,7 @@ pub struct VehicleInterface {}
 /// Generic
 impl Interface for VehicleInterface {
     type Consumer<R: Runtime + ?Sized> = VehicleConsumer<R>;
+    type Producer<R: Runtime + ?Sized> = VehicleProducer<R>;
 }
 
 pub struct VehicleConsumer<R: Runtime + ?Sized> {
@@ -56,54 +57,32 @@ impl<R: Runtime + ?Sized> Consumer for VehicleConsumer<R> {
 
 pub struct AnotherInterface {}
 
-pub struct VehicleProducer {}
+pub struct VehicleProducer<R: Runtime + ?Sized>
+{
+    _runtime: std::marker::PhantomData<R>,
+}
 
-impl Producer for VehicleProducer {
+impl<R: Runtime + ?Sized> Producer for VehicleProducer<R> {
     type Interface = VehicleInterface;
-    type OfferedProducer = VehicleOfferedProducer;
+    type OfferedProducer = VehicleOfferedProducer<R>;
 
     fn offer(self) -> com_api::Result<Self::OfferedProducer> {
         todo!()
     }
 }
 
-pub struct VehicleOfferedProducer {
-    pub left_tire: com_api_runtime_mock::Publisher<Tire>,
-    pub exhaust: com_api_runtime_mock::Publisher<Exhaust>,
+pub struct VehicleOfferedProducer<R: Runtime + ?Sized> {
+    pub left_tire: R::Publisher<Tire>,
+    pub exhaust: R::Publisher<Exhaust>,
 }
 
-impl OfferedProducer for VehicleOfferedProducer {
+impl<R: Runtime + ?Sized> OfferedProducer for VehicleOfferedProducer<R> {
     type Interface = VehicleInterface;
-    type Producer = VehicleProducer;
+    type Producer = VehicleProducer<R>;
 
     fn unoffer(self) -> Self::Producer {
-        VehicleProducer {}
+        VehicleProducer {
+            _runtime: std::marker::PhantomData,
+        }
     }
 }
-/*
-impl Builder<VehicleProducer> for SampleProducerBuilder<VehicleInterface> {
-    fn build(self) -> com_api::Result<VehicleProducer> {
-        todo!()
-    }
-}
-
-impl ProducerBuilder<VehicleInterface, MockRuntimeImpl, VehicleProducer>
-    for SampleProducerBuilder<VehicleInterface>
-{
-}
-
-pub struct VehicleConsumer {
-    pub left_tire: com_api_runtime_mock::SubscribableImpl<Tire>,
-    pub exhaust: com_api_runtime_mock::SubscribableImpl<Exhaust>,
-}
-
-impl Consumer for VehicleConsumer {}
-
-impl ConsumerBuilder<VehicleInterface, MockRuntimeImpl> for SampleConsumerBuilder<VehicleInterface> {}
-
-impl Builder<VehicleConsumer> for SampleConsumerBuilder<VehicleInterface> {
-    fn build(self) -> com_api::Result<VehicleConsumer> {
-        todo!()
-    }
-}
-*/

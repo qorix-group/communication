@@ -75,6 +75,7 @@ pub trait Runtime {
     type ConsumerDiscovery<I: Interface>: ServiceDiscovery<I, Self>;
     type Subscriber<T: Reloc + Send>: Subscriber<T>;
     type ProducerBuild<I: Interface, P: Producer<Interface = I>>: ProducerBuilder<I, Self, P>;
+    type Publisher<T: Reloc + Send>: Publisher<T>;
 
     fn find_service<I: Interface>(
         &self,
@@ -232,6 +233,7 @@ where
 
 pub trait Interface {
     type Consumer<R: Runtime + ?Sized>: Consumer;
+    type Producer<R: Runtime + ?Sized>: Producer;
 }
 
 #[must_use = "if a service is offered it will be unoffered and dropped immediately, causing unexpected behavior in the system"]

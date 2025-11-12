@@ -12,6 +12,6 @@
  ********************************************************************************/
 
 #[cfg(feature = "lola")]
-pub use com_api_gen_lola::{Tire, VehicleConsumer, VehicleInterface};
+pub use com_api_gen_lola::{Tire, VehicleConsumer, VehicleInterface, VehicleProducer};
 #[cfg(feature = "mock")]
-pub use com_api_gen_mock::{Tire, VehicleConsumer, VehicleInterface};
+pub use com_api_gen_mock::{Tire, VehicleConsumer, VehicleInterface, VehicleProducer};

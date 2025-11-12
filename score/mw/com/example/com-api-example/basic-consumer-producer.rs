@@ -34,7 +34,7 @@ use com_api_gen::*;
 
  }
 
-fn use_consumer<R: Runtime>(runtime: R)
+fn use_consumer<R: Runtime>(runtime: &R)
 {
     // Create service discovery
     let consumer_discovery = runtime.find_service::<VehicleInterface>(InstanceSpecifier::new("My/Funk/ServiceName").unwrap());
@@ -49,20 +49,23 @@ fn use_consumer<R: Runtime>(runtime: R)
     use_vehicle_interface(consumer);
 }
 
+fn use_producer<R: Runtime>(runtime: &R)
+{
+    let producer_builder = runtime.producer_builder::<VehicleInterface, VehicleProducer<R>>(InstanceSpecifier::new("My/Funk/ServiceName").unwrap());
+    let producer = producer_builder.build().unwrap();
+    let offered_producer = producer.offer().unwrap();
+
+    // Business logic
+    let uninit_sample = offered_producer.left_tire.allocate().unwrap();
+    let sample = uninit_sample.write(Tire {});
+    sample.send().unwrap();
+}
+
 fn main() {
     let runtime_builder = RuntimeBuilderImpl::new();
     let runtime = Builder::<MockRuntimeImpl>::build(runtime_builder).unwrap();
-    // let producer_builder = runtime.producer_builder::<VehicleInterface>(InstanceSpecifier::new("My/Funk/ServiceName").unwrap());
-    // let producer = producer_builder.build().unwrap();
-    // let offered_producer = producer.offer().unwrap();
-
-    // // Business logic
-    // let uninit_sample = offered_producer.left_tire.allocate().unwrap();
-    // let sample = uninit_sample.write(Tire {});
-    // sample.send().unwrap();
-
-    // Create service discovery
-    use_consumer(runtime);
+    use_producer(&runtime);
+    use_consumer(&runtime);
 }
 
 #[cfg(test)]
@@ -72,18 +75,9 @@ mod test {
     #[test]
     fn create_producer() {
         // Factory
-        // let runtime_builder = RuntimeBuilderImpl::new();
-        // let runtime = runtime_builder.build().unwrap();
-        // let producer_builder = runtime.producer_builder::<VehicleInterface>(InstanceSpecifier::new("My/Funk/ServiceName").unwrap());
-        // let producer = producer_builder.build().unwrap();
-        // let offered_producer = producer.offer().unwrap();
-
-        // // Business logic
-        // let uninit_sample = offered_producer.left_tire.allocate().unwrap();
-        // let sample = uninit_sample.write(Tire {});
-        // sample.send().unwrap();
-
-        // offered_producer.unoffer();
+        let runtime_builder = RuntimeBuilderImpl::new();
+        let runtime = runtime_builder.build().unwrap();
+        use_producer(&runtime);
 
     }
 
@@ -94,7 +88,7 @@ mod test {
         let runtime = runtime_builder.build().unwrap();
 
         // Create service discovery
-        use_consumer(runtime);
+        use_consumer(&runtime);
     }
 
     async fn async_data_processor_fn(subscribed: impl Subscription<Tire>) {

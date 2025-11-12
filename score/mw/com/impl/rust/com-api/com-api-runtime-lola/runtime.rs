@@ -35,7 +35,8 @@ pub struct LolaRuntimeImpl {}
 impl Runtime for LolaRuntimeImpl {
     type ConsumerDiscovery<I: Interface> = SampleConsumerDiscovery<I>;
     type Subscriber<T: Reloc + Send> = SubscribableImpl<T>;
-     type ProducerBuild<I: Interface, P: Producer<Interface = I>> = SampleProducerBuilder<I>;
+    type ProducerBuild<I: Interface, P: Producer<Interface = I>> = SampleProducerBuilder<I>;
+    type Publisher<T: Reloc + Send> = Publisher<T>;
 
     fn find_service<I: Interface>(
         &self,
