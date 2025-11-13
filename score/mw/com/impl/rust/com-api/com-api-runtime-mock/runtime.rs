@@ -40,16 +40,16 @@ pub struct MockInstanceInfo {
 }
 
 impl Runtime for MockRuntimeImpl {
-    type ConsumerDiscovery<I: Interface> = SampleConsumerDiscovery<I>;
+    type ServiceDiscovery<I: Interface> = SampleConsumerDiscovery<I>;
     type Subscriber<T: Reloc + Send> = SubscribableImpl<T>;
-    type ProducerBuild<I: Interface, P: Producer<Self, Interface = I>> = SampleProducerBuilder<I>;
+    type ProducerBuilder<I: Interface, P: Producer<Self, Interface = I>> = SampleProducerBuilder<I>;
     type Publisher<T: Reloc + Send> = Publisher<T>;
     type InstanceInfo = MockInstanceInfo;
 
     fn find_service<I: Interface>(
         &self,
         _instance_specifier: InstanceSpecifier,
-    ) -> Self::ConsumerDiscovery<I> {
+    ) -> Self::ServiceDiscovery<I> {
         SampleConsumerDiscovery {
             _interface: PhantomData,
         }
@@ -58,7 +58,7 @@ impl Runtime for MockRuntimeImpl {
     fn producer_builder<I: Interface, P: Producer<Self, Interface = I>>(
         &self,
         instance_specifier: InstanceSpecifier,
-    ) -> Self::ProducerBuild<I, P> {
+    ) -> Self::ProducerBuilder<I, P> {
         SampleProducerBuilder::new(self, instance_specifier)
     }
 }

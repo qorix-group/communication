@@ -72,23 +72,21 @@ pub trait Builder<Output> {
 /// This represents the com implementation and acts as a root for all types and objects provided by
 /// the implementation.
 pub trait Runtime {
-    type ConsumerDiscovery<I: Interface>: ServiceDiscovery<I, Self>;
+    type ServiceDiscovery<I: Interface>: ServiceDiscovery<I, Self>;
     type Subscriber<T: Reloc + Send>: Subscriber<T, Self>;
-    type ProducerBuild<I: Interface, P: Producer<Self, Interface = I>>: ProducerBuilder<I, P, Self>;
+    type ProducerBuilder<I: Interface, P: Producer<Self, Interface = I>>: ProducerBuilder<I, P, Self>;
     type Publisher<T: Reloc + Send>: Publisher<T>;
     type InstanceInfo: Send + Clone;
 
     fn find_service<I: Interface>(
         &self,
         _instance_specifier: InstanceSpecifier,
-    ) -> Self::ConsumerDiscovery<I>;
+    ) -> Self::ServiceDiscovery<I>;
 
     fn producer_builder<I: Interface, P: Producer<Self, Interface = I>>(
         &self,
         instance_specifier: InstanceSpecifier,
-    ) -> Self::ProducerBuild<I, P>;
-
-    //fn get_instance_info(&self) -> &Self::InstanceInfo;
+    ) -> Self::ProducerBuilder<I, P>;
 }
 
 pub trait RuntimeBuilder<B>: Builder<B>
