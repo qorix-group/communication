@@ -73,17 +73,17 @@ pub trait Builder<Output> {
 /// the implementation.
 pub trait Runtime {
     type ConsumerDiscovery<I: Interface>: ServiceDiscovery<I, Self>;
-    type Subscriber<T: Reloc + Send>: Subscriber<Self, T>;
-    type ProducerBuild<I: Interface, P: Producer<Interface = I>>: ProducerBuilder<I, Self, P>;
+    type Subscriber<T: Reloc + Send>: Subscriber<T, Self>;
+    type ProducerBuild<I: Interface, P: Producer<Self, Interface = I>>: ProducerBuilder<I, P, Self>;
     type Publisher<T: Reloc + Send>: Publisher<T>;
-    type InstanceInfo: Send + Sync + Clone;
-    
+    type InstanceInfo: Send + Clone;
+
     fn find_service<I: Interface>(
         &self,
         _instance_specifier: InstanceSpecifier,
     ) -> Self::ConsumerDiscovery<I>;
 
-    fn producer_builder<I: Interface, P: Producer<Interface = I>>(
+    fn producer_builder<I: Interface, P: Producer<Self, Interface = I>>(
         &self,
         instance_specifier: InstanceSpecifier,
     ) -> Self::ProducerBuild<I, P>;
@@ -103,6 +103,7 @@ where
 /// The string shall describe where to find a certain instance of a service. Each level shall look
 /// like this
 /// <InterfaceName>:my/path/to/service_name
+#[derive(Clone)]
 pub struct InstanceSpecifier {
     specifier: Option<String>,
 }
@@ -146,14 +147,6 @@ impl AsRef<str> for InstanceSpecifier {
             .as_ref()
             .map(String::as_str)
             .unwrap_or("[ANY]")
-    }
-}
-
-impl Clone for InstanceSpecifier {
-    fn clone(&self) -> Self {
-        InstanceSpecifier {
-            specifier: self.specifier.clone(),
-        }
     }
 }
 
@@ -244,20 +237,20 @@ where
 
 pub trait Interface {
     type Consumer<R: Runtime + ?Sized>: Consumer<R>;
-    type Producer<R: Runtime + ?Sized>: Producer;
+    type Producer<R: Runtime + ?Sized>: Producer<R>;
 }
 
 #[must_use = "if a service is offered it will be unoffered and dropped immediately, causing unexpected behavior in the system"]
-pub trait OfferedProducer {
+pub trait OfferedProducer<R: Runtime + ?Sized> {
     type Interface: Interface;
-    type Producer: Producer<Interface = Self::Interface>;
+    type Producer: Producer<R, Interface = Self::Interface>;
 
     fn unoffer(self) -> Self::Producer;
 }
 
-pub trait Producer {
+pub trait Producer<R: Runtime + ?Sized> {
     type Interface: Interface;
-    type OfferedProducer: OfferedProducer<Interface = Self::Interface>;
+    type OfferedProducer: OfferedProducer<R, Interface = Self::Interface>;
 
     fn offer(self) -> Result<Self::OfferedProducer>;
 }
@@ -283,7 +276,7 @@ pub trait Consumer<R: Runtime + ?Sized> {
     fn new(instance_info: R::InstanceInfo) -> Self;
 }
 
-pub trait ProducerBuilder<I: Interface, R: Runtime + ?Sized, P: Producer<Interface = I>>:
+pub trait ProducerBuilder<I: Interface, P: Producer<R, Interface = I>, R: Runtime + ?Sized>:
     Builder<P>
 {
 }
@@ -305,9 +298,9 @@ pub trait ConsumerBuilder<I: Interface, R: Runtime + ?Sized>:
 {
 }
 
-pub trait Subscriber<R: Runtime + ?Sized, T: Reloc + Send> {
-    type Subscription: Subscription<R, T>;
-    fn new(identifier: &str ,instance_info: R::InstanceInfo) -> Self;
+pub trait Subscriber<T: Reloc + Send, R: Runtime + ?Sized,> {
+    type Subscription: Subscription<T, R>;
+    fn new(identifier: &str, instance_info: R::InstanceInfo) -> Self;
     fn subscribe(self, max_num_samples: usize) -> Result<Self::Subscription>;
 }
 
@@ -357,8 +350,8 @@ impl<S> SampleContainer<S> {
     }
 }
 
-pub trait Subscription<R: Runtime + ?Sized, T: Reloc + Send> {
-    type Subscriber: Subscriber<R, T>;
+pub trait Subscription<T: Reloc + Send, R: Runtime + ?Sized> {
+    type Subscriber: Subscriber<T, R>;
     type Sample<'a>: Sample<T>
     where
         Self: 'a;

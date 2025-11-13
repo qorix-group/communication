@@ -42,7 +42,7 @@ pub struct MockInstanceInfo {
 impl Runtime for MockRuntimeImpl {
     type ConsumerDiscovery<I: Interface> = SampleConsumerDiscovery<I>;
     type Subscriber<T: Reloc + Send> = SubscribableImpl<T>;
-    type ProducerBuild<I: Interface, P: Producer<Interface = I>> = SampleProducerBuilder<I>;
+    type ProducerBuild<I: Interface, P: Producer<Self, Interface = I>> = SampleProducerBuilder<I>;
     type Publisher<T: Reloc + Send> = Publisher<T>;
     type InstanceInfo = MockInstanceInfo;
 
@@ -55,7 +55,7 @@ impl Runtime for MockRuntimeImpl {
         }
     }
 
-    fn producer_builder<I: Interface, P: Producer<Interface = I>>(
+    fn producer_builder<I: Interface, P: Producer<Self, Interface = I>>(
         &self,
         instance_specifier: InstanceSpecifier,
     ) -> Self::ProducerBuild<I, P> {
@@ -230,28 +230,26 @@ where
 
 pub struct SubscribableImpl<T> {
     identifier: String,
-    instance_info: MockInstanceInfo,
+    instance_info: Option<MockInstanceInfo>,
     data: PhantomData<T>,
 }
 
 impl<T> Default for SubscribableImpl<T> {
     fn default() -> Self {
-        Self { 
+        Self {
             identifier: String::new(),
-            instance_info: MockInstanceInfo {
-                instance_specifier: InstanceSpecifier::new("default").unwrap(),
-            },
+            instance_info: None,
             data: PhantomData,
         }
     }
 }
 
-impl<T: Reloc + Send> Subscriber<MockRuntimeImpl,T> for SubscribableImpl<T> {
+impl<T: Reloc + Send> Subscriber<T, MockRuntimeImpl> for SubscribableImpl<T> {
     type Subscription = SubscriberImpl<T>;
     fn new(identifier: &str, instance_info: MockInstanceInfo) -> Self {
         Self {
             identifier: identifier.to_string(),
-            instance_info,
+            instance_info: Some(instance_info),
             data: PhantomData,
         }
     }
@@ -283,7 +281,7 @@ where
     }
 }
 
-impl<T> Subscription<MockRuntimeImpl,T> for SubscriberImpl<T>
+impl<T> Subscription<T, MockRuntimeImpl> for SubscriberImpl<T>
 where
     T: Reloc + Send,
 {
@@ -390,9 +388,9 @@ impl<I: Interface> SampleProducerBuilder<I> {
     }
 }
 
-impl<I: Interface, P: Producer<Interface = I>> ProducerBuilder<I, MockRuntimeImpl, P> for SampleProducerBuilder<I> {}
+impl<I: Interface, P: Producer<MockRuntimeImpl, Interface = I>> ProducerBuilder<I, P, MockRuntimeImpl> for SampleProducerBuilder<I> {}
 
-impl<I: Interface, P: Producer<Interface = I>> Builder<P> for SampleProducerBuilder<I> {
+impl<I: Interface, P: Producer<MockRuntimeImpl, Interface = I>> Builder<P> for SampleProducerBuilder<I> {
     fn build(self) -> Result<P> {
         todo!()
     }
@@ -505,7 +503,7 @@ mod test {
         })
     }
 
-      #[test]
+    #[test]
     fn send_stuff() {
         let test_publisher = super::Publisher::<u32>::new();
         let sample = test_publisher.allocate().expect("Couldn't allocate sample");

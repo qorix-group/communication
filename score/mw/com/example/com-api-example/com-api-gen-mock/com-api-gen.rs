@@ -62,7 +62,7 @@ pub struct VehicleProducer<R: Runtime + ?Sized>
     _runtime: std::marker::PhantomData<R>,
 }
 
-impl<R: Runtime + ?Sized> Producer for VehicleProducer<R> {
+impl<R: Runtime + ?Sized> Producer<R> for VehicleProducer<R> {
     type Interface = VehicleInterface;
     type OfferedProducer = VehicleOfferedProducer<R>;
 
@@ -76,7 +76,7 @@ pub struct VehicleOfferedProducer<R: Runtime + ?Sized> {
     pub exhaust: R::Publisher<Exhaust>,
 }
 
-impl<R: Runtime + ?Sized> OfferedProducer for VehicleOfferedProducer<R> {
+impl<R: Runtime + ?Sized> OfferedProducer<R> for VehicleOfferedProducer<R> {
     type Interface = VehicleInterface;
     type Producer = VehicleProducer<R>;
 
