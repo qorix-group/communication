@@ -79,8 +79,10 @@ cc_library(
     deps = [
         ":i_message_passing_service",
         "@communication//score/message_passing",
+        "@score_baselibs//score/concurrency:thread_pool",
         "@score_baselibs//score/language/futurecpp",
         "@score_baselibs//score/mw/log",
+        "@score_baselibs//score/os:errno_logging",
     ],
 )
 

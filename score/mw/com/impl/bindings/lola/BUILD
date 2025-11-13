@@ -1011,6 +1011,7 @@ cc_gtest_unit_test(
     features = COMPILER_WARNING_FEATURES,
     deps = [
         ":runtime",
+        "//score/mw/com/message_passing",
         "//score/mw/com/message_passing:mock",
         "@score_baselibs//score/os/mocklib:unistd_mock",
     ],

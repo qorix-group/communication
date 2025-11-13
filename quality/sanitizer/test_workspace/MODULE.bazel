@@ -12,14 +12,13 @@
 # *******************************************************************************
 module(name = "foo")
 
-bazel_dep(name = "toolchains_llvm", dev_dependency = True, version = "1.5.0")
+bazel_dep(name = "toolchains_llvm", version = "1.5.0", dev_dependency = True)
 
 llvm = use_extension(
     "@toolchains_llvm//toolchain/extensions:llvm.bzl",
     "llvm",
     dev_dependency = True,
 )
-
 llvm.toolchain(
     compile_flags = {"": [
         "-march=nehalem",
@@ -41,5 +40,4 @@ llvm.toolchain(
     llvm_version = "16.0.0",
     stdlib = {"": "dynamic-stdc++"},
 )
-
 use_repo(llvm, "llvm_toolchain")
