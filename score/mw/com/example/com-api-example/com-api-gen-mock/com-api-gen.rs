@@ -47,7 +47,7 @@ pub struct VehicleConsumer<R: Runtime + ?Sized> {
 }
 
 impl<R: Runtime + ?Sized> Consumer<R> for VehicleConsumer<R> {
-  fn new(instance_info: R::InstanceInfo) -> Self {
+  fn new(instance_info: R::ConsumerInfo) -> Self {
         VehicleConsumer {
             left_tire: R::Subscriber::new("left_tire", instance_info.clone()),
             exhaust: R::Subscriber::new("exhaust", instance_info.clone()),

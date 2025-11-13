@@ -33,7 +33,12 @@ use com_api_concept::{
 pub struct LolaRuntimeImpl {}
 
 #[derive(Clone)]
-pub struct LolaInstanceInfo {
+pub struct LolaProviderInfo {
+    instance_specifier: InstanceSpecifier,
+}
+
+#[derive(Clone)]
+pub struct LolaConsumerInfo {
     instance_specifier: InstanceSpecifier,
 }
 
@@ -42,7 +47,8 @@ impl Runtime for LolaRuntimeImpl {
     type Subscriber<T: Reloc + Send> = SubscribableImpl<T>;
     type ProducerBuilder<I: Interface, P: Producer<Self, Interface = I>> = SampleProducerBuilder<I>;
     type Publisher<T: Reloc + Send> = Publisher<T>;
-    type InstanceInfo = LolaInstanceInfo;
+    type ProviderInfo = LolaProviderInfo;
+    type ConsumerInfo = LolaConsumerInfo;
 
     fn find_service<I: Interface>(
         &self,
@@ -229,7 +235,7 @@ where
 
 pub struct SubscribableImpl<T> {
     identifier: String,
-    instance_info: Option<LolaInstanceInfo>,
+    instance_info: Option<LolaConsumerInfo>,
     data: PhantomData<T>,
 }
 
@@ -245,7 +251,7 @@ impl<T> Default for SubscribableImpl<T> {
 
 impl<T: Reloc + Send> Subscriber<T,LolaRuntimeImpl> for SubscribableImpl<T> {
     type Subscription = SubscriberImpl<T>;
-    fn new(identifier: &str, instance_info: LolaInstanceInfo) -> Self {
+    fn new(identifier: &str, instance_info: LolaConsumerInfo) -> Self {
         Self {
             identifier: identifier.to_string(),
             instance_info: Some(instance_info),
@@ -377,7 +383,7 @@ impl<I: Interface> ConsumerBuilder<I, LolaRuntimeImpl> for SampleConsumerBuilder
 
 impl<I: Interface> Builder<I::Consumer<LolaRuntimeImpl>> for SampleConsumerBuilder<I> {
     fn build(self) -> com_api_concept::Result<I::Consumer<LolaRuntimeImpl>> {
-        let instance_info = LolaInstanceInfo {
+        let instance_info = LolaConsumerInfo {
             instance_specifier: self.instance_specifier.clone(),
         };
         Ok(Consumer::new(instance_info))

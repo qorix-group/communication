@@ -35,7 +35,12 @@ use com_api_concept::{
 pub struct MockRuntimeImpl {}
 
 #[derive(Clone)]
-pub struct MockInstanceInfo {
+pub struct MockProviderInfo {
+    instance_specifier: InstanceSpecifier,
+}
+
+#[derive(Clone)]
+pub struct MockConsumerInfo {
     instance_specifier: InstanceSpecifier,
 }
 
@@ -44,7 +49,8 @@ impl Runtime for MockRuntimeImpl {
     type Subscriber<T: Reloc + Send> = SubscribableImpl<T>;
     type ProducerBuilder<I: Interface, P: Producer<Self, Interface = I>> = SampleProducerBuilder<I>;
     type Publisher<T: Reloc + Send> = Publisher<T>;
-    type InstanceInfo = MockInstanceInfo;
+    type ProviderInfo = MockProviderInfo;
+    type ConsumerInfo = MockConsumerInfo;
 
     fn find_service<I: Interface>(
         &self,
@@ -230,7 +236,7 @@ where
 
 pub struct SubscribableImpl<T> {
     identifier: String,
-    instance_info: Option<MockInstanceInfo>,
+    instance_info: Option<MockConsumerInfo>,
     data: PhantomData<T>,
 }
 
@@ -246,7 +252,7 @@ impl<T> Default for SubscribableImpl<T> {
 
 impl<T: Reloc + Send> Subscriber<T, MockRuntimeImpl> for SubscribableImpl<T> {
     type Subscription = SubscriberImpl<T>;
-    fn new(identifier: &str, instance_info: MockInstanceInfo) -> Self {
+    fn new(identifier: &str, instance_info: MockConsumerInfo) -> Self {
         Self {
             identifier: identifier.to_string(),
             instance_info: Some(instance_info),
@@ -423,7 +429,7 @@ impl<I: Interface> ConsumerBuilder<I, MockRuntimeImpl> for SampleConsumerBuilder
 
 impl<I: Interface> Builder<I::Consumer<MockRuntimeImpl>> for SampleConsumerBuilder<I> {
     fn build(self) -> com_api_concept::Result<I::Consumer<MockRuntimeImpl>> {
-        let instance_info = MockInstanceInfo {
+        let instance_info = MockConsumerInfo {
             instance_specifier: self.instance_specifier.clone(),
         };
 

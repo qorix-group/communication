@@ -76,7 +76,8 @@ pub trait Runtime {
     type Subscriber<T: Reloc + Send>: Subscriber<T, Self>;
     type ProducerBuilder<I: Interface, P: Producer<Self, Interface = I>>: ProducerBuilder<I, P, Self>;
     type Publisher<T: Reloc + Send>: Publisher<T>;
-    type InstanceInfo: Send + Clone;
+    type ProviderInfo: Send + Clone;
+    type ConsumerInfo: Send + Clone;
 
     fn find_service<I: Interface>(
         &self,
@@ -271,7 +272,7 @@ where
 }
 
 pub trait Consumer<R: Runtime + ?Sized> {
-    fn new(instance_info: R::InstanceInfo) -> Self;
+    fn new(instance_info: R::ConsumerInfo) -> Self;
 }
 
 pub trait ProducerBuilder<I: Interface, P: Producer<R, Interface = I>, R: Runtime + ?Sized>:
@@ -298,7 +299,7 @@ pub trait ConsumerBuilder<I: Interface, R: Runtime + ?Sized>:
 
 pub trait Subscriber<T: Reloc + Send, R: Runtime + ?Sized,> {
     type Subscription: Subscription<T, R>;
-    fn new(identifier: &str, instance_info: R::InstanceInfo) -> Self;
+    fn new(identifier: &str, instance_info: R::ConsumerInfo) -> Self;
     fn subscribe(self, max_num_samples: usize) -> Result<Self::Subscription>;
 }
 
