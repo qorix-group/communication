@@ -476,7 +476,7 @@ bool Skeleton::CreateSharedMemoryForData(
             : memory::shared::SharedMemoryFactory::UserPermissions{permissions};
     const auto memory_resource = score::memory::shared::SharedMemoryFactory::Create(
         path,
-        [this](std::shared_ptr<score::memory::shared::ManagedMemoryResource> memory) {
+        [this](std::shared_ptr<score::memory::shared::ISharedMemoryResource> memory) {
             this->InitializeSharedMemoryForData(memory);
         },
         shm_size,

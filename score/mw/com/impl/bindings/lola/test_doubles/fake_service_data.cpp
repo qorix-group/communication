@@ -12,13 +12,13 @@
  ********************************************************************************/
 #include "score/mw/com/impl/bindings/lola/test_doubles/fake_service_data.h"
 #include "score/filesystem/path.h"
-#include "score/memory/shared/shared_memory_resource.h"
+#include "score/memory/shared/i_shared_memory_resource.h"
 #include <memory>
 
 namespace score::mw::com::impl::lola
 {
 
-using ::score::memory::shared::SharedMemoryResource;
+using ::score::memory::shared::ISharedMemoryResource;
 
 std::unique_ptr<FakeServiceData> FakeServiceData::Create(const std::string& control_file_name,
                                                          const std::string& data_file_name,
@@ -67,7 +67,7 @@ FakeServiceData::FakeServiceData(const std::string& control_file_name,
 
     control_memory = score::memory::shared::SharedMemoryFactory::Create(
         control_file_name,
-        [this, initialise_skeleton_data](std::shared_ptr<SharedMemoryResource> memory_resource) {
+        [this, initialise_skeleton_data](std::shared_ptr<ISharedMemoryResource> memory_resource) {
             if (initialise_skeleton_data)
             {
                 data_control =
@@ -79,7 +79,7 @@ FakeServiceData::FakeServiceData(const std::string& control_file_name,
     data_memory = score::memory::shared::SharedMemoryFactory::Create(
         data_file_name,
         [this, initialise_skeleton_data, skeleton_process_pid_in](
-            std::shared_ptr<SharedMemoryResource> memory_resource) {
+            std::shared_ptr<ISharedMemoryResource> memory_resource) {
             if (initialise_skeleton_data)
             {
                 data_storage =
