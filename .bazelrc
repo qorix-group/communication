@@ -15,11 +15,24 @@
 common --@score_baselibs//score/mw/log/detail/flags:KUse_Stub_Implementation_Only=False
 common --@score_baselibs//score/mw/log/flags:KRemote_Logging=False
 common --@score_baselibs//score/json:base_library=nlohmann
+common --@score_baselibs//score/memory/shared/flags:use_typedshmd=False
 common --//score/mw/com/flags:tracing_library=stub
 common --extra_toolchains=@gcc_toolchain//:host_gcc_12
 build --incompatible_strict_action_env
 test --test_output=errors
 build --experimental_retain_test_configuration_across_testonly #https://github.com/bazelbuild/bazel/issues/6842
+
+# In order to build for QNX, you need:
+# * An account on qnx.com
+# * An assigned QNX 8 license to your account
+#   * If you are applicable for "Free for non commercial use" see here: https://www.qnx.com/products/everywhere/
+# * The credentials for this account stored in your ~/.netrc (machine qnx.com)
+# * A license stored under `/opt/score_qnx/license/licenses`
+common:qnx_x86_64 --host_platform=@score_bazel_platforms//:x86_64-linux
+common:qnx_x86_64 --platforms=@score_bazel_platforms//:x86_64-qnx
+common:qnx_x86_64 --extra_toolchains=@toolchains_qnx_qcc//:qcc_x86_64
+common:qnx_x86_64 --credential_helper=*.qnx.com=%workspace%/third_party/qnx_credential_helper.py
+common:qnx_x86_64 --sandbox_writable_path=/var/tmp
 
 # unshare /dev/shm and /tmp
 test --sandbox_tmpfs_path=/dev/shm
