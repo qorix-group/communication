@@ -71,6 +71,10 @@ pub trait Builder<Output> {
 
 /// This represents the com implementation and acts as a root for all types and objects provided by
 /// the implementation.
+//
+// Associated types:
+// * ProviderInfo - Information about a producer instance required to pass to different traits/types/methods
+// * ConsumerInfo - Information about a consumer instance required to pass to different traits/types/methods
 pub trait Runtime {
     type ServiceDiscovery<I: Interface>: ServiceDiscovery<I, Self>;
     type Subscriber<T: Reloc + Send>: Subscriber<T, Self>;

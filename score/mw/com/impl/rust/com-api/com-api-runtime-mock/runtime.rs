@@ -34,6 +34,8 @@ use com_api_concept::{
 
 pub struct MockRuntimeImpl {}
 
+// Note: ProviderInfo is currently unused but will be utilized
+// with the Producer::offer() method in future implementations.
 #[derive(Clone)]
 pub struct MockProviderInfo {
     instance_specifier: InstanceSpecifier,
@@ -49,6 +51,7 @@ impl Runtime for MockRuntimeImpl {
     type Subscriber<T: Reloc + Send> = SubscribableImpl<T>;
     type ProducerBuilder<I: Interface, P: Producer<Self, Interface = I>> = SampleProducerBuilder<I>;
     type Publisher<T: Reloc + Send> = Publisher<T>;
+    // TODO: Integrate with Producer::offer() method implementation
     type ProviderInfo = MockProviderInfo;
     type ConsumerInfo = MockConsumerInfo;
 
@@ -467,7 +470,7 @@ impl RuntimeBuilderImpl {
 
 #[cfg(test)]
 mod test {
-    use com_api::{Publisher, SampleContainer, SampleMaybeUninit, SampleMut, Subscription};
+    use com_api_concept::{Publisher, SampleContainer, SampleMaybeUninit, SampleMut, Subscription};
 
     #[test]
     fn receive_stuff() {

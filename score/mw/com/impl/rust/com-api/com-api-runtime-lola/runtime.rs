@@ -32,6 +32,8 @@ use com_api_concept::{
 
 pub struct LolaRuntimeImpl {}
 
+// Note: LolaProviderInfo is currently unused but will be utilized
+// with the Producer::offer() method in future implementations.
 #[derive(Clone)]
 pub struct LolaProviderInfo {
     instance_specifier: InstanceSpecifier,
@@ -47,6 +49,7 @@ impl Runtime for LolaRuntimeImpl {
     type Subscriber<T: Reloc + Send> = SubscribableImpl<T>;
     type ProducerBuilder<I: Interface, P: Producer<Self, Interface = I>> = SampleProducerBuilder<I>;
     type Publisher<T: Reloc + Send> = Publisher<T>;
+    // TODO: Integrate with Producer::offer() method implementation
     type ProviderInfo = LolaProviderInfo;
     type ConsumerInfo = LolaConsumerInfo;
 
@@ -466,7 +469,7 @@ impl RuntimeBuilderImpl {
 
 #[cfg(test)]
 mod test {
-    use com_api::{Publisher, SampleContainer, SampleMaybeUninit, SampleMut, Subscription};
+    use com_api_concept::{Publisher, SampleContainer, SampleMaybeUninit, SampleMut, Subscription};
 
     #[test]
     fn receive_stuff() {
