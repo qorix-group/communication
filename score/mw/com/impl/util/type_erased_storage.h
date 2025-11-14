@@ -61,9 +61,11 @@ class MemoryBufferAccessor
 template <typename Arg>
 constexpr void AggregateArgType(memory::DataTypeSizeInfo& info)
 {
-    auto padding = (info.size % alignof(Arg)) == 0 ? 0 : alignof(Arg) - (info.size % alignof(Arg));
-    info.size += sizeof(Arg) + padding;
-    info.alignment = std::max(info.alignment, alignof(Arg));
+    auto size = info.Size();
+    auto padding = (size % alignof(Arg)) == 0 ? 0 : alignof(Arg) - (size % alignof(Arg));
+    size += sizeof(Arg) + padding;
+    info.SetSize(size);
+    info.SetAlignment(std::max(info.Alignment(), alignof(Arg)));
 }
 
 /// \brief Returns pointer to argument value at current buffer position.
@@ -177,9 +179,9 @@ constexpr memory::DataTypeSizeInfo CreateDataTypeSizeInfoFromTypes()
     // See: https://en.cppreference.com/w/cpp/language/sizeof.html -> "When applied to a class type, the result is the
     // number of bytes occupied by a complete object of that class, including any additional padding required to place
     // such object in an array."
-    if (result.size % result.alignment != 0)
+    if (result.Size() % result.Alignment() != 0)
     {
-        result.size += result.alignment - (result.size % result.alignment);
+        result.SetSize(result.Size() + result.Alignment() - (result.Size() % result.Alignment()));
     }
     return result;
 }

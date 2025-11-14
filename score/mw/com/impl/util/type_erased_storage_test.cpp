@@ -131,9 +131,9 @@ TEST(TypeErasedStorageTest, CreateDataTypeSizeInfoFromValues_1)
         test_arguments_1);
 
     // expect, that it has exactly the same size as its equivalent struct representation.
-    EXPECT_EQ(result.size, sizeof(equivalent_struct_test_arguments_1));
+    EXPECT_EQ(result.Size(), sizeof(equivalent_struct_test_arguments_1));
     // expect, that it has exactly the same alignment as its equivalent struct representation.
-    EXPECT_EQ(result.alignment, alignof(equivalent_struct_test_arguments_1));
+    EXPECT_EQ(result.Alignment(), alignof(equivalent_struct_test_arguments_1));
 }
 
 TEST(TypeErasedStorageTest, CreateDataTypeSizeInfoFromValues_2)
@@ -146,9 +146,9 @@ TEST(TypeErasedStorageTest, CreateDataTypeSizeInfoFromValues_2)
         test_arguments_2);
 
     // expect, that it has exactly the same size as its equivalent struct representation.
-    EXPECT_EQ(result.size, sizeof(equivalent_struct_test_arguments_2));
+    EXPECT_EQ(result.Size(), sizeof(equivalent_struct_test_arguments_2));
     // expect, that it has exactly the same alignment as its equivalent struct representation.
-    EXPECT_EQ(result.alignment, alignof(equivalent_struct_test_arguments_2));
+    EXPECT_EQ(result.Alignment(), alignof(equivalent_struct_test_arguments_2));
 }
 
 TEST(TypeErasedStorageTest, CreateDataTypeSizeInfoFromValues_3)
@@ -161,9 +161,9 @@ TEST(TypeErasedStorageTest, CreateDataTypeSizeInfoFromValues_3)
         test_arguments_3);
 
     // expect, that it has exactly the same size as its equivalent struct representation.
-    EXPECT_EQ(result.size, sizeof(equivalent_struct_test_arguments_3));
+    EXPECT_EQ(result.Size(), sizeof(equivalent_struct_test_arguments_3));
     // expect, that it has exactly the same alignment as its equivalent struct representation.
-    EXPECT_EQ(result.alignment, alignof(equivalent_struct_test_arguments_3));
+    EXPECT_EQ(result.Alignment(), alignof(equivalent_struct_test_arguments_3));
 }
 
 TEST(TypeErasedStorageTest, CreateDataTypeSizeInfoFromTypes_1)
@@ -176,9 +176,9 @@ TEST(TypeErasedStorageTest, CreateDataTypeSizeInfoFromTypes_1)
         test_arguments_1);
 
     // expect, that it has exactly the same size as its equivalent struct representation.
-    EXPECT_EQ(result.size, sizeof(equivalent_struct_test_arguments_1));
+    EXPECT_EQ(result.Size(), sizeof(equivalent_struct_test_arguments_1));
     // expect, that it has exactly the same alignment as its equivalent struct representation.
-    EXPECT_EQ(result.alignment, alignof(equivalent_struct_test_arguments_1));
+    EXPECT_EQ(result.Alignment(), alignof(equivalent_struct_test_arguments_1));
 }
 
 TEST(TypeErasedStorageTest, CreateDataTypeSizeInfoFromType_2)
@@ -191,9 +191,9 @@ TEST(TypeErasedStorageTest, CreateDataTypeSizeInfoFromType_2)
         test_arguments_2);
 
     // expect, that it has exactly the same size as its equivalent struct representation.
-    EXPECT_EQ(result.size, sizeof(equivalent_struct_test_arguments_2));
+    EXPECT_EQ(result.Size(), sizeof(equivalent_struct_test_arguments_2));
     // expect, that it has exactly the same alignment as its equivalent struct representation.
-    EXPECT_EQ(result.alignment, alignof(equivalent_struct_test_arguments_2));
+    EXPECT_EQ(result.Alignment(), alignof(equivalent_struct_test_arguments_2));
 }
 
 TEST(TypeErasedStorageTest, CreateDataTypeSizeInfoFromTypes_3)
@@ -206,16 +206,16 @@ TEST(TypeErasedStorageTest, CreateDataTypeSizeInfoFromTypes_3)
         test_arguments_3);
 
     // expect, that it has exactly the same size as its equivalent struct representation.
-    EXPECT_EQ(result.size, sizeof(equivalent_struct_test_arguments_3));
+    EXPECT_EQ(result.Size(), sizeof(equivalent_struct_test_arguments_3));
     // expect, that it has exactly the same alignment as its equivalent struct representation.
-    EXPECT_EQ(result.alignment, alignof(equivalent_struct_test_arguments_3));
+    EXPECT_EQ(result.Alignment(), alignof(equivalent_struct_test_arguments_3));
 }
 
 TEST(TypeErasedStorageTest, CreateDataTypeSizeInfoFromTypes_constexpr)
 {
     // Expect, that instantiation of a std::array specifying its size depending on the outcome of a call to
     // CreateDataTypeSizeInfoFromTypes() compiles.
-    std::array<std::uint8_t, CreateDataTypeSizeInfoFromTypes<int, char, int>().size> dummy_array{};
+    std::array<std::uint8_t, CreateDataTypeSizeInfoFromTypes<int, char, int>().Size()> dummy_array{};
     EXPECT_GT(dummy_array.size(), 0U);
 }
 
@@ -224,7 +224,7 @@ TEST(TypeErasedStorageTest, CreateDataTypeSizeInfoFromValues_constexpr)
     // Expect, that instantiation of a std::array specifying its size depending on the outcome of a call to
     // CreateDataTypeSizeInfoFromValues() compiles.
     const int i{0}, j{0}, k{0};
-    std::array<std::uint8_t, CreateDataTypeSizeInfoFromValues(i, j, k).size> dummy_array{};
+    std::array<std::uint8_t, CreateDataTypeSizeInfoFromValues(i, j, k).Size()> dummy_array{};
     EXPECT_GT(dummy_array.size(), 0U);
 }
 
