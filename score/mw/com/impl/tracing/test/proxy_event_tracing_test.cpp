@@ -37,7 +37,7 @@ using namespace ::testing;
 
 using TestSampleType = std::uint16_t;
 
-const auto kInstanceSpecifier{InstanceSpecifier::Create("abc/abc/TirePressurePort").value()};
+const auto kInstanceSpecifier{InstanceSpecifier::Create(std::string{"abc/abc/TirePressurePort"}).value()};
 const auto kInstanceSpecifierStdStringView = kInstanceSpecifier.ToString();
 const auto kInstanceSpecifierStringView = kInstanceSpecifierStdStringView;
 const std::string kServiceTypeName{"foo"};
