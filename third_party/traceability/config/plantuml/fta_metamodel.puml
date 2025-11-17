@@ -19,7 +19,7 @@ sprite $or <svg width="80" height="80" viewBox="0 0 60 70" xmlns="http://www.w3.
 !endprocedure
 
 !procedure $BasicEvent($name, $alias, $connection)
-  ("$name") as $alias
+  "$name" as $alias
   $alias -u-> $connection
 !endprocedure
 

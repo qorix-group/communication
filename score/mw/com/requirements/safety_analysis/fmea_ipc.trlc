@@ -10,13 +10,15 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-package SampleType
+package Communication
 
 import ScoreReq
 
-ScoreReq.AoU SampleAoU {
-    description = "It shall be made sure that this SampleAoU never ends up anywhere"
-    safety = ScoreReq.Asil.B
-    mitigates = "ShmemCreatedWrongName"
+ScoreReq.FailureMode SkeletonNotOffered{
+    guideword = ScoreReq.GuideWord.LossOfFunction
+    description = "Skeleton Not Offered"
+    failureeffect = "No communication between process will happen, thus no information can be exchanged, thus any overall system functionality can stop."
     version = 1
+    safety = ScoreReq.Asil.B
+    rationale = "We added an AoU that no Safety-goal shall be harmed, if a service is not offered. Thus, this failure cannot have any safety-related bad effect."
 }

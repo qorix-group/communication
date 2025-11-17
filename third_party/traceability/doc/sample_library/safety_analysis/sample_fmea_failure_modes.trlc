@@ -13,13 +13,12 @@
 package SampleLibrary
 
 import ScoreReq
-import SafetyAnalysis
 
-SafetyAnalysis.FailureMode SampleFailureMode{
-    guideword = SafetyAnalysis.GuideWord.LossOfFunction
+ScoreReq.FailureMode SampleFailureMode{
+    guideword = ScoreReq.GuideWord.LossOfFunction
     description = "SampleFailureMode takes over the world"
     failureeffect = "The world as we know it will end"
     version = 1
     safety = ScoreReq.Asil.B
-    function = "SampleLibraryAPI.GetNumber"
+    interface = "SampleLibraryAPI.GetNumber"
 }

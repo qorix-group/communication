@@ -42,7 +42,6 @@ trlc_requirements(
     ],
     spec = [
         "@//third_party/traceability/config/trlc/score_model:requirement_metamodel",
-        "@//third_party/traceability/config/trlc/bmw_model:safety_analysis_metamodel",
     ],
     visibility = ["//visibility:public"],
 )

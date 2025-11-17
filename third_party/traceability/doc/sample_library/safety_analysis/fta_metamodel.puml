@@ -1,10 +1,10 @@
 @startuml
 
 sprite $and <svg width="80" height="80" viewBox="0 0 60 70">
-  <text x="10" y="55" font-size="60" text-anchor="middle" dominant-baseline="middle" font-family="Arial" fill="black">&</text></svg>
+  <text x="10" y="55" font-size="40" text-anchor="middle" dominant-baseline="middle" font-family="Arial" fill="black">&</text></svg>
 
 sprite $or <svg width="80" height="80" viewBox="0 0 60 70">
-  <text x="10" y="55" font-size="60" text-anchor="middle" dominant-baseline="middle" font-family="Arial" fill="black">||</text></svg>
+  <text x="10" y="55" font-size="40" text-anchor="middle" dominant-baseline="middle" font-family="Arial" fill="black">||</text></svg>
 
 sprite $tf {
   00000000000000000000000000000000000000000000000000000000000000000
@@ -55,7 +55,7 @@ sprite $tf {
 !endprocedure
 
 !procedure $BasicEvent($name, $alias, $connection)
-  ("$name") as $alias
+  ($name) as $alias
   $alias -u-> $connection
 !endprocedure
 

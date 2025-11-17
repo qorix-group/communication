@@ -22,7 +22,7 @@ trlc_requirements(
         "sample_fmea_failure_modes.trlc",
     ],
     spec = [
-        "@//third_party/traceability/config/trlc/bmw_model:safety_analysis_metamodel",
+        "@//third_party/traceability/config/trlc/score_model:requirement_metamodel",
     ],
     visibility = ["//visibility:public"],
 )
@@ -33,7 +33,7 @@ trlc_requirements(
         "sample_fmea_control_measures.trlc",
     ],
     spec = [
-        "@//third_party/traceability/config/trlc/bmw_model:safety_analysis_metamodel",
+        "@//third_party/traceability/config/trlc/score_model:requirement_metamodel",
     ],
     visibility = ["//visibility:public"],
 )

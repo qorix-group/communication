@@ -13,9 +13,8 @@
 package SampleLibrary
 
 import ScoreReq
-import SafetyAnalysis
 
-SafetyAnalysis.ControlMeasure EndNoteTest{
+ScoreReq.ControlMeasure EndNoteTest{
     safety = ScoreReq.Asil.B
     description = "We will make sure that the candy supply will never be depleted"
     version = 1
