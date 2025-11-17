@@ -59,13 +59,11 @@ class MemoryBufferAccessor
 /// \tparam Arg type of argument to be aggregated into existing DataTypeSizeInfo
 /// \param info existing DataTypeSizeInfo
 template <typename Arg>
-constexpr void AggregateArgType(memory::DataTypeSizeInfo& info)
+constexpr void AggregateArgType(std::size_t& size, std::size_t& alignment)
 {
-    auto size = info.Size();
     auto padding = (size % alignof(Arg)) == 0 ? 0 : alignof(Arg) - (size % alignof(Arg));
     size += sizeof(Arg) + padding;
-    info.SetSize(size);
-    info.SetAlignment(std::max(info.Alignment(), alignof(Arg)));
+    alignment = std::max(alignment, alignof(Arg));
 }
 
 /// \brief Returns pointer to argument value at current buffer position.
@@ -171,19 +169,20 @@ void SerializeArgs(MemoryBufferAccessor& target_buffer, T& arg, Args&... args)
 template <typename... Args>
 constexpr memory::DataTypeSizeInfo CreateDataTypeSizeInfoFromTypes()
 {
-    memory::DataTypeSizeInfo result{};
+    std::size_t total_size{0U};
+    std::size_t total_alignment{0U};
 
-    ((detail::AggregateArgType<Args>(result)), ...);
+    ((detail::AggregateArgType<Args>(total_size, total_alignment)), ...);
 
     // final step: Adjust size to be a multiple of its alignment!
     // See: https://en.cppreference.com/w/cpp/language/sizeof.html -> "When applied to a class type, the result is the
     // number of bytes occupied by a complete object of that class, including any additional padding required to place
     // such object in an array."
-    if (result.Size() % result.Alignment() != 0)
+    if ((total_alignment != 0) && (total_size % total_alignment != 0))
     {
-        result.SetSize(result.Size() + result.Alignment() - (result.Size() % result.Alignment()));
+        total_size += total_alignment - (total_size % total_alignment);
     }
-    return result;
+    return {total_size, total_alignment};
 }
 
 /// \brief Creates meta-info (sizeof/alignment) a type-erased representation of the given arguments would have.
