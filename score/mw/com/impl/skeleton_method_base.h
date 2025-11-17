@@ -14,6 +14,7 @@
 #define SCORE_MW_COM_IMPL_SKELETON_METHOD_BASE_H
 
 #include "score/mw/com/impl/skeleton_method_binding.h"
+
 #include <functional>
 #include <memory>
 
@@ -33,7 +34,7 @@ class SkeletonMethodBase
     {
     }
 
-    ~SkeletonMethodBase()= default;
+    ~SkeletonMethodBase() = default;
 
     SkeletonMethodBase(const SkeletonMethodBase&) = delete;
     SkeletonMethodBase& operator=(const SkeletonMethodBase&) & = delete;

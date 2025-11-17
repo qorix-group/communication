@@ -28,6 +28,22 @@ class SkeletonMethod : public SkeletonMethodBinding
     MOCK_METHOD(ResultBlank, Register, (TypeErasedCallback&&), (override));
 };
 
+class SkeletonMethodFacade : public SkeletonMethodBinding
+{
+  public:
+    SkeletonMethodFacade(SkeletonMethod& skeleton_method)
+        : SkeletonMethodBinding(), skeleton_method_{skeleton_method} {};
+    ~SkeletonMethodFacade() override = default;
+
+    ResultBlank Register(TypeErasedCallback&& cb) override
+    {
+        return skeleton_method_.Register(std::move(cb));
+    }
+
+  private:
+    SkeletonMethodBinding& skeleton_method_;
+};
+
 }  // namespace score::mw::com::impl::mock_binding
 
 #endif  // SCORE_MW_COM_IMPL_BINDINGS_MOCK_BINDING_SKELETON_METHOD_H

@@ -1066,10 +1066,10 @@ class SkeletonBaseServiceElementReferencesFixture : public ::testing::Test
   public:
     const std::string event_name_0_{"event_name_0"};
     const std::string event_name_1_{"event_name_1"};
-    std::string field_name_0_{"field_name_0"};
-    std::string field_name_1_{"field_name_1"};
-    std::string method_name_0_{"method_name_0"};
-    std::string method_name_1_{"method_name_1"};
+    const std::string field_name_0_{"field_name_0"};
+    const std::string field_name_1_{"field_name_1"};
+    const std::string method_name_0_{"method_name_0"};
+    const std::string method_name_1_{"method_name_1"};
 
     ConfigurationStore config_store_{kInstanceSpecifier,
                                      kServiceIdentifier,

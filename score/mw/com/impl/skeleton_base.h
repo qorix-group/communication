@@ -113,7 +113,7 @@ class SkeletonBase
     SkeletonBase(SkeletonBase&& other) noexcept;
     SkeletonBase& operator=(SkeletonBase&& other) noexcept;
 
-    // private:
+  private:
     std::unique_ptr<SkeletonBinding> binding_;
     SkeletonEvents events_;
     SkeletonFields fields_;

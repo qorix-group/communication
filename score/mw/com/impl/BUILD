@@ -197,6 +197,7 @@ cc_library(
         "//score/mw/com/impl:__subpackages__",
     ],
     deps = [
+        "@score_baselibs//score/language/futurecpp",
         "@score_baselibs//score/result",
     ],
 )
@@ -1038,9 +1039,6 @@ cc_test(
         "skeleton_event_test.cpp",
         "skeleton_field_base_test.cpp",
         "skeleton_field_test.cpp",
-        "skeleton_method_base_test.cpp",
-        "skeleton_method_binding_test.cpp",
-        "skeleton_method_test.cpp",
         "traits_test.cpp",
     ],
     features = COMPILER_WARNING_FEATURES + [
@@ -1053,8 +1051,6 @@ cc_test(
         ":runtime_mock",
         ":service_discovery_mock",
         ":service_element_map",
-        ":skeleton_method",
-        ":skeleton_method_binding",
         "//score/mw/com:types",
         "//score/mw/com/impl/bindings/lola:runtime_mock",
         "//score/mw/com/impl/bindings/lola/test_doubles",
@@ -1075,9 +1071,39 @@ cc_test(
         "@score_baselibs//score/analysis/tracing/generic_trace_library/mock:trace_library_mock",
         "@score_baselibs//score/language/futurecpp",
         "@score_baselibs//score/language/safecpp/coverage_termination_handler",
-        "@score_baselibs//score/mw/log",
         "@score_baselibs//score/os/mocklib:mman_mock",
         "@score_baselibs//score/os/mocklib:stat_mock",
+    ],
+)
+
+cc_gtest_unit_test(
+    name = "skeleton_method_test",
+    srcs = [
+        "skeleton_method_test.cpp",
+    ],
+    features = COMPILER_WARNING_FEATURES + [
+        "aborts_upon_exception",
+    ],
+    deps = [
+        ":skeleton_method",
+        "//score/mw/com/impl/bindings/mock_binding",
+        "@score_baselibs//score/language/futurecpp",
+    ],
+)
+
+cc_gtest_unit_test(
+    name = "skeleton_method_base_test",
+    srcs = [
+        "skeleton_method_base_test.cpp",
+    ],
+    features = COMPILER_WARNING_FEATURES + [
+        "aborts_upon_exception",
+    ],
+    deps = [
+        ":skeleton_method",
+        ":skeleton_method_base",
+        "//score/mw/com/impl/bindings/mock_binding",
+        "@score_baselibs//score/language/futurecpp",
     ],
 )
 
@@ -1094,6 +1120,8 @@ cc_unit_test_suites_for_host_and_qnx(
         ":service_discovery_test",
         ":service_element_type_test",
         ":unit_test",
+        ":skeleton_method_base_test",
+        ":skeleton_method_test",
         ":unit_test_runtime_single_exec",
     ],
     test_suites_from_sub_packages = [

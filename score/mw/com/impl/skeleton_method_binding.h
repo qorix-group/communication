@@ -17,7 +17,9 @@
 
 #include <score/callback.hpp>
 #include <score/span.hpp>
+
 #include <algorithm>
+#include <memory>
 #include <optional>
 
 namespace score::mw::com::impl
@@ -26,14 +28,14 @@ namespace score::mw::com::impl
 class SkeletonMethodBinding
 {
   public:
-    using TypeErasedSignature = void(std::optional<score::cpp::span<std::byte>>, std::optional<score::cpp::span<std::byte>>);
+    using TypeErasedCallbackSignature = void(std::optional<score::cpp::span<std::byte>>, std::optional<score::cpp::span<std::byte>>);
     // size of storred callback should be the base size of amp callback and a unique_ptr
     // this way the user can pass any information to the callback through the pointer.
     static constexpr std::size_t CallbackSize{
-        sizeof(score::cpp::callback<TypeErasedSignature>) +
-        std::max(score::cpp::callback<TypeErasedSignature>::alignment_t::value, sizeof(std::unique_ptr<void>))};
+        sizeof(score::cpp::callback<TypeErasedCallbackSignature>) +
+        std::max(score::cpp::callback<TypeErasedCallbackSignature>::alignment_t::value, sizeof(std::unique_ptr<void>))};
 
-    using TypeErasedCallback = score::cpp::callback<TypeErasedSignature, CallbackSize>;
+    using TypeErasedCallback = score::cpp::callback<TypeErasedCallbackSignature, CallbackSize>;
 
     SkeletonMethodBinding() = default;
     virtual ~SkeletonMethodBinding() = default;

@@ -51,14 +51,14 @@ class MyDummyMethod final : public SkeletonMethodBase
 
 TEST(SkeletonMethodBaseTests, NotCopyable)
 {
-    static_assert(!std::is_copy_constructible<MyDummyMethod>::value, "Is wrongly copyable");
-    static_assert(!std::is_copy_assignable<MyDummyMethod>::value, "Is wrongly copyable");
+    static_assert(!std::is_copy_constructible<SkeletonMethodBase>::value, "Is wrongly copyable");
+    static_assert(!std::is_copy_assignable<SkeletonMethodBase>::value, "Is wrongly copyable");
 }
 
 TEST(SkeletonMethodBaseTests, IsMoveable)
 {
-    static_assert(std::is_move_constructible<MyDummyMethod>::value, "Is not move constructible");
-    static_assert(std::is_move_assignable<MyDummyMethod>::value, "Is not move assignable");
+    static_assert(std::is_move_constructible<SkeletonMethodBase>::value, "Is not move constructible");
+    static_assert(std::is_move_assignable<SkeletonMethodBase>::value, "Is not move assignable");
 }
 
 TEST(SkeletonMethodBase, UpdateSkeletonReferenceUpdatesTheReference)
