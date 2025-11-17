@@ -216,3 +216,5 @@ pip.parse(
     requirements_lock = "//:requirements_lock.txt",
 )
 use_repo(pip, "score_communication_pip")
+
+bazel_dep(name = "score_tooling", version = "1.0.2")
