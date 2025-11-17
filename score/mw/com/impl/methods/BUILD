@@ -177,9 +177,7 @@ cc_gtest_unit_test(
     srcs = [
         "skeleton_method_test.cpp",
     ],
-    features = COMPILER_WARNING_FEATURES + [
-        "aborts_upon_exception",
-    ],
+    features = COMPILER_WARNING_FEATURES,
     deps = [
         ":skeleton_method",
         "//score/mw/com/impl/bindings/mock_binding",
@@ -192,9 +190,7 @@ cc_gtest_unit_test(
     srcs = [
         "skeleton_method_base_test.cpp",
     ],
-    features = COMPILER_WARNING_FEATURES + [
-        "aborts_upon_exception",
-    ],
+    features = COMPILER_WARNING_FEATURES,
     deps = [
         ":skeleton_method",
         ":skeleton_method_base",

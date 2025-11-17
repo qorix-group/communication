@@ -23,8 +23,6 @@ namespace score::mw::com::impl::mock_binding
 class SkeletonMethod : public SkeletonMethodBinding
 {
   public:
-    using SkeletonMethodBinding::SkeletonMethodBinding;
-    ~SkeletonMethod() override = default;
     MOCK_METHOD(ResultBlank, Register, (TypeErasedCallback&&), (override));
 };
 
