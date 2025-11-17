@@ -90,8 +90,6 @@ cc_library(
         ":message_passing_client_cache",
         ":thread_abstraction",
         "@communication//score/message_passing",
-        "@score_baselibs//score/concurrency:thread_pool",
-        "@score_baselibs//score/os:errno_logging",
     ],
 )
 
@@ -118,7 +116,6 @@ cc_library(
         ":client_quality_type",
         ":i_message_passing_service_instance",
         "@communication//score/message_passing",
-        "@score_baselibs//score/concurrency:executor",
     ],
 )
 
