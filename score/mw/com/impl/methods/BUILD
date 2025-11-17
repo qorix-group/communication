@@ -125,11 +125,91 @@ cc_unit_test(
     ],
 )
 
+cc_library(
+    name = "skeleton_method_base",
+    srcs = ["skeleton_method_base.cpp"],
+    hdrs = ["skeleton_method_base.h"],
+    features = COMPILER_WARNING_FEATURES,
+    tags = ["FFI"],
+    visibility = [
+        "//score/mw/com:__subpackages__",
+    ],
+    deps = [
+        ":skeleton_method_binding",
+        "//score/mw/com/impl/util:type_erased_storage",
+    ],
+)
+
+cc_library(
+    name = "skeleton_method",
+    srcs = ["skeleton_method.cpp"],
+    hdrs = ["skeleton_method.h"],
+    features = COMPILER_WARNING_FEATURES,
+    tags = ["FFI"],
+    visibility = [
+        "//score/mw/com/impl:__subpackages__",
+    ],
+    deps = [
+        ":skeleton_method_binding",
+        "//score/mw/com/impl:instance_identifier",
+        "//score/mw/com/impl:skeleton_base",
+        "@score_baselibs//score/result",
+    ],
+)
+
+cc_library(
+    name = "skeleton_method_binding",
+    srcs = ["skeleton_method_binding.cpp"],
+    hdrs = ["skeleton_method_binding.h"],
+    features = COMPILER_WARNING_FEATURES,
+    tags = ["FFI"],
+    visibility = [
+        "//score/mw/com/impl:__subpackages__",
+    ],
+    deps = [
+        "@score_baselibs//score/language/futurecpp",
+        "@score_baselibs//score/result",
+    ],
+)
+
+cc_gtest_unit_test(
+    name = "skeleton_method_test",
+    srcs = [
+        "skeleton_method_test.cpp",
+    ],
+    features = COMPILER_WARNING_FEATURES + [
+        "aborts_upon_exception",
+    ],
+    deps = [
+        ":skeleton_method",
+        "//score/mw/com/impl/bindings/mock_binding",
+        "@score_baselibs//score/language/futurecpp",
+    ],
+)
+
+cc_gtest_unit_test(
+    name = "skeleton_method_base_test",
+    srcs = [
+        "skeleton_method_base_test.cpp",
+    ],
+    features = COMPILER_WARNING_FEATURES + [
+        "aborts_upon_exception",
+    ],
+    deps = [
+        ":skeleton_method",
+        ":skeleton_method_base",
+        "//score/mw/com/impl/bindings/mock_binding",
+        "@score_baselibs//score/language/futurecpp",
+    ],
+)
+
 cc_unit_test_suites_for_host_and_qnx(
     name = "unit_test_suite",
     cc_unit_tests = [
         ":method_signature_element_ptr_test",
         ":proxy_method_test",
+        "skeleton_method_base_test",
+        "skeleton_method_test",
     ],
     visibility = ["//score/mw/com:__pkg__"],
 )

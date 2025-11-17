@@ -10,4 +10,4 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#include "score/mw/com/impl/skeleton_method.h"
+#include "score/mw/com/impl/methods/skeleton_method_binding.h"

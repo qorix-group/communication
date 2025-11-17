@@ -10,10 +10,10 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#ifndef SCORE_MW_COM_IMPL_SKELETON_METHOD_BASE_H
-#define SCORE_MW_COM_IMPL_SKELETON_METHOD_BASE_H
+#ifndef SCORE_MW_COM_IMPL_METHODS_SKELETON_METHOD_BASE_H
+#define SCORE_MW_COM_IMPL_METHODS_SKELETON_METHOD_BASE_H
 
-#include "score/mw/com/impl/skeleton_method_binding.h"
+#include "score/mw/com/impl/methods/skeleton_method_binding.h"
 
 #include <functional>
 #include <memory>
@@ -51,4 +51,4 @@ class SkeletonMethodBase
 };
 
 }  // namespace score::mw::com::impl
-#endif  // SCORE_MW_COM_IMPL_SKELETON_METHOD_BASE_H
+#endif  // SCORE_MW_COM_IMPL_METHODS_SKELETON_METHOD_BASE_H

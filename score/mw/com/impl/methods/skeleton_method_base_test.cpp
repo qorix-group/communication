@@ -1,10 +1,10 @@
-#include "score/mw/com/impl/skeleton_method_base.h"
+#include "score/mw/com/impl/methods/skeleton_method_base.h"
 
 #include "score/mw/com/impl/bindings/mock_binding/skeleton.h"
 #include "score/mw/com/impl/bindings/mock_binding/skeleton_method.h"
 #include "score/mw/com/impl/instance_identifier.h"
+#include "score/mw/com/impl/methods/skeleton_method.h"
 #include "score/mw/com/impl/skeleton_base.h"
-#include "score/mw/com/impl/skeleton_method.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

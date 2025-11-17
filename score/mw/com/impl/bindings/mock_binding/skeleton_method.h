@@ -13,7 +13,7 @@
 #ifndef SCORE_MW_COM_IMPL_BINDINGS_MOCK_BINDING_SKELETON_METHOD_H
 #define SCORE_MW_COM_IMPL_BINDINGS_MOCK_BINDING_SKELETON_METHOD_H
 
-#include "score/mw/com/impl/skeleton_method_binding.h"
+#include "score/mw/com/impl/methods/skeleton_method_binding.h"
 
 #include <gmock/gmock.h>
 

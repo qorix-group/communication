@@ -16,9 +16,8 @@
 #include "score/mw/com/impl/flag_owner.h"
 #include "score/mw/com/impl/instance_identifier.h"
 #include "score/mw/com/impl/instance_specifier.h"
+#include "score/mw/com/impl/methods/skeleton_method_base.h"
 #include "score/mw/com/impl/skeleton_binding.h"
-#include "score/mw/com/impl/skeleton_event_binding.h"
-#include "score/mw/com/impl/skeleton_method_base.h"
 
 #include "score/mw/com/impl/mocking/i_skeleton_base.h"
 

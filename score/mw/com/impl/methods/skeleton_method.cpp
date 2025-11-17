@@ -10,12 +10,4 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#include "score/mw/com/impl/skeleton_method_base.h"
-
-namespace score::mw::com::impl
-{
-void SkeletonMethodBase::UpdateSkeletonReference(SkeletonBase& skeleton_base) noexcept
-{
-    skeleton_base_ = skeleton_base;
-}
-}  // namespace score::mw::com::impl
+#include "score/mw/com/impl/methods/skeleton_method.h"

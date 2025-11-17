@@ -10,13 +10,12 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#ifndef SCORE_MW_COM_IMPL_SKELETON_METHOD_H
-#define SCORE_MW_COM_IMPL_SKELETON_METHOD_H
-
+#ifndef SCORE_MW_COM_IMPL_METHODS_SKELETON_METHOD_H
+#define SCORE_MW_COM_IMPL_METHODS_SKELETON_METHOD_H
 #include "score/result/result.h"
+#include "score/mw/com/impl/methods/skeleton_method_base.h"
+#include "score/mw/com/impl/methods/skeleton_method_binding.h"
 #include "score/mw/com/impl/skeleton_base.h"
-#include "score/mw/com/impl/skeleton_method_base.h"
-#include "score/mw/com/impl/skeleton_method_binding.h"
 #include "score/mw/com/impl/util/type_erased_storage.h"
 
 #include <functional>
@@ -158,4 +157,4 @@ ResultBlank SkeletonMethod<ReturnType(ArgTypes...)>::Register(Callable&& callbac
 }
 
 }  // namespace score::mw::com::impl
-#endif  // SCORE_MW_COM_IMPL_SKELETON_METHOD_H
+#endif  // SCORE_MW_COM_IMPL_METHODS_SKELETON_METHOD_H
