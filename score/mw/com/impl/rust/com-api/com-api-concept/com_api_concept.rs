@@ -52,6 +52,7 @@ use std::future::Future;
 use std::ops::{Deref, DerefMut};
 use std::path::Path;
 
+/// Error enumeration for different failure cases in the Consumer/Producer/Runtime APIs.
 #[derive(Debug)]
 pub enum Error {
     /// TODO: To be replaced, dummy value for "something went wrong"
@@ -61,43 +62,105 @@ pub enum Error {
     SubscribeFailed,
 }
 
+/// Result type alias with std::result::Result using com_api::Error as error type
 pub type Result<T> = std::result::Result<T, Error>;
 
-/// Generic trait for all "factory-like" types
+/// A factory-like trait for constructing complex objects through a builder pattern.
+///
+/// This trait enables type-safe construction of objects by moving self during the build phase,
+/// ensuring all required configuration steps are completed before object instantiation.
+///
+/// # Type Parameters
+/// * `Output` - The type of object being constructed
 pub trait Builder<Output> {
+    /// Construct the output object from the current builder state.
+    ///
+    /// Consumes self to prevent reuse and ensure immutability of the constructed object.
+    ///
+    /// # Returns
+    ///
+    ///  A 'Result' containing the constructed object on success and an 'Error' on failure.
     /// TODO: Should this be &mut self so that this can be turned into a trait object?
     fn build(self) -> Result<Output>;
 }
 
 /// This represents the com implementation and acts as a root for all types and objects provided by
 /// the implementation.
-//
-// Associated types:
-// * ProviderInfo - Information about a producer instance required to pass to different traits/types/methods
-// * ConsumerInfo - Information about a consumer instance required to pass to different traits/types/methods
 pub trait Runtime {
+    /// ServiceDiscovery<I> types for Discovers available service instances of a specific interface
     type ServiceDiscovery<I: Interface>: ServiceDiscovery<I, Self>;
+
+    /// Subscriber<T> types for Manages subscriptions to event notifications
     type Subscriber<T: Reloc + Send>: Subscriber<T, Self>;
+
+    /// ProducerBuilder<I, P> types for Constructs producer instances for offering services
     type ProducerBuilder<I: Interface, P: Producer<Self, Interface = I>>: ProducerBuilder<I, P, Self>;
+
+    /// Publisher<T> types for Publishes event data to subscribers
     type Publisher<T: Reloc + Send>: Publisher<T>;
+
+    /// ProviderInfo types for Configuration data for service producers instances
     type ProviderInfo: Send + Clone;
+
+    /// ConsumerInfo types for Configuration data for service consumers instances
     type ConsumerInfo: Send + Clone;
 
+    /// Find a service instance for the given interface and instance specifier.
+    /// Locate available instances of a service interface.
+    ///
+    /// Discovers service instances matching the provided instance specifier through
+    /// the runtime's service discovery mechanism.
+    ///
+    /// # Parameters
+    /// * `instance_specifier` - Target service instance identifier; use `InstanceSpecifier::MATCH_ANY`
+    ///   to discover all available instances
+    ///
+    /// # Returns
+    /// Service discovery handle for querying available instances
     fn find_service<I: Interface>(
         &self,
         _instance_specifier: InstanceSpecifier,
     ) -> Self::ServiceDiscovery<I>;
 
+
+    /// Create a producer builder for the given interface and producer type.
+    /// Constructs a producer builder for offering services.
+    ///
+    /// # Parameters
+    /// * `instance_specifier` - Unique identifier for this service instance; must not collide
+    ///   with other offered instances of the same interface
+    ///
+    /// # Returns
+    ///
+    /// A configured builder ready for finalization via `build()`
     fn producer_builder<I: Interface, P: Producer<Self, Interface = I>>(
         &self,
         instance_specifier: InstanceSpecifier,
     ) -> Self::ProducerBuilder<I, P>;
 }
 
+/// Builder for Runtime instances with configuration support.
+///
+/// Extends the base builder pattern to support loading implementation-specific
+/// configuration before runtime initialization.
+///
+/// # Type Parameters
+/// * `B` - The runtime implementation being constructed
 pub trait RuntimeBuilder<B>: Builder<B>
 where
     B: Runtime,
 {
+    /// Load configuration from a specified file path.
+    ///
+    /// Reads implementation-specific configuration for the process which is going to offer the
+    /// Services or events.
+    ///
+    /// # Parameters
+    /// * `config` - Path to the configuration file
+    ///
+    /// # Returns
+    ///
+    /// A mutable reference to self for method chaining.
     fn load_config(&mut self, config: &Path) -> &mut Self;
 }
 
@@ -125,6 +188,11 @@ impl InstanceSpecifier {
     ///
     /// The returned instance specifier will only match if the instance exactly matches the given
     /// string.
+    /// # Parameters
+    /// * `service_name` - The string representing the instance path
+    ///
+    /// # Returns
+    /// A 'Result' containing the constructed InstanceSpecifier on success and an 'Error' on failure.
     pub fn new(service_name: impl AsRef<str>) -> Result<InstanceSpecifier> {
         let service_name = service_name.as_ref();
         if Self::check_str(service_name) {
@@ -178,6 +246,8 @@ unsafe impl Reloc for u32 {}
 /// The buffers with its data lives as long as there are references to it existing in the framework.
 ///
 /// The ordering of SamplePtrs is total over the reception order
+/// # Type Parameters
+/// * `T` - The relocatable event data type
 // TODO: C++ doesn't yet support this. Expose API to compare SamplePtr ages.
 pub trait Sample<T>: Deref<Target = T> + Send + PartialOrd + Ord
 where
@@ -189,17 +259,28 @@ where
 ///
 /// By implementing the `DerefMut` trait implementations of the trait support the `.` operator for dereferencing.
 /// The buffers with its data lives as long as there are references to it existing in the framework.
+///
+/// # Type Parameters
+/// * `T` - The relocatable event data type
 pub trait SampleMut<T>: DerefMut<Target = T>
 where
     T: Send + Reloc,
 {
-    /// The associated read-only sample type.
+    /// Sample type for immutable access
     type Sample: Sample<T>;
 
     /// Consume the sample into an immutable sample.
+    ///
+    /// # Returns
+    ///
+    /// A `Sample` instance providing immutable access to the data.
     fn into_sample(self) -> Self::Sample;
 
     /// Send the sample and consume it.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` indicating success or failure of the send operation.
     fn send(self) -> Result<()>;
 }
 
@@ -207,6 +288,9 @@ where
 ///
 /// The buffer can be assumed initialized with mutable access by calling `assume_init` which returns a `SampleMut`.
 /// The buffers with its data lives as long as there are references to it existing in the framework.
+///
+/// # Type Parameters
+/// * `T` - The relocatable event data type
 ///
 /// TODO: Shall we also require DerefMut<Target=MaybeUninit<T>> from implementing types? How to deal
 /// TODO: with the ambiguous assume_init() then?
@@ -225,49 +309,112 @@ where
     /// # Safety
     ///
     /// The caller has to make sure to initialize the data in the buffer before calling this method.
+    ///
+    /// # Returns
+    ///
+    /// A `SampleMut` instance providing mutable access to the initialized data.
     unsafe fn assume_init(self) -> Self::SampleMut;
     /// Write a value into the buffer and render it initialized.
     ///
     /// This corresponds to `MaybeUninit::write`.
+    ///
+    /// # Returns
+    ///
+    /// A `SampleMut` instance providing mutable access to the initialized data.
     fn write(self, value: T) -> Self::SampleMut;
 
     /// Get a mutable pointer to the internal maybe uninitialized `T`.
     ///
     /// The caller has to make sure to initialize the data in the buffer.
     /// Reading from the received pointer before initialization is undefined behavior.
+    ///
+    /// # Returns
+    ///
+    /// A mutable pointer to the internal maybe uninitialized `T`.
     fn as_mut_ptr(&mut self) -> *mut T;
 }
 
+/// Service interface contract definition.
+///
+/// Defines the communication schema and roles for a particular service interface.
+/// Implementations specify the consumer and producer types that implement the interface contract.
 pub trait Interface {
+    /// consumer type for this interface
     type Consumer<R: Runtime + ?Sized>: Consumer<R>;
+    /// producer type for this interface
     type Producer<R: Runtime + ?Sized>: Producer<R>;
 }
 
+/// Service instance currently offered to the system.
+///
+/// Represents an actively advertised service that can be discovered and consumed by clients.
+/// The offered producer can be withdrawn from the system via the `unoffer` operation.
+///
+/// # Type Parameters
+/// * `R` - The runtime implementation managing this offered service
 #[must_use = "if a service is offered it will be unoffered and dropped immediately, causing unexpected behavior in the system"]
 pub trait OfferedProducer<R: Runtime + ?Sized> {
+    /// Interface type of the producer
     type Interface: Interface;
+    /// Producer type of the offered producer
     type Producer: Producer<R, Interface = Self::Interface>;
 
+    /// Withdraw the service from system availability.
+    ///
+    /// # Returns
+    ///
+    /// The original producer instance after withdrawal.
     fn unoffer(self) -> Self::Producer;
 }
 
+/// Service instance to be offered to the system.
+///
+/// Represents an implementer of a service interface that can be advertised to make it
+/// discoverable and accessible by consumer applications.
+///
+/// # Type Parameters
+/// * `R` - The runtime implementation managing this service
 pub trait Producer<R: Runtime + ?Sized> {
+    /// Interface type of the producer
     type Interface: Interface;
+    /// Offered producer type after offering the service
     type OfferedProducer: OfferedProducer<R, Interface = Self::Interface>;
 
+    /// Register the service instance with the runtime for discovery.
+    ///
+    /// # Returns
+    ///
+    /// A 'Result' containing the offered producer on success and an 'Error' on failure.
     fn offer(self) -> Result<Self::OfferedProducer>;
 }
 
+/// Event publication interface for streaming data to subscribers.
+/// Manages the allocation and transmission of event samples
+/// # Type Parameters
+/// * `T` - The relocatable event data type
 pub trait Publisher<T>
 where
     T: Reloc + Send,
 {
+    /// Associated sample type for uninitialized event data
     type SampleMaybeUninit<'a>: SampleMaybeUninit<T> + 'a
     where
         Self: 'a;
-
+    /// Allocate a buffer slot for the event publication.
+    ///
+    /// # Returns
+    ///
+    /// A 'Result' containing the allocated sample buffer on success and an 'Error' on failure.
     fn allocate<'a>(&'a self) -> Result<Self::SampleMaybeUninit<'a>>;
 
+    /// Allocate, initialize, and send an event sample in one step.
+    ///
+    /// # Parameters
+    /// * `value` - The event data to publish
+    ///
+    /// # Returns
+    ///
+    /// A 'Result' indicating success or failure of the send operation.
     fn send(&self, value: T) -> Result<()> {
         let sample = self.allocate()?;
         let init_sample = sample.write(value);
@@ -275,38 +422,119 @@ where
     }
 }
 
+/// Consumer role implementation for a specific service interface.
+///
+/// # Type Parameters
+/// * `R` - The runtime implementation managing this consumer
 pub trait Consumer<R: Runtime + ?Sized> {
+    /// Create a new consumer instance from the provided instance information.
+    ///
+    /// # Parameters
+    /// * `instance_info` - Runtime-specific configuration for this consumer instance
+    ///
+    /// # Returns
+    ///
+    /// A new consumer instance configured with the provided instance information.
     fn new(instance_info: R::ConsumerInfo) -> Self;
 }
 
+/// Builder for creating configured producer instances.
+///
+/// Extends the base builder pattern with producer-specific configuration steps
+/// before instantiation.
+///
+/// # Type Parameters
+/// * `I` - The service interface being offered
+/// * `P` - The producer type being constructed
+/// * `R` - The runtime managing the producer
 pub trait ProducerBuilder<I: Interface, P: Producer<R, Interface = I>, R: Runtime + ?Sized>:
     Builder<P>
 {
 }
 
+/// Service registry and discovery interface.
+///
+/// Locates available instances of a service interface within the system.
+///
+/// # Type Parameters
+/// * `I` - The service interface to discover
+/// * `R` - The runtime managing service discovery
 pub trait ServiceDiscovery<I: Interface, R: Runtime + ?Sized> {
+    /// Builder type for constructing consumers from discovered services
     type ConsumerBuilder: ConsumerBuilder<I, R>;
+    /// ServiceEnumerator type for iterating over available service instances
     type ServiceEnumerator: IntoIterator<Item = Self::ConsumerBuilder>;
 
+    /// Query available instances of this service interface.
+    ///
+    /// # Returns
+    ///
+    /// An iterator over builders for each discovered instance. Returns empty
+    /// results if no instances are currently available.
     fn get_available_instances(&self) -> Result<Self::ServiceEnumerator>;
     // TODO: Provide an async stream for newly available services / ServiceDescriptors
 }
 
+/// Metadata and identification for a discovered service instance.
+///
+/// Provides runtime-specific identifiers and properties for a service instance
+/// discovered during service discovery operations.
+///
+/// # Type Parameters
+/// * `R` - The runtime managing this service
 pub trait ConsumerDescriptor<R: Runtime + ?Sized> {
+    /// Get the unique instance identifier for this service instance.
     fn get_instance_id(&self) -> usize; // TODO: Turn return type into separate type
 }
 
+/// Constructor for consumer instances of a specific service.
+///
+/// Combines service metadata with the ability to construct fully-configured
+/// consumer endpoints through the builder pattern.
+///
+/// # Type Parameters
+/// * `I` - The service interface
+/// * `R` - The runtime managing the consumer
 pub trait ConsumerBuilder<I: Interface, R: Runtime + ?Sized>:
     ConsumerDescriptor<R> + Builder<I::Consumer<R>>
 {
 }
 
+/// Event subscription management interface.
+///
+/// Establishes a subscription channel to receive publications from a specific event source.
+/// Subscriptions support both polling and async-await patterns for consuming events.
+///
+/// # Type Parameters
+/// * `T` - The relocatable event data type
+/// * `R` - The runtime managing the subscription
 pub trait Subscriber<T: Reloc + Send, R: Runtime + ?Sized,> {
+    /// Associated subscription type for receiving event samples
     type Subscription: Subscription<T, R>;
+
+    /// Create a subscriber for the specified event source.
+    ///
+    /// # Parameters
+    /// * `identifier` - Logical name of the event topic
+    /// * `instance_info` - Runtime-specific configuration for the event source
     fn new(identifier: &str, instance_info: R::ConsumerInfo) -> Self;
+
+    /// Establish a subscription to the event source.
+    ///
+    ///  Parameters
+    /// * `max_num_samples` - Maximum number of samples to buffer for this subscription
+    ///
+    /// # Returns
+    /// A subscription handle for receiving event samples.
+    /// Fails if the subscription cannot be established due to resource constraints
+    /// or if the event source is not available.
     fn subscribe(self, max_num_samples: usize) -> Result<Self::Subscription>;
 }
-
+/// A container for samples received from a subscription.
+/// Provides methods to manipulate and access the samples.
+///
+/// # Type Parameters
+/// * `S`: The sample type stored in the container.
 pub struct SampleContainer<S> {
     inner: VecDeque<S>,
 }
@@ -320,10 +548,18 @@ impl<S> Default for SampleContainer<S> {
 }
 
 impl<S> SampleContainer<S> {
+    /// Creates a new, empty `SampleContainer`
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Returns an iterator over references to the samples in the container.
+    ///
+    /// # Type Parameters
+    /// * `T`: The type of the samples to iterate over.
+    ///
+    /// # Returns
+    /// An iterator over references to the samples of type `T`.
     pub fn iter<'a, T>(&'a self) -> impl Iterator<Item = &'a T>
     where
         S: Sample<T>,
@@ -332,19 +568,38 @@ impl<S> SampleContainer<S> {
         self.inner.iter().map(<S as Deref>::deref)
     }
 
+    /// Removes and returns the first sample from the container, if any.
+    ///
+    /// # Returns
+    /// An `Option` containing the removed sample, or `None` if the container is empty.
     pub fn pop_front(&mut self) -> Option<S> {
         self.inner.pop_front()
     }
 
+    /// Adds a new sample to the back of the container.
+    ///
+    /// # Parameters
+    /// * `new` - The new sample to add to the container.
+    ///
+    /// # Returns
+    /// A `Result` indicating success or failure.
     pub fn push_back(&mut self, new: S) -> Result<()> {
         self.inner.push_back(new);
         Ok(())
     }
 
+    /// Returns the number of samples in the container.
+    ///
+    /// # Returns
+    /// The number of samples currently stored in the container.
     pub fn sample_count(&self) -> usize {
         self.inner.len()
     }
 
+    /// Returns a reference to the first sample in the container, if any.
+    ///
+    /// # Returns
+    /// An `Option` containing a reference to the first sample, or `None` if the container is empty.
     pub fn front<T: Reloc + Send>(&self) -> Option<&T>
     where
         S: Sample<T>,
@@ -353,12 +608,28 @@ impl<S> SampleContainer<S> {
     }
 }
 
+/// Active event subscription with polling and async receive capabilities.
+///
+/// Represents a live subscription to an event source with methods for both
+/// non-blocking polling and asynchronous waiting for new events.
+///
+/// # Type Parameters
+/// * `T` - The relocatable event data type
+/// * `R` - The runtime managing the subscription
 pub trait Subscription<T: Reloc + Send, R: Runtime + ?Sized> {
+    /// Associated subscriber type for managing the subscription lifecycle
     type Subscriber: Subscriber<T, R>;
+    /// Associated sample type for received event data
     type Sample<'a>: Sample<T>
     where
         Self: 'a;
 
+    /// Unsubscribe from the event source.
+    ///
+    /// Consumes the subscription and returns the original subscriber.
+    ///
+    /// Returns
+    /// The subscriber used to create this subscription.
     fn unsubscribe(self) -> Self::Subscriber;
 
     /// Returns up to max_samples samples.
@@ -388,6 +659,14 @@ pub trait Subscription<T: Reloc + Send, R: Runtime + ?Sized> {
     ///
     /// TODO: C++ cannot fully support this yet since there is no way to retain potentially-reusable
     /// TODO: samples.
+    /// # Parameters
+    /// * `scratch` - Container for events from this subscription; must not be reused across
+    ///   different subscriptions
+    /// * `max_samples` - Maximum number of events to transfer
+    ///
+    /// # Returns
+    ///
+    /// Number of newly added events to the container
     fn try_receive<'a>(
         &'a self,
         scratch: &'_ mut SampleContainer<Self::Sample<'a>>,
@@ -401,6 +680,14 @@ pub trait Subscription<T: Reloc + Send, R: Runtime + ?Sized> {
     /// to `try_receive`.
     ///
     /// TODO: See above for C++ limitations.
+    /// # Parameters
+    /// * `scratch` - Container for events from this subscription
+    /// * `new_samples` - Minimum number of new events before resolution
+    /// * `max_samples` - Maximum total capacity of the container
+    ///
+    /// # Returns
+    ///
+    /// Number of newly added events to the container
     fn receive<'a>(
         &'a self,
         scratch: &'_ mut SampleContainer<Self::Sample<'a>>,
