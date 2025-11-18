@@ -93,7 +93,15 @@ bazel_dep(name = "googletest", version = "1.15.0")
 bazel_dep(name = "google_benchmark", version = "1.9.1")
 bazel_dep(name = "rules_rust", version = "0.61.0")
 bazel_dep(name = "buildifier_prebuilt", version = "6.3.3")
-bazel_dep(name = "score_crates", version = "0.0.2", repo_name = "crate_index")
+bazel_dep(name = "score_crates", version = "0.0.4", repo_name = "crate_index")
+
+# Temporary: Use latest GitHub main with regenerated BUILD file including paste and arrayvec
+git_override(
+    module_name = "score_crates",
+    commit = "636a5add5ffd53177fd0fdf70b672043ac2664c4",
+    remote = "https://github.com/eclipse-score/score-crates.git",
+)
+
 bazel_dep(name = "boost.program_options", version = "1.87.0")
 bazel_dep(name = "download_utils", version = "1.0.1")
 
