@@ -21,8 +21,8 @@ namespace score::mw::com::impl::lola
 using ::testing::Contains;
 using ::testing::Not;
 
-InstanceSpecifier kInstanceSpecifier1{InstanceSpecifier::Create("/bla/blub/specifier").value()};
-InstanceSpecifier kInstanceSpecifier2{InstanceSpecifier::Create("/bla/blub/specifier2").value()};
+InstanceSpecifier kInstanceSpecifier1{InstanceSpecifier::Create(std::string{"/bla/blub/specifier"}).value()};
+InstanceSpecifier kInstanceSpecifier2{InstanceSpecifier::Create(std::string{"/bla/blub/specifier2"}).value()};
 LolaServiceTypeDeployment kServiceId1{1U};
 LolaServiceTypeDeployment kServiceId2{2U};
 ServiceTypeDeployment kServiceTypeDeployment1{kServiceId1};

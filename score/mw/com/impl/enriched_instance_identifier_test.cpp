@@ -19,7 +19,7 @@
 namespace score::mw::com::impl
 {
 
-const auto kInstanceSpecifier = InstanceSpecifier::Create("/bla/blub/specifier").value();
+const auto kInstanceSpecifier = InstanceSpecifier::Create(std::string{"/bla/blub/specifier"}).value();
 const auto kServiceTypeName = "/bla/blub/service";
 const auto kService = make_ServiceIdentifierType(kServiceTypeName);
 const auto kLolaServiceId{15U};

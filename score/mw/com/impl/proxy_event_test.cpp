@@ -40,7 +40,7 @@ using TestSampleType = std::uint16_t;
 
 const ServiceTypeDeployment kEmptyTypeDeployment{score::cpp::blank{}};
 const ServiceIdentifierType kFooservice{make_ServiceIdentifierType("foo")};
-const auto kInstanceSpecifier = InstanceSpecifier::Create("abc/abc/TirePressurePort").value();
+const auto kInstanceSpecifier = InstanceSpecifier::Create(std::string{"abc/abc/TirePressurePort"}).value();
 const ServiceInstanceDeployment kEmptyInstanceDeployment{kFooservice,
                                                          LolaServiceInstanceDeployment{LolaServiceInstanceId{10U}},
                                                          QualityType::kASIL_QM,

@@ -40,7 +40,7 @@ namespace
 using namespace ::testing;
 
 constexpr std::string_view kServiceElementName{"ServiceElement1"};
-const auto kInstanceSpecifier = InstanceSpecifier::Create("/bla/blub/specifier").value();
+const auto kInstanceSpecifier = InstanceSpecifier::Create(std::string{"/bla/blub/specifier"}).value();
 constexpr auto kServiceElementType = ServiceElementType::EVENT;
 const ConfigurationStore kConfigStore{
     kInstanceSpecifier,

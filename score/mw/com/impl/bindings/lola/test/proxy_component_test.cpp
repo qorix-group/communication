@@ -117,12 +117,12 @@ class ProxyWithRealMemFixture : public ::testing::Test
             {{kEventName, LolaEventId{kElementFqId.element_id_}},
              {kNonProvidedEventName, LolaEventId{kNonProvidedElementFqId.element_id_}}}};
 
-        config_store_ =
-            std::make_unique<ConfigurationStore>(InstanceSpecifier::Create("/my_dummy_instance_specifier").value(),
-                                                 make_ServiceIdentifierType("foo"),
-                                                 QualityType::kASIL_QM,
-                                                 lola_service_type_deployment,
-                                                 lola_service_instance_deployment);
+        config_store_ = std::make_unique<ConfigurationStore>(
+            InstanceSpecifier::Create(std::string{"/my_dummy_instance_specifier"}).value(),
+            make_ServiceIdentifierType("foo"),
+            QualityType::kASIL_QM,
+            lola_service_type_deployment,
+            lola_service_instance_deployment);
         return *this;
     }
 
@@ -132,12 +132,12 @@ class ProxyWithRealMemFixture : public ::testing::Test
             LolaServiceInstanceId{kElementFqId.instance_id_}};
         LolaServiceTypeDeployment lola_service_type_deployment{kElementFqId.service_id_};
 
-        config_store_ =
-            std::make_unique<ConfigurationStore>(InstanceSpecifier::Create("/my_dummy_instance_specifier").value(),
-                                                 make_ServiceIdentifierType("foo"),
-                                                 QualityType::kASIL_QM,
-                                                 lola_service_type_deployment,
-                                                 lola_service_instance_deployment);
+        config_store_ = std::make_unique<ConfigurationStore>(
+            InstanceSpecifier::Create(std::string{"/my_dummy_instance_specifier"}).value(),
+            make_ServiceIdentifierType("foo"),
+            QualityType::kASIL_QM,
+            lola_service_type_deployment,
+            lola_service_instance_deployment);
 
         return *this;
     }

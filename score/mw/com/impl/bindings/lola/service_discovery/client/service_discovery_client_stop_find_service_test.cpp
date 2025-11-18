@@ -53,7 +53,7 @@ using ::testing::StrictMock;
 using ::testing::WithArg;
 
 const LolaServiceId kServiceId{1U};
-const auto kInstanceSpecifierString = InstanceSpecifier::Create("/bla/blub/specifier").value();
+const auto kInstanceSpecifierString = InstanceSpecifier::Create(std::string{"/bla/blub/specifier"}).value();
 ConfigurationStore kConfigStoreQm1{kInstanceSpecifierString,
                                    make_ServiceIdentifierType("foo"),
                                    QualityType::kASIL_QM,

@@ -47,7 +47,7 @@ constexpr std::string_view kFieldName{"Field1"};
 
 ServiceIdentifierType kServiceIdentifier{make_ServiceIdentifierType("foo", 1U, 0U)};
 std::uint16_t kInstanceId{23U};
-const auto kInstanceSpecifier = InstanceSpecifier::Create("abc/abc/TirePressurePort").value();
+const auto kInstanceSpecifier = InstanceSpecifier::Create(std::string{"abc/abc/TirePressurePort"}).value();
 const ServiceInstanceDeployment kDeploymentInfo{kServiceIdentifier,
                                                 LolaServiceInstanceDeployment{LolaServiceInstanceId{kInstanceId}},
                                                 QualityType::kASIL_QM,

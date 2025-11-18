@@ -78,7 +78,7 @@ TEST_F(ConfigParserFixture, ParseExampleJson)
     const auto config = score::mw::com::impl::configuration::Parse(get_path("ara_com_config.json"));
 
     const auto deployments =
-        config.GetServiceInstances().at(InstanceSpecifier::Create("abc/abc/TirePressurePort").value());
+        config.GetServiceInstances().at(InstanceSpecifier::Create(std::string{"abc/abc/TirePressurePort"}).value());
 
     EXPECT_EQ(deployments.service_, si_);
     EXPECT_EQ(ServiceIdentifierTypeView{deployments.service_}.GetVersion(), make_ServiceVersionType(12U, 34U));
@@ -1663,7 +1663,7 @@ TEST(ConfigParser, NoEventMaxSubscribersLeavesValueOptional)
     const auto config = score::mw::com::impl::configuration::Parse(std::move(j2));
 
     const auto deployment =
-        config.GetServiceInstances().at(InstanceSpecifier::Create("abc/abc/TirePressurePort").value());
+        config.GetServiceInstances().at(InstanceSpecifier::Create(std::string{"abc/abc/TirePressurePort"}).value());
 
     const auto deploymentInfo = std::get<LolaServiceInstanceDeployment>(deployment.bindingInfo_);
     // That the max_subscribers_ in the event has no value
@@ -1727,7 +1727,7 @@ TEST(ConfigParser, NoFieldMaxSubscribersLeavesValueOptional)
     const auto config = score::mw::com::impl::configuration::Parse(std::move(j2));
 
     const auto deployment =
-        config.GetServiceInstances().at(InstanceSpecifier::Create("abc/abc/TirePressurePort").value());
+        config.GetServiceInstances().at(InstanceSpecifier::Create(std::string{"abc/abc/TirePressurePort"}).value());
 
     const auto deploymentInfo = std::get<LolaServiceInstanceDeployment>(deployment.bindingInfo_);
     // That the max_subscribers_ in the field has no value
@@ -1771,7 +1771,7 @@ TEST(ConfigParser, NoSHMInstanceIdLeavesValueOptional)
     const auto config = score::mw::com::impl::configuration::Parse(std::move(j2));
 
     const auto deployment =
-        config.GetServiceInstances().at(InstanceSpecifier::Create("abc/abc/TirePressurePort").value());
+        config.GetServiceInstances().at(InstanceSpecifier::Create(std::string{"abc/abc/TirePressurePort"}).value());
 
     const auto deploymentInfo = std::get<LolaServiceInstanceDeployment>(deployment.bindingInfo_);
     ASSERT_FALSE(deploymentInfo.instance_id_.has_value());
@@ -1893,7 +1893,7 @@ TEST(ConfigParser, LolaEventDeprecatedMaxSamplesGetsRecognized)
     const auto config = score::mw::com::impl::configuration::Parse(std::move(j2));
 
     const auto deployment =
-        config.GetServiceInstances().at(InstanceSpecifier::Create("abc/abc/TirePressurePort").value());
+        config.GetServiceInstances().at(InstanceSpecifier::Create(std::string{"abc/abc/TirePressurePort"}).value());
 
     const auto deploymentInfo = std::get<LolaServiceInstanceDeployment>(deployment.bindingInfo_);
     EXPECT_EQ(deploymentInfo.events_.at("CurrentPressureFrontLeft").GetNumberOfSampleSlots().value(), 50);
@@ -2021,7 +2021,7 @@ TEST(ConfigParser, LolaEventOptionalEnforceMaxSamples)
     const auto config = score::mw::com::impl::configuration::Parse(std::move(j2));
 
     const auto deployment =
-        config.GetServiceInstances().at(InstanceSpecifier::Create("abc/abc/TirePressurePort").value());
+        config.GetServiceInstances().at(InstanceSpecifier::Create(std::string{"abc/abc/TirePressurePort"}).value());
 
     const auto deploymentInfo = std::get<LolaServiceInstanceDeployment>(deployment.bindingInfo_);
     EXPECT_EQ(deploymentInfo.events_.at("CurrentPressureFrontLeft").enforce_max_samples_, false);
@@ -2084,7 +2084,7 @@ TEST(ConfigParser, LolaFieldOptionalEnforceMaxSamples)
     const auto config = score::mw::com::impl::configuration::Parse(std::move(j2));
 
     const auto deployment =
-        config.GetServiceInstances().at(InstanceSpecifier::Create("abc/abc/TirePressurePort").value());
+        config.GetServiceInstances().at(InstanceSpecifier::Create(std::string{"abc/abc/TirePressurePort"}).value());
 
     const auto deploymentInfo = std::get<LolaServiceInstanceDeployment>(deployment.bindingInfo_);
     EXPECT_EQ(deploymentInfo.fields_.at("CurrentTemperatureFrontLeft").enforce_max_samples_, false);
@@ -2901,8 +2901,10 @@ TEST(ConfigParserTracing, ProvidingServiceElementEnabledEnablesServiceElementTra
     tracing::ServiceElementIdentifierView service_2_field{
         "/bmw/ncar/services/TireTemperatureService", "CurrentTemperatureFrontRight", ServiceElementType::FIELD};
 
-    const auto service_1_instance_specifier = InstanceSpecifier::Create("abc/abc/TirePressurePort").value();
-    const auto service_2_instance_specifier = InstanceSpecifier::Create("abc/abc/TireTemperaturePort").value();
+    const auto service_1_instance_specifier =
+        InstanceSpecifier::Create(std::string{"abc/abc/TirePressurePort"}).value();
+    const auto service_2_instance_specifier =
+        InstanceSpecifier::Create(std::string{"abc/abc/TireTemperaturePort"}).value();
     const auto service_1_instance_specifier_string_view = service_1_instance_specifier.ToString();
     const auto service_2_instance_specifier_string_view = service_2_instance_specifier.ToString();
 
@@ -3059,8 +3061,10 @@ TEST(ConfigParserTracing, DisablingGlobalTracingReturnsFalseForAllCallsToIsServi
     tracing::ServiceElementIdentifierView service_2_field{
         "/bmw/ncar/services/TireTemperatureService", "CurrentTemperatureFrontRight", ServiceElementType::FIELD};
 
-    const auto service_1_instance_specifier = InstanceSpecifier::Create("abc/abc/TirePressurePort").value();
-    const auto service_2_instance_specifier = InstanceSpecifier::Create("abc/abc/TireTemperaturePort").value();
+    const auto service_1_instance_specifier =
+        InstanceSpecifier::Create(std::string{"abc/abc/TirePressurePort"}).value();
+    const auto service_2_instance_specifier =
+        InstanceSpecifier::Create(std::string{"abc/abc/TireTemperaturePort"}).value();
     const auto service_1_instance_specifier_string_view = service_1_instance_specifier.ToString();
     const auto service_2_instance_specifier_string_view = service_2_instance_specifier.ToString();
 
@@ -3215,8 +3219,10 @@ TEST(ConfigParserTracing, NotProvidingServiceElementEnabledDisablesServiceElemen
     tracing::ServiceElementIdentifierView service_2_field{
         "/bmw/ncar/services/TireTemperatureService", "CurrentTemperatureFrontRight", ServiceElementType::FIELD};
 
-    const auto service_1_instance_specifier = InstanceSpecifier::Create("abc/abc/TirePressurePort").value();
-    const auto service_2_instance_specifier = InstanceSpecifier::Create("abc/abc/TireTemperaturePort").value();
+    const auto service_1_instance_specifier =
+        InstanceSpecifier::Create(std::string{"abc/abc/TirePressurePort"}).value();
+    const auto service_2_instance_specifier =
+        InstanceSpecifier::Create(std::string{"abc/abc/TireTemperaturePort"}).value();
     const auto service_1_instance_specifier_string_view = service_1_instance_specifier.ToString();
     const auto service_2_instance_specifier_string_view = service_2_instance_specifier.ToString();
 
@@ -3312,7 +3318,7 @@ TEST(TracingFilterConfigGetNumberOfTraceingSlots, CorrectlyParseAJsonContainingN
     auto config = score::mw::com::impl::configuration::Parse(std::move(config_json));
 
     auto serv_inst_depls = config.GetServiceInstances();
-    const auto instance_specifier = InstanceSpecifier::Create(instance_specifier_str).value();
+    const auto instance_specifier = InstanceSpecifier::Create(std::string{instance_specifier_str}).value();
     const auto serv_inst_depl_it = serv_inst_depls.at(instance_specifier);
     const auto lola_service_instance_depl = std::get<0>(serv_inst_depl_it.bindingInfo_);
     const auto& field = lola_service_instance_depl.fields_.at(field_name_str);

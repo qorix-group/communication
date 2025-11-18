@@ -42,7 +42,7 @@ namespace
 
 using namespace ::testing;
 
-const auto kInstanceSpecifier = InstanceSpecifier::Create("/bla/blub/specifier").value();
+const auto kInstanceSpecifier = InstanceSpecifier::Create(std::string{"/bla/blub/specifier"}).value();
 const ConfigurationStore kConfigStore{
     kInstanceSpecifier,
     make_ServiceIdentifierType("foo"),

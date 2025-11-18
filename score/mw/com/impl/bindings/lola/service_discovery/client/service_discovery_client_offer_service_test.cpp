@@ -42,7 +42,7 @@ constexpr auto kQmPathLabel{"asil-qm"};
 constexpr auto kAsilBPathLabel{"asil-b"};
 
 const LolaServiceId kServiceId{1U};
-const auto kInstanceSpecifierString = InstanceSpecifier::Create("/bla/blub/specifier").value();
+const auto kInstanceSpecifierString = InstanceSpecifier::Create(std::string{"/bla/blub/specifier"}).value();
 ConfigurationStore kConfigStoreQm{
     kInstanceSpecifierString,
     make_ServiceIdentifierType("foo"),

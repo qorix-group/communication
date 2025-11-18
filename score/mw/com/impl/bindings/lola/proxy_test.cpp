@@ -50,7 +50,7 @@ const std::string kShmDataPathPrefix{"/lola-data-"};
 const auto service = make_ServiceIdentifierType("foo");
 const ServiceTypeDeployment kServiceTypeDeployment{LolaServiceTypeDeployment{0x1234}};
 const LolaServiceInstanceId kLolaServiceInstanceId{0x5678};
-const auto kInstanceSpecifier = InstanceSpecifier::Create("abc/abc/TirePressurePort").value();
+const auto kInstanceSpecifier = InstanceSpecifier::Create(std::string{"abc/abc/TirePressurePort"}).value();
 const auto kServiceInstanceDeployment =
     ServiceInstanceDeployment{service,
                               LolaServiceInstanceDeployment{LolaServiceInstanceId{kLolaServiceInstanceId}},

@@ -62,8 +62,8 @@ using ::testing::StrEq;
 
 const auto kServiceTypeName1 = "/bla/blub/service1";
 const auto kServiceTypeName2 = "/bla/blub/service2";
-const auto kInstanceSpecifier1 = InstanceSpecifier::Create(kServiceTypeName1).value();
-const auto kInstanceSpecifier2 = InstanceSpecifier::Create(kServiceTypeName2).value();
+const auto kInstanceSpecifier1 = InstanceSpecifier::Create(std::string{kServiceTypeName1}).value();
+const auto kInstanceSpecifier2 = InstanceSpecifier::Create(std::string{kServiceTypeName2}).value();
 const auto kService1 = make_ServiceIdentifierType(kServiceTypeName1);
 const auto kService2 = make_ServiceIdentifierType(kServiceTypeName2);
 const LolaServiceInstanceDeployment kServiceInstanceDeployment1{LolaServiceInstanceId{16U}};

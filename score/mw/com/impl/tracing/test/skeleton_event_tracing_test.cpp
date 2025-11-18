@@ -55,7 +55,7 @@ const tracing::ITracingRuntimeBinding::TraceContextId kTraceContextId{0U};
 
 const auto kEventName{"Event1"};
 
-const auto kInstanceSpecifier = InstanceSpecifier::Create("abc/abc/TirePressurePort").value();
+const auto kInstanceSpecifier = InstanceSpecifier::Create(std::string{"abc/abc/TirePressurePort"}).value();
 const std::string kServiceTypeName{"foo"};
 const auto kServiceIdentifier = make_ServiceIdentifierType(kServiceTypeName, 13, 37);
 std::uint16_t kInstanceId{23U};

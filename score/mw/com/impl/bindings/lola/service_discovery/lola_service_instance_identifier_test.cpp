@@ -32,7 +32,7 @@ const std::string kServiceTypeName = "/bla/blub/service";
 const ServiceIdentifierType kService = make_ServiceIdentifierType(kServiceTypeName);
 const LolaServiceInstanceId::InstanceId kLolaInstanceId{16U};
 const LolaServiceInstanceId kLolaServiceInstanceId{kLolaInstanceId};
-const InstanceSpecifier kInstanceSpecifier = InstanceSpecifier::Create("/bla/blub/specifier").value();
+const InstanceSpecifier kInstanceSpecifier = InstanceSpecifier::Create(std::string{"/bla/blub/specifier"}).value();
 const std::uint16_t kLolaServiceId{15U};
 const ServiceTypeDeployment kLolaServiceTypeDeployment{LolaServiceTypeDeployment{kLolaServiceId}};
 const ServiceInstanceDeployment kLolaServiceInstanceDeployment{kService,

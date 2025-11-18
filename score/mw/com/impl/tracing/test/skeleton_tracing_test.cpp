@@ -53,7 +53,7 @@ const auto kDummyEventName{"DummyEvent"};
 
 const ServiceTypeDeployment kTypeDeployment{score::cpp::blank{}};
 
-const auto kInstanceSpecifier = InstanceSpecifier::Create("abc/abc/TirePressurePort").value();
+const auto kInstanceSpecifier = InstanceSpecifier::Create(std::string{"abc/abc/TirePressurePort"}).value();
 const std::string kServiceTypeName{"foo"};
 const auto kServiceIdentifier = make_ServiceIdentifierType(kServiceTypeName, 13, 37);
 

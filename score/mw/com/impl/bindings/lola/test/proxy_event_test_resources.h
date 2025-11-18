@@ -181,7 +181,8 @@ class ProxyMockedMemoryFixture : public ::testing::Test
     LolaServiceTypeDeployment lola_service_deployment_{lola_service_id_};
     ServiceIdentifierType service_identifier_ = make_ServiceIdentifierType("foo");
     ServiceTypeDeployment service_type_deployment_ = ServiceTypeDeployment{lola_service_deployment_};
-    const InstanceSpecifier instance_specifier_{InstanceSpecifier::Create("/my_dummy_instance_specifier").value()};
+    const InstanceSpecifier instance_specifier_{
+        InstanceSpecifier::Create(std::string{"/my_dummy_instance_specifier"}).value()};
     QualityType service_quality_type_{QualityType::kASIL_QM};
     ServiceInstanceDeployment service_instance_deployment_ =
         ServiceInstanceDeployment{service_identifier_,

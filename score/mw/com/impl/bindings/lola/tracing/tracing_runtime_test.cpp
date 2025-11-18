@@ -1001,7 +1001,8 @@ class TracingRuntimeConvertToTracingServiceInstanceElementFixture : public testi
     const std::uint32_t major_version_number_{20U};
     const std::uint32_t minor_version_number_{30U};
 
-    const InstanceSpecifier instance_specifier_{InstanceSpecifier::Create("my_instance_specifier").value()};
+    const InstanceSpecifier instance_specifier_{
+        InstanceSpecifier::Create(std::string{"my_instance_specifier"}).value()};
 
     const LolaServiceInstanceId::InstanceId instance_id_{12U};
     const LolaServiceId service_id_{13U};

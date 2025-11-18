@@ -27,7 +27,7 @@ DummyInstanceIdentifierBuilder::DummyInstanceIdentifierBuilder()
       service_type_deployment_{0x0},
       type_deployment_{score::cpp::blank{}},
       type_{make_ServiceIdentifierType("foo")},
-      instance_specifier_{InstanceSpecifier::Create("/my_dummy_instance_specifier").value()},
+      instance_specifier_{InstanceSpecifier::Create(std::string{"/my_dummy_instance_specifier"}).value()},
       instance_deployment_{}
 {
 }

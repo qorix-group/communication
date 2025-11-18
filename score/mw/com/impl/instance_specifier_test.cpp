@@ -67,11 +67,11 @@ TEST(InstanceSpecifierComparisonOperatorTest, EqualityOperatorForTwoInstanceSpec
     constexpr auto valid_instance_specifier_string_2 = "/good/instance/specifier"sv;
 
     // When creating 2 instance specifiers from each string
-    const auto instance_specifier_result = InstanceSpecifier::Create(valid_instance_specifier_string);
+    const auto instance_specifier_result = InstanceSpecifier::Create(std::string{valid_instance_specifier_string});
     ASSERT_TRUE(instance_specifier_result.has_value());
     const InstanceSpecifier instance_specifier = std::move(instance_specifier_result).value();
 
-    const auto instance_specifier_result_2 = InstanceSpecifier::Create(valid_instance_specifier_string_2);
+    const auto instance_specifier_result_2 = InstanceSpecifier::Create(std::string{valid_instance_specifier_string_2});
     ASSERT_TRUE(instance_specifier_result_2.has_value());
     const InstanceSpecifier instance_specifier_2 = std::move(instance_specifier_result_2).value();
 
@@ -92,7 +92,7 @@ TEST(InstanceSpecifierComparisonOperatorTest, EqualityOperatorForInstanceSpecifi
     constexpr auto valid_instance_specifier_string_2 = "/good/instance/specifier"sv;
 
     // When creating an instance specifier from one string
-    const auto instance_specifier_result = InstanceSpecifier::Create(valid_instance_specifier_string);
+    const auto instance_specifier_result = InstanceSpecifier::Create(std::string{valid_instance_specifier_string});
     ASSERT_TRUE(instance_specifier_result.has_value());
     const InstanceSpecifier instance_specifier = std::move(instance_specifier_result).value();
 
@@ -114,11 +114,11 @@ TEST(InstanceSpecifierComparisonOperatorTest, InequalityOperatorForTwoInstanceSp
     constexpr auto valid_instance_specifier_string_2 = "/good/instance/specifier2"sv;
 
     // When creating an instance specifier from each string
-    const auto instance_specifier_result = InstanceSpecifier::Create(valid_instance_specifier_string);
+    const auto instance_specifier_result = InstanceSpecifier::Create(std::string{valid_instance_specifier_string});
     ASSERT_TRUE(instance_specifier_result.has_value());
     const InstanceSpecifier instance_specifier = std::move(instance_specifier_result).value();
 
-    const auto instance_specifier_result_2 = InstanceSpecifier::Create(valid_instance_specifier_string_2);
+    const auto instance_specifier_result_2 = InstanceSpecifier::Create(std::string{valid_instance_specifier_string_2});
     ASSERT_TRUE(instance_specifier_result_2.has_value());
     const InstanceSpecifier instance_specifier_2 = std::move(instance_specifier_result_2).value();
 
@@ -139,7 +139,7 @@ TEST(InstanceSpecifierComparisonOperatorTest, InequalityOperatorForInstanceSpeci
     constexpr auto valid_instance_specifier_string_2 = "/good/instance/specifier2"sv;
 
     // When creating an instance specifier from the first string
-    const auto instance_specifier_result = InstanceSpecifier::Create(valid_instance_specifier_string);
+    const auto instance_specifier_result = InstanceSpecifier::Create(std::string{valid_instance_specifier_string});
     ASSERT_TRUE(instance_specifier_result.has_value());
     const InstanceSpecifier instance_specifier = std::move(instance_specifier_result).value();
 
@@ -161,11 +161,11 @@ TEST(InstanceSpecifierComparisonOperatorTest, LessThanOperatorForTwoInstanceSpec
     constexpr auto valid_instance_specifier_string_2 = "/good/instance/specifier2"sv;
 
     // When creating an instance specifier from each string
-    const auto instance_specifier_result = InstanceSpecifier::Create(valid_instance_specifier_string);
+    const auto instance_specifier_result = InstanceSpecifier::Create(std::string{valid_instance_specifier_string});
     ASSERT_TRUE(instance_specifier_result.has_value());
     const InstanceSpecifier instance_specifier = std::move(instance_specifier_result).value();
 
-    const auto instance_specifier_result_2 = InstanceSpecifier::Create(valid_instance_specifier_string_2);
+    const auto instance_specifier_result_2 = InstanceSpecifier::Create(std::string{valid_instance_specifier_string_2});
     ASSERT_TRUE(instance_specifier_result_2.has_value());
     const InstanceSpecifier instance_specifier_2 = std::move(instance_specifier_result_2).value();
 
@@ -189,11 +189,11 @@ TEST(InstanceSpecifierComparisonOperatorTest, HashOperatorForDifferentUnderlying
     constexpr auto valid_instance_specifier_string_2 = "/good/instance/specifier2"sv;
 
     // When creating an instance specifier from each string
-    const auto instance_specifier_result = InstanceSpecifier::Create(valid_instance_specifier_string);
+    const auto instance_specifier_result = InstanceSpecifier::Create(std::string{valid_instance_specifier_string});
     ASSERT_TRUE(instance_specifier_result.has_value());
     const InstanceSpecifier instance_specifier = std::move(instance_specifier_result).value();
 
-    const auto instance_specifier_result_2 = InstanceSpecifier::Create(valid_instance_specifier_string_2);
+    const auto instance_specifier_result_2 = InstanceSpecifier::Create(std::string{valid_instance_specifier_string_2});
     ASSERT_TRUE(instance_specifier_result_2.has_value());
     const InstanceSpecifier instance_specifier_2 = std::move(instance_specifier_result_2).value();
 
@@ -217,11 +217,11 @@ TEST(InstanceSpecifierHashTest, HashOperatorForTheSameUnderlyingStringIsTheSame)
     constexpr auto valid_instance_specifier_string_2 = "/good/instance/specifier"sv;
 
     // When creating 2 instance specifiers from each string
-    const auto instance_specifier_result = InstanceSpecifier::Create(valid_instance_specifier_string);
+    const auto instance_specifier_result = InstanceSpecifier::Create(std::string{valid_instance_specifier_string});
     ASSERT_TRUE(instance_specifier_result.has_value());
     const InstanceSpecifier instance_specifier = std::move(instance_specifier_result).value();
 
-    const auto instance_specifier_result_2 = InstanceSpecifier::Create(valid_instance_specifier_string_2);
+    const auto instance_specifier_result_2 = InstanceSpecifier::Create(std::string{valid_instance_specifier_string_2});
     ASSERT_TRUE(instance_specifier_result_2.has_value());
     const InstanceSpecifier instance_specifier_2 = std::move(instance_specifier_result_2).value();
 
@@ -243,7 +243,7 @@ TEST(InstanceSpecifierHashTest, InstanceSpecifierCanBeKeyForStlContainer)
     constexpr auto valid_instance_specifier_string = "/good/instance/specifier"sv;
 
     // When creating an instance specifier from the string
-    const auto instance_specifier_result = InstanceSpecifier::Create(valid_instance_specifier_string);
+    const auto instance_specifier_result = InstanceSpecifier::Create(std::string{valid_instance_specifier_string});
     ASSERT_TRUE(instance_specifier_result.has_value());
     const InstanceSpecifier instance_specifier = std::move(instance_specifier_result).value();
 
@@ -265,7 +265,7 @@ TEST(InstanceSpecifierToStringTest, ToStringWillReturnTheUnderlyingString)
     constexpr auto valid_instance_specifier_string = "/good/instance/specifier"sv;
 
     // When creating an instance specifier from the string
-    const auto instance_specifier_result = InstanceSpecifier::Create(valid_instance_specifier_string);
+    const auto instance_specifier_result = InstanceSpecifier::Create(std::string{valid_instance_specifier_string});
     ASSERT_TRUE(instance_specifier_result.has_value());
     const InstanceSpecifier instance_specifier = std::move(instance_specifier_result).value();
 
@@ -288,7 +288,7 @@ TEST_P(InstanceSpecifierCanConstructFromValidStringFixture, CanConstructFromVali
     // Given a valid instance specifier string
     const std::string_view instance_specifier_string = GetParam();
 
-    const auto instance_specifier_result = InstanceSpecifier::Create(instance_specifier_string);
+    const auto instance_specifier_result = InstanceSpecifier::Create(std::string{instance_specifier_string});
     ASSERT_TRUE(instance_specifier_result.has_value());
 }
 
@@ -317,7 +317,7 @@ TEST_P(InstanceSpecifierCannotConstructFromInvalidStringFixture, ConstructingFro
     RecordProperty("DerivationTechnique", "Analysis of requirements");
 
     const std::string_view instance_specifier_string = GetParam();
-    const auto instance_specifier_result = InstanceSpecifier::Create(instance_specifier_string);
+    const auto instance_specifier_result = InstanceSpecifier::Create(std::string{instance_specifier_string});
     ASSERT_FALSE(instance_specifier_result.has_value());
     EXPECT_EQ(instance_specifier_result.error(), ComErrc::kInvalidMetaModelShortname);
 }
@@ -403,6 +403,7 @@ TEST(InstanceSpecifierCreateAPI, CreateReturnsValidSpecifierFromConstCharPointer
     const char* shortname_cstr = "/bla/blub/service1";
 
     // When creating InstanceSpecifier with const char* variable
+
     const auto result = InstanceSpecifier::Create(shortname_cstr);
 
     // Then should succeed and contain the correct value

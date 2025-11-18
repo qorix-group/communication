@@ -154,7 +154,7 @@ static constexpr std::uint16_t kFooFieldId{3U};
 static const auto kServiceTypeName{"foo"};
 static const ServiceIdentifierType kFooService{make_ServiceIdentifierType(kServiceTypeName)};
 
-const auto kFooInstanceSpecifier = InstanceSpecifier::Create("foo/abc/TirePressurePort").value();
+const auto kFooInstanceSpecifier = InstanceSpecifier::Create(std::string{"foo/abc/TirePressurePort"}).value();
 
 /// \brief A very basic (Lola) ASIL-QM only ServiceInstanceDeployment, which relates to the kValidMinimalTypeDeployment
 ///        and has a shm-size configuration of kConfiguredDeploymentShmSize. It does NOT use ACLs and therefore its

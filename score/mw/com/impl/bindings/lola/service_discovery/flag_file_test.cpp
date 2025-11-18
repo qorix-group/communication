@@ -35,7 +35,7 @@ using ::testing::InvokeWithoutArgs;
 using ::testing::Not;
 using ::testing::Return;
 
-InstanceSpecifier kInstanceSpecifier{InstanceSpecifier::Create("/bla/blub/specifier").value()};
+InstanceSpecifier kInstanceSpecifier{InstanceSpecifier::Create(std::string{"/bla/blub/specifier"}).value()};
 LolaServiceTypeDeployment kServiceId{1U};
 LolaServiceInstanceId kInstanceId1{1U};
 ServiceTypeDeployment kServiceTypeDeployment{kServiceId};

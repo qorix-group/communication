@@ -52,7 +52,7 @@ const auto kOldFlagFile = kOldFlagFileDirectory / "123456_asil-qm_1234";
 constexpr auto kQmPathLabel{"asil-qm"};
 
 const LolaServiceId kServiceId{1U};
-const auto kInstanceSpecifierString = InstanceSpecifier::Create("/bla/blub/specifier").value();
+const auto kInstanceSpecifierString = InstanceSpecifier::Create(std::string{"/bla/blub/specifier"}).value();
 ConfigurationStore kConfigStoreQm1{
     kInstanceSpecifierString,
     make_ServiceIdentifierType("foo"),

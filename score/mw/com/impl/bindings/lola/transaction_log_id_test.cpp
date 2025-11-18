@@ -29,13 +29,15 @@ namespace lola
 namespace
 {
 
-const InstanceSpecifier kSameInstanceSpecifier{InstanceSpecifier::Create("same_instance_specifier").value()};
-const InstanceSpecifier kDifferentInstanceSpecifier{InstanceSpecifier::Create("different_instance_specifier").value()};
+const InstanceSpecifier kSameInstanceSpecifier{
+    InstanceSpecifier::Create(std::string{"same_instance_specifier"}).value()};
+const InstanceSpecifier kDifferentInstanceSpecifier{
+    InstanceSpecifier::Create(std::string{"different_instance_specifier"}).value()};
 
 TEST(TransactionLogIdEqualityTest, SameTransactionLogIdsAreEqual)
 {
     const uid_t test_uid{10U};
-    const auto test_instance_specifier = InstanceSpecifier::Create("my_test_specifier").value();
+    const auto test_instance_specifier = InstanceSpecifier::Create(std::string{"my_test_specifier"}).value();
     TransactionLogId id1{test_uid, test_instance_specifier.ToString()};
     TransactionLogId id2{test_uid, test_instance_specifier.ToString()};
 
@@ -45,7 +47,7 @@ TEST(TransactionLogIdEqualityTest, SameTransactionLogIdsAreEqual)
 TEST(TransactionLogIdHashTest, CanHash)
 {
     const uid_t test_uid{10U};
-    const auto test_instance_specifier = InstanceSpecifier::Create("my_test_specifier").value();
+    const auto test_instance_specifier = InstanceSpecifier::Create(std::string{"my_test_specifier"}).value();
     TransactionLogId transaction_log_id{test_uid, test_instance_specifier.ToString()};
     static auto unit = std::hash<TransactionLogId>{}(transaction_log_id);
     ASSERT_NE(unit, 0);
@@ -54,7 +56,7 @@ TEST(TransactionLogIdHashTest, CanHash)
 TEST(TransactionLogIdHashTest, HashesOfTheSameTransactionLogIdAreEqual)
 {
     const uid_t test_uid{10U};
-    const auto test_instance_specifier = InstanceSpecifier::Create("my_test_specifier").value();
+    const auto test_instance_specifier = InstanceSpecifier::Create(std::string{"my_test_specifier"}).value();
 
     TransactionLogId unit{test_uid, test_instance_specifier.ToString()};
     TransactionLogId unit_2{test_uid, test_instance_specifier.ToString()};

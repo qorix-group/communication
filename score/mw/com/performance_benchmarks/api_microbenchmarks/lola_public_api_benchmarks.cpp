@@ -60,7 +60,7 @@ BENCHMARK_F(LolaBenchmarkFixture, LoLaInstanceSpecifierCreate)(benchmark::State&
 {
     for (auto _ : state)
     {
-        auto result = score::mw::com::InstanceSpecifier::Create(kBenchmarkInstanceSpecifier);
+        auto result = score::mw::com::InstanceSpecifier::Create(std::string{kBenchmarkInstanceSpecifier});
         benchmark::DoNotOptimize(result);
     }
 }
@@ -75,7 +75,7 @@ BENCHMARK_F(LolaBenchmarkFixture, LoLaInstanceSpecifierCreatePartialLoopBenchmar
         // other work could be done here which would not be part of the benchmarked time
 
         auto start = std::chrono::high_resolution_clock::now();
-        auto result = score::mw::com::InstanceSpecifier::Create(kBenchmarkInstanceSpecifier);
+        auto result = score::mw::com::InstanceSpecifier::Create(std::string{kBenchmarkInstanceSpecifier});
         auto end = std::chrono::high_resolution_clock::now();
 
         auto elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);

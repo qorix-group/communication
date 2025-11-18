@@ -40,7 +40,7 @@ using ::testing::StrictMock;
 
 const ServiceTypeDeployment kEmptyTypeDeployment{score::cpp::blank{}};
 const ServiceIdentifierType kFooservice{make_ServiceIdentifierType("foo")};
-const auto kInstanceSpecifier = InstanceSpecifier::Create("/dummy_instance_specifier").value();
+const auto kInstanceSpecifier = InstanceSpecifier::Create(std::string{"/dummy_instance_specifier"}).value();
 const ServiceInstanceDeployment kEmptyInstanceDeployment{kFooservice,
                                                          score::cpp::blank{},
                                                          QualityType::kASIL_QM,

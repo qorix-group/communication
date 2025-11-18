@@ -38,7 +38,7 @@ using TestSampleType = std::uint32_t;
 const auto kEventName{"SomeEventName"};
 const auto kFieldName{"SomeFieldName"};
 
-const auto kInstanceSpecifier = InstanceSpecifier::Create("abc/abc/TirePressurePort").value();
+const auto kInstanceSpecifier = InstanceSpecifier::Create(std::string{"abc/abc/TirePressurePort"}).value();
 
 const auto kDummyService = make_ServiceIdentifierType("foo", 1U, 0U);
 const auto kTestTypeDeployment = ServiceTypeDeployment{score::cpp::blank{}};

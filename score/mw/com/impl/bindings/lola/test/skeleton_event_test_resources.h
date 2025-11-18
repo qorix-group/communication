@@ -47,7 +47,8 @@ class SkeletonEventFixture : public SkeletonMockedMemoryFixture
     const std::string service_type_name_{"foo"};
     const ElementFqId fake_element_fq_id_{1, 1, 1, ServiceElementType::EVENT};
     const std::string fake_event_name_{"dummy"};
-    const InstanceSpecifier instance_specifier_{InstanceSpecifier::Create("abc/abc/TirePressurePort").value()};
+    const InstanceSpecifier instance_specifier_{
+        InstanceSpecifier::Create(std::string{"abc/abc/TirePressurePort"}).value()};
 
     LolaServiceInstanceDeployment binding_info_{CreateLolaServiceInstanceDeployment(
         test::kDefaultLolaInstanceId,

@@ -28,8 +28,8 @@ namespace score::mw::com::impl::lola
 namespace
 {
 
-const auto kInstanceSpecifier = InstanceSpecifier::Create("abc/abc/TirePressurePort").value();
-const auto kInstanceSpecifier2 = InstanceSpecifier::Create("abc/abc/TirePressurePort2").value();
+const auto kInstanceSpecifier = InstanceSpecifier::Create(std::string{"abc/abc/TirePressurePort"}).value();
+const auto kInstanceSpecifier2 = InstanceSpecifier::Create(std::string{"abc/abc/TirePressurePort2"}).value();
 constexpr pid_t kOurPid = 4444;
 constexpr pid_t kOurUid = 112;
 
@@ -152,9 +152,9 @@ TEST_F(RuntimeFixture, GetMessagePassingCfgWithPredefinedTwoLolaServiceConfig)
     ServiceInstanceDeployment deployment1(si1, binding1, QualityType::kASIL_B, kInstanceSpecifier);
     ServiceInstanceDeployment deployment2(si2, binding2, QualityType::kASIL_QM, kInstanceSpecifier2);
 
-    auto instance_specifier_result = InstanceSpecifier::Create("foo_1");
+    auto instance_specifier_result = InstanceSpecifier::Create(std::string{"foo_1"});
     ASSERT_TRUE(instance_specifier_result.has_value());
-    auto instance_specifier_result_2 = InstanceSpecifier::Create("bar_1");
+    auto instance_specifier_result_2 = InstanceSpecifier::Create(std::string{"bar_1"});
     ASSERT_TRUE(instance_specifier_result_2.has_value());
 
     Configuration::ServiceInstanceDeployments instanceDeployments;
@@ -221,9 +221,9 @@ TEST_F(RuntimeFixture, GetMessagePassingCfgOneEmptyQMProvider)
     ServiceInstanceDeployment deployment1(si1, binding1, QualityType::kASIL_B, kInstanceSpecifier);
     ServiceInstanceDeployment deployment2(si2, binding2, QualityType::kASIL_QM, kInstanceSpecifier2);
 
-    auto instance_specifier_result = InstanceSpecifier::Create("foo_1");
+    auto instance_specifier_result = InstanceSpecifier::Create(std::string{"foo_1"});
     ASSERT_TRUE(instance_specifier_result.has_value());
-    auto instance_specifier_result_2 = InstanceSpecifier::Create("bar_1");
+    auto instance_specifier_result_2 = InstanceSpecifier::Create(std::string{"bar_1"});
     ASSERT_TRUE(instance_specifier_result_2.has_value());
 
     Configuration::ServiceInstanceDeployments instanceDeployments;
@@ -290,9 +290,9 @@ TEST_F(RuntimeFixture, GetMessagePassingCfgOneEmptyQMConsumer)
     ServiceInstanceDeployment deployment1(si1, binding1, QualityType::kASIL_B, kInstanceSpecifier);
     ServiceInstanceDeployment deployment2(si2, binding2, QualityType::kASIL_QM, kInstanceSpecifier2);
 
-    auto instance_specifier_result = InstanceSpecifier::Create("foo_1");
+    auto instance_specifier_result = InstanceSpecifier::Create(std::string{"foo_1"});
     ASSERT_TRUE(instance_specifier_result.has_value());
-    auto instance_specifier_result_2 = InstanceSpecifier::Create("bar_1");
+    auto instance_specifier_result_2 = InstanceSpecifier::Create(std::string{"bar_1"});
     ASSERT_TRUE(instance_specifier_result_2.has_value());
 
     Configuration::ServiceInstanceDeployments instanceDeployments;
@@ -347,7 +347,7 @@ TEST_F(RuntimeFixture, GetMessagePassingCfgMissingConsumer)
     ServiceIdentifierType si1 = make_ServiceIdentifierType("foo", 1U, 1U);
     ServiceInstanceDeployment deployment1(si1, binding1, QualityType::kASIL_B, kInstanceSpecifier);
 
-    auto instance_specifier_result = InstanceSpecifier::Create("foo_1");
+    auto instance_specifier_result = InstanceSpecifier::Create(std::string{"foo_1"});
     ASSERT_TRUE(instance_specifier_result.has_value());
 
     Configuration::ServiceInstanceDeployments instanceDeployments;

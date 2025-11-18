@@ -26,7 +26,7 @@ const tracing::ServiceElementIdentifierView kDummyServiceElementIdentifierView{
     kDummyServiceElementIdentifier.service_type_name.data(),
     kDummyServiceElementIdentifier.service_element_name.data(),
     kDummyServiceElementIdentifier.service_element_type};
-const auto kDummyInstanceSpecifier = InstanceSpecifier::Create("my_dummy_instance_specifier").value();
+const auto kDummyInstanceSpecifier = InstanceSpecifier::Create(std::string{"my_dummy_instance_specifier"}).value();
 const std::string_view kDummyInstanceSpecifierView = kDummyInstanceSpecifier.ToString();
 
 TEST(TracingConfigurationTest, GettingTracingEnabledReturnsSetValue)
@@ -101,7 +101,7 @@ TEST(TracingConfigurationTest, CheckingIsServiceElementTracingEnabledAfterSettin
 
 TEST(TracingConfigurationTest, CheckingIsServiceElementTracingEnabledAfterSettingMultipleSpecifiersReturnsTrue)
 {
-    auto other_instance_specifier = InstanceSpecifier::Create("a_completely_different_specifier").value();
+    auto other_instance_specifier = InstanceSpecifier::Create(std::string{"a_completely_different_specifier"}).value();
     auto other_instance_specifier_view = other_instance_specifier.ToString();
     TracingConfiguration tracing_configuration{};
     tracing_configuration.SetServiceElementTracingEnabled(kDummyServiceElementIdentifier, kDummyInstanceSpecifier);

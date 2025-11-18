@@ -33,7 +33,7 @@ namespace
 {
 
 const LolaServiceId kServiceId{1U};
-const auto kInstanceSpecifierString = InstanceSpecifier::Create("/bla/blub/instance_specifier").value();
+const auto kInstanceSpecifierString = InstanceSpecifier::Create(std::string{"/bla/blub/instance_specifier"}).value();
 ConfigurationStore kConfigStoreQm{
     kInstanceSpecifierString,
     make_ServiceIdentifierType("/bla/blub/one", 1U, 2U),
@@ -158,7 +158,7 @@ TEST_F(ConfigurationFixture, ConfigIsCorrectlyParsedFromFile)
     EXPECT_EQ(manual_service_fields.at(service_field_name), generated_service_fields.at(service_field_name));
 
     // And manually generated ServiceInstances using data from config file
-    const auto instance_specifier_result = InstanceSpecifier::Create("abc/abc/TirePressurePort");
+    const auto instance_specifier_result = InstanceSpecifier::Create(std::string{"abc/abc/TirePressurePort"});
     ASSERT_TRUE(instance_specifier_result.has_value());
 
     const std::string instance_event_name{"CurrentPressureFrontLeft"};

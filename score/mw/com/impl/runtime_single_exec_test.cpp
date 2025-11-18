@@ -90,9 +90,10 @@ class SingleTestPerProcessFixture : public ::testing::Test
     }
 
   protected:
-    InstanceSpecifier tire_pressure_port_{InstanceSpecifier::Create("abc/abc/TirePressurePort").value()};
+    InstanceSpecifier tire_pressure_port_{InstanceSpecifier::Create(std::string{"abc/abc/TirePressurePort"}).value()};
     std::string config_with_tire_pressure_port_{get_path("ara_com_config.json")};
-    InstanceSpecifier tire_pressure_port_other_{InstanceSpecifier::Create("abc/abc/TirePressurePortOther").value()};
+    InstanceSpecifier tire_pressure_port_other_{
+        InstanceSpecifier::Create(std::string{"abc/abc/TirePressurePortOther"}).value()};
     std::string config_with_tire_pressure_port_other_{get_path("ara_com_config_other.json")};
     bool tested_in_separate_process_{false};
 

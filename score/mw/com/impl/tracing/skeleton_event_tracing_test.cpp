@@ -58,7 +58,7 @@ const LolaServiceTypeDeployment kLolaServiceTypeDeploymentWithEventAndField{2U,
                                                                             {{kDummyEventName, LolaEventId{3U}}},
                                                                             {{kDummyFieldName, LolaEventId{4U}}}};
 
-const auto kInstanceSpecifier = InstanceSpecifier::Create("/bla/blub/specifier").value();
+const auto kInstanceSpecifier = InstanceSpecifier::Create(std::string{"/bla/blub/specifier"}).value();
 const ConfigurationStore kConfigStore{kInstanceSpecifier,
                                       make_ServiceIdentifierType("foo"),
                                       QualityType::kASIL_QM,

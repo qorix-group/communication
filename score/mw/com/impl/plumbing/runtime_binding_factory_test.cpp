@@ -31,8 +31,8 @@ namespace score::mw::com::impl
 {
 
 const LolaServiceId kServiceId{1U};
-const auto kInstanceSpecifierString1 = InstanceSpecifier::Create("/bla/blub/specifier1").value();
-const auto kInstanceSpecifierString2 = InstanceSpecifier::Create("/bla/blub/specifier2").value();
+const auto kInstanceSpecifierString1 = InstanceSpecifier::Create(std::string{"/bla/blub/specifier1"}).value();
+const auto kInstanceSpecifierString2 = InstanceSpecifier::Create(std::string{"/bla/blub/specifier2"}).value();
 ConfigurationStore kConfigStoreQm1{
     kInstanceSpecifierString1,
     make_ServiceIdentifierType("foo"),

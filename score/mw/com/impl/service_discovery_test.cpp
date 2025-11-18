@@ -153,7 +153,7 @@ class ServiceDiscoveryTest : public Test
     lola::RuntimeMock lola_runtime_{};
     ServiceDiscoveryClientMock service_discovery_client_{};
 
-    InstanceSpecifier instance_specifier_{InstanceSpecifier::Create("/bla/blub/specifier").value()};
+    InstanceSpecifier instance_specifier_{InstanceSpecifier::Create(std::string{"/bla/blub/specifier"}).value()};
 
     std::unique_ptr<ServiceDiscovery> unit_ = std::make_unique<ServiceDiscovery>(runtime_);
 };

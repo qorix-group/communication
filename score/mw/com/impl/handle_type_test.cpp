@@ -20,8 +20,8 @@ namespace score::mw::com::impl
 namespace
 {
 
-const auto kInstanceSpecifier = InstanceSpecifier::Create("/my_dummy_specifier").value();
-const auto kInstanceSpecifier2 = InstanceSpecifier::Create("/my_dummy_specifier2").value();
+const auto kInstanceSpecifier = InstanceSpecifier::Create(std::string{"/my_dummy_specifier"}).value();
+const auto kInstanceSpecifier2 = InstanceSpecifier::Create(std::string{"/my_dummy_specifier2"}).value();
 const auto kService1 = make_ServiceIdentifierType("/bla/blub/service1", 1U, 0U);
 const auto kService2 = make_ServiceIdentifierType("/bla/blub/service2", 1U, 0U);
 const ServiceTypeDeployment kTestTypeDeployment{LolaServiceTypeDeployment{1U}};

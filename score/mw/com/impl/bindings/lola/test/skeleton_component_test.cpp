@@ -49,7 +49,7 @@ constexpr auto control_shm = "/dev/shm/lola-ctl-0000000000000001-00016";
 constexpr auto asil_control_shm = "/dev/shm/lola-ctl-0000000000000001-00016-b";
 #endif
 
-const auto kInstanceSpecifier = InstanceSpecifier::Create("abc/abc/TirePressurePort").value();
+const auto kInstanceSpecifier = InstanceSpecifier::Create(std::string{"abc/abc/TirePressurePort"}).value();
 constexpr std::size_t kNumberOfSlots{10U};
 
 SkeletonBinding::SkeletonEventBindings kEmptyEvents{};
