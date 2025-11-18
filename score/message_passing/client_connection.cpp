@@ -334,13 +334,7 @@ void ClientConnection::DoRestart() noexcept
               << std::endl;
 
     connect_retry_ms_ = kConnectRetryMsStart;
-    engine_->EnqueueCommand(
-        connection_timer_,
-        ISharedResourceEngine::TimePoint{},
-        [this](auto) noexcept {
-            TryConnect();
-        },
-        this);
+    TryConnect();
 }
 
 void ClientConnection::TryConnect() noexcept
@@ -348,7 +342,6 @@ void ClientConnection::TryConnect() noexcept
     // The order of access to these atomics is important, as stop_reason_ can change in background
     SCORE_LANGUAGE_FUTURECPP_ASSERT_DBG(((stop_reason_ == StopReason::kNone) && (state_ == State::kStarting)) ||
                    ((state_ == State::kStopping) && (stop_reason_ == StopReason::kUserRequested)));
-    SCORE_LANGUAGE_FUTURECPP_ASSERT_DBG(IsInCallback());
 
     // Suppress AUTOSAR C++14 M8-4-4, rule finding: "A function identifier shall either be used to call the
     // function or it shall be preceded by &".
@@ -415,7 +408,20 @@ void ClientConnection::TryConnect() noexcept
     posix_endpoint_.disconnect = [this]() noexcept {
         SwitchToStopState();
     };
-    engine_->RegisterPosixEndpoint(posix_endpoint_);
+    if (IsInCallback())
+    {
+        engine_->RegisterPosixEndpoint(posix_endpoint_);
+    }
+    else
+    {
+        engine_->EnqueueCommand(
+            connection_timer_,
+            ISharedResourceEngine::TimePoint{},
+            [this](auto) noexcept {
+                engine_->RegisterPosixEndpoint(posix_endpoint_);
+            },
+            this);
+    }
 
     ProcessStateChange(State::kReady);
 }
