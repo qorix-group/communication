@@ -41,7 +41,7 @@ interprocess communication, you will find the user documentation here: LINK TODO
 
 Documentation of `mw::com`s public API with usage examples can be found [here](./doc/user_facing_API_examples.md).
 If you want to see an example app, which uses LoLa to establish shared-memory communication between a service and a
-client you can take a look at our macro benchmark app which resides in [this](performance_benchmarks/macro_benchmark) directory.
+client you can take a look at our macro benchmark app which resides in [this](./performance_benchmarks/macro_benchmark) directory.
 
 
 ## Requirements
