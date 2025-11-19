@@ -16,14 +16,18 @@
 #include "score/mw/com/impl/bindings/lola/element_fq_id.h"
 #include "score/mw/com/impl/bindings/lola/event_meta_info.h"
 #include "score/mw/com/impl/bindings/lola/runtime_mock.h"
+#include "score/mw/com/impl/configuration/global_configuration.h"
 #include "score/mw/com/impl/test/runtime_mock_guard.h"
 
 #include "score/memory/shared/map.h"
+#include "score/os/ObjectSeam.h"
+#include "score/os/mocklib/unistdmock.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <sched.h>
+#include <sys/types.h>
 #include <type_traits>
 
 namespace score::mw::com::impl::lola
@@ -102,6 +106,21 @@ TEST_F(ServiceDataStorageFixture, GetsPidFromUnistdAndStoresItOnConstruction)
 
     // Then the ServiceDataStorage will contain the returned PID
     EXPECT_EQ(unit.skeleton_pid_, pid);
+}
+
+TEST_F(ServiceDataStorageFixture, GetsUidFromRuntimAndStoresItOnConstruction)
+{
+    const os::MockGuard<os::UnistdMock> unistd_mock{};
+
+    // Expecting that getuid will be called
+    const uid_t uid{456};
+    EXPECT_CALL(*unistd_mock, getuid()).WillOnce(Return(uid));
+
+    // When creating a ServiceDataStorage
+    const ServiceDataStorage unit{nullptr};
+
+    // Then the ServiceDataStorage will contain the returned UID
+    EXPECT_EQ(unit.skeleton_uid_, uid);
 }
 
 }  // namespace

@@ -22,6 +22,7 @@
 #include "score/memory/shared/map.h"
 #include "score/memory/shared/memory_resource_proxy.h"
 #include "score/memory/shared/offset_ptr.h"
+#include "score/os/unistd.h"
 
 namespace score::mw::com::impl::lola
 {
@@ -32,7 +33,8 @@ class ServiceDataStorage
     explicit ServiceDataStorage(const score::memory::shared::MemoryResourceProxy* const proxy)
         : events_(proxy),
           events_metainfo_(proxy),
-          skeleton_pid_{impl::GetBindingRuntime<lola::IRuntime>(BindingType::kLoLa).GetPid()}
+          skeleton_pid_{impl::GetBindingRuntime<lola::IRuntime>(BindingType::kLoLa).GetPid()},
+          skeleton_uid_{os::Unistd::instance().getuid()}
     {
     }
 
@@ -45,6 +47,8 @@ class ServiceDataStorage
     score::memory::shared::Map<ElementFqId, EventMetaInfo> events_metainfo_;
     // coverity[autosar_cpp14_m11_0_1_violation]
     pid_t skeleton_pid_;
+    // coverity[autosar_cpp14_m11_0_1_violation]
+    uid_t skeleton_uid_;
 };
 
 }  // namespace score::mw::com::impl::lola

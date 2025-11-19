@@ -22,6 +22,7 @@
 #include "score/mw/com/impl/bindings/lola/proxy.h"
 #include "score/mw/com/impl/bindings/lola/proxy_event.h"
 #include "score/mw/com/impl/bindings/lola/test_doubles/fake_mocked_service_data.h"
+#include "score/mw/com/impl/configuration/global_configuration.h"
 #include "score/mw/com/impl/configuration/quality_type.h"
 #include "score/mw/com/impl/configuration/service_identifier_type.h"
 #include "score/mw/com/impl/handle_type.h"
@@ -164,6 +165,7 @@ class ProxyMockedMemoryFixture : public ::testing::Test
   protected:
     using SampleType = std::uint32_t;
     static constexpr pid_t kDummyPid{123456};
+    static constexpr GlobalConfiguration::ApplicationId kDummyApplicationId{6543};
 
     ProxyMockedMemoryFixture() noexcept;
 
