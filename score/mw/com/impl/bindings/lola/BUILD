@@ -233,6 +233,8 @@ cc_library(
         ":element_fq_id",
         ":event",
         ":event_meta_info",
+        ":i_runtime",
+        "//score/mw/com/impl:runtime",
         "@score_baselibs//score/memory/shared",
     ],
 )
@@ -1045,7 +1047,13 @@ cc_gtest_unit_test(
     ],
     features = COMPILER_WARNING_FEATURES,
     deps = [
-        ":skeleton",
+        ":element_fq_id",
+        ":event_meta_info",
+        ":runtime_mock",
+        ":shared_data_structures",
+        "//score/mw/com/impl:binding_type",
+        "//score/mw/com/impl/test:runtime_mock_guard",
+        "@score_baselibs//score/memory/shared:map",
     ],
 )
 

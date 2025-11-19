@@ -12,16 +12,39 @@
  ********************************************************************************/
 #include "score/mw/com/impl/bindings/lola/service_data_storage.h"
 
-#include "score/memory/shared/map.h"
+#include "score/mw/com/impl/binding_type.h"
 #include "score/mw/com/impl/bindings/lola/element_fq_id.h"
+#include "score/mw/com/impl/bindings/lola/event_meta_info.h"
+#include "score/mw/com/impl/bindings/lola/runtime_mock.h"
+#include "score/mw/com/impl/test/runtime_mock_guard.h"
 
+#include "score/memory/shared/map.h"
+
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
+
+#include <sched.h>
 #include <type_traits>
 
 namespace score::mw::com::impl::lola
 {
 namespace
 {
+
+using namespace ::testing;
+
+class ServiceDataStorageFixture : public ::testing::Test
+{
+  public:
+    ServiceDataStorageFixture()
+    {
+        ON_CALL(runtime_mock_guard_.runtime_mock_, GetBindingRuntime(BindingType::kLoLa))
+            .WillByDefault(::testing::Return(&lola_runtime_mock_));
+    }
+
+    RuntimeMockGuard runtime_mock_guard_{};
+    RuntimeMock lola_runtime_mock_{};
+};
 
 TEST(ServiceDataStorageTest, GenericProxyEventMetaInfoIsStoredInServiceDataStorage)
 {
@@ -41,7 +64,7 @@ TEST(ServiceDataStorageTest, GenericProxyEventMetaInfoIsStoredInServiceDataStora
 // When compiling for linux, we use a boost map. Since the tests for satisfying requirements must be on qnx, we only
 // check the service element event map type on qnx.
 #if !defined(__linux__)
-TEST(ServiceDataStorageTest, ServiceElementsAreIndexedUsingElementFqId)
+TEST_F(ServiceDataStorageFixture, ServiceElementsAreIndexedUsingElementFqId)
 {
     RecordProperty("Verifies", "SCR-21555839");
     RecordProperty("Description",
@@ -67,6 +90,19 @@ TEST(ServiceDataStorageTest, ServiceElementsAreIndexedUsingElementFqId)
     static_assert(std::is_same_v<ActualEventMapType, ExpectedEventMapType>, "Event map is not a std::map");
 }
 #endif  // not __linux__
+
+TEST_F(ServiceDataStorageFixture, GetsPidFromUnistdAndStoresItOnConstruction)
+{
+    // Expecting that getpid will be called
+    const pid_t pid{123};
+    EXPECT_CALL(lola_runtime_mock_, GetPid()).WillOnce(Return(pid));
+
+    // When creating a ServiceDataStorage
+    const ServiceDataStorage unit{nullptr};
+
+    // Then the ServiceDataStorage will contain the returned PID
+    EXPECT_EQ(unit.skeleton_pid_, pid);
+}
 
 }  // namespace
 }  // namespace score::mw::com::impl::lola

@@ -13,14 +13,15 @@
 #ifndef SCORE_MW_COM_IMPL_BINDINGS_LOLA_SKELETON_DATA_STORAGE_H
 #define SCORE_MW_COM_IMPL_BINDINGS_LOLA_SKELETON_DATA_STORAGE_H
 
+#include "score/mw/com/impl/binding_type.h"
 #include "score/mw/com/impl/bindings/lola/element_fq_id.h"
 #include "score/mw/com/impl/bindings/lola/event_meta_info.h"
+#include "score/mw/com/impl/bindings/lola/i_runtime.h"
+#include "score/mw/com/impl/runtime.h"
 
 #include "score/memory/shared/map.h"
 #include "score/memory/shared/memory_resource_proxy.h"
 #include "score/memory/shared/offset_ptr.h"
-
-#include "score/os/unistd.h"
 
 namespace score::mw::com::impl::lola
 {
@@ -29,7 +30,9 @@ class ServiceDataStorage
 {
   public:
     explicit ServiceDataStorage(const score::memory::shared::MemoryResourceProxy* const proxy)
-        : events_(proxy), events_metainfo_(proxy), skeleton_pid_{score::os::Unistd::instance().getpid()}
+        : events_(proxy),
+          events_metainfo_(proxy),
+          skeleton_pid_{impl::GetBindingRuntime<lola::IRuntime>(BindingType::kLoLa).GetPid()}
     {
     }
 
