@@ -62,13 +62,15 @@ ProxyMockedMemoryFixture::ProxyMockedMemoryFixture() noexcept
     ON_CALL(binding_runtime_, GetPid()).WillByDefault(::testing::Return(kDummyPid));
     ON_CALL(runtime_mock_.runtime_mock_, GetServiceDiscovery()).WillByDefault(ReturnRef(service_discovery_mock_));
 
+    fake_data_ = std::make_unique<FakeMockedServiceData>(kDummyPid);
+
     ExpectControlSegmentOpened();
     ExpectDataSegmentOpened();
 
-    ON_CALL(*(fake_data_.control_memory), getUsableBaseAddress())
-        .WillByDefault(Return(static_cast<void*>(fake_data_.data_control)));
-    ON_CALL(*(fake_data_.data_memory), getUsableBaseAddress())
-        .WillByDefault(Return(static_cast<void*>(fake_data_.data_storage)));
+    ON_CALL(*(fake_data_->control_memory), getUsableBaseAddress())
+        .WillByDefault(Return(static_cast<void*>(fake_data_->data_control)));
+    ON_CALL(*(fake_data_->data_memory), getUsableBaseAddress())
+        .WillByDefault(Return(static_cast<void*>(fake_data_->data_storage)));
 
     ON_CALL(binding_runtime_, GetRollbackSynchronization()).WillByDefault(ReturnRef(rollback_synchronization_));
 }
@@ -77,7 +79,7 @@ void ProxyMockedMemoryFixture::ExpectControlSegmentOpened()
 {
     ON_CALL(shared_memory_factory_mock_guard_.mock_, Open(StartsWith(kControlChannelPrefix), true, _))
         .WillByDefault(InvokeWithoutArgs([this]() -> std::shared_ptr<memory::shared::ISharedMemoryResource> {
-            return fake_data_.control_memory;
+            return fake_data_->control_memory;
         }));
 }
 
@@ -85,7 +87,7 @@ void ProxyMockedMemoryFixture::ExpectDataSegmentOpened()
 {
     ON_CALL(shared_memory_factory_mock_guard_.mock_, Open(StartsWith(kDataChannelPrefix), false, _))
         .WillByDefault(InvokeWithoutArgs([this]() -> std::shared_ptr<memory::shared::ISharedMemoryResource> {
-            return fake_data_.data_memory;
+            return fake_data_->data_memory;
         }));
 }
 
@@ -97,8 +99,8 @@ void ProxyMockedMemoryFixture::InitialiseProxyWithConstructor(const InstanceIden
 
     Proxy::EventNameToElementFqIdConverter event_name_to_element_fq_id_converter{lola_service_deployment_,
                                                                                  lola_service_instance_id_.GetId()};
-    proxy_ = std::make_unique<Proxy>(fake_data_.control_memory,
-                                     fake_data_.data_memory,
+    proxy_ = std::make_unique<Proxy>(fake_data_->control_memory,
+                                     fake_data_->data_memory,
                                      service_quality_type_,
                                      std::move(event_name_to_element_fq_id_converter),
                                      make_HandleType(instance_identifier),
@@ -119,7 +121,7 @@ void ProxyMockedMemoryFixture::InitialiseDummySkeletonEvent(const ElementFqId el
                                                             const SkeletonEventProperties& skeleton_event_properties)
 {
     std::tie(event_control_, event_data_storage_) =
-        fake_data_.AddEvent<SampleType>(element_fq_id, skeleton_event_properties);
+        fake_data_->AddEvent<SampleType>(element_fq_id, skeleton_event_properties);
 }
 
 LolaProxyEventResources::LolaProxyEventResources() : ProxyMockedMemoryFixture{}

@@ -98,13 +98,13 @@ TEST_F(ProxyCreationFixture, ProxyCreationOpensSharedMemoryWithoutProvidersIfNot
         .WillOnce(WithArg<2>(
             Invoke([this](const auto& provider_list) -> std::shared_ptr<memory::shared::ISharedMemoryResource> {
                 EXPECT_FALSE(provider_list.has_value());
-                return fake_data_.control_memory;
+                return fake_data_->control_memory;
             })));
     EXPECT_CALL(shared_memory_factory_mock_guard_.mock_, Open(StartsWith(kShmDataPathPrefix), false, _))
         .WillOnce(WithArg<2>(
             Invoke([this](const auto& provider_list) -> std::shared_ptr<memory::shared::ISharedMemoryResource> {
                 EXPECT_FALSE(provider_list.has_value());
-                return fake_data_.data_memory;
+                return fake_data_->data_memory;
             })));
 
     // When creating a proxy
@@ -131,7 +131,7 @@ TEST_F(ProxyCreationFixture, ProxyCreationOpensSharedMemoryWithProvidersFromConf
             EXPECT_TRUE(provider_list.has_value());
             EXPECT_THAT(provider_list.value(), Contains(allowed_qm_providers[0]));
             EXPECT_THAT(provider_list.value(), Contains(allowed_qm_providers[1]));
-            return fake_data_.control_memory;
+            return fake_data_->control_memory;
         })));
     EXPECT_CALL(shared_memory_factory_mock_guard_.mock_, Open(StartsWith(kShmDataPathPrefix), false, _))
         .WillOnce(WithArg<2>(Invoke([this, &allowed_qm_providers](const auto& provider_list)
@@ -139,7 +139,7 @@ TEST_F(ProxyCreationFixture, ProxyCreationOpensSharedMemoryWithProvidersFromConf
             EXPECT_TRUE(provider_list.has_value());
             EXPECT_THAT(provider_list.value(), Contains(allowed_qm_providers[0]));
             EXPECT_THAT(provider_list.value(), Contains(allowed_qm_providers[1]));
-            return fake_data_.data_memory;
+            return fake_data_->data_memory;
         })));
 
     // When creating a proxy
@@ -573,7 +573,7 @@ TEST_F(ProxyGetEventMetaInfoDeathTest, CallingGetEventMetaInfoWhenGettingDataSec
     InitialiseProxyWithCreate(identifier_);
 
     // and that getting the usable base address (from which we read the EventMetaInfo) returns a nullptr
-    ON_CALL(*(fake_data_.data_memory), getUsableBaseAddress()).WillByDefault(Return(nullptr));
+    ON_CALL(*(fake_data_->data_memory), getUsableBaseAddress()).WillByDefault(Return(nullptr));
 
     // When getting the EventMetaInfo for a random element fq id
     // Then the program terminates
@@ -587,7 +587,7 @@ class ProxyUidPidRegistrationFixture : public ProxyMockedMemoryFixture
 
     void AddApplicationIdPidMapping(std::uint32_t application_id, pid_t pid) noexcept
     {
-        auto result = fake_data_.data_control->application_id_pid_mapping_.RegisterPid(application_id, pid);
+        auto result = fake_data_->data_control->application_id_pid_mapping_.RegisterPid(application_id, pid);
         ASSERT_TRUE(result.has_value());
         ASSERT_EQ(result.value(), pid);
     }

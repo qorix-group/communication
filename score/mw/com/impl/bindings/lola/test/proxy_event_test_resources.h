@@ -199,7 +199,7 @@ class ProxyMockedMemoryFixture : public ::testing::Test
 
     ::testing::NiceMock<ServiceDiscoveryMock> service_discovery_mock_{};
 
-    FakeMockedServiceData fake_data_{kDummyPid};
+    std::unique_ptr<FakeMockedServiceData> fake_data_{nullptr};
     EventControl* event_control_{nullptr};
     EventDataStorage<SampleType>* event_data_storage_{nullptr};
     RollbackSynchronization rollback_synchronization_{};
