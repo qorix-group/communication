@@ -29,7 +29,7 @@ const std::uint64_t kDataMemoryResourceId{11U};
 
 }  // namespace
 
-FakeMockedServiceData::FakeMockedServiceData(const pid_t skeleton_process_pid_in)
+FakeMockedServiceData::FakeMockedServiceData(const pid_t skeleton_process_pid_in, uid_t skeleton_uid_in)
 {
     control_memory =
         std::make_shared<::testing::NiceMock<SharedMemoryResourceHeapAllocatorMock>>(kControlMemoryResourceId);
@@ -39,6 +39,7 @@ FakeMockedServiceData::FakeMockedServiceData(const pid_t skeleton_process_pid_in
     data_storage = data_memory->construct<ServiceDataStorage>(data_memory->getMemoryResourceProxy());
 
     data_storage->skeleton_pid_ = skeleton_process_pid_in;
+    data_storage->skeleton_uid_ = skeleton_uid_in;
 }
 
 }  // namespace score::mw::com::impl::lola

@@ -151,6 +151,7 @@ class ProxyWithRealMemFixture : public ::testing::Test
                                                           data_file_name,
                                                           service_instance_usage_marker_file,
                                                           os::Unistd::instance().getpid(),
+                                                          os::Unistd::instance().getuid(),
                                                           init);
         if (fake_skeleton_data == nullptr)
         {

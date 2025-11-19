@@ -42,6 +42,7 @@ struct FakeServiceData
                                                    const std::string& data_file_name,
                                                    const std::string& usage_marker_file,
                                                    pid_t skeleton_process_pid_in,
+                                                   uid_t skeleton_uid_in,
                                                    bool initialise_skeleton_data = true) noexcept;
 
     /// \brief Create shared memory regions that will resemble data created by a Lola skeleton.
@@ -52,6 +53,7 @@ struct FakeServiceData
                     const std::string& data_file_name,
                     memory::shared::LockFile service_instance_usage_marker_file_in,
                     pid_t skeleton_process_pid_in,
+                    uid_t skeleton_uid_in,
                     bool initialise_skeleton_data = true) noexcept;
     ~FakeServiceData() noexcept;
 

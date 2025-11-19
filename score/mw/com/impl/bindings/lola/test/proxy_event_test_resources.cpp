@@ -63,7 +63,7 @@ ProxyMockedMemoryFixture::ProxyMockedMemoryFixture() noexcept
     ON_CALL(binding_runtime_, GetApplicationId()).WillByDefault(::testing::Return(kDummyApplicationId));
     ON_CALL(runtime_mock_.runtime_mock_, GetServiceDiscovery()).WillByDefault(ReturnRef(service_discovery_mock_));
 
-    fake_data_ = std::make_unique<FakeMockedServiceData>(kDummyPid);
+    fake_data_ = std::make_unique<FakeMockedServiceData>(kDummyPid, kDummyUid);
 
     ExpectControlSegmentOpened();
     ExpectDataSegmentOpened();

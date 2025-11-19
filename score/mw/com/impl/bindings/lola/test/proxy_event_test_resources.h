@@ -40,6 +40,7 @@
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <sys/types.h>
 #include <functional>
 #include <future>
 #include <memory>
@@ -165,6 +166,7 @@ class ProxyMockedMemoryFixture : public ::testing::Test
   protected:
     using SampleType = std::uint32_t;
     static constexpr pid_t kDummyPid{123456};
+    static constexpr uid_t kDummyUid{2543};
     static constexpr GlobalConfiguration::ApplicationId kDummyApplicationId{6543};
 
     ProxyMockedMemoryFixture() noexcept;

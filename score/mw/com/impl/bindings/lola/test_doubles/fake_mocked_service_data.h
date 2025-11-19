@@ -35,7 +35,7 @@ namespace score::mw::com::impl::lola
 struct FakeMockedServiceData
 {
     /// \brief Create shared memory regions that will resemble data created by a Lola skeleton.
-    FakeMockedServiceData(pid_t skeleton_process_pid_in);
+    FakeMockedServiceData(pid_t skeleton_process_pid_in, uid_t skeleton_uid_in);
 
     ServiceDataControl* data_control{nullptr};
     ServiceDataStorage* data_storage{nullptr};

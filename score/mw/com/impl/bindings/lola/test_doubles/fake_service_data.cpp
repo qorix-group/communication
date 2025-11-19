@@ -24,6 +24,7 @@ std::unique_ptr<FakeServiceData> FakeServiceData::Create(const std::string& cont
                                                          const std::string& data_file_name,
                                                          const std::string& usage_marker_file,
                                                          const pid_t skeleton_process_pid_in,
+                                                         const uid_t skeleton_uid_in,
                                                          bool initialise_skeleton_data) noexcept
 {
     score::filesystem::Path path{usage_marker_file};
@@ -49,6 +50,7 @@ std::unique_ptr<FakeServiceData> FakeServiceData::Create(const std::string& cont
                                              data_file_name,
                                              std::move(marker_file.value()),
                                              skeleton_process_pid_in,
+                                             skeleton_uid_in,
                                              initialise_skeleton_data);
 }
 
@@ -56,6 +58,7 @@ FakeServiceData::FakeServiceData(const std::string& control_file_name,
                                  const std::string& data_file_name,
                                  memory::shared::LockFile service_instance_usage_marker_file_in,
                                  const pid_t skeleton_process_pid_in,
+                                 const uid_t skeleton_uid_in,
                                  bool initialise_skeleton_data) noexcept
     : control_path{control_file_name},
       data_path{data_file_name},
@@ -78,13 +81,14 @@ FakeServiceData::FakeServiceData(const std::string& control_file_name,
 
     data_memory = score::memory::shared::SharedMemoryFactory::Create(
         data_file_name,
-        [this, initialise_skeleton_data, skeleton_process_pid_in](
+        [this, initialise_skeleton_data, skeleton_process_pid_in, skeleton_uid_in](
             std::shared_ptr<ISharedMemoryResource> memory_resource) {
             if (initialise_skeleton_data)
             {
                 data_storage =
                     memory_resource->construct<ServiceDataStorage>(memory_resource->getMemoryResourceProxy());
                 data_storage->skeleton_pid_ = skeleton_process_pid_in;
+                data_storage->skeleton_uid_ = skeleton_uid_in;
             }
         },
         65535U);
