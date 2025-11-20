@@ -1021,7 +1021,6 @@ cc_test(
         "skeleton_event_test.cpp",
         "skeleton_field_base_test.cpp",
         "skeleton_field_test.cpp",
-        "traits_test.cpp",
     ],
     features = COMPILER_WARNING_FEATURES + [
         "aborts_upon_exception",

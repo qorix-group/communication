@@ -129,7 +129,7 @@ class ProxyEventFacade : public ProxyEventBinding<SampleType>
     ProxyEventFacade(ProxyEvent<SampleType>& proxy_event)
         : ProxyEventBinding<SampleType>{}, proxy_event_{proxy_event} {};
 
-    ~ProxyEventFacade() = default;
+    ~ProxyEventFacade() override = default;
 
     SubscriptionState GetSubscriptionState() const noexcept override
     {
