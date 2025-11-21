@@ -193,7 +193,7 @@ class "score::mw::com::impl::Runtime" {
   {static} + Initialize(const score::cpp::span<const score::StringLiteral> arguments) : void
   {static} + getInstance() : Runtime&
   + resolve(const InstanceSpecifier&): score::mw::com::InstanceIdentifierContainer
-  + GetBindingRuntime(const BindingType binding) const : IRuntimeBinding*
+  + GetBindingRuntime(const BindingType binding) const : IBindingRuntime*
   + GetServiceDiscovery() : IServiceDiscovery&
   + GetTracingFilterConfig() const : const tracing::ITracingFilterConfig*
   + GetTracingRuntime() const : tracing::ITracingRuntime*

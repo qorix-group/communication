@@ -16,7 +16,7 @@
 #include "score/mw/com/impl/find_service_handle.h"
 #include "score/mw/com/impl/find_service_handler.h"
 #include "score/mw/com/impl/handle_type.h"
-#include "score/mw/com/impl/i_runtime_binding.h"
+#include "score/mw/com/impl/i_binding_runtime.h"
 
 #include "score/result/result.h"
 #include "score/mw/log/logging.h"

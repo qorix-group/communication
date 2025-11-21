@@ -10,11 +10,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#ifndef SCORE_MW_COM_IMPL_PLUMBING_RUNTIME_BINDING_FACTORY_H
-#define SCORE_MW_COM_IMPL_PLUMBING_RUNTIME_BINDING_FACTORY_H
+#ifndef SCORE_MW_COM_IMPL_PLUMBING_BINDING_RUNTIME_FACTORY_H
+#define SCORE_MW_COM_IMPL_PLUMBING_BINDING_RUNTIME_FACTORY_H
 
 #include "score/mw/com/impl/configuration/configuration.h"
-#include "score/mw/com/impl/i_runtime_binding.h"
+#include "score/mw/com/impl/i_binding_runtime.h"
 #include "score/mw/com/impl/tracing/configuration/tracing_filter_config.h"
 
 #include <score/optional.hpp>
@@ -28,10 +28,10 @@
 namespace score::mw::com::impl
 {
 
-class RuntimeBindingFactory final
+class BindingRuntimeFactory final
 {
   public:
-    static std::unordered_map<BindingType, std::unique_ptr<IRuntimeBinding>> CreateBindingRuntimes(
+    static std::unordered_map<BindingType, std::unique_ptr<IBindingRuntime>> CreateBindingRuntimes(
         Configuration& configuration,
         concurrency::Executor& long_running_threads,
         const score::cpp::optional<tracing::TracingFilterConfig>& tracing_filter_config);
@@ -39,4 +39,4 @@ class RuntimeBindingFactory final
 
 }  // namespace score::mw::com::impl
 
-#endif  // SCORE_MW_COM_IMPL_PLUMBING_RUNTIME_BINDING_FACTORY_H
+#endif  // SCORE_MW_COM_IMPL_PLUMBING_BINDING_RUNTIME_FACTORY_H

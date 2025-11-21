@@ -10,8 +10,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#ifndef SCORE_MW_COM_IMPL_I_RUNTIME_BINDING_H
-#define SCORE_MW_COM_IMPL_I_RUNTIME_BINDING_H
+#ifndef SCORE_MW_COM_IMPL_I_BINDING_RUNTIME_H
+#define SCORE_MW_COM_IMPL_I_BINDING_RUNTIME_H
 
 #include "score/mw/com/impl/binding_type.h"
 #include "score/mw/com/impl/i_service_discovery_client.h"
@@ -24,14 +24,14 @@ namespace score::mw::com::impl
 
 /// \brief Interface implemented by runtimes of all different bindings.
 /// \details this interface is very thin/coarse as bindings are quite specific and therefore do not have much
-///          in common. This also means, that instances of IRuntimeBinding returned by a factory need to be down-casted
-///          to concrete implementation/derived classes of IRuntimeBinding, which is easy as the type/tag is provided by
-///          IRuntimeBinding::GetBindingType().
-class IRuntimeBinding
+///          in common. This also means, that instances of IBindingRuntime returned by a factory need to be down-casted
+///          to concrete implementation/derived classes of IBindingRuntime, which is easy as the type/tag is provided by
+///          IBindingRuntime::GetBindingType().
+class IBindingRuntime
 {
   public:
-    IRuntimeBinding() = default;
-    virtual ~IRuntimeBinding();
+    IBindingRuntime() = default;
+    virtual ~IBindingRuntime();
     virtual BindingType GetBindingType() const noexcept = 0;
 
     /// \brief returns client for binding-specific service discovery
@@ -39,17 +39,17 @@ class IRuntimeBinding
 
     /// \brief Returns (optional) TracingRuntime of this binding.
     /// \return pointer to binding specific TracingRuntime or nullptr in case there is no TracingRuntime as
-    ///         RuntimeBinding has been created without tracing support.
+    ///         BindingRuntime has been created without tracing support.
     virtual tracing::ITracingRuntimeBinding* GetTracingRuntime() noexcept = 0;
 
   protected:
-    IRuntimeBinding(const IRuntimeBinding&) = default;
-    IRuntimeBinding(IRuntimeBinding&&) noexcept = default;
+    IBindingRuntime(const IBindingRuntime&) = default;
+    IBindingRuntime(IBindingRuntime&&) noexcept = default;
 
-    IRuntimeBinding& operator=(IRuntimeBinding&&) & noexcept = default;
-    IRuntimeBinding& operator=(const IRuntimeBinding&) & = default;
+    IBindingRuntime& operator=(IBindingRuntime&&) & noexcept = default;
+    IBindingRuntime& operator=(const IBindingRuntime&) & = default;
 };
 
 }  // namespace score::mw::com::impl
 
-#endif  // SCORE_MW_COM_IMPL_I_RUNTIME_BINDING_H
+#endif  // SCORE_MW_COM_IMPL_I_BINDING_RUNTIME_H

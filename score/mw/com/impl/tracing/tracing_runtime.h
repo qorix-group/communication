@@ -172,7 +172,7 @@ class TracingRuntime : public ITracingRuntime
                                        ITracingRuntimeBinding& tracing_runtime_binding) noexcept;
 
     Result<analysis::tracing::ShmObjectHandle> GetRegisteredShmObject(
-        ITracingRuntimeBinding& runtime_binding,
+        ITracingRuntimeBinding& binding_runtime,
         const ServiceElementInstanceIdentifierView service_element_instance_identifier) noexcept;
 
     std::unordered_map<BindingType, ITracingRuntimeBinding*> tracing_runtime_bindings_;

@@ -33,7 +33,7 @@
 namespace score::mw::com::impl::lola
 {
 
-/// \brief LoLa binding specific implementation of impl::IRuntimeBinding, which holds the infrastructure for LoLa
+/// \brief LoLa binding specific implementation of impl::IBindingRuntime, which holds the infrastructure for LoLa
 ///        specific messaging used by LoLa skeletons/proxies.
 class Runtime final : public IRuntime
 {

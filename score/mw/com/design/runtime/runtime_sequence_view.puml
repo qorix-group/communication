@@ -5,7 +5,7 @@ hide footbox
 participant "<u>:impl::lola::<some class></u>" as lolaClass
 participant "<u>static:impl::Runtime</u>" as staticRuntime
 participant "singleton_instance:impl::Runtime" as runtimeInstance
-participant "<u>:impl::RuntimeBindingFactory</u>\n<<plumbing>>" as bindingFactory
+participant "<u>:impl::BindingRuntimeFactory</u>\n<<plumbing>>" as bindingFactory
 participant "<u>static:impl::lola::Runtime</u>" as staticLolaRuntime
 participant "<u>:impl::lola::Runtime</u>" as lolaRuntime
 
@@ -34,10 +34,10 @@ deactivate staticRuntime
 activate lolaClass
 lolaClass -> staticRuntime : GetBindingRuntime(BindingType::LoLa)
 activate staticRuntime
-staticRuntime --> lolaClass : return : impl::IRuntimeBinding*
+staticRuntime --> lolaClass : return : impl::IBindingRuntime*
 deactivate staticRuntime
 
-lolaClass -> lolaClass : dynamic_cast<impl::lola::Runtime*>(impl::IRuntimeBinding*)
+lolaClass -> lolaClass : dynamic_cast<impl::lola::Runtime*>(impl::IBindingRuntime*)
 
 lolaClass -> lolaRuntime : GetLoLaMessaging()
 activate lolaRuntime

@@ -94,11 +94,11 @@ class "std::hash<TracePointKey>" {
 abstract class "mw::com::impl::IRuntime" {
   {abstract} +resolve(const InstanceSpecifier&) : std::vector<InstanceIdentifier>
   {abstract} +GetTracingFilterConfig() : const ITracingFilterConfig*
-  {abstract} +getBindingRuntime(BindingType binding) : IRuntimeBinding*
+  {abstract} +getBindingRuntime(BindingType binding) : IBindingRuntime*
 }
 
 class "mw::com::impl::Runtime" {
-  -runtime_bindings_ : std:unordered_map<BindingType, std::unique_ptr<IRuntimeBinding>>
+  -binding_runtimes_ : std:unordered_map<BindingType, std::unique_ptr<IBindingRuntime>>
   {static} +Initialize() : void
   {static} +Initialize(int argc, score::StringLiteral argv) : void
   {static} +Initialize(std::string const&) : void
@@ -106,7 +106,7 @@ class "mw::com::impl::Runtime" {
   +Runtime(Configuration&& config)
   +resolve(const InstanceSpecifier&) : std::vector<InstanceIdentifier>
   +GetTracingFilterConfig() : const ITracingFilterConfig*
-  +getBindingRuntime(BindingType binding) : IRuntimeBinding*
+  +getBindingRuntime(BindingType binding) : IBindingRuntime*
   ..
   <u>Note:</u>
   Runtime is not copyable.

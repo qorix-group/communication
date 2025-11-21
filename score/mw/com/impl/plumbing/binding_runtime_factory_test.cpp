@@ -10,7 +10,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#include "score/mw/com/impl/plumbing/runtime_binding_factory.h"
+#include "score/mw/com/impl/plumbing/binding_runtime_factory.h"
 #include "score/mw/com/impl/configuration/config_parser.h"
 #include "score/mw/com/impl/configuration/configuration.h"
 #include "score/mw/com/impl/configuration/global_configuration.h"
@@ -48,10 +48,10 @@ ConfigurationStore kConfigStoreQm2{
     LolaServiceInstanceId{2U},
 };
 
-class RuntimeBindingFactoryFixture : public ::testing::Test
+class BindingRuntimeFactoryFixture : public ::testing::Test
 {
   public:
-    RuntimeBindingFactoryFixture& WithAConfigurationContainingOneLolaBinding()
+    BindingRuntimeFactoryFixture& WithAConfigurationContainingOneLolaBinding()
     {
         Configuration::ServiceTypeDeployments service_type_deployments{
             {kConfigStoreQm1.service_identifier_, *kConfigStoreQm1.service_type_deployment_},
@@ -66,7 +66,7 @@ class RuntimeBindingFactoryFixture : public ::testing::Test
         return *this;
     }
 
-    RuntimeBindingFactoryFixture& WithAConfigurationContainingTwoLolaBindings()
+    BindingRuntimeFactoryFixture& WithAConfigurationContainingTwoLolaBindings()
     {
         Configuration::ServiceTypeDeployments service_type_deployments{
             {kConfigStoreQm1.service_identifier_, *kConfigStoreQm1.service_type_deployment_},
@@ -83,7 +83,7 @@ class RuntimeBindingFactoryFixture : public ::testing::Test
         return *this;
     }
 
-    RuntimeBindingFactoryFixture& WithAConfigurationContainingOneBlankBinding()
+    BindingRuntimeFactoryFixture& WithAConfigurationContainingOneBlankBinding()
     {
         const auto instance_identifier = dummy_instance_identifier_builder_.CreateBlankBindingInstanceIdentifier();
         Configuration::ServiceTypeDeployments service_type_deployments{
@@ -106,13 +106,13 @@ class RuntimeBindingFactoryFixture : public ::testing::Test
     DummyInstanceIdentifierBuilder dummy_instance_identifier_builder_{};
 };
 
-TEST_F(RuntimeBindingFactoryFixture, CanCreateLolaBinding)
+TEST_F(BindingRuntimeFactoryFixture, CanCreateLolaBinding)
 {
     // Given a configuration containing a single lola binding
     WithAConfigurationContainingOneLolaBinding();
 
     // When calling CreateBindingRuntimes
-    auto runtimes = RuntimeBindingFactory::CreateBindingRuntimes(*configuration_, long_running_threads_, {});
+    auto runtimes = BindingRuntimeFactory::CreateBindingRuntimes(*configuration_, long_running_threads_, {});
 
     // Then a single lola runtime binding will be created
     EXPECT_EQ(runtimes.size(), 1);
@@ -120,13 +120,13 @@ TEST_F(RuntimeBindingFactoryFixture, CanCreateLolaBinding)
     EXPECT_EQ(lola_runtime->GetBindingType(), BindingType::kLoLa);
 }
 
-TEST_F(RuntimeBindingFactoryFixture, WillOnlyCreateABindingRuntimeFromTheFirstLolaConfigurationThatIsFound)
+TEST_F(BindingRuntimeFactoryFixture, WillOnlyCreateABindingRuntimeFromTheFirstLolaConfigurationThatIsFound)
 {
     // Given a configuration containing a single lola binding
     WithAConfigurationContainingTwoLolaBindings();
 
     // When calling CreateBindingRuntimes
-    auto runtimes = RuntimeBindingFactory::CreateBindingRuntimes(*configuration_, long_running_threads_, {});
+    auto runtimes = BindingRuntimeFactory::CreateBindingRuntimes(*configuration_, long_running_threads_, {});
 
     // Then a single lola runtime binding will be created
     EXPECT_EQ(runtimes.size(), 1);
@@ -134,13 +134,13 @@ TEST_F(RuntimeBindingFactoryFixture, WillOnlyCreateABindingRuntimeFromTheFirstLo
     EXPECT_EQ(lola_runtime->GetBindingType(), BindingType::kLoLa);
 }
 
-TEST_F(RuntimeBindingFactoryFixture, CannotCreateBlankBinding)
+TEST_F(BindingRuntimeFactoryFixture, CannotCreateBlankBinding)
 {
     // Given a configuration containing a single blank binding
     WithAConfigurationContainingOneBlankBinding();
 
     // When calling CreateBindingRuntimes
-    auto runtimes = RuntimeBindingFactory::CreateBindingRuntimes(*configuration_, long_running_threads_, {});
+    auto runtimes = BindingRuntimeFactory::CreateBindingRuntimes(*configuration_, long_running_threads_, {});
 
     // Then no runtime binding will be created
     EXPECT_TRUE(runtimes.empty());

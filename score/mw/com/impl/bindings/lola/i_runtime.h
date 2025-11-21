@@ -17,7 +17,7 @@
 #include "score/mw/com/impl/bindings/lola/rollback_synchronization.h"
 #include "score/mw/com/impl/configuration/global_configuration.h"
 #include "score/mw/com/impl/configuration/shm_size_calc_mode.h"
-#include "score/mw/com/impl/i_runtime_binding.h"
+#include "score/mw/com/impl/i_binding_runtime.h"
 
 #include <cstdint>
 
@@ -25,7 +25,7 @@ namespace score::mw::com::impl::lola
 {
 
 /// \brief LoLa binding specific runtime interface
-class IRuntime : public impl::IRuntimeBinding
+class IRuntime : public impl::IBindingRuntime
 {
   public:
     IRuntime() noexcept = default;

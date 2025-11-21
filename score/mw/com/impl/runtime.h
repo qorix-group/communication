@@ -107,7 +107,7 @@ class Runtime final : public IRuntime
 
     /// \brief see IRuntime::GetBindingRuntime
     // coverity[autosar_cpp14_a10_3_1_violation]
-    IRuntimeBinding* GetBindingRuntime(const BindingType binding) const noexcept override final;
+    IBindingRuntime* GetBindingRuntime(const BindingType binding) const noexcept override final;
 
     // coverity[autosar_cpp14_a10_3_1_violation]
     IServiceDiscovery& GetServiceDiscovery() noexcept override final;
@@ -153,8 +153,8 @@ class Runtime final : public IRuntime
     /// successfully parsed.
     score::cpp::optional<tracing::TracingFilterConfig> tracing_filter_configuration_;
 
-    /// \brief binding specific runtimes (runtime extensions).
-    std::unordered_map<BindingType, std::unique_ptr<IRuntimeBinding>> runtime_bindings_;
+    /// \brief Runtimes for specific bindings (e.g. LoLa, SomeIP etc.)
+    std::unordered_map<BindingType, std::unique_ptr<IBindingRuntime>> binding_runtimes_;
 
     /// \brief Tracing Runtime which encapsulates all calls to GenericTraceLibrary.
     ///        This pointer will only be set to a value when a tracing_filter_configuration_ is set.

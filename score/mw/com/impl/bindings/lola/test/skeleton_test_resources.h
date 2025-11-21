@@ -29,7 +29,7 @@
 #include "score/mw/com/impl/configuration/service_identifier_type.h"
 #include "score/mw/com/impl/configuration/service_instance_deployment.h"
 #include "score/mw/com/impl/configuration/service_type_deployment.h"
-#include "score/mw/com/impl/i_runtime_binding.h"
+#include "score/mw/com/impl/i_binding_runtime.h"
 #include "score/mw/com/impl/instance_identifier.h"
 #include "score/mw/com/impl/runtime.h"
 #include "score/mw/com/impl/runtime_mock.h"

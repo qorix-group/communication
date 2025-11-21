@@ -631,12 +631,12 @@ cc_library(
 cc_library(
     name = "runtime_interfaces",
     srcs = [
+        "i_binding_runtime.cpp",
         "i_runtime.cpp",
-        "i_runtime_binding.cpp",
     ],
     hdrs = [
+        "i_binding_runtime.h",
         "i_runtime.h",
-        "i_runtime_binding.h",
     ],
     features = COMPILER_WARNING_FEATURES,
     tags = ["FFI"],

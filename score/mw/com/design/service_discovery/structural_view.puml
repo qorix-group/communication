@@ -6,7 +6,7 @@ interface "mw::com::impl::IRuntime" as IRuntime {
   --
   + {abstract} resolve(const InstanceSpecifier&) : std::vector<InstanceIdentifier>
   + {abstract} GetServiceDiscovery(): ServiceDiscovery&
-  + {abstract} GetBindingRuntime(BindingType binding): IRuntimeBinding*
+  + {abstract} GetBindingRuntime(BindingType binding): IBindingRuntime*
 }
 
 class "mw::com::impl::ServiceDiscovery" as ServiceDiscovery {
@@ -33,7 +33,7 @@ class "lola::ServiceDiscoveryClient" as ServiceDiscoveryClient {
   - InstanceIdentiferToPath(): filesystem::Path
 }
 
-interface "mw::com::impl::IRuntimeBinding" as IRuntimeBinding {
+interface "mw::com::impl::IBindingRuntime" as IBindingRuntime {
   service_discovery_client_: binding::ServiceDiscoveryClient
   --
   + {abstract} GetServiceDiscoveryClient(): IServiceDiscoveryClient&
@@ -69,10 +69,10 @@ class "os::IONotify" as IONotify {
 IRuntime --> ServiceDiscovery : "create"
 ProxyBase --> IRuntime : "uses: GetServiceDiscovery()"
 IServiceDiscoveryClient <|.. ServiceDiscoveryClient
-IRuntimeBinding --> ServiceDiscoveryClient : "create"
+IBindingRuntime --> ServiceDiscoveryClient : "create"
 ServiceDiscovery --> IServiceDiscoveryClient
 IRuntime <-- ServiceDiscovery : "uses:\nGetBindingRuntime(BindingType) /\nresolve(InstanceSpecifier)"
-IRuntimeBinding <-- ServiceDiscovery : "uses:\nGetServiceDiscoveryClient()"
+IBindingRuntime <-- ServiceDiscovery : "uses:\nGetServiceDiscoveryClient()"
 ServiceDiscoveryClient *-- IONotify
 ProxyBase <|.. DummyProxy
 IServiceDiscovery <|.. ServiceDiscovery

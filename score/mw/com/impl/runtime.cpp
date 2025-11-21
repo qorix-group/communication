@@ -14,7 +14,7 @@
 
 #include "score/mw/com/impl/configuration/config_parser.h"
 #include "score/mw/com/impl/instance_specifier.h"
-#include "score/mw/com/impl/plumbing/runtime_binding_factory.h"
+#include "score/mw/com/impl/plumbing/binding_runtime_factory.h"
 #include "score/mw/com/impl/tracing/configuration/tracing_filter_config_parser.h"
 #include "score/mw/com/impl/tracing/i_tracing_runtime_binding.h"
 
@@ -177,7 +177,7 @@ Runtime::Runtime(std::pair<Configuration&&, score::cpp::optional<TracingFilterCo
       service_discovery_{*this},
       long_running_threads_{}
 {
-    runtime_bindings_ = RuntimeBindingFactory::CreateBindingRuntimes(
+    binding_runtimes_ = BindingRuntimeFactory::CreateBindingRuntimes(
         configuration_, long_running_threads_, tracing_filter_configuration_);
     if (configuration_.GetTracingConfiguration().IsTracingEnabled())
     {
@@ -188,12 +188,12 @@ Runtime::Runtime(std::pair<Configuration&&, score::cpp::optional<TracingFilterCo
             // Ticket-Ticket-184255).
             std::unordered_map<BindingType, tracing::ITracingRuntimeBinding*> tracing_runtime_bindings{};
             // LCOV_EXCL_STOP
-            for (auto& runtime_binding : runtime_bindings_)
+            for (auto& binding_runtime : binding_runtimes_)
             {
-                SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(runtime_binding.second->GetTracingRuntime() != nullptr,
+                SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(binding_runtime.second->GetTracingRuntime() != nullptr,
                                        "Binding specific runtime has no tracing runtime although tracing is enabled!");
-                score::cpp::ignore = tracing_runtime_bindings.emplace(runtime_binding.first,
-                                                               runtime_binding.second->GetTracingRuntime());
+                score::cpp::ignore = tracing_runtime_bindings.emplace(binding_runtime.first,
+                                                               binding_runtime.second->GetTracingRuntime());
             }
             tracing_runtime_ = std::make_unique<tracing::TracingRuntime>(std::move(tracing_runtime_bindings));
         }
@@ -233,10 +233,10 @@ std::vector<InstanceIdentifier> Runtime::resolve(const InstanceSpecifier& specif
     return result;
 }
 
-auto Runtime::GetBindingRuntime(const BindingType binding) const noexcept -> IRuntimeBinding*
+auto Runtime::GetBindingRuntime(const BindingType binding) const noexcept -> IBindingRuntime*
 {
-    auto search = runtime_bindings_.find(binding);
-    if (search != runtime_bindings_.cend())
+    auto search = binding_runtimes_.find(binding);
+    if (search != binding_runtimes_.cend())
     {
         return search->second.get();
     }

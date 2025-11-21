@@ -173,14 +173,14 @@ analysis::tracing::AraComMetaInfo CreateMetaInfo(
     const ServiceElementInstanceIdentifierView& service_element_instance_identifier,
     const TracingRuntime::TracePointType& trace_point_type,
     const score::cpp::optional<TracingRuntime::TracePointDataId> trace_point_data_id,
-    const ITracingRuntimeBinding& runtime_binding) noexcept
+    const ITracingRuntimeBinding& binding_runtime) noexcept
 {
     const analysis::tracing::TracePointType ext_trace_point_type = InternalToExternalTracePointType(trace_point_type);
     analysis::tracing::AraComMetaInfo result{analysis::tracing::AraComProperties(
         ext_trace_point_type,
-        runtime_binding.ConvertToTracingServiceInstanceElement(service_element_instance_identifier),
+        binding_runtime.ConvertToTracingServiceInstanceElement(service_element_instance_identifier),
         trace_point_data_id)};
-    if (runtime_binding.GetDataLossFlag())
+    if (binding_runtime.GetDataLossFlag())
     {
         result.SetDataLossBit();
     }
@@ -246,8 +246,8 @@ bool TracingRuntime::IsTracingEnabled()
 ServiceElementTracingData TracingRuntime::RegisterServiceElement(const BindingType binding_type,
                                                                  std::uint8_t number_of_ipc_tracing_slots) noexcept
 {
-    auto& runtime_binding = GetTracingRuntimeBinding(binding_type);
-    return runtime_binding.RegisterServiceElement(number_of_ipc_tracing_slots);
+    auto& binding_runtime = GetTracingRuntimeBinding(binding_type);
+    return binding_runtime.RegisterServiceElement(number_of_ipc_tracing_slots);
 }
 
 ResultBlank TracingRuntime::ProcessTraceCallResult(
@@ -341,13 +341,13 @@ void TracingRuntime::RegisterShmObject(
     {
         return;
     }
-    auto& runtime_binding = GetTracingRuntimeBinding(binding_type);
+    auto& binding_runtime = GetTracingRuntimeBinding(binding_type);
     const auto generic_trace_api_shm_handle =
-        analysis::tracing::GenericTraceAPI::RegisterShmObject(runtime_binding.GetTraceClientId(), shm_object_fd);
+        analysis::tracing::GenericTraceAPI::RegisterShmObject(binding_runtime.GetTraceClientId(), shm_object_fd);
 
     if (generic_trace_api_shm_handle.has_value())
     {
-        runtime_binding.RegisterShmObject(
+        binding_runtime.RegisterShmObject(
             service_element_instance_identifier_view, generic_trace_api_shm_handle.value(), shm_memory_start_address);
     }
     else
@@ -378,7 +378,7 @@ void TracingRuntime::RegisterShmObject(
                 << service_element_instance_identifier_view
                 << " failed with recoverable error: " << generic_trace_api_shm_handle.error()
                 << ". Will retry once on next Trace call referring to this ShmObject.";
-            runtime_binding.CacheFileDescriptorForReregisteringShmObject(
+            binding_runtime.CacheFileDescriptorForReregisteringShmObject(
                 service_element_instance_identifier_view, shm_object_fd, shm_memory_start_address);
         }
     }
@@ -399,19 +399,19 @@ void TracingRuntime::UnregisterShmObject(
     {
         return;
     }
-    auto& runtime_binding = GetTracingRuntimeBinding(binding_type);
-    const auto shm_object_handle_result = runtime_binding.GetShmObjectHandle(service_element_instance_identifier_view);
+    auto& binding_runtime = GetTracingRuntimeBinding(binding_type);
+    const auto shm_object_handle_result = binding_runtime.GetShmObjectHandle(service_element_instance_identifier_view);
     if (!shm_object_handle_result.has_value())
     {
         // This shm-object was never successfully registered. Call is ok, since the upper-layer/skeleton doesn't
         // book-keep it. Still clear any eventually cached fd!
-        runtime_binding.ClearCachedFileDescriptorForReregisteringShmObject(service_element_instance_identifier_view);
+        binding_runtime.ClearCachedFileDescriptorForReregisteringShmObject(service_element_instance_identifier_view);
         return;
     }
-    runtime_binding.UnregisterShmObject(service_element_instance_identifier_view);
+    binding_runtime.UnregisterShmObject(service_element_instance_identifier_view);
 
     const auto generic_trace_api_unregister_shm_result = analysis::tracing::GenericTraceAPI::UnregisterShmObject(
-        runtime_binding.GetTraceClientId(), shm_object_handle_result.value());
+        binding_runtime.GetTraceClientId(), shm_object_handle_result.value());
     if (!generic_trace_api_unregister_shm_result.has_value())
     {
         if (IsNonRecoverableError(generic_trace_api_unregister_shm_result.error()))
@@ -445,17 +445,17 @@ void TracingRuntime::UnregisterShmObject(
 // coverity[autosar_cpp14_a15_4_2_violation: FALSE] see justification of autosar_cpp14_a15_5_3_violation for Trace()
 // coverity[autosar_cpp14_a15_5_3_violation: FALSE] see justification of autosar_cpp14_a15_5_3_violation for Trace()
 Result<analysis::tracing::ShmObjectHandle> TracingRuntime::GetRegisteredShmObject(
-    ITracingRuntimeBinding& runtime_binding,
+    ITracingRuntimeBinding& binding_runtime,
     const ServiceElementInstanceIdentifierView service_element_instance_identifier) noexcept
 {
-    auto shm_object_handle = runtime_binding.GetShmObjectHandle(service_element_instance_identifier);
+    auto shm_object_handle = binding_runtime.GetShmObjectHandle(service_element_instance_identifier);
     if (shm_object_handle.has_value())
     {
         return std::move(shm_object_handle.value());
     }
 
     auto cached_file_descriptor =
-        runtime_binding.GetCachedFileDescriptorForReregisteringShmObject(service_element_instance_identifier);
+        binding_runtime.GetCachedFileDescriptorForReregisteringShmObject(service_element_instance_identifier);
 
     if (!cached_file_descriptor.has_value())
     {
@@ -468,7 +468,7 @@ Result<analysis::tracing::ShmObjectHandle> TracingRuntime::GetRegisteredShmObjec
     const memory::shared::ISharedMemoryResource::FileDescriptor shm_object_fd = cached_file_descriptor.value().first;
     void* const shm_memory_start_address = cached_file_descriptor.value().second;
     const auto register_shm_result =
-        analysis::tracing::GenericTraceAPI::RegisterShmObject(runtime_binding.GetTraceClientId(), shm_object_fd);
+        analysis::tracing::GenericTraceAPI::RegisterShmObject(binding_runtime.GetTraceClientId(), shm_object_fd);
     if (!register_shm_result.has_value())
     {
         if (IsTerminalFatalError(register_shm_result.error()))
@@ -479,7 +479,7 @@ Result<analysis::tracing::ShmObjectHandle> TracingRuntime::GetRegisteredShmObjec
             return MakeUnexpected(TraceErrorCode::TraceErrorDisableAllTracePoints);
         }
         // register failed, we won't try any further
-        runtime_binding.ClearCachedFileDescriptorForReregisteringShmObject(service_element_instance_identifier);
+        binding_runtime.ClearCachedFileDescriptorForReregisteringShmObject(service_element_instance_identifier);
         score::mw::log::LogError("lola")
             << "TracingRuntime::Trace: Re-registration of ShmObject for ServiceElementInstanceIdentifier "
             << service_element_instance_identifier
@@ -490,7 +490,7 @@ Result<analysis::tracing::ShmObjectHandle> TracingRuntime::GetRegisteredShmObjec
     }
     shm_object_handle = register_shm_result.value();
     // we re-registered successfully at GenericTraceAPI -> now also register to the binding specific runtime.
-    runtime_binding.RegisterShmObject(
+    binding_runtime.RegisterShmObject(
         service_element_instance_identifier, shm_object_handle.value(), shm_memory_start_address);
 
     return std::move(shm_object_handle.value());
@@ -515,9 +515,9 @@ ResultBlank TracingRuntime::Trace(const BindingType binding_type,
     {
         return MakeUnexpected(TraceErrorCode::TraceErrorDisableAllTracePoints);
     }
-    auto& runtime_binding = GetTracingRuntimeBinding(binding_type);
+    auto& binding_runtime = GetTracingRuntimeBinding(binding_type);
 
-    auto shm_object_handle = GetRegisteredShmObject(runtime_binding, service_element_instance_identifier);
+    auto shm_object_handle = GetRegisteredShmObject(binding_runtime, service_element_instance_identifier);
     if (!shm_object_handle.has_value())
     {
         // Suppress "AUTOSAR C++14 A7-2-1" rule finding. This rule states: "An expression with enum underlying type
@@ -527,13 +527,13 @@ ResultBlank TracingRuntime::Trace(const BindingType binding_type,
         return MakeUnexpected(static_cast<TraceErrorCode>(*shm_object_handle.error()));
     }
 
-    const auto shm_region_start = runtime_binding.GetShmRegionStartAddress(service_element_instance_identifier);
+    const auto shm_region_start = binding_runtime.GetShmRegionStartAddress(service_element_instance_identifier);
     // a valid shm_object_handle ... a shm_region_start should also exist!
     SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(shm_region_start.has_value(),
                            "No shared-memory-region start address for shm-object in tracing runtime binding!");
 
     const auto meta_info =
-        CreateMetaInfo(service_element_instance_identifier, trace_point_type, trace_point_data_id, runtime_binding);
+        CreateMetaInfo(service_element_instance_identifier, trace_point_type, trace_point_data_id, binding_runtime);
 
     // Create ShmChunkList
     analysis::tracing::SharedMemoryLocation root_chunk_memory_location{
@@ -543,7 +543,7 @@ ResultBlank TracingRuntime::Trace(const BindingType binding_type,
     analysis::tracing::ShmDataChunkList chunk_list{root_chunk};
 
     const auto trace_context_id =
-        runtime_binding.EmplaceTypeErasedSamplePtr(std::move(sample_ptr), service_element_tracing_data);
+        binding_runtime.EmplaceTypeErasedSamplePtr(std::move(sample_ptr), service_element_tracing_data);
     if (!trace_context_id.has_value())
     {
         // Handle debounced logging for no available tracing slots
@@ -576,7 +576,7 @@ ResultBlank TracingRuntime::Trace(const BindingType binding_type,
                 << "Range starts at " << service_element_tracing_data.service_element_range_start << ".";
         }
 
-        runtime_binding.SetDataLossFlag(true);
+        binding_runtime.SetDataLossFlag(true);
         return {};
     }
     else
@@ -588,12 +588,12 @@ ResultBlank TracingRuntime::Trace(const BindingType binding_type,
 
     const auto trace_context_id_value = trace_context_id.value();
     const auto trace_result = analysis::tracing::GenericTraceAPI::Trace(
-        runtime_binding.GetTraceClientId(), meta_info, chunk_list, trace_context_id_value);
+        binding_runtime.GetTraceClientId(), meta_info, chunk_list, trace_context_id_value);
     if (!trace_result.has_value())
     {
-        runtime_binding.ClearTypeErasedSamplePtr(trace_context_id_value);
+        binding_runtime.ClearTypeErasedSamplePtr(trace_context_id_value);
     }
-    return ProcessTraceCallResult(service_element_instance_identifier, trace_result, runtime_binding);
+    return ProcessTraceCallResult(service_element_instance_identifier, trace_result, binding_runtime);
 }
 
 ResultBlank TracingRuntime::Trace(const BindingType binding_type,
@@ -607,17 +607,17 @@ ResultBlank TracingRuntime::Trace(const BindingType binding_type,
     {
         return MakeUnexpected(TraceErrorCode::TraceErrorDisableAllTracePoints);
     }
-    auto& runtime_binding = GetTracingRuntimeBinding(binding_type);
+    auto& binding_runtime = GetTracingRuntimeBinding(binding_type);
     const auto meta_info =
-        CreateMetaInfo(service_element_instance_identifier, trace_point_type, trace_point_data_id, runtime_binding);
+        CreateMetaInfo(service_element_instance_identifier, trace_point_type, trace_point_data_id, binding_runtime);
 
     // Create LocalChunkList
     const analysis::tracing::LocalDataChunk root_chunk{local_data_ptr, local_data_size};
     analysis::tracing::LocalDataChunkList chunk_list{root_chunk};
 
     const auto trace_result =
-        analysis::tracing::GenericTraceAPI::Trace(runtime_binding.GetTraceClientId(), meta_info, chunk_list);
-    return ProcessTraceCallResult(service_element_instance_identifier, trace_result, runtime_binding);
+        analysis::tracing::GenericTraceAPI::Trace(binding_runtime.GetTraceClientId(), meta_info, chunk_list);
+    return ProcessTraceCallResult(service_element_instance_identifier, trace_result, binding_runtime);
 }
 
 }  // namespace score::mw::com::impl::tracing

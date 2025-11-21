@@ -1,7 +1,7 @@
 @startuml lola_message_passing_model
 title "Structural View_MessagePassing"
 
-class "mw::com::impl::IRuntimeBinding" {
+class "mw::com::impl::IBindingRuntime" {
   +GetBindingType() : BindingType
 }
 
@@ -203,7 +203,7 @@ class "DisconnectEventMessage" {
 
 ' Relationships
 "mw::com::impl::lola::IRuntime" <|-- "<u>score::com::impl::lola::Runtime</u>"
-"mw::com::impl::IRuntimeBinding" <|-- "mw::com::impl::lola::IRuntime"
+"mw::com::impl::IBindingRuntime" <|-- "mw::com::impl::lola::IRuntime"
 "messaging::IMessagePassingService" ..> "lola::ASILType"
 "<u>score::com::impl::lola::Runtime</u>" *-- "lola::messaging::MessagePassingFacade" : 1
 "lola::messaging::MessagePassingFacade" *-- "MessageReceiveCtrl"

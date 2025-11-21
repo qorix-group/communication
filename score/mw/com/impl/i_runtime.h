@@ -13,7 +13,7 @@
 #ifndef SCORE_MW_COM_IMPL_I_RUNTIME_H
 #define SCORE_MW_COM_IMPL_I_RUNTIME_H
 
-#include "score/mw/com/impl/i_runtime_binding.h"
+#include "score/mw/com/impl/i_binding_runtime.h"
 #include "score/mw/com/impl/i_service_discovery.h"
 #include "score/mw/com/impl/instance_identifier.h"
 #include "score/mw/com/impl/instance_specifier.h"
@@ -42,7 +42,7 @@ class IRuntime
     /// \param binding binding type
     /// \return  Binding specific runtime (needs to be down-casted) or nullptr in case there is no binding runtime for
     ///          the given type (due to configuration settings)
-    virtual IRuntimeBinding* GetBindingRuntime(const BindingType binding) const noexcept = 0;
+    virtual IBindingRuntime* GetBindingRuntime(const BindingType binding) const noexcept = 0;
 
     virtual IServiceDiscovery& GetServiceDiscovery() noexcept = 0;
 

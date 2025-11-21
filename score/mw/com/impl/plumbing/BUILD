@@ -23,8 +23,8 @@ cc_library(
         "//score/mw/com/impl:__subpackages__",
     ],
     deps = [
+        ":binding_runtime_factory",
         ":proxy_binding_factory",
-        ":runtime_binding_factory",
         ":sample_allocatee_ptr",
         ":sample_ptr",
         ":skeleton_binding_factory",
@@ -33,9 +33,9 @@ cc_library(
 )
 
 cc_library(
-    name = "runtime_binding_factory",
-    srcs = ["runtime_binding_factory.cpp"],
-    hdrs = ["runtime_binding_factory.h"],
+    name = "binding_runtime_factory",
+    srcs = ["binding_runtime_factory.cpp"],
+    hdrs = ["binding_runtime_factory.h"],
     features = COMPILER_WARNING_FEATURES,
     tags = ["FFI"],
     visibility = [
@@ -446,10 +446,10 @@ cc_library(
 cc_library(
     name = "runtime",
     srcs = [
-        "runtime_binding_factory.cpp",
+        "binding_runtime_factory.cpp",
     ],
     hdrs = [
-        "runtime_binding_factory.h",
+        "binding_runtime_factory.h",
     ],
     features = COMPILER_WARNING_FEATURES,
     implementation_deps = [
@@ -619,13 +619,13 @@ cc_gtest_unit_test(
 )
 
 cc_gtest_unit_test(
-    name = "runtime_binding_factory_test",
+    name = "binding_runtime_factory_test",
     srcs = [
-        "runtime_binding_factory_test.cpp",
+        "binding_runtime_factory_test.cpp",
     ],
     features = COMPILER_WARNING_FEATURES,
     deps = [
-        ":runtime_binding_factory",
+        ":binding_runtime_factory",
         "//score/mw/com/impl/configuration/test:configuration_store",
         "//score/mw/com/impl/test:dummy_instance_identifier_builder",
     ],
@@ -671,7 +671,7 @@ cc_unit_test_suites_for_host_and_qnx(
         ":proxy_event_binding_factory_test",
         ":proxy_field_binding_factory_test",
         ":proxy_service_element_binding_factory_test",
-        ":runtime_binding_factory_test",
+        ":binding_runtime_factory_test",
         ":skeleton_event_binding_factory_test",
         ":skeleton_field_binding_factory_test",
         ":skeleton_service_element_binding_factory_test",

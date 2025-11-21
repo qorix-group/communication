@@ -10,6 +10,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#include "score/mw/com/impl/i_runtime_binding.h"
+#include "score/mw/com/impl/i_binding_runtime.h"
 
-::score::mw::com::impl::IRuntimeBinding::~IRuntimeBinding() = default;
+::score::mw::com::impl::IBindingRuntime::~IBindingRuntime() = default;

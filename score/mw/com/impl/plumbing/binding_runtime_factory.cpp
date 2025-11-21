@@ -10,7 +10,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#include "score/mw/com/impl/plumbing/runtime_binding_factory.h"
+#include "score/mw/com/impl/plumbing/binding_runtime_factory.h"
 
 #include "score/mw/com/impl/configuration/lola_service_type_deployment.h"
 
@@ -23,13 +23,13 @@
 #include <unordered_map>
 #include <utility>
 
-std::unordered_map<score::mw::com::impl::BindingType, std::unique_ptr<score::mw::com::impl::IRuntimeBinding>>
-score::mw::com::impl::RuntimeBindingFactory::CreateBindingRuntimes(
+std::unordered_map<score::mw::com::impl::BindingType, std::unique_ptr<score::mw::com::impl::IBindingRuntime>>
+score::mw::com::impl::BindingRuntimeFactory::CreateBindingRuntimes(
     Configuration& configuration,
     concurrency::Executor& long_running_threads,
     const score::cpp::optional<tracing::TracingFilterConfig>& tracing_filter_config)
 {
-    std::unordered_map<BindingType, std::unique_ptr<IRuntimeBinding>> result{};
+    std::unordered_map<BindingType, std::unique_ptr<IBindingRuntime>> result{};
 
     // Iterate through all the service types we have to find out, which technical bindings are used.
     for (auto it = configuration.GetServiceTypes().cbegin(); it != configuration.GetServiceTypes().cend(); ++it)
