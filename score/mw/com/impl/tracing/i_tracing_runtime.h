@@ -21,7 +21,7 @@
 #include "score/mw/com/impl/tracing/configuration/service_element_instance_identifier_view.h"
 #include "score/mw/com/impl/tracing/configuration/skeleton_event_trace_point_type.h"
 #include "score/mw/com/impl/tracing/configuration/skeleton_field_trace_point_type.h"
-#include "score/mw/com/impl/tracing/i_tracing_runtime_binding.h"
+#include "score/mw/com/impl/tracing/i_binding_tracing_runtime.h"
 #include "score/mw/com/impl/tracing/service_element_tracing_data.h"
 #include "score/mw/com/impl/tracing/type_erased_sample_ptr.h"
 
@@ -76,7 +76,7 @@ class ITracingRuntime
                               const void* const local_data_ptr,
                               const std::size_t local_data_size) noexcept = 0;
 
-    virtual ITracingRuntimeBinding& GetTracingRuntimeBinding(const BindingType binding_type) const noexcept = 0;
+    virtual IBindingTracingRuntime& GetBindingTracingRuntime(const BindingType binding_type) const noexcept = 0;
 
   protected:
     ITracingRuntime(ITracingRuntime&&) noexcept = default;

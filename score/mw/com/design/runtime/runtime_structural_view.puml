@@ -35,7 +35,7 @@ class "mw::com::impl::RuntimeMock" as RuntimeMock {
 interface "mw::com::impl::IBindingRuntime" as IBindingRuntime {
     +{abstract} GetBindingType() : BindingType
     +{abstract} GetServiceDiscoveryClient() : IServiceDiscoveryClient&
-    +{abstract} GetTracingRuntime() : tracing::ITracingRuntimeBinding*
+    +{abstract} GetTracingRuntime() : tracing::IBindingTracingRuntime*
 }
 
 class "mw::com::impl::BindingRuntimeFactory" as BindingRuntimeFactory << plumbing >> {

@@ -15,7 +15,7 @@
 
 #include "score/mw/com/impl/binding_type.h"
 #include "score/mw/com/impl/i_service_discovery_client.h"
-#include "score/mw/com/impl/tracing/i_tracing_runtime_binding.h"
+#include "score/mw/com/impl/tracing/i_binding_tracing_runtime.h"
 
 #include <cstdint>
 
@@ -40,7 +40,7 @@ class IBindingRuntime
     /// \brief Returns (optional) TracingRuntime of this binding.
     /// \return pointer to binding specific TracingRuntime or nullptr in case there is no TracingRuntime as
     ///         BindingRuntime has been created without tracing support.
-    virtual tracing::ITracingRuntimeBinding* GetTracingRuntime() noexcept = 0;
+    virtual tracing::IBindingTracingRuntime* GetTracingRuntime() noexcept = 0;
 
   protected:
     IBindingRuntime(const IBindingRuntime&) = default;

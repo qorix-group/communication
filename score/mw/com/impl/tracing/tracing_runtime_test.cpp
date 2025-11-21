@@ -62,17 +62,17 @@ class TracingRuntimeFixture : public ::testing::Test
     void SetUp() override
     {
         generic_trace_api_mock_ = std::make_unique<score::analysis::tracing::TraceLibraryMock>();
-        std::unordered_map<BindingType, ITracingRuntimeBinding*> tracing_runtime_binding_map{};
-        tracing_runtime_binding_map.emplace(registered_binding_type_, &tracing_runtime_binding_mock_);
-        EXPECT_CALL(tracing_runtime_binding_mock_, RegisterWithGenericTraceApi()).WillOnce(Return(true));
+        std::unordered_map<BindingType, IBindingTracingRuntime*> binding_tracing_runtime_map{};
+        binding_tracing_runtime_map.emplace(registered_binding_type_, &binding_tracing_runtime_mock_);
+        EXPECT_CALL(binding_tracing_runtime_mock_, RegisterWithGenericTraceApi()).WillOnce(Return(true));
 
-        unit_under_test_ = std::make_unique<TracingRuntime>(std::move(tracing_runtime_binding_map));
+        unit_under_test_ = std::make_unique<TracingRuntime>(std::move(binding_tracing_runtime_map));
         ASSERT_TRUE(unit_under_test_);
         TracingRuntimeAttorney attorney{*unit_under_test_};
         EXPECT_EQ(attorney.GetFailureCounter(), 0U);
         EXPECT_TRUE(unit_under_test_->IsTracingEnabled());
 
-        ON_CALL(tracing_runtime_binding_mock_, GetTraceClientId()).WillByDefault(Return(trace_client_id_));
+        ON_CALL(binding_tracing_runtime_mock_, GetTraceClientId()).WillByDefault(Return(trace_client_id_));
     };
 
     TracingRuntimeFixture& WithARegisteredShmObjectHandle()
@@ -82,13 +82,13 @@ class TracingRuntimeFixture : public ::testing::Test
                                             kShmFileDescriptor,
                                             kShmObjectStartAddress);
 
-        ON_CALL(tracing_runtime_binding_mock_, GetShmObjectHandle(dummy_service_element_instance_identifier_view_))
+        ON_CALL(binding_tracing_runtime_mock_, GetShmObjectHandle(dummy_service_element_instance_identifier_view_))
             .WillByDefault(Return(kGenericTraceApiShmHandle));
         return *this;
     }
 
     std::unique_ptr<TracingRuntime> unit_under_test_{nullptr};
-    mock_binding::TracingRuntime tracing_runtime_binding_mock_{};
+    mock_binding::TracingRuntime binding_tracing_runtime_mock_{};
     std::unique_ptr<score::analysis::tracing::TraceLibraryMock> generic_trace_api_mock_{};
     ServiceElementIdentifierView dummy_service_element_identifier_view_{kDummyServiceTypeName,
                                                                         kDummyElementName,
@@ -102,17 +102,17 @@ class TracingRuntimeFixture : public ::testing::Test
 
 TEST(TracingRuntimeMove, MoveAssign)
 {
-    mock_binding::TracingRuntime tracing_runtime_binding_mock_1;
-    mock_binding::TracingRuntime tracing_runtime_binding_mock_2;
-    mock_binding::TracingRuntime tracing_runtime_binding_mock_3;
-    std::unordered_map<BindingType, ITracingRuntimeBinding*> tracing_runtime_binding_map_1;
-    tracing_runtime_binding_map_1.emplace(BindingType::kLoLa, &tracing_runtime_binding_mock_1);
-    tracing_runtime_binding_map_1.emplace(BindingType::kFake, &tracing_runtime_binding_mock_2);
-    std::unordered_map<BindingType, ITracingRuntimeBinding*> tracing_runtime_binding_map_2;
-    tracing_runtime_binding_map_2.emplace(BindingType::kLoLa, &tracing_runtime_binding_mock_3);
+    mock_binding::TracingRuntime binding_tracing_runtime_mock_1;
+    mock_binding::TracingRuntime binding_tracing_runtime_mock_2;
+    mock_binding::TracingRuntime binding_tracing_runtime_mock_3;
+    std::unordered_map<BindingType, IBindingTracingRuntime*> binding_tracing_runtime_map_1;
+    binding_tracing_runtime_map_1.emplace(BindingType::kLoLa, &binding_tracing_runtime_mock_1);
+    binding_tracing_runtime_map_1.emplace(BindingType::kFake, &binding_tracing_runtime_mock_2);
+    std::unordered_map<BindingType, IBindingTracingRuntime*> binding_tracing_runtime_map_2;
+    binding_tracing_runtime_map_2.emplace(BindingType::kLoLa, &binding_tracing_runtime_mock_3);
 
-    TracingRuntime runtime_1(std::move(tracing_runtime_binding_map_1));
-    TracingRuntime runtime_2(std::move(tracing_runtime_binding_map_2));
+    TracingRuntime runtime_1(std::move(binding_tracing_runtime_map_1));
+    TracingRuntime runtime_2(std::move(binding_tracing_runtime_map_2));
 
     TracingRuntimeAttorney attorney_1{runtime_1};
     TracingRuntimeAttorney attorney_2{runtime_2};
@@ -122,19 +122,19 @@ TEST(TracingRuntimeMove, MoveAssign)
     runtime_1 = std::move(runtime_2);
     EXPECT_FALSE(runtime_1.IsTracingEnabled());
     EXPECT_EQ(attorney_1.GetFailureCounter(), 42);
-    EXPECT_EQ(attorney_1.GetTracingRuntimeBindings().size(), 1);
+    EXPECT_EQ(attorney_1.GetBindingTracingRuntimes().size(), 1);
 }
 
 TEST(TracingRuntimeMove, MoveConstruct)
 {
-    mock_binding::TracingRuntime tracing_runtime_binding_mock_1;
-    mock_binding::TracingRuntime tracing_runtime_binding_mock_2;
+    mock_binding::TracingRuntime binding_tracing_runtime_mock_1;
+    mock_binding::TracingRuntime binding_tracing_runtime_mock_2;
 
-    std::unordered_map<BindingType, ITracingRuntimeBinding*> tracing_runtime_binding_map_1;
-    tracing_runtime_binding_map_1.emplace(BindingType::kLoLa, &tracing_runtime_binding_mock_1);
-    tracing_runtime_binding_map_1.emplace(BindingType::kFake, &tracing_runtime_binding_mock_2);
+    std::unordered_map<BindingType, IBindingTracingRuntime*> binding_tracing_runtime_map_1;
+    binding_tracing_runtime_map_1.emplace(BindingType::kLoLa, &binding_tracing_runtime_mock_1);
+    binding_tracing_runtime_map_1.emplace(BindingType::kFake, &binding_tracing_runtime_mock_2);
 
-    TracingRuntime runtime_1(std::move(tracing_runtime_binding_map_1));
+    TracingRuntime runtime_1(std::move(binding_tracing_runtime_map_1));
     TracingRuntimeAttorney attorney_1{runtime_1};
     attorney_1.SetTracingEnabled(false);
     attorney_1.SetFailureCounter(42);
@@ -184,20 +184,20 @@ TEST(TracingRuntimeDisable, TraceClientRegistrationFails)
     RecordProperty("DerivationTechnique", "Analysis of requirements");
 
     // given two binding specific tracing runtimes
-    mock_binding::TracingRuntime tracing_runtime_binding_mock_1;
-    mock_binding::TracingRuntime tracing_runtime_binding_mock_2;
-    std::unordered_map<BindingType, ITracingRuntimeBinding*> tracing_runtime_binding_map;
-    tracing_runtime_binding_map.emplace(BindingType::kLoLa, &tracing_runtime_binding_mock_1);
-    tracing_runtime_binding_map.emplace(BindingType::kFake, &tracing_runtime_binding_mock_2);
+    mock_binding::TracingRuntime binding_tracing_runtime_mock_1;
+    mock_binding::TracingRuntime binding_tracing_runtime_mock_2;
+    std::unordered_map<BindingType, IBindingTracingRuntime*> binding_tracing_runtime_map;
+    binding_tracing_runtime_map.emplace(BindingType::kLoLa, &binding_tracing_runtime_mock_1);
+    binding_tracing_runtime_map.emplace(BindingType::kFake, &binding_tracing_runtime_mock_2);
 
     // expect, that one of those binding specific tracing runtimes registers successfully with the GenericTraceAPI
-    EXPECT_CALL(tracing_runtime_binding_mock_1, RegisterWithGenericTraceApi()).WillOnce(Return(true));
+    EXPECT_CALL(binding_tracing_runtime_mock_1, RegisterWithGenericTraceApi()).WillOnce(Return(true));
     // expect, that the other of those binding specific tracing runtimes registers NOT successfully with the
     // GenericTraceAPI
-    EXPECT_CALL(tracing_runtime_binding_mock_2, RegisterWithGenericTraceApi()).WillOnce(Return(false));
+    EXPECT_CALL(binding_tracing_runtime_mock_2, RegisterWithGenericTraceApi()).WillOnce(Return(false));
 
     // when the tracing runtime is created with those two binding specific runtimes
-    TracingRuntime runtime(std::move(tracing_runtime_binding_map));
+    TracingRuntime runtime(std::move(binding_tracing_runtime_map));
 
     // then expect, that tracing is globally disabled.
     EXPECT_FALSE(runtime.IsTracingEnabled());
@@ -211,10 +211,10 @@ TEST_F(TracingRuntimeFixture, CanCreateTracingRuntime)
 
 TEST_F(TracingRuntimeFixture, SetDataLossFlag)
 {
-    // given a UuT which delegates to a mock ITracingRuntimeBinding in case of BindingType::kLoLa
+    // given a UuT which delegates to a mock IBindingTracingRuntime in case of BindingType::kLoLa
 
-    // expect, that SetDataLossFlag(true) is called on the ITracingRuntimeBinding
-    EXPECT_CALL(tracing_runtime_binding_mock_, SetDataLossFlag(true)).Times(1);
+    // expect, that SetDataLossFlag(true) is called on the IBindingTracingRuntime
+    EXPECT_CALL(binding_tracing_runtime_mock_, SetDataLossFlag(true)).Times(1);
 
     // when we call SetDataLossFlag(BindingType::kLoLa) on the UuT
     unit_under_test_->SetDataLossFlag(BindingType::kLoLa);
@@ -228,16 +228,16 @@ TEST_F(TracingRuntimeRegisterShmObjectFixture, RegisterShmObjectOK)
     RecordProperty("TestType", "Requirements-based test");
     RecordProperty("DerivationTechnique", "Analysis of requirements");
 
-    // given a UuT which delegates to a mock ITracingRuntimeBinding in case of BindingType::kLoLa
+    // given a UuT which delegates to a mock IBindingTracingRuntime in case of BindingType::kLoLa
 
     // expect, that UuT calls GetTraceClientId() on the binding specific tracing runtime
-    EXPECT_CALL(tracing_runtime_binding_mock_, GetTraceClientId()).WillOnce(Return(trace_client_id_));
+    EXPECT_CALL(binding_tracing_runtime_mock_, GetTraceClientId()).WillOnce(Return(trace_client_id_));
     // and that it calls RegisterShmObject() on the GenericTraceAPI, which returns kGenericTraceApiShmHandle as the
     // translated kShmFileDescriptor
     EXPECT_CALL(*generic_trace_api_mock_.get(), RegisterShmObject(trace_client_id_, kShmFileDescriptor))
         .WillOnce(Return(analysis::tracing::RegisterSharedMemoryObjectResult{kGenericTraceApiShmHandle}));
     // and that UuT calls RegisterShmObject on the binding specific tracing runtime
-    EXPECT_CALL(tracing_runtime_binding_mock_,
+    EXPECT_CALL(binding_tracing_runtime_mock_,
                 RegisterShmObject(
                     dummy_service_element_instance_identifier_view_, kGenericTraceApiShmHandle, kShmObjectStartAddress))
         .Times(1);
@@ -263,10 +263,10 @@ TEST_F(TracingRuntimeRegisterShmObjectFixture, RegisterShmObjectNOK_unrecoverabl
     RecordProperty("TestType", "Requirements-based test");
     RecordProperty("DerivationTechnique", "Analysis of requirements");
 
-    // given a UuT which delegates to a mock ITracingRuntimeBinding in case of BindingType::kLoLa
+    // given a UuT which delegates to a mock IBindingTracingRuntime in case of BindingType::kLoLa
 
     // expect, that UuT calls GetTraceClientId() on the binding specific tracing runtime
-    EXPECT_CALL(tracing_runtime_binding_mock_, GetTraceClientId()).WillOnce(Return(trace_client_id_));
+    EXPECT_CALL(binding_tracing_runtime_mock_, GetTraceClientId()).WillOnce(Return(trace_client_id_));
     // and that it calls RegisterShmObject() on the GenericTraceAPI, which returns an unrecoverable error
     EXPECT_CALL(*generic_trace_api_mock_.get(), RegisterShmObject(trace_client_id_, kShmFileDescriptor))
         .WillOnce(Return(score::MakeUnexpected(analysis::tracing::ErrorCode::kInvalidArgumentFatal)));
@@ -291,10 +291,10 @@ TEST_F(TracingRuntimeRegisterShmObjectFixture, RegisterShmObjectNOK_FatalError)
     RecordProperty("TestType", "Requirements-based test");
     RecordProperty("DerivationTechnique", "Analysis of requirements");
 
-    // given a UuT which delegates to a mock ITracingRuntimeBinding in case of BindingType::kLoLa
+    // given a UuT which delegates to a mock IBindingTracingRuntime in case of BindingType::kLoLa
 
     // expect, that UuT calls GetTraceClientId() on the binding specific tracing runtime
-    EXPECT_CALL(tracing_runtime_binding_mock_, GetTraceClientId()).WillOnce(Return(trace_client_id_));
+    EXPECT_CALL(binding_tracing_runtime_mock_, GetTraceClientId()).WillOnce(Return(trace_client_id_));
     // and that it calls RegisterShmObject() on the GenericTraceAPI, which returns an unrecoverable error
     EXPECT_CALL(*generic_trace_api_mock_.get(), RegisterShmObject(trace_client_id_, kShmFileDescriptor))
         .WillOnce(Return(score::MakeUnexpected(analysis::tracing::ErrorCode::kTerminalFatal)));
@@ -318,15 +318,15 @@ TEST_F(TracingRuntimeRegisterShmObjectFixture, RegisterShmObjectNOK_recoverable)
     RecordProperty("TestType", "Requirements-based test");
     RecordProperty("DerivationTechnique", "Analysis of requirements");
 
-    // given a UuT which delegates to a mock ITracingRuntimeBinding in case of BindingType::kLoLa
+    // given a UuT which delegates to a mock IBindingTracingRuntime in case of BindingType::kLoLa
 
     // expect, that UuT calls GetTraceClientId() on the binding specific tracing runtime
-    EXPECT_CALL(tracing_runtime_binding_mock_, GetTraceClientId()).WillOnce(Return(trace_client_id_));
+    EXPECT_CALL(binding_tracing_runtime_mock_, GetTraceClientId()).WillOnce(Return(trace_client_id_));
     // and that it calls RegisterShmObject() on the GenericTraceAPI, which returns a recoverable error
     EXPECT_CALL(*generic_trace_api_mock_.get(), RegisterShmObject(trace_client_id_, kShmFileDescriptor))
         .WillOnce(Return(score::MakeUnexpected(analysis::tracing::ErrorCode::kMessageSendFailedRecoverable)));
     // and that UuT calls CacheFileDescriptorForReregisteringShmObject() on the binding specific tracing runtime
-    EXPECT_CALL(tracing_runtime_binding_mock_,
+    EXPECT_CALL(binding_tracing_runtime_mock_,
                 CacheFileDescriptorForReregisteringShmObject(
                     dummy_service_element_instance_identifier_view_, kShmFileDescriptor, kShmObjectStartAddress))
         .Times(1);
@@ -342,14 +342,14 @@ TEST_F(TracingRuntimeRegisterShmObjectFixture, RegisterShmObjectNOK_recoverable)
 }
 
 using TracingRuntimeUnregisterShmObjectFixture = TracingRuntimeFixture;
-TEST_F(TracingRuntimeUnregisterShmObjectFixture, UnregisterShmObjectDispatchesToTracingRuntimeBinding)
+TEST_F(TracingRuntimeUnregisterShmObjectFixture, UnregisterShmObjectDispatchesToBindingTracingRuntime)
 {
-    // Given a UuT which delegates to a mock ITracingRuntimeBinding in case of BindingType::kLoLa which has registered a
+    // Given a UuT which delegates to a mock IBindingTracingRuntime in case of BindingType::kLoLa which has registered a
     // shm object
     WithARegisteredShmObjectHandle();
 
     // Expecting that UuT calls UnregisterShmObject on the binding specific tracing runtime
-    EXPECT_CALL(tracing_runtime_binding_mock_, UnregisterShmObject(dummy_service_element_instance_identifier_view_));
+    EXPECT_CALL(binding_tracing_runtime_mock_, UnregisterShmObject(dummy_service_element_instance_identifier_view_));
 
     // When calling UnregisterShmObject on the UuT.
     unit_under_test_->UnregisterShmObject(BindingType::kLoLa, dummy_service_element_instance_identifier_view_);
@@ -357,7 +357,7 @@ TEST_F(TracingRuntimeUnregisterShmObjectFixture, UnregisterShmObjectDispatchesTo
 
 TEST_F(TracingRuntimeUnregisterShmObjectFixture, UnregisterShmObjectDispatchesToGenericTraceApiBinding)
 {
-    // Given a UuT which delegates to a mock ITracingRuntimeBinding in case of BindingType::kLoLa which has registered a
+    // Given a UuT which delegates to a mock IBindingTracingRuntime in case of BindingType::kLoLa which has registered a
     // shm object
     WithARegisteredShmObjectHandle();
 
@@ -370,12 +370,12 @@ TEST_F(TracingRuntimeUnregisterShmObjectFixture, UnregisterShmObjectDispatchesTo
 
 TEST_F(TracingRuntimeUnregisterShmObjectFixture, UnregisterShmObjectDoesNotDispatchToAnyBindingsWhenTracingIsDisabled)
 {
-    // Given a UuT which delegates to a mock ITracingRuntimeBinding in case of BindingType::kLoLa which has tracing
+    // Given a UuT which delegates to a mock IBindingTracingRuntime in case of BindingType::kLoLa which has tracing
     // disabled
     unit_under_test_->DisableTracing();
 
     // Expecting that UuT does not call UnregisterShmObject() on the GenericTraceAPI or binding specific tracing runtime
-    EXPECT_CALL(tracing_runtime_binding_mock_, UnregisterShmObject(dummy_service_element_instance_identifier_view_))
+    EXPECT_CALL(binding_tracing_runtime_mock_, UnregisterShmObject(dummy_service_element_instance_identifier_view_))
         .Times(0);
     EXPECT_CALL(*generic_trace_api_mock_.get(), UnregisterShmObject(trace_client_id_, kGenericTraceApiShmHandle))
         .Times(0);
@@ -387,7 +387,7 @@ TEST_F(TracingRuntimeUnregisterShmObjectFixture, UnregisterShmObjectDoesNotDispa
 TEST_F(TracingRuntimeUnregisterShmObjectFixture,
        UnregisterShmObjectDisablesTracingWhenBindingReturnsATerminalFatalError)
 {
-    // Given a UuT which delegates to a mock ITracingRuntimeBinding in case of BindingType::kLoLa which has registered a
+    // Given a UuT which delegates to a mock IBindingTracingRuntime in case of BindingType::kLoLa which has registered a
     // shm object
     WithARegisteredShmObjectHandle();
 
@@ -405,7 +405,7 @@ TEST_F(TracingRuntimeUnregisterShmObjectFixture,
 TEST_F(TracingRuntimeUnregisterShmObjectFixture,
        UnregisterShmObjectDoesNotDisableTracingOrIncrementFailureCounterWhenBindingReturnsRecoverableError)
 {
-    // Given a UuT which delegates to a mock ITracingRuntimeBinding in case of BindingType::kLoLa which has registered a
+    // Given a UuT which delegates to a mock IBindingTracingRuntime in case of BindingType::kLoLa which has registered a
     // shm object
     WithARegisteredShmObjectHandle();
 
@@ -425,7 +425,7 @@ TEST_F(TracingRuntimeUnregisterShmObjectFixture,
 TEST_F(TracingRuntimeUnregisterShmObjectFixture,
        UnregisterShmObjectDoesNotDisableTracingOrIncrementFailureCounterWhenBindingReturnsNonRecoverableError)
 {
-    // Given a UuT which delegates to a mock ITracingRuntimeBinding in case of BindingType::kLoLa which has registered a
+    // Given a UuT which delegates to a mock IBindingTracingRuntime in case of BindingType::kLoLa which has registered a
     // shm object
     WithARegisteredShmObjectHandle();
 
@@ -445,15 +445,15 @@ TEST_F(TracingRuntimeUnregisterShmObjectFixture,
 TEST_F(TracingRuntimeUnregisterShmObjectFixture,
        UnregisterShmObjectWillClearCacheFileDescriptorsWhenShmObjectHandleNotFound)
 {
-    // given a UuT which delegates to a mock ITracingRuntimeBinding in case of BindingType::kLoLa
+    // given a UuT which delegates to a mock IBindingTracingRuntime in case of BindingType::kLoLa
 
     // and that UuT calls GetShmObjectHandle on the binding specific tracing runtime, which returns an empty optional
-    ON_CALL(tracing_runtime_binding_mock_, GetShmObjectHandle(dummy_service_element_instance_identifier_view_))
+    ON_CALL(binding_tracing_runtime_mock_, GetShmObjectHandle(dummy_service_element_instance_identifier_view_))
         .WillByDefault(Return(score::cpp::optional<analysis::tracing::ShmObjectHandle>{}));
 
     // Expecting that UuT calls ClearCachedFileDescriptorForReregisteringShmObject on the binding specific tracing
     // runtime
-    EXPECT_CALL(tracing_runtime_binding_mock_,
+    EXPECT_CALL(binding_tracing_runtime_mock_,
                 ClearCachedFileDescriptorForReregisteringShmObject(dummy_service_element_instance_identifier_view_));
 
     // when calling UnregisterShmObject on the UuT.
@@ -463,10 +463,10 @@ TEST_F(TracingRuntimeUnregisterShmObjectFixture,
 TEST_F(TracingRuntimeUnregisterShmObjectFixture,
        UnregisterShmObjectWillNotDisableTracingOrIncrementFailureCounterWhenShmObjectHandleNotFound)
 {
-    // given a UuT which delegates to a mock ITracingRuntimeBinding in case of BindingType::kLoLa
+    // given a UuT which delegates to a mock IBindingTracingRuntime in case of BindingType::kLoLa
 
     // and that UuT calls GetShmObjectHandle on the binding specific tracing runtime, which returns an empty optional
-    ON_CALL(tracing_runtime_binding_mock_, GetShmObjectHandle(dummy_service_element_instance_identifier_view_))
+    ON_CALL(binding_tracing_runtime_mock_, GetShmObjectHandle(dummy_service_element_instance_identifier_view_))
         .WillByDefault(Return(score::cpp::optional<analysis::tracing::ShmObjectHandle>{}));
 
     // when calling UnregisterShmObject on the UuT.
@@ -479,11 +479,11 @@ TEST_F(TracingRuntimeUnregisterShmObjectFixture,
 }
 
 using TracingRuntimeUnregisterShmObjectDeathTest = TracingRuntimeUnregisterShmObjectFixture;
-TEST_F(TracingRuntimeUnregisterShmObjectDeathTest, UnregisterShmObjectTerminatesWhenTracingRuntimeBindingCannotBeFound)
+TEST_F(TracingRuntimeUnregisterShmObjectDeathTest, UnregisterShmObjectTerminatesWhenBindingTracingRuntimeCannotBeFound)
 {
     // Given a TracingRuntime that is constructed without any tracing runtime bindings
-    std::unordered_map<BindingType, ITracingRuntimeBinding*> tracing_runtime_binding_map{};
-    auto unit_under_test = std::make_unique<TracingRuntime>(std::move(tracing_runtime_binding_map));
+    std::unordered_map<BindingType, IBindingTracingRuntime*> binding_tracing_runtime_map{};
+    auto unit_under_test = std::make_unique<TracingRuntime>(std::move(binding_tracing_runtime_map));
 
     // When calling UnregisterShmObject
     // Then the program terminates
@@ -493,12 +493,12 @@ TEST_F(TracingRuntimeUnregisterShmObjectDeathTest, UnregisterShmObjectTerminates
 }
 
 using TracingRuntimeRegisterServiceElementFixture = TracingRuntimeFixture;
-TEST_F(TracingRuntimeRegisterServiceElementFixture, RegisterServiceElementDispatchesToTracingRuntimeBinding)
+TEST_F(TracingRuntimeRegisterServiceElementFixture, RegisterServiceElementDispatchesToBindingTracingRuntime)
 {
     // Given a TracingRuntime
 
     // Expecting that RegisterServiceElement will be called on the tracing runtime binding
-    EXPECT_CALL(tracing_runtime_binding_mock_, RegisterServiceElement(kNumberOfIpcTracingSlots));
+    EXPECT_CALL(binding_tracing_runtime_mock_, RegisterServiceElement(kNumberOfIpcTracingSlots));
 
     // When calling RegisterServiceElement
     score::cpp::ignore = unit_under_test_->RegisterServiceElement(registered_binding_type_, kNumberOfIpcTracingSlots);
@@ -509,7 +509,7 @@ TEST_F(TracingRuntimeRegisterServiceElementFixture,
 {
     // Given a TracingRuntime
     // and that RegisterServiceElement will be called on the tracing runtime binding
-    ON_CALL(tracing_runtime_binding_mock_, RegisterServiceElement(_)).WillByDefault(Return(kServiceElementTracingData));
+    ON_CALL(binding_tracing_runtime_mock_, RegisterServiceElement(_)).WillByDefault(Return(kServiceElementTracingData));
 
     // When calling RegisterServiceElement
     const auto actual_service_element_tracing_data =
@@ -521,11 +521,11 @@ TEST_F(TracingRuntimeRegisterServiceElementFixture,
 
 using TracingRuntimeRegisterServiceElementDeathTest = TracingRuntimeRegisterServiceElementFixture;
 TEST_F(TracingRuntimeRegisterServiceElementDeathTest,
-       RegisterServiceElementTerminatesWhenTracingRuntimeBindingCannotBeFound)
+       RegisterServiceElementTerminatesWhenBindingTracingRuntimeCannotBeFound)
 {
     // Given a TracingRuntime that is constructed without any tracing runtime bindings
-    std::unordered_map<BindingType, ITracingRuntimeBinding*> tracing_runtime_binding_map{};
-    auto unit_under_test = std::make_unique<TracingRuntime>(std::move(tracing_runtime_binding_map));
+    std::unordered_map<BindingType, IBindingTracingRuntime*> binding_tracing_runtime_map{};
+    auto unit_under_test = std::make_unique<TracingRuntime>(std::move(binding_tracing_runtime_map));
 
     // When calling RegisterServiceElement
     // Then the program terminates

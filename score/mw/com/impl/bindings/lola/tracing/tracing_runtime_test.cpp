@@ -404,7 +404,7 @@ TEST_F(TracingRuntimeTypeErasedSamplePtrFixture, ServiceElementTracingIsActiveAf
 
     // Then the service element is initially inactive
     EXPECT_FALSE(
-        tracing_runtime_.IsTracingSlotUsed(static_cast<impl::tracing::ITracingRuntimeBinding::TraceContextId>(0U)));
+        tracing_runtime_.IsTracingSlotUsed(static_cast<impl::tracing::IBindingTracingRuntime::TraceContextId>(0U)));
 
     // and when setting the type erased sample ptr
     const auto completed_service_context_id =

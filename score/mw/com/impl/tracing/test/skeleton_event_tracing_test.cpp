@@ -51,7 +51,7 @@ using SkeletonEventTracingData = tracing::SkeletonEventTracingData;
 
 using TestSampleType = std::uint8_t;
 
-const tracing::ITracingRuntimeBinding::TraceContextId kTraceContextId{0U};
+const tracing::IBindingTracingRuntime::TraceContextId kTraceContextId{0U};
 
 const auto kEventName{"Event1"};
 

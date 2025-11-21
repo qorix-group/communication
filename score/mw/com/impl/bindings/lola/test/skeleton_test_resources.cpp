@@ -142,8 +142,8 @@ SkeletonMockedMemoryFixture::SkeletonMockedMemoryFixture()
     ON_CALL(*data_shared_memory_resource_mock_, IsShmInTypedMemory()).WillByDefault(::testing::Return(false));
 
     ON_CALL(runtime_mock_, GetTracingRuntime()).WillByDefault(Return(&tracing_runtime_mock_));
-    ON_CALL(tracing_runtime_mock_, GetTracingRuntimeBinding(BindingType::kLoLa))
-        .WillByDefault(ReturnRef(tracing_runtime_binding_mock_));
+    ON_CALL(tracing_runtime_mock_, GetBindingTracingRuntime(BindingType::kLoLa))
+        .WillByDefault(ReturnRef(binding_tracing_runtime_mock_));
 }
 
 SkeletonMockedMemoryFixture::~SkeletonMockedMemoryFixture()

@@ -715,7 +715,7 @@ cc_library(
     deps = [
         "//score/mw/com/impl:binding_type",
         "//score/mw/com/impl:runtime",
-        "//score/mw/com/impl/tracing:i_tracing_runtime_binding",
+        "//score/mw/com/impl/tracing:i_binding_tracing_runtime",
     ],
 )
 

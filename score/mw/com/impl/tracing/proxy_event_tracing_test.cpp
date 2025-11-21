@@ -137,7 +137,7 @@ INSTANTIATE_TEST_SUITE_P(ProxyEventCreateTracingGetNewSamplesCallbackFixture,
                          ProxyEventCreateTracingGetNewSamplesCallbackFixture,
                          ::testing::Values(ServiceElementType::EVENT, ServiceElementType::FIELD));
 
-TEST_P(ProxyEventTraceSubscribeFixture, TraceSubscribeWillDispatchToTracingRuntimeBinding)
+TEST_P(ProxyEventTraceSubscribeFixture, TraceSubscribeWillDispatchToBindingTracingRuntime)
 {
     const std::size_t max_sample_count{1U};
 
@@ -151,7 +151,7 @@ TEST_P(ProxyEventTraceSubscribeFixture, TraceSubscribeWillDispatchToTracingRunti
     TraceSubscribe(proxy_event_tracing_data_, proxy_event_binding_base_, max_sample_count);
 }
 
-TEST_P(ProxyEventTraceSubscribeFixture, TraceSubscribeWillNotDispatchToTracingRuntimeBindingIfTracingDisabled)
+TEST_P(ProxyEventTraceSubscribeFixture, TraceSubscribeWillNotDispatchToBindingTracingRuntimeIfTracingDisabled)
 {
     const std::size_t max_sample_count{1U};
 
@@ -166,7 +166,7 @@ TEST_P(ProxyEventTraceSubscribeFixture, TraceSubscribeWillNotDispatchToTracingRu
 }
 
 TEST_P(ProxyEventTraceSubscribeFixture,
-       TraceSubscribeWillDisableTracePointIfDisableInstanceErrorReturnedFromTracingRuntimeBinding)
+       TraceSubscribeWillDisableTracePointIfDisableInstanceErrorReturnedFromBindingTracingRuntime)
 {
     const std::size_t max_sample_count{1U};
 
@@ -186,7 +186,7 @@ TEST_P(ProxyEventTraceSubscribeFixture,
 }
 
 TEST_P(ProxyEventTraceSubscribeFixture,
-       TraceSubscribeWillDisableTracePointIfDisableAllTracePointsErrorReturnedFromTracingRuntimeBinding)
+       TraceSubscribeWillDisableTracePointIfDisableAllTracePointsErrorReturnedFromBindingTracingRuntime)
 {
     const std::size_t max_sample_count{1U};
 
@@ -204,7 +204,7 @@ TEST_P(ProxyEventTraceSubscribeFixture,
     EXPECT_TRUE(AreAllTracePointsDisabled(proxy_event_tracing_data_));
 }
 
-TEST_P(ProxyEventTraceSubscribeFixture, TraceSubscribeWillIgnoreUnknownErrorFromTracingRuntimeBinding)
+TEST_P(ProxyEventTraceSubscribeFixture, TraceSubscribeWillIgnoreUnknownErrorFromBindingTracingRuntime)
 {
     const std::size_t max_sample_count{1U};
 
@@ -236,7 +236,7 @@ TEST_F(ProxyEventTraceSubscribeDeathTest, TraceSubscribeWithInvalidTraceServiceE
 }
 
 using ProxyEventTraceUnsubscribeFixture = ProxyEventTracingFixture;
-TEST_P(ProxyEventTraceUnsubscribeFixture, TraceUnsubscribeWillDispatchToTracingRuntimeBinding)
+TEST_P(ProxyEventTraceUnsubscribeFixture, TraceUnsubscribeWillDispatchToBindingTracingRuntime)
 {
     // Given a ProxyEventTracingData with all trace points enabled
     WithAValidProxyEventTracingData().WithAllTracePointsEnabled();
@@ -248,7 +248,7 @@ TEST_P(ProxyEventTraceUnsubscribeFixture, TraceUnsubscribeWillDispatchToTracingR
     TraceUnsubscribe(proxy_event_tracing_data_, proxy_event_binding_base_);
 }
 
-TEST_P(ProxyEventTraceUnsubscribeFixture, TraceSubscribeWillNotDispatchToTracingRuntimeBindingIfTracingDisabled)
+TEST_P(ProxyEventTraceUnsubscribeFixture, TraceSubscribeWillNotDispatchToBindingTracingRuntimeIfTracingDisabled)
 {
     // Given a ProxyEventTracingData with all trace points disabled
     WithAValidProxyEventTracingData();
@@ -261,7 +261,7 @@ TEST_P(ProxyEventTraceUnsubscribeFixture, TraceSubscribeWillNotDispatchToTracing
 }
 
 TEST_P(ProxyEventTraceUnsubscribeFixture,
-       TraceUnsubscribeWillDisableTracePointIfDisableInstanceErrorReturnedFromTracingRuntimeBinding)
+       TraceUnsubscribeWillDisableTracePointIfDisableInstanceErrorReturnedFromBindingTracingRuntime)
 {
     // Given a ProxyEventTracingData with all trace points enabled
     WithAValidProxyEventTracingData().WithAllTracePointsEnabled();
@@ -279,7 +279,7 @@ TEST_P(ProxyEventTraceUnsubscribeFixture,
 }
 
 TEST_P(ProxyEventTraceUnsubscribeFixture,
-       TraceUnsubscribeWillDisableTracePointIfDisableAllTracePointsErrorReturnedFromTracingRuntimeBinding)
+       TraceUnsubscribeWillDisableTracePointIfDisableAllTracePointsErrorReturnedFromBindingTracingRuntime)
 {
     // Given a ProxyEventTracingData with all trace points enabled
     WithAValidProxyEventTracingData().WithAllTracePointsEnabled();
@@ -295,7 +295,7 @@ TEST_P(ProxyEventTraceUnsubscribeFixture,
     EXPECT_TRUE(AreAllTracePointsDisabled(proxy_event_tracing_data_));
 }
 
-TEST_P(ProxyEventTraceUnsubscribeFixture, TraceUnsubscribeWillIgnoreUnknownErrorFromTracingRuntimeBinding)
+TEST_P(ProxyEventTraceUnsubscribeFixture, TraceUnsubscribeWillIgnoreUnknownErrorFromBindingTracingRuntime)
 {
     // Given a ProxyEventTracingData with all trace points enabled
     WithAValidProxyEventTracingData().WithAllTracePointsEnabled();
@@ -323,7 +323,7 @@ TEST_F(ProxyEventTraceUnsubscribeDeathTest, TraceUnsubscribeWithInvalidTraceServ
 }
 
 using ProxyEventTraceSetReceiveHandlerFixture = ProxyEventTracingFixture;
-TEST_P(ProxyEventTraceSetReceiveHandlerFixture, TraceSetReceiveHandlerWillDispatchToTracingRuntimeBinding)
+TEST_P(ProxyEventTraceSetReceiveHandlerFixture, TraceSetReceiveHandlerWillDispatchToBindingTracingRuntime)
 {
     // Given a ProxyEventTracingData with all trace points enabled
     WithAValidProxyEventTracingData().WithAllTracePointsEnabled();
@@ -335,7 +335,7 @@ TEST_P(ProxyEventTraceSetReceiveHandlerFixture, TraceSetReceiveHandlerWillDispat
     TraceSetReceiveHandler(proxy_event_tracing_data_, proxy_event_binding_base_);
 }
 
-TEST_P(ProxyEventTraceSetReceiveHandlerFixture, TraceSubscribeWillNotDispatchToTracingRuntimeBindingIfTracingDisabled)
+TEST_P(ProxyEventTraceSetReceiveHandlerFixture, TraceSubscribeWillNotDispatchToBindingTracingRuntimeIfTracingDisabled)
 {
     // Given a ProxyEventTracingData with all trace points disabled
     WithAValidProxyEventTracingData();
@@ -348,7 +348,7 @@ TEST_P(ProxyEventTraceSetReceiveHandlerFixture, TraceSubscribeWillNotDispatchToT
 }
 
 TEST_P(ProxyEventTraceSetReceiveHandlerFixture,
-       TraceSetReceiveHandlerWillDisableTracePointIfDisableInstanceErrorReturnedFromTracingRuntimeBinding)
+       TraceSetReceiveHandlerWillDisableTracePointIfDisableInstanceErrorReturnedFromBindingTracingRuntime)
 {
     // Given a ProxyEventTracingData with all trace points enabled
     WithAValidProxyEventTracingData().WithAllTracePointsEnabled();
@@ -366,7 +366,7 @@ TEST_P(ProxyEventTraceSetReceiveHandlerFixture,
 }
 
 TEST_P(ProxyEventTraceSetReceiveHandlerFixture,
-       TraceSetReceiveHandlerWillDisableTracePointIfDisableAllTracePointsErrorReturnedFromTracingRuntimeBinding)
+       TraceSetReceiveHandlerWillDisableTracePointIfDisableAllTracePointsErrorReturnedFromBindingTracingRuntime)
 {
     // Given a ProxyEventTracingData with all trace points enabled
     WithAValidProxyEventTracingData().WithAllTracePointsEnabled();
@@ -382,7 +382,7 @@ TEST_P(ProxyEventTraceSetReceiveHandlerFixture,
     EXPECT_TRUE(AreAllTracePointsDisabled(proxy_event_tracing_data_));
 }
 
-TEST_P(ProxyEventTraceSetReceiveHandlerFixture, TraceSetReceiveHandlerWillIgnoreUnknownErrorFromTracingRuntimeBinding)
+TEST_P(ProxyEventTraceSetReceiveHandlerFixture, TraceSetReceiveHandlerWillIgnoreUnknownErrorFromBindingTracingRuntime)
 {
     // Given a ProxyEventTracingData with all trace points enabled
     WithAValidProxyEventTracingData().WithAllTracePointsEnabled();
@@ -410,7 +410,7 @@ TEST_F(ProxyEventTraceSetReceiveHandlerDeathTest, TraceSetReceiveHandlerWithInva
 }
 
 using ProxyEventTraceUnsetReceiveHandlerFixture = ProxyEventTracingFixture;
-TEST_P(ProxyEventTraceUnsetReceiveHandlerFixture, TraceUnsetReceiveHandlerWillDispatchToTracingRuntimeBinding)
+TEST_P(ProxyEventTraceUnsetReceiveHandlerFixture, TraceUnsetReceiveHandlerWillDispatchToBindingTracingRuntime)
 {
     // Given a ProxyEventTracingData with all trace points enabled
     WithAValidProxyEventTracingData().WithAllTracePointsEnabled();
@@ -422,7 +422,7 @@ TEST_P(ProxyEventTraceUnsetReceiveHandlerFixture, TraceUnsetReceiveHandlerWillDi
     TraceUnsetReceiveHandler(proxy_event_tracing_data_, proxy_event_binding_base_);
 }
 
-TEST_P(ProxyEventTraceUnsetReceiveHandlerFixture, TraceSubscribeWillNotDispatchToTracingRuntimeBindingIfTracingDisabled)
+TEST_P(ProxyEventTraceUnsetReceiveHandlerFixture, TraceSubscribeWillNotDispatchToBindingTracingRuntimeIfTracingDisabled)
 {
     // Given a ProxyEventTracingData with all trace points disabled
     WithAValidProxyEventTracingData();
@@ -435,7 +435,7 @@ TEST_P(ProxyEventTraceUnsetReceiveHandlerFixture, TraceSubscribeWillNotDispatchT
 }
 
 TEST_P(ProxyEventTraceUnsetReceiveHandlerFixture,
-       TraceUnsetReceiveHandlerWillDisableTracePointIfDisableInstanceErrorReturnedFromTracingRuntimeBinding)
+       TraceUnsetReceiveHandlerWillDisableTracePointIfDisableInstanceErrorReturnedFromBindingTracingRuntime)
 {
     // Given a ProxyEventTracingData with all trace points enabled
     WithAValidProxyEventTracingData().WithAllTracePointsEnabled();
@@ -453,7 +453,7 @@ TEST_P(ProxyEventTraceUnsetReceiveHandlerFixture,
 }
 
 TEST_P(ProxyEventTraceUnsetReceiveHandlerFixture,
-       TraceUnsetReceiveHandlerWillDisableTracePointIfDisableAllTracePointsErrorReturnedFromTracingRuntimeBinding)
+       TraceUnsetReceiveHandlerWillDisableTracePointIfDisableAllTracePointsErrorReturnedFromBindingTracingRuntime)
 {
     // Given a ProxyEventTracingData with all trace points enabled
     WithAValidProxyEventTracingData().WithAllTracePointsEnabled();
@@ -470,7 +470,7 @@ TEST_P(ProxyEventTraceUnsetReceiveHandlerFixture,
 }
 
 TEST_P(ProxyEventTraceUnsetReceiveHandlerFixture,
-       TraceUnsetReceiveHandlerWillIgnoreUnknownErrorFromTracingRuntimeBinding)
+       TraceUnsetReceiveHandlerWillIgnoreUnknownErrorFromBindingTracingRuntime)
 {
     // Given a ProxyEventTracingData with all trace points enabled
     WithAValidProxyEventTracingData().WithAllTracePointsEnabled();
@@ -499,7 +499,7 @@ TEST_F(ProxyEventTraceUnsetReceiveHandlerDeathTest,
 }
 
 using ProxyEventTraceGetNewSamplesFixture = ProxyEventTracingFixture;
-TEST_P(ProxyEventTraceGetNewSamplesFixture, TraceGetNewSamplesWillDispatchToTracingRuntimeBinding)
+TEST_P(ProxyEventTraceGetNewSamplesFixture, TraceGetNewSamplesWillDispatchToBindingTracingRuntime)
 {
     // Given a ProxyEventTracingData with all trace points enabled
     WithAValidProxyEventTracingData().WithAllTracePointsEnabled();
@@ -511,7 +511,7 @@ TEST_P(ProxyEventTraceGetNewSamplesFixture, TraceGetNewSamplesWillDispatchToTrac
     TraceGetNewSamples(proxy_event_tracing_data_, proxy_event_binding_base_);
 }
 
-TEST_P(ProxyEventTraceGetNewSamplesFixture, TraceSubscribeWillNotDispatchToTracingRuntimeBindingIfTracingDisabled)
+TEST_P(ProxyEventTraceGetNewSamplesFixture, TraceSubscribeWillNotDispatchToBindingTracingRuntimeIfTracingDisabled)
 {
     // Given a ProxyEventTracingData with all trace points disabled
     WithAValidProxyEventTracingData();
@@ -524,7 +524,7 @@ TEST_P(ProxyEventTraceGetNewSamplesFixture, TraceSubscribeWillNotDispatchToTraci
 }
 
 TEST_P(ProxyEventTraceGetNewSamplesFixture,
-       TraceGetNewSamplesWillDisableTracePointIfDisableInstanceErrorReturnedFromTracingRuntimeBinding)
+       TraceGetNewSamplesWillDisableTracePointIfDisableInstanceErrorReturnedFromBindingTracingRuntime)
 {
     // Given a ProxyEventTracingData with all trace points enabled
     WithAValidProxyEventTracingData().WithAllTracePointsEnabled();
@@ -542,7 +542,7 @@ TEST_P(ProxyEventTraceGetNewSamplesFixture,
 }
 
 TEST_P(ProxyEventTraceGetNewSamplesFixture,
-       TraceGetNewSamplesWillDisableTracePointIfDisableAllTracePointsErrorReturnedFromTracingRuntimeBinding)
+       TraceGetNewSamplesWillDisableTracePointIfDisableAllTracePointsErrorReturnedFromBindingTracingRuntime)
 {
     // Given a ProxyEventTracingData with all trace points enabled
     WithAValidProxyEventTracingData().WithAllTracePointsEnabled();
@@ -558,7 +558,7 @@ TEST_P(ProxyEventTraceGetNewSamplesFixture,
     EXPECT_TRUE(AreAllTracePointsDisabled(proxy_event_tracing_data_));
 }
 
-TEST_P(ProxyEventTraceGetNewSamplesFixture, TraceGetNewSamplesWillIgnoreUnknownErrorFromTracingRuntimeBinding)
+TEST_P(ProxyEventTraceGetNewSamplesFixture, TraceGetNewSamplesWillIgnoreUnknownErrorFromBindingTracingRuntime)
 {
     // Given a ProxyEventTracingData with all trace points enabled
     WithAValidProxyEventTracingData().WithAllTracePointsEnabled();
@@ -587,7 +587,7 @@ TEST_F(ProxyEventTraceGetNewSamplesDeathTest, TraceGetNewSamplesWithInvalidTrace
 
 using ProxyEventTraceCallGetNewSamplesCallbackFixture = ProxyEventTracingFixture;
 TEST_P(ProxyEventTraceCallGetNewSamplesCallbackFixture,
-       TraceCallGetNewSamplesCallbackWillDispatchToTracingRuntimeBinding)
+       TraceCallGetNewSamplesCallbackWillDispatchToBindingTracingRuntime)
 {
     ITracingRuntime::TracePointDataId trace_point_data_id{10U};
 
@@ -602,7 +602,7 @@ TEST_P(ProxyEventTraceCallGetNewSamplesCallbackFixture,
 }
 
 TEST_P(ProxyEventTraceCallGetNewSamplesCallbackFixture,
-       TraceSubscribeWillNotDispatchToTracingRuntimeBindingIfTracingDisabled)
+       TraceSubscribeWillNotDispatchToBindingTracingRuntimeIfTracingDisabled)
 {
     ITracingRuntime::TracePointDataId trace_point_data_id{10U};
 
@@ -617,7 +617,7 @@ TEST_P(ProxyEventTraceCallGetNewSamplesCallbackFixture,
 }
 
 TEST_P(ProxyEventTraceCallGetNewSamplesCallbackFixture,
-       TraceCallGetNewSamplesCallbackWillDisableTracePointIfDisableInstanceErrorReturnedFromTracingRuntimeBinding)
+       TraceCallGetNewSamplesCallbackWillDisableTracePointIfDisableInstanceErrorReturnedFromBindingTracingRuntime)
 {
     ITracingRuntime::TracePointDataId trace_point_data_id{10U};
 
@@ -637,7 +637,7 @@ TEST_P(ProxyEventTraceCallGetNewSamplesCallbackFixture,
 }
 
 TEST_P(ProxyEventTraceCallGetNewSamplesCallbackFixture,
-       TraceCallGetNewSamplesCallbackWillDisableTracePointIfDisableAllTracePointsErrorReturnedFromTracingRuntimeBinding)
+       TraceCallGetNewSamplesCallbackWillDisableTracePointIfDisableAllTracePointsErrorReturnedFromBindingTracingRuntime)
 {
     ITracingRuntime::TracePointDataId trace_point_data_id{10U};
 
@@ -656,7 +656,7 @@ TEST_P(ProxyEventTraceCallGetNewSamplesCallbackFixture,
 }
 
 TEST_P(ProxyEventTraceCallGetNewSamplesCallbackFixture,
-       TraceCallGetNewSamplesCallbackWillIgnoreUnknownErrorFromTracingRuntimeBinding)
+       TraceCallGetNewSamplesCallbackWillIgnoreUnknownErrorFromBindingTracingRuntime)
 {
     ITracingRuntime::TracePointDataId trace_point_data_id{10U};
 
@@ -691,7 +691,7 @@ TEST_F(ProxyEventTraceCallGetNewSamplesCallbackDeathTest,
 }
 
 using ProxyEventTraceCallReceiveHandlerFixture = ProxyEventTracingFixture;
-TEST_P(ProxyEventTraceCallReceiveHandlerFixture, TraceCallReceiveHandlerWillDispatchToTracingRuntimeBinding)
+TEST_P(ProxyEventTraceCallReceiveHandlerFixture, TraceCallReceiveHandlerWillDispatchToBindingTracingRuntime)
 {
     // Given a ProxyEventTracingData with all trace points enabled
     WithAValidProxyEventTracingData().WithAllTracePointsEnabled();
@@ -703,7 +703,7 @@ TEST_P(ProxyEventTraceCallReceiveHandlerFixture, TraceCallReceiveHandlerWillDisp
     TraceCallReceiveHandler(proxy_event_tracing_data_, proxy_event_binding_base_);
 }
 
-TEST_P(ProxyEventTraceCallReceiveHandlerFixture, TraceSubscribeWillNotDispatchToTracingRuntimeBindingIfTracingDisabled)
+TEST_P(ProxyEventTraceCallReceiveHandlerFixture, TraceSubscribeWillNotDispatchToBindingTracingRuntimeIfTracingDisabled)
 {
     // Given a ProxyEventTracingData with all trace points disabled
     WithAValidProxyEventTracingData();
@@ -716,7 +716,7 @@ TEST_P(ProxyEventTraceCallReceiveHandlerFixture, TraceSubscribeWillNotDispatchTo
 }
 
 TEST_P(ProxyEventTraceCallReceiveHandlerFixture,
-       TraceCallReceiveHandlerWillDisableTracePointIfDisableInstanceErrorReturnedFromTracingRuntimeBinding)
+       TraceCallReceiveHandlerWillDisableTracePointIfDisableInstanceErrorReturnedFromBindingTracingRuntime)
 {
     // Given a ProxyEventTracingData with all trace points enabled
     WithAValidProxyEventTracingData().WithAllTracePointsEnabled();
@@ -734,7 +734,7 @@ TEST_P(ProxyEventTraceCallReceiveHandlerFixture,
 }
 
 TEST_P(ProxyEventTraceCallReceiveHandlerFixture,
-       TraceCallReceiveHandlerWillDisableTracePointIfDisableAllTracePointsErrorReturnedFromTracingRuntimeBinding)
+       TraceCallReceiveHandlerWillDisableTracePointIfDisableAllTracePointsErrorReturnedFromBindingTracingRuntime)
 {
     // Given a ProxyEventTracingData with all trace points enabled
     WithAValidProxyEventTracingData().WithAllTracePointsEnabled();
@@ -750,7 +750,7 @@ TEST_P(ProxyEventTraceCallReceiveHandlerFixture,
     EXPECT_TRUE(AreAllTracePointsDisabled(proxy_event_tracing_data_));
 }
 
-TEST_P(ProxyEventTraceCallReceiveHandlerFixture, TraceCallReceiveHandlerWillIgnoreUnknownErrorFromTracingRuntimeBinding)
+TEST_P(ProxyEventTraceCallReceiveHandlerFixture, TraceCallReceiveHandlerWillIgnoreUnknownErrorFromBindingTracingRuntime)
 {
     // Given a ProxyEventTracingData with all trace points enabled
     WithAValidProxyEventTracingData().WithAllTracePointsEnabled();
@@ -778,7 +778,7 @@ TEST_F(ProxyEventTraceCallReceiveHandlerDeathTest, TraceCallReceiveHandlerWithIn
 }
 
 TEST_P(ProxyEventCreateTracingGetNewSamplesCallbackFixture,
-       GetNewSamplesCallbackWillDispatchToTracingRuntimeBindingWhenNewSamplesCallbackTracePointEnabled)
+       GetNewSamplesCallbackWillDispatchToBindingTracingRuntimeWhenNewSamplesCallbackTracePointEnabled)
 {
     // Given a ProxyEventTracingData with all trace points enabled and a TracingGetNewSamplesCallback
     WithAValidProxyEventTracingData().WithAllTracePointsEnabled();
@@ -795,7 +795,7 @@ TEST_P(ProxyEventCreateTracingGetNewSamplesCallbackFixture,
 }
 
 TEST_P(ProxyEventCreateTracingGetNewSamplesCallbackFixture,
-       GetNewSamplesCallbackWillNotDispatchToTracingRuntimeBindingWhenNewSamplesCallbackTracePointDisabled)
+       GetNewSamplesCallbackWillNotDispatchToBindingTracingRuntimeWhenNewSamplesCallbackTracePointDisabled)
 {
     // Given a ProxyEventTracingData with enable_new_samples_callback disabled and a TracingGetNewSamplesCallback
     WithAValidProxyEventTracingData();

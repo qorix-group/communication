@@ -13,7 +13,7 @@
 #ifndef SCORE_MW_COM_IMPL_TRACING_TRACING_TEST_RESOURCES_H
 #define SCORE_MW_COM_IMPL_TRACING_TRACING_TEST_RESOURCES_H
 
-#include "score/mw/com/impl/tracing/i_tracing_runtime_binding.h"
+#include "score/mw/com/impl/tracing/i_binding_tracing_runtime.h"
 #include "score/mw/com/impl/tracing/tracing_runtime.h"
 
 #include <cstdint>
@@ -41,9 +41,9 @@ class TracingRuntimeAttorney
         tracing_runtime_.atomic_state_.consecutive_failure_counter = counter;
     }
 
-    std::unordered_map<BindingType, ITracingRuntimeBinding*>& GetTracingRuntimeBindings()
+    std::unordered_map<BindingType, IBindingTracingRuntime*>& GetBindingTracingRuntimes()
     {
-        return tracing_runtime_.tracing_runtime_bindings_;
+        return tracing_runtime_.binding_tracing_runtimes_;
     }
 
   private:

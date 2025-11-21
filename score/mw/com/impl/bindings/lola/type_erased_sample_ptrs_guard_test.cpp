@@ -41,13 +41,13 @@ class TypeErasedSamplePtrsGuardFixture : public ::testing::Test
     TypeErasedSamplePtrsGuardFixture()
     {
         ON_CALL(runtime_mock_guard_.runtime_mock_, GetTracingRuntime()).WillByDefault(Return(&tracing_runtime_mock_));
-        ON_CALL(tracing_runtime_mock_, GetTracingRuntimeBinding(BindingType::kLoLa))
-            .WillByDefault(ReturnRef(tracing_runtime_binding_mock_));
+        ON_CALL(tracing_runtime_mock_, GetBindingTracingRuntime(BindingType::kLoLa))
+            .WillByDefault(ReturnRef(binding_tracing_runtime_mock_));
     }
 
     RuntimeMockGuard runtime_mock_guard_{};
     NiceMock<impl::tracing::TracingRuntimeMock> tracing_runtime_mock_{};
-    impl::tracing::mock_binding::TracingRuntime tracing_runtime_binding_mock_{};
+    impl::tracing::mock_binding::TracingRuntime binding_tracing_runtime_mock_{};
 };
 
 TEST_F(TypeErasedSamplePtrsGuardFixture, WillCallClearTypeErasedSamplePtrsOnDestruction)
@@ -56,7 +56,7 @@ TEST_F(TypeErasedSamplePtrsGuardFixture, WillCallClearTypeErasedSamplePtrsOnDest
     TypeErasedSamplePtrsGuard unit{kDummyServiceElementTracingData};
 
     // Expecting ClearTypeErasedSamplePtrs to be called on the TracingRuntime
-    EXPECT_CALL(tracing_runtime_binding_mock_, ClearTypeErasedSamplePtrs(kDummyServiceElementTracingData));
+    EXPECT_CALL(binding_tracing_runtime_mock_, ClearTypeErasedSamplePtrs(kDummyServiceElementTracingData));
 
     // When destroying the TypeErasedSamplePtrsGuard
 }
@@ -70,7 +70,7 @@ TEST_F(TypeErasedSamplePtrsGuardFixture, WillNotCallClearTypeErasedSamplePtrsOnD
     EXPECT_CALL(runtime_mock_guard_.runtime_mock_, GetTracingRuntime()).WillOnce(Return(nullptr));
 
     // Expecting that ClearTypeErasedSamplePtrs won't be called on the TracingRuntime
-    EXPECT_CALL(tracing_runtime_binding_mock_, ClearTypeErasedSamplePtrs(kDummyServiceElementTracingData)).Times(0);
+    EXPECT_CALL(binding_tracing_runtime_mock_, ClearTypeErasedSamplePtrs(kDummyServiceElementTracingData)).Times(0);
 
     // When destroying the TypeErasedSamplePtrsGuard
 }

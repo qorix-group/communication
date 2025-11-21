@@ -16,7 +16,7 @@
 #include "score/mw/com/impl/configuration/configuration.h"
 #include "score/mw/com/impl/service_element_type.h"
 #include "score/mw/com/impl/tracing/configuration/service_element_instance_identifier_view.h"
-#include "score/mw/com/impl/tracing/i_tracing_runtime_binding.h"
+#include "score/mw/com/impl/tracing/i_binding_tracing_runtime.h"
 #include "score/mw/com/impl/tracing/service_element_tracing_data.h"
 
 #include "score/language/safecpp/scoped_function/scope.h"
@@ -35,7 +35,7 @@
 namespace score::mw::com::impl::lola::tracing
 {
 
-class TracingRuntime : public impl::tracing::ITracingRuntimeBinding
+class TracingRuntime : public impl::tracing::IBindingTracingRuntime
 {
     // friend to test class; it's used to check type_erased_sample_ptrs_
     // coverity[autosar_cpp14_a11_3_1_violation]

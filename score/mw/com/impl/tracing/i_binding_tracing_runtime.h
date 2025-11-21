@@ -10,8 +10,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#ifndef SCORE_MW_COM_IMPL_TRACING_I_TRACING_RUNTIME_BINDING_H
-#define SCORE_MW_COM_IMPL_TRACING_I_TRACING_RUNTIME_BINDING_H
+#ifndef SCORE_MW_COM_IMPL_TRACING_I_BINDING_TRACING_RUNTIME_H
+#define SCORE_MW_COM_IMPL_TRACING_I_BINDING_TRACING_RUNTIME_H
 
 #include "score/mw/com/impl/tracing/configuration/service_element_instance_identifier_view.h"
 #include "score/mw/com/impl/tracing/service_element_tracing_data.h"
@@ -28,7 +28,7 @@
 namespace score::mw::com::impl::tracing
 {
 
-class ITracingRuntimeBinding
+class IBindingTracingRuntime
 {
   public:
     using TraceContextId = analysis::tracing::TraceContextId;
@@ -36,9 +36,9 @@ class ITracingRuntimeBinding
     using TracingSlotSizeType = ServiceElementTracingData::TracingSlotSizeType;
     using SamplePointerIndex = ServiceElementTracingData::SamplePointerIndex;
 
-    ITracingRuntimeBinding() noexcept = default;
+    IBindingTracingRuntime() noexcept = default;
 
-    virtual ~ITracingRuntimeBinding() noexcept = default;
+    virtual ~IBindingTracingRuntime() noexcept = default;
 
     /// \brief Registers LoLa service element that will call impl::Runtime::Trace with a ShmDataChunkList with the
     ///        TracingRuntime. Before this service element can be traced, the ServiceElementTracingData has to be
@@ -113,12 +113,12 @@ class ITracingRuntimeBinding
         const impl::tracing::ServiceElementTracingData& service_element_tracing_data) noexcept = 0;
 
   protected:
-    ITracingRuntimeBinding(ITracingRuntimeBinding&&) noexcept = default;
-    ITracingRuntimeBinding& operator=(ITracingRuntimeBinding&&) noexcept = default;
-    ITracingRuntimeBinding(const ITracingRuntimeBinding&) noexcept = default;
-    ITracingRuntimeBinding& operator=(const ITracingRuntimeBinding&) noexcept = default;
+    IBindingTracingRuntime(IBindingTracingRuntime&&) noexcept = default;
+    IBindingTracingRuntime& operator=(IBindingTracingRuntime&&) noexcept = default;
+    IBindingTracingRuntime(const IBindingTracingRuntime&) noexcept = default;
+    IBindingTracingRuntime& operator=(const IBindingTracingRuntime&) noexcept = default;
 };
 
 }  // namespace score::mw::com::impl::tracing
 
-#endif  // SCORE_MW_COM_IMPL_TRACING_I_TRACING_RUNTIME_BINDING_H
+#endif  // SCORE_MW_COM_IMPL_TRACING_I_BINDING_TRACING_RUNTIME_H

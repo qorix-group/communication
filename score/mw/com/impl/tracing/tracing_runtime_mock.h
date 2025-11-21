@@ -53,7 +53,7 @@ class TracingRuntimeMock : public ITracingRuntime
                  const void*,
                  std::size_t),
                 (noexcept, override));
-    MOCK_METHOD(ITracingRuntimeBinding&, GetTracingRuntimeBinding, (BindingType), (const, noexcept, override));
+    MOCK_METHOD(IBindingTracingRuntime&, GetBindingTracingRuntime, (BindingType), (const, noexcept, override));
 };
 
 }  // namespace score::mw::com::impl::tracing

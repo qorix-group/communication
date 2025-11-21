@@ -601,7 +601,7 @@ TEST_F(SkeletonEventTracingPrepareStopOfferFixture, PrepareStopOfferWillCallClea
     expected_enabled_trace_points.service_element_tracing_data.number_of_service_element_tracing_slots = 10U;
 
     // Expecting that ClearTypeErasedSamplePtrs will be called on the TracingRuntime
-    EXPECT_CALL(tracing_runtime_binding_mock_,
+    EXPECT_CALL(binding_tracing_runtime_mock_,
                 ClearTypeErasedSamplePtrs(expected_enabled_trace_points.service_element_tracing_data));
 
     // Given a skeleton event in an offered service

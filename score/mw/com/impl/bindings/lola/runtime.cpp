@@ -101,7 +101,7 @@ bool Runtime::HasAsilBSupport() const noexcept
     return configuration_.GetGlobalConfiguration().GetProcessAsilLevel() == QualityType::kASIL_B;
 }
 
-impl::tracing::ITracingRuntimeBinding* Runtime::GetTracingRuntime() noexcept
+impl::tracing::IBindingTracingRuntime* Runtime::GetTracingRuntime() noexcept
 {
     return tracing_runtime_.get();
 }

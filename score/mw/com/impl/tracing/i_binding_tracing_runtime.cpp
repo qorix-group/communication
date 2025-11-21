@@ -10,4 +10,4 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#include "score/mw/com/impl/tracing/i_tracing_runtime_binding.h"
+#include "score/mw/com/impl/tracing/i_binding_tracing_runtime.h"

@@ -173,7 +173,7 @@ analysis::tracing::AraComMetaInfo CreateMetaInfo(
     const ServiceElementInstanceIdentifierView& service_element_instance_identifier,
     const TracingRuntime::TracePointType& trace_point_type,
     const score::cpp::optional<TracingRuntime::TracePointDataId> trace_point_data_id,
-    const ITracingRuntimeBinding& binding_runtime) noexcept
+    const IBindingTracingRuntime& binding_runtime) noexcept
 {
     const analysis::tracing::TracePointType ext_trace_point_type = InternalToExternalTracePointType(trace_point_type);
     analysis::tracing::AraComMetaInfo result{analysis::tracing::AraComProperties(
@@ -246,18 +246,18 @@ bool TracingRuntime::IsTracingEnabled()
 ServiceElementTracingData TracingRuntime::RegisterServiceElement(const BindingType binding_type,
                                                                  std::uint8_t number_of_ipc_tracing_slots) noexcept
 {
-    auto& binding_runtime = GetTracingRuntimeBinding(binding_type);
+    auto& binding_runtime = GetBindingTracingRuntime(binding_type);
     return binding_runtime.RegisterServiceElement(number_of_ipc_tracing_slots);
 }
 
 ResultBlank TracingRuntime::ProcessTraceCallResult(
     const ServiceElementInstanceIdentifierView& service_element_instance_identifier,
     const analysis::tracing::TraceResult& trace_call_result,
-    ITracingRuntimeBinding& tracing_runtime_binding) noexcept
+    IBindingTracingRuntime& binding_tracing_runtime) noexcept
 {
     if (trace_call_result.has_value())
     {
-        tracing_runtime_binding.SetDataLossFlag(false);
+        binding_tracing_runtime.SetDataLossFlag(false);
         atomic_state_.consecutive_failure_counter = 0U;
         return {};
     }
@@ -270,7 +270,7 @@ ResultBlank TracingRuntime::ProcessTraceCallResult(
         return MakeUnexpected(TraceErrorCode::TraceErrorDisableAllTracePoints);
     }
     atomic_state_.consecutive_failure_counter++;
-    tracing_runtime_binding.SetDataLossFlag(true);
+    binding_tracing_runtime.SetDataLossFlag(true);
     if (atomic_state_.consecutive_failure_counter >= MAX_CONSECUTIVE_ACCEPTABLE_TRACE_FAILURES)
     {
         score::mw::log::LogWarn("lola") << "TracingRuntime: Disabling Tracing because of max number of consecutive "
@@ -288,28 +288,28 @@ ResultBlank TracingRuntime::ProcessTraceCallResult(
     return {};
 }
 
-ITracingRuntimeBinding& TracingRuntime::GetTracingRuntimeBinding(const BindingType binding_type) const noexcept
+IBindingTracingRuntime& TracingRuntime::GetBindingTracingRuntime(const BindingType binding_type) const noexcept
 {
-    const auto& search = tracing_runtime_bindings_.find(binding_type);
-    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(search != tracing_runtime_bindings_.cend(), "No tracing runtime for given BindingType!");
+    const auto& search = binding_tracing_runtimes_.find(binding_type);
+    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(search != binding_tracing_runtimes_.cend(), "No tracing runtime for given BindingType!");
     return *search->second;
 }
 
 TracingRuntime::TracingRuntime(
-    std::unordered_map<BindingType, ITracingRuntimeBinding*>&& tracing_runtime_bindings) noexcept
+    std::unordered_map<BindingType, IBindingTracingRuntime*>&& binding_tracing_runtimes) noexcept
     : ITracingRuntime{},
-      tracing_runtime_bindings_{std::move(tracing_runtime_bindings)},
+      binding_tracing_runtimes_{std::move(binding_tracing_runtimes)},
       debounce_counter_{0U},
       first_debounce_{true}
 {
-    for (auto tracing_runtime_binding : tracing_runtime_bindings_)
+    for (auto binding_tracing_runtime : binding_tracing_runtimes_)
     {
-        bool success = tracing_runtime_binding.second->RegisterWithGenericTraceApi();
+        bool success = binding_tracing_runtime.second->RegisterWithGenericTraceApi();
         if (!success)
         {
             score::mw::log::LogError("lola")
                 << "TracingRuntime: Registration as Client with the GenericTraceAPI failed for binding "
-                << static_cast<std::underlying_type<BindingType>::type>(tracing_runtime_binding.first)
+                << static_cast<std::underlying_type<BindingType>::type>(binding_tracing_runtime.first)
                 << ". Disable Tracing!";
             // SCR-18159752 -> disable tracing.
             atomic_state_.is_tracing_enabled = false;
@@ -323,7 +323,7 @@ void TracingRuntime::SetDataLossFlag(const BindingType binding_type) noexcept
     {
         return;
     }
-    GetTracingRuntimeBinding(binding_type).SetDataLossFlag(true);
+    GetBindingTracingRuntime(binding_type).SetDataLossFlag(true);
 }
 
 // Suppress "AUTOSAR C++14 A15-5-3" rule findings. This rule states: "The std::terminate() function shall not be called
@@ -341,7 +341,7 @@ void TracingRuntime::RegisterShmObject(
     {
         return;
     }
-    auto& binding_runtime = GetTracingRuntimeBinding(binding_type);
+    auto& binding_runtime = GetBindingTracingRuntime(binding_type);
     const auto generic_trace_api_shm_handle =
         analysis::tracing::GenericTraceAPI::RegisterShmObject(binding_runtime.GetTraceClientId(), shm_object_fd);
 
@@ -399,7 +399,7 @@ void TracingRuntime::UnregisterShmObject(
     {
         return;
     }
-    auto& binding_runtime = GetTracingRuntimeBinding(binding_type);
+    auto& binding_runtime = GetBindingTracingRuntime(binding_type);
     const auto shm_object_handle_result = binding_runtime.GetShmObjectHandle(service_element_instance_identifier_view);
     if (!shm_object_handle_result.has_value())
     {
@@ -445,7 +445,7 @@ void TracingRuntime::UnregisterShmObject(
 // coverity[autosar_cpp14_a15_4_2_violation: FALSE] see justification of autosar_cpp14_a15_5_3_violation for Trace()
 // coverity[autosar_cpp14_a15_5_3_violation: FALSE] see justification of autosar_cpp14_a15_5_3_violation for Trace()
 Result<analysis::tracing::ShmObjectHandle> TracingRuntime::GetRegisteredShmObject(
-    ITracingRuntimeBinding& binding_runtime,
+    IBindingTracingRuntime& binding_runtime,
     const ServiceElementInstanceIdentifierView service_element_instance_identifier) noexcept
 {
     auto shm_object_handle = binding_runtime.GetShmObjectHandle(service_element_instance_identifier);
@@ -515,7 +515,7 @@ ResultBlank TracingRuntime::Trace(const BindingType binding_type,
     {
         return MakeUnexpected(TraceErrorCode::TraceErrorDisableAllTracePoints);
     }
-    auto& binding_runtime = GetTracingRuntimeBinding(binding_type);
+    auto& binding_runtime = GetBindingTracingRuntime(binding_type);
 
     auto shm_object_handle = GetRegisteredShmObject(binding_runtime, service_element_instance_identifier);
     if (!shm_object_handle.has_value())
@@ -607,7 +607,7 @@ ResultBlank TracingRuntime::Trace(const BindingType binding_type,
     {
         return MakeUnexpected(TraceErrorCode::TraceErrorDisableAllTracePoints);
     }
-    auto& binding_runtime = GetTracingRuntimeBinding(binding_type);
+    auto& binding_runtime = GetBindingTracingRuntime(binding_type);
     const auto meta_info =
         CreateMetaInfo(service_element_instance_identifier, trace_point_type, trace_point_data_id, binding_runtime);
 

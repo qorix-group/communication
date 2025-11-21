@@ -52,7 +52,7 @@ using TestSampleType = std::uint8_t;
 
 using SkeletonEventTracingData = tracing::SkeletonEventTracingData;
 
-const tracing::ITracingRuntimeBinding::TraceContextId kTraceContextId{0U};
+const tracing::IBindingTracingRuntime::TraceContextId kTraceContextId{0U};
 
 const auto kFieldName{"Field1"};
 

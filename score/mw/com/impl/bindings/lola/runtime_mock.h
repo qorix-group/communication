@@ -39,7 +39,7 @@ class RuntimeMock : public IRuntime
     // coverity[autosar_cpp14_m3_9_1_violation]
     MOCK_METHOD(IServiceDiscoveryClient&, GetServiceDiscoveryClient, (), (noexcept, override));
     // coverity[autosar_cpp14_m3_9_1_violation]
-    MOCK_METHOD(impl::tracing::ITracingRuntimeBinding*, GetTracingRuntime, (), (noexcept, override));
+    MOCK_METHOD(impl::tracing::IBindingTracingRuntime*, GetTracingRuntime, (), (noexcept, override));
     // coverity[autosar_cpp14_m3_9_1_violation]
     MOCK_METHOD(RollbackSynchronization&, GetRollbackSynchronization, (), (noexcept, override));
     // coverity[autosar_cpp14_m3_9_1_violation]

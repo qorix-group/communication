@@ -134,7 +134,7 @@ INSTANTIATE_TEST_SUITE_P(SkeletonEventTraceSendWithAllocateParamaterisedDeathTes
                          SkeletonEventTraceSendWithAllocateParamaterisedDeathTest,
                          ::testing::Values(ServiceElementType::EVENT, ServiceElementType::FIELD));
 
-TEST_P(SkeletonEventTraceSendFixture, TraceSendWillDispatchToTracingRuntimeBinding)
+TEST_P(SkeletonEventTraceSendFixture, TraceSendWillDispatchToBindingTracingRuntime)
 {
     // Given a SkeletonEventTracingData with all trace points enabled
     WithAValidSkeletonEventTracingData().WithAllTracePointsEnabled();
@@ -146,7 +146,7 @@ TEST_P(SkeletonEventTraceSendFixture, TraceSendWillDispatchToTracingRuntimeBindi
     TraceSend<TestSampleType>(skeleton_event_tracing_data_, skeleton_event_binding_base_, sample_data_ptr_);
 }
 
-TEST_P(SkeletonEventTraceSendFixture, TraceSendWillNotDispatchToTracingRuntimeBindingIfTracingDisabled)
+TEST_P(SkeletonEventTraceSendFixture, TraceSendWillNotDispatchToBindingTracingRuntimeIfTracingDisabled)
 {
     // Given a SkeletonEventTracingData with all trace points disabled
     WithAValidSkeletonEventTracingData();
@@ -159,7 +159,7 @@ TEST_P(SkeletonEventTraceSendFixture, TraceSendWillNotDispatchToTracingRuntimeBi
 }
 
 TEST_P(SkeletonEventTraceSendFixture,
-       TraceSendWillDisableTracePointIfDisableInstanceErrorReturnedFromTracingRuntimeBinding)
+       TraceSendWillDisableTracePointIfDisableInstanceErrorReturnedFromBindingTracingRuntime)
 {
     // Given a SkeletonEventTracingData with all trace points enabled
     WithAValidSkeletonEventTracingData().WithAllTracePointsEnabled();
@@ -177,7 +177,7 @@ TEST_P(SkeletonEventTraceSendFixture,
 }
 
 TEST_P(SkeletonEventTraceSendFixture,
-       TraceSendWillDisableTracePointIfDisableAllTracePointsErrorReturnedFromTracingRuntimeBinding)
+       TraceSendWillDisableTracePointIfDisableAllTracePointsErrorReturnedFromBindingTracingRuntime)
 {
     // Given a SkeletonEventTracingData with all trace points enabled
     WithAValidSkeletonEventTracingData().WithAllTracePointsEnabled();
@@ -193,7 +193,7 @@ TEST_P(SkeletonEventTraceSendFixture,
     EXPECT_TRUE(AreAllTracePointsDisabled(skeleton_event_tracing_data_));
 }
 
-TEST_P(SkeletonEventTraceSendFixture, TraceSendWillIgnoreUnknownErrorFromTracingRuntimeBinding)
+TEST_P(SkeletonEventTraceSendFixture, TraceSendWillIgnoreUnknownErrorFromBindingTracingRuntime)
 {
     // Given a SkeletonEventTracingData with all trace points enabled
     WithAValidSkeletonEventTracingData().WithAllTracePointsEnabled();
@@ -235,7 +235,7 @@ TEST_P(SkeletonEventTraceSendParamaterisedDeathTest, TraceSendWithAllocateWithNu
 }
 
 using SkeletonEventTraceSendWithAllocateFixture = SkeletonEventTracingFixture;
-TEST_P(SkeletonEventTraceSendWithAllocateFixture, TraceSendWithAllocateWillDispatchToTracingRuntimeBinding)
+TEST_P(SkeletonEventTraceSendWithAllocateFixture, TraceSendWithAllocateWillDispatchToBindingTracingRuntime)
 {
     // Given a SkeletonEventTracingData with all trace points enabled
     WithAValidSkeletonEventTracingData().WithAllTracePointsEnabled();
@@ -248,7 +248,7 @@ TEST_P(SkeletonEventTraceSendWithAllocateFixture, TraceSendWithAllocateWillDispa
 }
 
 TEST_P(SkeletonEventTraceSendWithAllocateFixture,
-       TraceSendWithAllocateWillNotDispatchToTracingRuntimeBindingIfTracingDisabled)
+       TraceSendWithAllocateWillNotDispatchToBindingTracingRuntimeIfTracingDisabled)
 {
     // Given a SkeletonEventTracingData with all trace points disabled
     WithAValidSkeletonEventTracingData();
@@ -261,7 +261,7 @@ TEST_P(SkeletonEventTraceSendWithAllocateFixture,
 }
 
 TEST_P(SkeletonEventTraceSendWithAllocateFixture,
-       TraceSendWithAllocateWillDisableTracePointIfDisableInstanceErrorReturnedFromTracingRuntimeBinding)
+       TraceSendWithAllocateWillDisableTracePointIfDisableInstanceErrorReturnedFromBindingTracingRuntime)
 {
     // Given a SkeletonEventTracingData with all trace points enabled
     WithAValidSkeletonEventTracingData().WithAllTracePointsEnabled();
@@ -279,7 +279,7 @@ TEST_P(SkeletonEventTraceSendWithAllocateFixture,
 }
 
 TEST_P(SkeletonEventTraceSendWithAllocateFixture,
-       TraceSendWithAllocateWillDisableTracePointIfDisableAllTracePointsErrorReturnedFromTracingRuntimeBinding)
+       TraceSendWithAllocateWillDisableTracePointIfDisableAllTracePointsErrorReturnedFromBindingTracingRuntime)
 {
     // Given a SkeletonEventTracingData with all trace points enabled
     WithAValidSkeletonEventTracingData().WithAllTracePointsEnabled();
@@ -295,7 +295,7 @@ TEST_P(SkeletonEventTraceSendWithAllocateFixture,
     EXPECT_TRUE(AreAllTracePointsDisabled(skeleton_event_tracing_data_));
 }
 
-TEST_P(SkeletonEventTraceSendWithAllocateFixture, TraceSendWithAllocateWillIgnoreUnknownErrorFromTracingRuntimeBinding)
+TEST_P(SkeletonEventTraceSendWithAllocateFixture, TraceSendWithAllocateWillIgnoreUnknownErrorFromBindingTracingRuntime)
 {
     // Given a SkeletonEventTracingData with all trace points enabled
     WithAValidSkeletonEventTracingData().WithAllTracePointsEnabled();

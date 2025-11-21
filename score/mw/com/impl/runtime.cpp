@@ -16,7 +16,7 @@
 #include "score/mw/com/impl/instance_specifier.h"
 #include "score/mw/com/impl/plumbing/binding_runtime_factory.h"
 #include "score/mw/com/impl/tracing/configuration/tracing_filter_config_parser.h"
-#include "score/mw/com/impl/tracing/i_tracing_runtime_binding.h"
+#include "score/mw/com/impl/tracing/i_binding_tracing_runtime.h"
 
 #include "score/memory/shared/memory_resource_registry.h"
 #include "score/mw/com/runtime_configuration.h"
@@ -186,16 +186,16 @@ Runtime::Runtime(std::pair<Configuration&&, score::cpp::optional<TracingFilterCo
             // LCOV_EXCL_START (Tool incorrectly marks this line as not covered. However, the lines before and after
             // are covered so this is clearly an error by the tool. Suppression can be removed when bug is fixed in
             // Ticket-Ticket-184255).
-            std::unordered_map<BindingType, tracing::ITracingRuntimeBinding*> tracing_runtime_bindings{};
+            std::unordered_map<BindingType, tracing::IBindingTracingRuntime*> binding_tracing_runtimes{};
             // LCOV_EXCL_STOP
             for (auto& binding_runtime : binding_runtimes_)
             {
                 SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(binding_runtime.second->GetTracingRuntime() != nullptr,
                                        "Binding specific runtime has no tracing runtime although tracing is enabled!");
-                score::cpp::ignore = tracing_runtime_bindings.emplace(binding_runtime.first,
+                score::cpp::ignore = binding_tracing_runtimes.emplace(binding_runtime.first,
                                                                binding_runtime.second->GetTracingRuntime());
             }
-            tracing_runtime_ = std::make_unique<tracing::TracingRuntime>(std::move(tracing_runtime_bindings));
+            tracing_runtime_ = std::make_unique<tracing::TracingRuntime>(std::move(binding_tracing_runtimes));
         }
     }
 }

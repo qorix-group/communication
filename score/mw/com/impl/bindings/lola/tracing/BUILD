@@ -27,7 +27,7 @@ cc_library(
     deps = [
         "//score/mw/com/impl:service_element_type",
         "//score/mw/com/impl/configuration",
-        "//score/mw/com/impl/tracing:i_tracing_runtime_binding",
+        "//score/mw/com/impl/tracing:i_binding_tracing_runtime",
         "//score/mw/com/impl/tracing:service_element_tracing_data",
         "//score/mw/com/impl/tracing/configuration:service_element_instance_identifier_view",
         "@score_baselibs//score/containers:dynamic_array",

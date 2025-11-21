@@ -184,11 +184,11 @@ wrapped in a "facade", which is `impl::tracing::TracingRuntime`.
 Besides the core Trace() calls the `analysis::tracing::GenericTraceAPI` provides APIs to register the client/user of
 library and do some setup stuff.
 Furthermore, `impl::tracing::TracingRuntime` eventually dispatches to a binding specific tracing runtime binding
-(implementing `ITracingRuntimeBinding`), where we currently obviously only have `lola::tracing::TracingRuntime`. This
+(implementing `IBindingTracingRuntime`), where we currently obviously only have `lola::tracing::TracingRuntime`. This
 solves again the problem, that different bindings might need to use/call the APIs of `analysis::tracing::GenericTraceAPI`
 slightly different. So in case there is no need to differentiate for an API call, it is directly done by/dispatched from
 `impl::tracing::TracingRuntime` to `analysis::tracing::GenericTraceAPI`, otherwise `impl::tracing::TracingRuntime`
-dispatches to the correct binding specific implementation of `ITracingRuntimeBinding`, which then calls
+dispatches to the correct binding specific implementation of `IBindingTracingRuntime`, which then calls
 `analysis::tracing::GenericTraceAPI`!
 
 An additional feature of the "facade" `impl::tracing::TracingRuntime` is, that it manages cross-cutting concerns over

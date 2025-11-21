@@ -63,7 +63,7 @@ impl::tracing::ServiceElementInstanceIdentifierView ConvertServiceElementInstanc
 
 TracingRuntime::TracingRuntime(const SamplePointerIndex number_of_needed_tracing_slots,
                                const Configuration& configuration) noexcept
-    : impl::tracing::ITracingRuntimeBinding{},
+    : impl::tracing::IBindingTracingRuntime{},
       configuration_{configuration},
       trace_client_id_{},
       data_loss_flag_{false},
@@ -394,7 +394,7 @@ auto TracingRuntime::GetTraceContextId(
     return {};
 }
 
-[[nodiscard]] std::optional<impl::tracing::ITracingRuntimeBinding::TraceContextId>
+[[nodiscard]] std::optional<impl::tracing::IBindingTracingRuntime::TraceContextId>
 // Suppress "AUTOSAR C++14 A15-5-3" rule findings. This rule states: "The std::terminate() function shall not be called
 // implicitly". std::terminate() is implicitly called from '.value()' in case it doesn't have value but as we check
 // before with 'has_value()' so no way for throwing std::bad_optional_access which leds to std::terminate().

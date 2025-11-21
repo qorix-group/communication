@@ -31,7 +31,7 @@
 #include "score/mw/com/impl/runtime_mock.h"
 #include "score/mw/com/impl/service_discovery_mock.h"
 #include "score/mw/com/impl/test/runtime_mock_guard.h"
-#include "score/mw/com/impl/tracing/i_tracing_runtime_binding.h"
+#include "score/mw/com/impl/tracing/i_binding_tracing_runtime.h"
 
 #include "score/memory/shared/shared_memory_factory.h"
 #include "score/memory/shared/shared_memory_factory_mock.h"
@@ -137,7 +137,7 @@ class LolaRuntimeMock : public IRuntime
     MOCK_METHOD(BindingType, GetBindingType, (), (const, noexcept, override));
     MOCK_METHOD(IServiceDiscoveryClient&, GetServiceDiscoveryClient, (), (noexcept, override));
     MOCK_METHOD(ShmSizeCalculationMode, GetShmSizeCalculationMode, (), (const, noexcept, override));
-    MOCK_METHOD(impl::tracing::ITracingRuntimeBinding*, GetTracingRuntime, (), (noexcept, override));
+    MOCK_METHOD(impl::tracing::IBindingTracingRuntime*, GetTracingRuntime, (), (noexcept, override));
     MOCK_METHOD(RollbackSynchronization&, GetRollbackSynchronization, (), (noexcept, override));
     MOCK_METHOD(pid_t, GetPid, (), (const, noexcept, override));
     MOCK_METHOD(std::uint32_t, GetApplicationId, (), (const, noexcept, override));

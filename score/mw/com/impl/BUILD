@@ -649,8 +649,8 @@ cc_library(
         ":i_service_discovery_client",
         ":instance_identifier",
         ":instance_specifier",
+        "//score/mw/com/impl/tracing:i_binding_tracing_runtime",
         "//score/mw/com/impl/tracing:i_tracing_runtime",
-        "//score/mw/com/impl/tracing:i_tracing_runtime_binding",
         "//score/mw/com/impl/tracing/configuration:i_tracing_filter_config",
     ],
 )

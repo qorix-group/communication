@@ -14,7 +14,7 @@
 
 #include "score/mw/com/impl/binding_type.h"
 #include "score/mw/com/impl/runtime.h"
-#include "score/mw/com/impl/tracing/i_tracing_runtime_binding.h"
+#include "score/mw/com/impl/tracing/i_binding_tracing_runtime.h"
 
 namespace score::mw::com::impl::lola::tracing
 {
@@ -30,7 +30,7 @@ TypeErasedSamplePtrsGuard::~TypeErasedSamplePtrsGuard() noexcept
     const auto* const tracing_runtime = impl::Runtime::getInstance().GetTracingRuntime();
     if (tracing_runtime != nullptr)
     {
-        auto& lola_tracing_runtime = tracing_runtime->GetTracingRuntimeBinding(BindingType::kLoLa);
+        auto& lola_tracing_runtime = tracing_runtime->GetBindingTracingRuntime(BindingType::kLoLa);
         lola_tracing_runtime.ClearTypeErasedSamplePtrs(service_element_tracing_data_);
     }
 }

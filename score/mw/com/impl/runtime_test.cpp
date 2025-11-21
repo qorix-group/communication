@@ -118,8 +118,8 @@ class RuntimeFixture : public ::testing::Test
         EXPECT_NE(tracing_runtime, nullptr);
         tracing::TracingRuntimeAttorney tracing_runtime_attorney{*tracing_runtime};
 
-        const auto tracing_runtime_bindings = tracing_runtime_attorney.GetTracingRuntimeBindings();
-        const auto* const lola_tracing_runtime = tracing_runtime_bindings.at(BindingType::kLoLa);
+        const auto binding_tracing_runtimes = tracing_runtime_attorney.GetBindingTracingRuntimes();
+        const auto* const lola_tracing_runtime = binding_tracing_runtimes.at(BindingType::kLoLa);
         EXPECT_NE(lola_tracing_runtime, nullptr);
 
         return lola_tracing_runtime->GetTraceClientId();

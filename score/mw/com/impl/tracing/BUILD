@@ -33,9 +33,9 @@ cc_library(
 )
 
 cc_library(
-    name = "i_tracing_runtime_binding",
-    srcs = ["i_tracing_runtime_binding.cpp"],
-    hdrs = ["i_tracing_runtime_binding.h"],
+    name = "i_binding_tracing_runtime",
+    srcs = ["i_binding_tracing_runtime.cpp"],
+    hdrs = ["i_binding_tracing_runtime.h"],
     features = COMPILER_WARNING_FEATURES,
     tags = ["FFI"],
     visibility = ["//score/mw/com/impl:__subpackages__"],
@@ -190,7 +190,7 @@ cc_library(
     tags = ["FFI"],
     visibility = ["//score/mw/com/impl:__subpackages__"],
     deps = [
-        ":i_tracing_runtime_binding",
+        ":i_binding_tracing_runtime",
         ":service_element_tracing_data",
         ":type_erased_sample_ptr",
         "//score/mw/com/impl:binding_type",
@@ -239,8 +239,8 @@ cc_library(
     tags = ["FFI"],
     visibility = ["//score/mw/com/impl:__subpackages__"],
     deps = [
+        ":i_binding_tracing_runtime",
         ":i_tracing_runtime",
-        ":i_tracing_runtime_binding",
         ":trace_error",
         "@score_baselibs//score/language/futurecpp",
     ],
@@ -255,7 +255,7 @@ cc_library(
     implementation_deps = [],
     visibility = ["//score/mw/com/impl:__subpackages__"],
     deps = [
-        ":i_tracing_runtime_binding",
+        ":i_binding_tracing_runtime",
         ":tracing_runtime",
     ],
 )

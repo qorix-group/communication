@@ -411,7 +411,7 @@ class SkeletonMockedMemoryFixture : public ::testing::Test
     os::MockGuard<os::UnistdMock> unistd_mock_{};
     filesystem::FilesystemFactoryFake filesystem_fake_{};
     impl::tracing::TracingRuntimeMock tracing_runtime_mock_{};
-    impl::tracing::mock_binding::TracingRuntime tracing_runtime_binding_mock_{};
+    impl::tracing::mock_binding::TracingRuntime binding_tracing_runtime_mock_{};
 
     memory::shared::SharedMemoryFactoryMock shared_memory_factory_mock_{};
     ShmPathBuilderMock* shm_path_builder_mock_{nullptr};

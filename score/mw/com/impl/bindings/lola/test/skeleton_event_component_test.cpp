@@ -85,8 +85,8 @@ class SkeletonEventComponentTestTemplateFixture : public ::testing::Test
             .WillByDefault(::testing::ReturnRef(service_discovery_mock_));
         ON_CALL(runtime_mock_guard_.runtime_mock_, GetTracingRuntime())
             .WillByDefault(::testing::Return(&tracing_runtime_mock_));
-        ON_CALL(tracing_runtime_mock_, GetTracingRuntimeBinding(BindingType::kLoLa))
-            .WillByDefault(::testing::ReturnRef(tracing_runtime_binding_mock_));
+        ON_CALL(tracing_runtime_mock_, GetBindingTracingRuntime(BindingType::kLoLa))
+            .WillByDefault(::testing::ReturnRef(binding_tracing_runtime_mock_));
 
         SkeletonBinding::SkeletonEventBindings events{};
         SkeletonBinding::SkeletonFieldBindings fields{};
@@ -222,7 +222,7 @@ class SkeletonEventComponentTestTemplateFixture : public ::testing::Test
     RuntimeMockGuard runtime_mock_guard_;
     lola::RuntimeMock lola_runtime_mock_;
     impl::tracing::TracingRuntimeMock tracing_runtime_mock_{};
-    impl::tracing::mock_binding::TracingRuntime tracing_runtime_binding_mock_{};
+    impl::tracing::mock_binding::TracingRuntime binding_tracing_runtime_mock_{};
     MessagePassingServiceMock message_passing_service_mock_;
     ServiceDiscoveryMock service_discovery_mock_{};
 

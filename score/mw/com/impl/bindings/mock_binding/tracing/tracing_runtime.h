@@ -13,14 +13,14 @@
 #ifndef SCORE_MW_COM_IMPL_BINDINGS_MOCK_BINDING_TRACING_TRACING_RUNTIME_H
 #define SCORE_MW_COM_IMPL_BINDINGS_MOCK_BINDING_TRACING_TRACING_RUNTIME_H
 
-#include "score/mw/com/impl/tracing/i_tracing_runtime_binding.h"
+#include "score/mw/com/impl/tracing/i_binding_tracing_runtime.h"
 
 #include <gmock/gmock.h>
 
 namespace score::mw::com::impl::tracing::mock_binding
 {
 
-class TracingRuntime : public ITracingRuntimeBinding
+class TracingRuntime : public IBindingTracingRuntime
 {
   public:
     MOCK_METHOD(ServiceElementTracingData, RegisterServiceElement, (std::uint8_t), (noexcept, override));

@@ -18,8 +18,8 @@
 #include "score/mw/com/impl/tracing/configuration/proxy_field_trace_point_type.h"
 #include "score/mw/com/impl/tracing/configuration/skeleton_event_trace_point_type.h"
 #include "score/mw/com/impl/tracing/configuration/skeleton_field_trace_point_type.h"
+#include "score/mw/com/impl/tracing/i_binding_tracing_runtime.h"
 #include "score/mw/com/impl/tracing/i_tracing_runtime.h"
-#include "score/mw/com/impl/tracing/i_tracing_runtime_binding.h"
 
 #include <atomic>
 #include <cstddef>
@@ -80,7 +80,7 @@ class TracingRuntime : public ITracingRuntime
     constexpr static std::uint32_t MAX_CONSECUTIVE_ACCEPTABLE_TRACE_FAILURES{std::numeric_limits<uint32_t>::max()};
 
     explicit TracingRuntime(
-        std::unordered_map<BindingType, ITracingRuntimeBinding*>&& tracing_runtime_bindings) noexcept;
+        std::unordered_map<BindingType, IBindingTracingRuntime*>&& binding_tracing_runtimes) noexcept;
 
     /// \brief TracingRuntime shall not be copyable/copy-assignable
     TracingRuntime(const TracingRuntime& other) = delete;
@@ -158,7 +158,7 @@ class TracingRuntime : public ITracingRuntime
                       const void* const local_data_ptr,
                       const std::size_t local_data_size) noexcept override;
 
-    ITracingRuntimeBinding& GetTracingRuntimeBinding(const BindingType binding_type) const noexcept override;
+    IBindingTracingRuntime& GetBindingTracingRuntime(const BindingType binding_type) const noexcept override;
 
   private:
     detail_tracing_runtime::TracingRuntimeAtomicState atomic_state_;
@@ -169,13 +169,13 @@ class TracingRuntime : public ITracingRuntime
     /// \return Result to be forwarded to the caller of Trace()
     ResultBlank ProcessTraceCallResult(const ServiceElementInstanceIdentifierView& service_element_instance_identifier,
                                        const analysis::tracing::TraceResult& trace_call_result,
-                                       ITracingRuntimeBinding& tracing_runtime_binding) noexcept;
+                                       IBindingTracingRuntime& binding_tracing_runtime) noexcept;
 
     Result<analysis::tracing::ShmObjectHandle> GetRegisteredShmObject(
-        ITracingRuntimeBinding& binding_runtime,
+        IBindingTracingRuntime& binding_runtime,
         const ServiceElementInstanceIdentifierView service_element_instance_identifier) noexcept;
 
-    std::unordered_map<BindingType, ITracingRuntimeBinding*> tracing_runtime_bindings_;
+    std::unordered_map<BindingType, IBindingTracingRuntime*> binding_tracing_runtimes_;
 
     /// \brief Threshold for switching from LogInfo to LogDebug level during consecutive failures
     /// \details After this many consecutive (limited by 10 for the moment) "no tracing slot available" failures,

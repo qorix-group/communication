@@ -66,7 +66,7 @@ class Runtime final : public IRuntime
     /// \brief return the lola specific tracing runtime
     /// \return valid pointer to LoLa specific tracing runtime or nullptr in case Runtime has been created without
     ///         tracing support.
-    impl::tracing::ITracingRuntimeBinding* GetTracingRuntime() noexcept override;
+    impl::tracing::IBindingTracingRuntime* GetTracingRuntime() noexcept override;
 
     /// \brief Read LoLa message passing related configuration from configuration for given ASIL level.
     /// \param asil_level either QM or B. If parameter is set to B although the app/process has been configured to
