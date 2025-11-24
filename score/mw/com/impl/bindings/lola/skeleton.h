@@ -13,16 +13,22 @@
 #ifndef SCORE_MW_COM_IMPL_BINDINGS_LOLA_SKELETON_H
 #define SCORE_MW_COM_IMPL_BINDINGS_LOLA_SKELETON_H
 
+#include "score/memory/shared/managed_memory_resource.h"
 #include "score/mw/com/impl/bindings/lola/element_fq_id.h"
 #include "score/mw/com/impl/bindings/lola/event_data_control_composite.h"
 #include "score/mw/com/impl/bindings/lola/event_data_storage.h"
 #include "score/mw/com/impl/bindings/lola/i_partial_restart_path_builder.h"
 #include "score/mw/com/impl/bindings/lola/i_shm_path_builder.h"
+#include "score/mw/com/impl/bindings/lola/methods/method_data.h"
+#include "score/mw/com/impl/bindings/lola/methods/proxy_instance_identifier.h"
+#include "score/mw/com/impl/bindings/lola/methods/skeleton_instance_identifier.h"
+#include "score/mw/com/impl/bindings/lola/methods/type_erased_call_queue.h"
 #include "score/mw/com/impl/bindings/lola/runtime.h"
 #include "score/mw/com/impl/bindings/lola/service_data_control.h"
 #include "score/mw/com/impl/bindings/lola/service_data_storage.h"
 #include "score/mw/com/impl/bindings/lola/skeleton_event_properties.h"
 #include "score/mw/com/impl/bindings/lola/skeleton_method.h"
+#include "score/mw/com/impl/configuration/global_configuration.h"
 #include "score/mw/com/impl/configuration/lola_event_id.h"
 #include "score/mw/com/impl/configuration/lola_method_id.h"
 #include "score/mw/com/impl/configuration/lola_service_instance_deployment.h"
@@ -42,6 +48,7 @@
 #include <score/assert.hpp>
 #include <score/optional.hpp>
 
+#include <sys/types.h>
 #include <functional>
 #include <memory>
 #include <string>
@@ -195,6 +202,16 @@ class Skeleton final : public SkeletonBinding
     void RemoveSharedMemory();
     void RemoveStaleSharedMemoryArtefacts() const;
 
+    ResultBlank OnServiceMethodsSubscribed(const ProxyInstanceIdentifier& proxy_instance_identifier,
+                                           const uid_t proxy_uid,
+                                           const QualityType asil_level,
+                                           pid_t proxy_pid);
+    static MethodData& GetMethodData(const memory::shared::ManagedMemoryResource& resource);
+
+    /// \brief Checks whether the Proxy which sent a notification to the Skeleton that it subscribed to a method is in
+    /// the allowed_consumers list in the configuration.
+    bool IsProxyInAllowedConsumerList(const uid_t proxy_uid, const QualityType asil_level) const;
+
     InstanceIdentifier identifier_;
     const LolaServiceInstanceDeployment& lola_service_instance_deployment_;
     const LolaServiceTypeDeployment& lola_service_type_deployment_;
@@ -219,11 +236,15 @@ class Skeleton final : public SkeletonBinding
     std::unique_ptr<score::memory::shared::FlockMutexAndLock<score::memory::shared::ExclusiveFlockMutex>>
         service_instance_existence_flock_mutex_and_lock_;
 
+    std::unordered_map<ProxyInstanceIdentifier, std::shared_ptr<memory::shared::ManagedMemoryResource>>
+        method_resources_;
     std::unordered_map<LolaMethodId, std::reference_wrapper<SkeletonMethod>> skeleton_methods_;
 
     bool was_old_shm_region_reopened_;
 
     score::filesystem::Filesystem filesystem_;
+
+    safecpp::Scope<> on_service_method_subscribed_handler_scope_;
 };
 
 namespace detail_skeleton

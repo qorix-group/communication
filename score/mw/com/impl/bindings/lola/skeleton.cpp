@@ -12,14 +12,23 @@
  ********************************************************************************/
 #include "score/mw/com/impl/bindings/lola/skeleton.h"
 
+#include "score/memory/shared/managed_memory_resource.h"
+#include "score/result/result.h"
+#include "score/mw/com/impl/bindings/lola/i_shm_path_builder.h"
+#include "score/mw/com/impl/bindings/lola/methods/proxy_instance_identifier.h"
+#include "score/mw/com/impl/bindings/lola/methods/skeleton_instance_identifier.h"
+#include "score/mw/com/impl/bindings/lola/methods/type_erased_call_queue.h"
 #include "score/mw/com/impl/bindings/lola/service_data_control.h"
 #include "score/mw/com/impl/bindings/lola/service_data_storage.h"
 #include "score/mw/com/impl/bindings/lola/shm_path_builder.h"
+#include "score/mw/com/impl/bindings/lola/skeleton_method.h"
 #include "score/mw/com/impl/bindings/lola/tracing/tracing_runtime.h"
 #include "score/mw/com/impl/com_error.h"
 #include "score/mw/com/impl/configuration/lola_event_instance_deployment.h"
 #include "score/mw/com/impl/configuration/lola_service_instance_deployment.h"
 #include "score/mw/com/impl/configuration/lola_service_type_deployment.h"
+#include "score/mw/com/impl/configuration/quality_type.h"
+#include "score/mw/com/impl/runtime.h"
 #include "score/mw/com/impl/skeleton_event_binding.h"
 #include "score/mw/com/impl/util/arithmetic_utils.h"
 
@@ -32,7 +41,10 @@
 #include "score/mw/log/logging.h"
 
 #include <score/assert.hpp>
+#include <score/span.hpp>
+#include <sys/types.h>
 
+#include <algorithm>
 #include <cstddef>
 #include <exception>
 #include <limits>
@@ -275,9 +287,11 @@ Skeleton::Skeleton(const InstanceIdentifier& identifier,
       service_instance_existence_marker_file_{std::move(service_instance_existence_marker_file)},
       service_instance_usage_marker_file_{},
       service_instance_existence_flock_mutex_and_lock_{std::move(service_instance_existence_flock_mutex_and_lock)},
+      method_resources_{},
       skeleton_methods_{},
       was_old_shm_region_reopened_{false},
-      filesystem_{std::move(filesystem)}
+      filesystem_{std::move(filesystem)},
+      on_service_method_subscribed_handler_scope_{}
 {
 }
 
@@ -316,7 +330,11 @@ auto Skeleton::PrepareOffer(SkeletonEventBindings& events,
         RemoveStaleSharedMemoryArtefacts();
 
         const auto create_result = CreateSharedMemory(events, fields, std::move(register_shm_object_trace_callback));
-        return create_result;
+        if (!(create_result.has_value()))
+        {
+            score::mw::log::LogError("lola") << "Could not create shared memory region for Skeleton.";
+            return create_result;
+        }
     }
     else
     {
@@ -328,11 +346,27 @@ auto Skeleton::PrepareOffer(SkeletonEventBindings& events,
         const auto open_result = OpenExistingSharedMemory(std::move(register_shm_object_trace_callback));
         if (!open_result.has_value())
         {
+            score::mw::log::LogError("lola") << "Could not open existing shared memory region for Skeleton.";
             return open_result;
         }
         CleanupSharedMemoryAfterCrash();
-        return {};
     }
+
+    // Register a handler with message passing which will open methods shared memory regions when the proxy notifies via
+    // message passing that it has finished setting up the regions.
+    auto& lola_runtime = GetBindingRuntime<lola::IRuntime>(BindingType::kLoLa);
+    auto& lola_message_passing = lola_runtime.GetLolaMessaging();
+    const SkeletonInstanceIdentifier skeleton_instance_identifier{lola_service_id_, lola_instance_id_};
+    return lola_message_passing.RegisterOnServiceMethodSubscribedHandler(
+        skeleton_instance_identifier,
+        IMessagePassingService::ServiceMethodSubscribedHandler{
+            on_service_method_subscribed_handler_scope_,
+            [this](const ProxyInstanceIdentifier proxy_instance_identifier,
+                   const uid_t proxy_uid,
+                   const QualityType asil_level,
+                   const pid_t proxy_pid) -> ResultBlank {
+                return OnServiceMethodsSubscribed(proxy_instance_identifier, proxy_uid, asil_level, proxy_pid);
+            }});
 }
 
 // Suppress "AUTOSAR C++14 A15-5-3" rule findings. This rule states: "The std::terminate() function shall not be called
@@ -883,6 +917,113 @@ void Skeleton::InitializeSharedMemoryForControl(
 {
     auto& control = (asil_level == QualityType::kASIL_QM) ? control_qm_ : control_asil_b_;
     control = memory->construct<ServiceDataControl>(memory->getMemoryResourceProxy());
+}
+
+ResultBlank Skeleton::OnServiceMethodsSubscribed(const ProxyInstanceIdentifier& proxy_instance_identifier,
+                                                 uid_t proxy_uid,
+                                                 const QualityType asil_level,
+                                                 pid_t /* proxy_pid */)
+{
+    const auto method_channel_shm_name =
+        shm_path_builder_->GetMethodChannelShmName(lola_instance_id_, proxy_instance_identifier);
+    const bool is_read_write{true};
+
+    if (!IsProxyInAllowedConsumerList(proxy_uid, asil_level))
+    {
+        score::mw::log::LogError("lola") << "Proxy UID:" << proxy_uid << "is not listed in" << ToString(asil_level)
+                                       << "allowed_consumers for method" << method_channel_shm_name;
+        return MakeUnexpected(ComErrc::kBindingFailure);
+    }
+
+    // If no methods contain InArgs or a Return type then no shared memory will be created. Therefore, we don't need to
+    // open it here.
+    const auto does_method_have_shm_result = filesystem_.standard->Exists(method_channel_shm_name);
+    if (!(does_method_have_shm_result.has_value()))
+    {
+        score::mw::log::LogError("lola") << "Skeleton failed to check if method shm path already exists. Exiting.";
+        return MakeUnexpected(ComErrc::kBindingFailure);
+    }
+
+    if (!(does_method_have_shm_result.value()))
+    {
+        for (auto& [method_id, skeleton_method] : skeleton_methods_)
+        {
+            const auto result = SkeletonMethodView{skeleton_method.get()}.OnProxyMethodSubscribeFinished(
+                std::optional<TypeErasedCallQueue::TypeErasedElementInfo>{},
+                std::optional<score::cpp::span<std::byte>>{},
+                std::optional<score::cpp::span<std::byte>>{},
+                proxy_instance_identifier);
+            if (!(result.has_value()))
+            {
+                score::mw::log::LogError("lola") << "Calling OnProxyMethodSubscribeFinished on SkeletonMethod:"
+                                               << proxy_instance_identifier.proxy_instance_counter << "/"
+                                               << proxy_instance_identifier.process_identifier << "failed!";
+                return result;
+            }
+        }
+        return {};
+    }
+
+    const std::vector<uid_t> allowed_providers{proxy_uid};
+    auto opened_shm_region =
+        memory::shared::SharedMemoryFactory::Open(method_channel_shm_name, is_read_write, allowed_providers);
+    if (opened_shm_region == nullptr)
+    {
+        score::mw::log::LogError("lola") << "Failed to open methods shared memory region at" << method_channel_shm_name;
+        return MakeUnexpected(ComErrc::kBindingFailure);
+    }
+
+    const auto [resource_it, was_created] = method_resources_.insert({proxy_instance_identifier, opened_shm_region});
+    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD(was_created);
+
+    auto& method_data = GetMethodData(*(resource_it->second));
+    auto& method_call_queues = method_data.method_call_queues_;
+    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD(method_call_queues.size() == skeleton_methods_.size());
+    for (auto& [method_id, type_erased_call_queue] : method_call_queues)
+    {
+        auto& skeleton_method = skeleton_methods_.at(method_id);
+        const auto result = SkeletonMethodView{skeleton_method.get()}.OnProxyMethodSubscribeFinished(
+            type_erased_call_queue.GetTypeErasedElementInfo(),
+            type_erased_call_queue.GetInArgValuesQueueStorage(),
+            type_erased_call_queue.GetReturnValueQueueStorage(),
+            proxy_instance_identifier);
+        if (!(result.has_value()))
+        {
+            score::mw::log::LogError("lola") << "Calling OnProxyMethodSubscribeFinished on SkeletonMethod:"
+                                           << proxy_instance_identifier.proxy_instance_counter << "/"
+                                           << proxy_instance_identifier.process_identifier << "failed!";
+            return result;
+        }
+    }
+    return {};
+}
+
+bool Skeleton::IsProxyInAllowedConsumerList(const uid_t proxy_uid, const QualityType asil_level) const
+{
+    const auto& lola_service_instance_deployment = GetLolaServiceInstanceDeployment(identifier_);
+    const auto& allowed_consumer = lola_service_instance_deployment.allowed_consumer_;
+
+    // Check if there is an allowed consumer list for the specified quality (ASIL-B / QM)
+    const auto allowed_consumer_list_it = allowed_consumer.find(asil_level);
+    if (allowed_consumer_list_it == allowed_consumer.cend())
+    {
+        score::mw::log::LogDebug("lola") << "Quality type:" << ToString(asil_level)
+                                       << "does not exist in allowed_consumer list in configuration!";
+        return false;
+    }
+
+    // Check if the proxy_uid is in the allowed consumer list for the specified quality
+    const auto& allowed_consumer_list = allowed_consumer_list_it->second;
+    return std::any_of(allowed_consumer_list.begin(), allowed_consumer_list.end(), [proxy_uid](const auto uid) {
+        return uid == proxy_uid;
+    });
+}
+
+MethodData& Skeleton::GetMethodData(const memory::shared::ManagedMemoryResource& resource)
+{
+    auto* const method_data_storage = static_cast<MethodData*>(resource.getUsableBaseAddress());
+    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(method_data_storage != nullptr, "Could not retrieve method data within shared-memory.");
+    return *method_data_storage;
 }
 
 }  // namespace score::mw::com::impl::lola

@@ -166,6 +166,9 @@ static constexpr std::uint16_t kDumbMethodId{5U};
 static constexpr LolaMethodInstanceDeployment::QueueSize kFooMethodQueueSize{5U};
 static constexpr LolaMethodInstanceDeployment::QueueSize kDumbMethodQueueSize{6U};
 
+static constexpr uid_t kAllowedQmMethodConsumer{20U};
+static constexpr uid_t kAllowedAsilBMethodConsumer{21U};
+
 static const auto kServiceTypeName{"foo"};
 static const ServiceIdentifierType kFooService{make_ServiceIdentifierType(kServiceTypeName)};
 
@@ -262,7 +265,7 @@ static const ServiceInstanceDeployment kValidInstanceDeploymentWithMethods{
                                         {},
                                         {{test::kFooMethodName, LolaMethodInstanceDeployment{kFooMethodQueueSize}},
                                          {test::kDumbMethodName, LolaMethodInstanceDeployment{kDumbMethodQueueSize}}},
-                                        {},
+                                        {kAllowedQmMethodConsumer},
                                         {},
                                         kConfiguredDeploymentShmSize,
                                         kConfiguredDeploymentControlAsilBShmSize,
@@ -308,7 +311,7 @@ static const ServiceInstanceDeployment kValidAsilInstanceDeploymentWithMethods{
                                         {{test::kFooMethodName, LolaMethodInstanceDeployment{kFooMethodQueueSize}},
                                          {test::kDumbMethodName, LolaMethodInstanceDeployment{kDumbMethodQueueSize}}},
                                         {},
-                                        {},
+                                        {kAllowedAsilBMethodConsumer},
                                         kConfiguredDeploymentShmSize,
                                         kConfiguredDeploymentControlAsilBShmSize,
                                         kConfiguredDeploymentControlQmShmSize),
@@ -391,6 +394,8 @@ class SkeletonMockedMemoryFixture : public ::testing::Test
     virtual ~SkeletonMockedMemoryFixture();
 
     SkeletonMockedMemoryFixture& InitialiseSkeleton(const InstanceIdentifier& instance_identifier);
+
+    SkeletonMockedMemoryFixture& InitialiseSkeletonWithRealPathBuilders(const InstanceIdentifier& instance_identifier);
 
     /// \brief Simulates that the instance usage marker file could be exclusively flocked meaning that no Procies are
     /// using an old shared memory region from this service. This is the "normal" case when we aren't in a partial

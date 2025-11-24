@@ -905,6 +905,31 @@ cc_test(
     ],
 )
 
+cc_unit_test(
+    name = "skeleton_method_handling_test",
+    srcs = [
+        "skeleton_method_handling_test.cpp",
+    ],
+    features = COMPILER_WARNING_FEATURES + [
+        # These tests catch exceptions instead of using gtest EXPECT_DEATH so we disable aborts_upon_exception.
+        "-aborts_upon_exception",
+    ],
+    deps = [
+        ":skeleton",
+        "//score/mw/com/impl:binding_type",
+        "//score/mw/com/impl/bindings/lola/test:skeleton_test_resources",
+        "//score/mw/com/impl/configuration/test:configuration_store",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "@score_baselibs//score/language/futurecpp",
+        "@score_baselibs//score/language/futurecpp:futurecpp_test_support",
+        "@score_baselibs//score/memory:data_type_size_info",
+        "@score_baselibs//score/memory/shared:shared_memory_resource_mock",
+        "@score_baselibs//score/memory/shared/fake:my_bounded_shared_memory_resource",
+        "@score_baselibs//score/result",
+    ],
+)
+
 cc_gtest_unit_test(
     name = "proxy_test",
     srcs = ["proxy_test.cpp"],
@@ -1309,6 +1334,7 @@ cc_unit_test_suites_for_host_and_qnx(
         ":shm_path_builder_test",
         ":skeleton_test",
         ":skeleton_method_test",
+        ":skeleton_method_handling_test",
         ":slot_decrementer_test",
         ":transaction_log_rollback_executor_test",
         ":type_erased_sample_ptrs_guard_test",

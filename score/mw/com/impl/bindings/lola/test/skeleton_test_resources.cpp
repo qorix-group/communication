@@ -272,6 +272,32 @@ SkeletonMockedMemoryFixture& SkeletonMockedMemoryFixture::InitialiseSkeleton(
     return *this;
 }
 
+SkeletonMockedMemoryFixture& SkeletonMockedMemoryFixture::InitialiseSkeletonWithRealPathBuilders(
+    const InstanceIdentifier& instance_identifier)
+{
+    const auto& instance_depl_info = InstanceIdentifierView{instance_identifier}.GetServiceInstanceDeployment();
+    const auto* lola_service_instance_deployment_ptr =
+        std::get_if<LolaServiceInstanceDeployment>(&instance_depl_info.bindingInfo_);
+    EXPECT_NE(lola_service_instance_deployment_ptr, nullptr);
+
+    const auto& service_type_depl_info = InstanceIdentifierView{instance_identifier}.GetServiceTypeDeployment();
+    const auto* lola_service_type_deployment_ptr =
+        std::get_if<LolaServiceTypeDeployment>(&service_type_depl_info.binding_info_);
+    EXPECT_NE(lola_service_type_deployment_ptr, nullptr);
+
+    skeleton_ = std::make_unique<Skeleton>(
+        instance_identifier,
+        *lola_service_instance_deployment_ptr,
+        *lola_service_type_deployment_ptr,
+        filesystem_fake_.CreateInstance(),
+        std::make_unique<ShmPathBuilder>(lola_service_type_deployment_ptr->service_id_),
+        std::make_unique<PartialRestartPathBuilder>(lola_service_type_deployment_ptr->service_id_),
+        std::optional<memory::shared::LockFile>{},
+        nullptr);
+
+    return *this;
+}
+
 SkeletonMockedMemoryFixture& SkeletonMockedMemoryFixture::WithNoConnectedProxy()
 {
     ON_CALL(*fcntl_mock_, flock(test::kServiceInstanceUsageFileDescriptor, test::kNonBlockingExlusiveLockOperation))
