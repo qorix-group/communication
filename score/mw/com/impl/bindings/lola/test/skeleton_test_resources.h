@@ -305,31 +305,17 @@ class SkeletonAttorney
   public:
     SkeletonAttorney(Skeleton& skeleton) noexcept : skeleton_{skeleton} {}
 
-    void InitializeSharedMemoryForControl(const QualityType asil_level,
-                                          std::shared_ptr<score::memory::shared::ManagedMemoryResource> memory) noexcept
-    {
-        return skeleton_.InitializeSharedMemoryForControl(asil_level, memory);
-    }
-
-    void InitializeSharedMemoryForData(std::shared_ptr<score::memory::shared::ManagedMemoryResource> memory) noexcept
-    {
-        return skeleton_.InitializeSharedMemoryForData(memory);
-    }
-
     ServiceDataControl* GetServiceDataControl(const QualityType quality_type) const noexcept
     {
         if (quality_type == QualityType::kASIL_QM)
         {
             return skeleton_.control_qm_;
         }
-        else if (quality_type == QualityType::kASIL_B)
+        if (quality_type == QualityType::kASIL_B)
         {
             return skeleton_.control_asil_b_;
         }
-        else
-        {
-            return nullptr;
-        }
+        return nullptr;
     }
 
   private:

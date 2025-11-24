@@ -23,6 +23,7 @@
 
 #include <unistd.h>
 #include <stdint.h>
+#include <functional>
 
 namespace score::mw::com::impl::lola
 {
@@ -35,6 +36,7 @@ using ::testing::InvokeWithoutArgs;
 using ::testing::Return;
 using ::testing::ReturnRef;
 using ::testing::StrEq;
+using ::testing::WithArg;
 
 }  // namespace
 
@@ -231,10 +233,9 @@ void SkeletonMockedMemoryFixture::ExpectControlSegmentCreated(const QualityType 
 
     // When we attempt to create a shared memory region which returns a pointer to a resource
     EXPECT_CALL(shared_memory_factory_mock_, Create(control_channel_path, _, _, WritablePermissionsMatcher(), false))
-        .WillOnce(InvokeWithoutArgs(
-            [created_resource, quality_type, this]() -> std::shared_ptr<memory::shared::ISharedMemoryResource> {
-                SkeletonAttorney skeleton_attorney{*skeleton_};
-                skeleton_attorney.InitializeSharedMemoryForControl(quality_type, created_resource);
+        .WillOnce(WithArg<1>(
+            [created_resource](auto initialize_callback) -> std::shared_ptr<memory::shared::ISharedMemoryResource> {
+                std::invoke(initialize_callback, created_resource);
                 return created_resource;
             }));
 }
@@ -244,11 +245,11 @@ void SkeletonMockedMemoryFixture::ExpectDataSegmentCreated(const bool in_typed_m
     // When we attempt to create a shared memory region which returns a pointer to a resource
     EXPECT_CALL(shared_memory_factory_mock_,
                 Create(test::kDataChannelPath, _, _, ReadablePermissionsMatcher(), in_typed_memory))
-        .WillOnce(InvokeWithoutArgs([this]() -> std::shared_ptr<memory::shared::ISharedMemoryResource> {
-            SkeletonAttorney skeleton_attorney{*skeleton_};
-            skeleton_attorney.InitializeSharedMemoryForData(data_shared_memory_resource_mock_);
-            return data_shared_memory_resource_mock_;
-        }));
+        .WillOnce(
+            WithArg<1>([this](auto initialize_callback) -> std::shared_ptr<memory::shared::ISharedMemoryResource> {
+                std::invoke(initialize_callback, data_shared_memory_resource_mock_);
+                return data_shared_memory_resource_mock_;
+            }));
 }
 
 void SkeletonMockedMemoryFixture::ExpectControlSegmentOpened(const QualityType quality_type,
