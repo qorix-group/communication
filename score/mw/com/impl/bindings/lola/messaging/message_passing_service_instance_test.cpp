@@ -3,6 +3,7 @@
 #include "score/message_passing/mock/client_factory_mock.h"
 #include "score/message_passing/mock/server_connection_mock.h"
 #include "score/message_passing/mock/server_factory_mock.h"
+#include "score/message_passing/server_types.h"
 #include <gtest/gtest.h>
 
 #include "score/concurrency/executor_mock.h"
@@ -1388,6 +1389,24 @@ TEST_F(MessagePassingServiceInstanceTest, UnregisterEventNotificationWithNonExis
 
     // Then status change callback is NOT invoked (no actual state change occurred)
     EXPECT_EQ(callback_count.load(), 0);  // Callback should not be invoked
+}
+
+TEST_F(MessagePassingServiceInstanceTest, ScopedFunctionPreventsCallbackExecutionAfterDestruction)
+{
+    // Given the the received_send_message_callback captured before instance destruction
+    MessageCallback captured_callback;
+    {
+        MessagePassingServiceInstance instance{
+            quality_type_, asil_cfg_, server_factory_mock_, client_factory_mock_, executor_mock_};
+
+        // Capture the callback created during construction
+        captured_callback = std::move(received_send_message_callback_);
+    }
+    // when the instance is destroyed (expiring the scope of the received_send_message_callback)
+
+    // Then calling the captured callback, we don't crash.
+    const auto message = Serialize(event_id_, MessageType::kNotifyEvent);
+    score::cpp::ignore = captured_callback(*server_connection_mock_, message);
 }
 
 }  // namespace
