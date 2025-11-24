@@ -254,14 +254,14 @@ impl<T> Default for SubscribableImpl<T> {
 
 impl<T: Reloc + Send> Subscriber<T,LolaRuntimeImpl> for SubscribableImpl<T> {
     type Subscription = SubscriberImpl<T>;
-    fn new(identifier: &str, instance_info: LolaConsumerInfo) -> Self {
-        Self {
+    fn new(identifier: &str, instance_info: LolaConsumerInfo) -> com_api_concept::Result<Self> {
+        Ok(Self {
             identifier: identifier.to_string(),
             instance_info: Some(instance_info),
             data: PhantomData,
-        }
+        })
     }
-    fn subscribe(self, _max_num_samples: usize) -> com_api_concept::Result<Self::Subscription> {
+    fn subscribe(&self, _max_num_samples: usize) -> com_api_concept::Result<Self::Subscription> {
         Ok(SubscriberImpl::new())
     }
 }
@@ -344,7 +344,7 @@ where
     }
 }
 
-impl<T> com_api_concept::Publisher<T> for Publisher<T>
+impl<T> com_api_concept::Publisher<T, LolaRuntimeImpl> for Publisher<T>
 where
     T: Reloc + Send,
 {
@@ -355,6 +355,10 @@ where
             data: MaybeUninit::uninit(),
             lifetime: PhantomData,
         })
+    }
+
+    fn new(_identifier: &str, _instance_info: LolaProviderInfo) -> com_api_concept::Result<Self> {
+        Ok(Self { _data: PhantomData })
     }
 }
 
@@ -379,6 +383,12 @@ where
 
     fn get_available_instances(&self) -> com_api_concept::Result<Self::ServiceEnumerator> {
         Ok(Vec::new())
+    }
+
+    fn get_available_instances_async(
+        &self,
+    ) -> impl Future<Output = com_api_concept::Result<Self::ServiceEnumerator>> + Send {
+        async { Ok(Vec::new()) }
     }
 }
 

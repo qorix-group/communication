@@ -97,7 +97,7 @@ pub trait Runtime {
     type ProducerBuilder<I: Interface, P: Producer<Self, Interface = I>>: ProducerBuilder<I, P, Self>;
 
     /// Publisher<T> types for Publishes event data to subscribers
-    type Publisher<T: Reloc + Send>: Publisher<T>;
+    type Publisher<T: Reloc + Send>: Publisher<T, Self>;
 
     /// ProviderInfo types for Configuration data for service producers instances
     type ProviderInfo: Send + Clone;
@@ -239,6 +239,13 @@ pub unsafe trait Reloc {}
 
 unsafe impl Reloc for () {}
 unsafe impl Reloc for u32 {}
+unsafe impl Reloc for u64 {}
+unsafe impl Reloc for i32 {}
+unsafe impl Reloc for i64 {}
+unsafe impl Reloc for f32 {}
+unsafe impl Reloc for f64 {}
+unsafe impl Reloc for bool {}
+unsafe impl Reloc for char {}
 
 /// A `Sample` provides a reference to a memory buffer of an event with immutable value.
 ///
@@ -386,13 +393,23 @@ pub trait Producer<R: Runtime + ?Sized> {
     ///
     /// A 'Result' containing the offered producer on success and an 'Error' on failure.
     fn offer(self) -> Result<Self::OfferedProducer>;
+
+    /// Create a new producer instance from the provided instance information.
+    ///
+    /// # Parameters
+    /// * `instance_info` - Runtime-specific configuration for this producer instance
+    /// # Returns
+    /// A 'Result' containing the constructed producer on success and an 'Error' on failure.
+    fn new(instance_info: R::ProviderInfo) -> Result<Self>
+    where
+        Self: Sized;
 }
 
 /// Event publication interface for streaming data to subscribers.
 /// Manages the allocation and transmission of event samples
 /// # Type Parameters
 /// * `T` - The relocatable event data type
-pub trait Publisher<T>
+pub trait Publisher<T, R: Runtime + ?Sized>
 where
     T: Reloc + Send,
 {
@@ -420,6 +437,17 @@ where
         let init_sample = sample.write(value);
         init_sample.send()
     }
+
+    /// Create a new publisher for the specified event source.
+    ///
+    /// # Parameters
+    /// * `identifier` - Logical name of the event topic
+    /// * `instance_info` - Runtime-specific configuration for the event source
+    /// # Returns
+    /// A 'Result' containing the constructed publisher on success and an 'Error' on failure.
+    fn new(identifier: &str, instance_info: R::ProviderInfo) -> Result<Self>
+    where
+        Self: Sized;
 }
 
 /// Consumer role implementation for a specific service interface.
@@ -472,7 +500,13 @@ pub trait ServiceDiscovery<I: Interface, R: Runtime + ?Sized> {
     /// An iterator over builders for each discovered instance. Returns empty
     /// results if no instances are currently available.
     fn get_available_instances(&self) -> Result<Self::ServiceEnumerator>;
-    // TODO: Provide an async stream for newly available services / ServiceDescriptors
+
+    /// Asynchronous version of querying available instances of this service interface.
+    ///
+    /// # Returns
+    ///
+    #[allow(clippy::manual_async_fn)]
+    fn get_available_instances_async(&self) -> impl Future<Output = Result<Self::ServiceEnumerator>> + Send;
 }
 
 /// Metadata and identification for a discovered service instance.
@@ -517,7 +551,9 @@ pub trait Subscriber<T: Reloc + Send, R: Runtime + ?Sized,> {
     /// # Parameters
     /// * `identifier` - Logical name of the event topic
     /// * `instance_info` - Runtime-specific configuration for the event source
-    fn new(identifier: &str, instance_info: R::ConsumerInfo) -> Self;
+    fn new(identifier: &str, instance_info: R::ConsumerInfo) -> Result<Self>
+    where
+        Self: Sized;
 
     /// Establish a subscription to the event source.
     ///
@@ -528,7 +564,7 @@ pub trait Subscriber<T: Reloc + Send, R: Runtime + ?Sized,> {
     /// A subscription handle for receiving event samples.
     /// Fails if the subscription cannot be established due to resource constraints
     /// or if the event source is not available.
-    fn subscribe(self, max_num_samples: usize) -> Result<Self::Subscription>;
+    fn subscribe(&self, max_num_samples: usize) -> Result<Self::Subscription>;
 }
 /// A container for samples received from a subscription.
 /// Provides methods to manipulate and access the samples.

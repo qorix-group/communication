@@ -16,23 +16,6 @@ load("@rules_rust//rust:defs.bzl", "rust_library")
 rust_library(
     name = "com-api",
     srcs = ["com_api.rs"],
-    crate_features = ["lola"],
-    crate_name = "com_api",
-    visibility = [
-        "//visibility:public",  # platform_only
-    ],
-    deps = [
-        "//score/mw/com/impl/rust/com-api/com-api-concept",
-        "//score/mw/com/impl/rust/com-api/com-api-runtime-lola",
-    ],
-)
-
-# Mock runtime variant for testing
-rust_library(
-    name = "com-api-mock",
-    testonly = True,  # Only test targets can depend on this
-    srcs = ["com_api.rs"],
-    crate_features = ["mock"],
     crate_name = "com_api",
     visibility = [
         "//visibility:public",  # platform_only

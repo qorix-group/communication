@@ -15,27 +15,11 @@ load("@rules_rust//rust:defs.bzl", "rust_library")
 rust_library(
     name = "com-api-gen",
     srcs = ["com_api_gen.rs"],
-    crate_features = ["lola"],
     crate_name = "com_api_gen",
     visibility = [
         "//visibility:public",  # platform_only
     ],
     deps = [
-        "//score/mw/com/example/com-api-example/com-api-gen-lola",
-    ],
-)
-
-rust_library(
-    name = "com-api-gen-mock-variant",
-    testonly = True,
-    srcs = ["com_api_gen.rs"],
-    crate_features = ["mock"],
-    crate_name = "com_api_gen",
-    visibility = [
-        "//visibility:public",  # platform_only
-    ],
-    deps = [
-        "//score/mw/com/example/com-api-example/com-api-gen-lola",
-        "//score/mw/com/example/com-api-example/com-api-gen-mock",
+        "//score/mw/com/impl/rust/com-api/com-api",
     ],
 )

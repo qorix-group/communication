@@ -14,27 +14,42 @@
 use com_api::*;
 use com_api_gen::*;
 
- fn use_vehicle_interface<R: Runtime>(consumer: VehicleConsumer<R>)
- {
-    // Subscribe to one event
-    let subscribed = consumer.left_tire.subscribe(3).unwrap();
+// Example struct demonstrating composition with VehicleConsumer
+pub struct VehicleMonitor<R: Runtime> {
+    consumer: VehicleConsumer<R>,
+    producer: VehicleOfferedProducer<R>,
+}
 
-    // Create sample buffer to be used during receive
-    let mut sample_buf = SampleContainer::new();
-    for _ in 0..10 {
+impl<R: Runtime> VehicleMonitor<R> {
+    /// Create a new VehicleMonitor with a consumer
+    pub fn new(consumer: VehicleConsumer<R>, producer: VehicleOfferedProducer<R>) -> Self {
+        Self { consumer, producer }
+    }
+
+    /// Monitor tire data from the consumer
+    pub fn read_tire_data(&self) -> Result<String> {
+        let subscribed = self.consumer.left_tire.subscribe(3)?;
+        let mut sample_buf = SampleContainer::new();
+
         match subscribed.try_receive(&mut sample_buf, 1) {
-            Ok(0) => panic!("No sample received"),
+            Ok(0) => Err(Error::Fail),
             Ok(x) => {
                 let sample = sample_buf.pop_front().unwrap();
-                println!("{} samples received: sample[0] = {:?}", x, *sample)
+                Ok(format!("{} samples received: sample[0] = {:?}", x, *sample))
             }
-            Err(e) => panic!("{:?}", e),
+            Err(e) => Err(e),
         }
     }
 
- }
+    pub fn write_tire_data(&self, tire: Tire) -> Result<()> {
+        let uninit_sample = self.producer.left_tire.allocate()?;
+        let sample = uninit_sample.write(tire);
+        sample.send()?;
+        Ok(())
+    }
+}
 
-fn use_consumer<R: Runtime>(runtime: &R)
+fn use_consumer<R: Runtime>(runtime: &R) -> VehicleConsumer<R>
 {
     // Create service discovery
     let consumer_discovery = runtime.find_service::<VehicleInterface>(InstanceSpecifier::new("My/Funk/ServiceName").unwrap());
@@ -46,45 +61,63 @@ fn use_consumer<R: Runtime>(runtime: &R)
         .find(|desc| desc.get_instance_id() == 42)
         .unwrap();
     let consumer = consumer_builder.build().unwrap();
-    use_vehicle_interface(consumer);
+    consumer
 }
 
-fn use_producer<R: Runtime>(runtime: &R)
+fn use_producer<R: Runtime>(runtime: &R) -> VehicleOfferedProducer<R>
 {
     let producer_builder = runtime.producer_builder::<VehicleInterface, VehicleProducer<R>>(InstanceSpecifier::new("My/Funk/ServiceName").unwrap());
     let producer = producer_builder.build().unwrap();
     let offered_producer = producer.offer().unwrap();
+    offered_producer
+}
 
-    // Business logic
-    let uninit_sample = offered_producer.left_tire.allocate().unwrap();
-    let sample = uninit_sample.write(Tire {});
-    sample.send().unwrap();
+fn run_with_runtime<R: Runtime>(name: &str, runtime: &R) {
+    println!("\n=== Running with {} runtime ===", name);
+
+    let monitor = VehicleMonitor::new(use_consumer(runtime), use_producer(runtime));
+
+    for _ in 0..5 {
+        monitor.write_tire_data(Tire {}).unwrap();
+        let tire_data = monitor.read_tire_data().unwrap();
+        println!("{}", tire_data);
+    }
+    println!("=== {} runtime completed ===\n", name);
 }
 
 fn main() {
-    let runtime_builder = RuntimeBuilderImpl::new();
-    let runtime = Builder::<MockRuntimeImpl>::build(runtime_builder).unwrap();
-    use_producer(&runtime);
-    use_consumer(&runtime);
+    let mock_runtime_builder = MockRuntimeBuilderImpl::new();
+    let mock_runtime = Builder::<MockRuntimeImpl>::build(mock_runtime_builder).unwrap();
+    run_with_runtime("Mock", &mock_runtime);
+
+    let lola_runtime_builder = LolaRuntimeBuilderImpl::new();
+    let lola_runtime = Builder::<LolaRuntimeImpl>::build(lola_runtime_builder).unwrap();
+    run_with_runtime("Lola", &lola_runtime);
 }
 
 #[cfg(test)]
 mod test {
-
     use super::*;
     #[test]
     fn create_producer() {
         // Factory
-        let runtime_builder = RuntimeBuilderImpl::new();
-        let runtime = Builder::<MockRuntimeImpl>::build(runtime_builder).unwrap();
+        let mock_runtime_builder = MockRuntimeBuilderImpl::new();
+        let runtime = Builder::<MockRuntimeImpl>::build(mock_runtime_builder).unwrap();
         use_producer(&runtime);
 
+        let lola_runtime_builder = LolaRuntimeBuilderImpl::new();
+        let runtime = Builder::<LolaRuntimeImpl>::build(lola_runtime_builder).unwrap();
+        use_producer(&runtime);
     }
 
     #[test]
     fn create_consumer() {
-        let runtime_builder = RuntimeBuilderImpl::new();
-        let runtime = Builder::<MockRuntimeImpl>::build(runtime_builder).unwrap();
+        let mock_runtime_builder = MockRuntimeBuilderImpl::new();
+        let runtime = Builder::<MockRuntimeImpl>::build(mock_runtime_builder).unwrap();
+        use_consumer(&runtime);
+
+        let lola_runtime_builder = LolaRuntimeBuilderImpl::new();
+        let runtime = Builder::<LolaRuntimeImpl>::build(lola_runtime_builder).unwrap();
         use_consumer(&runtime);
     }
 
@@ -107,8 +140,8 @@ mod test {
 
     #[tokio::test(flavor = "multi_thread")]
     async fn schedule_subscription_on_mt_scheduler() {
-        let runtime_builder = RuntimeBuilderImpl::new();
-        let runtime = runtime_builder.build().unwrap();
+        let mock_runtime_builder = MockRuntimeBuilderImpl::new();
+        let runtime = Builder::<MockRuntimeImpl>::build(mock_runtime_builder).unwrap();
 
         let consumer_discovery = runtime.find_service::<VehicleInterface>(InstanceSpecifier::new("My/Funk/ServiceName").unwrap());
         let available_service_instances = consumer_discovery.get_available_instances().unwrap();

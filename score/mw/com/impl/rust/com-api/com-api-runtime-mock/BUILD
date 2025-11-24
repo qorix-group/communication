@@ -14,7 +14,6 @@ load("@rules_rust//rust:defs.bzl", "rust_library")
 
 rust_library(
     name = "com-api-runtime-mock",
-    testonly = True,
     srcs = ["runtime.rs"],
     visibility = [
         "//visibility:public",  # platform_only
