@@ -307,16 +307,6 @@ class SkeletonAttorney
         return skeleton_.InitializeSharedMemoryForData(memory);
     }
 
-    ShmPathBuilderMock* GetIShmPathBuilder() const noexcept
-    {
-        return dynamic_cast<ShmPathBuilderMock*>(skeleton_.shm_path_builder_.get());
-    };
-
-    PartialRestartPathBuilderMock* GetIPartialRestartPathBuilder() const noexcept
-    {
-        return dynamic_cast<PartialRestartPathBuilderMock*>(skeleton_.partial_restart_path_builder_.get());
-    };
-
     ServiceDataControl* GetServiceDataControl(const QualityType quality_type) const noexcept
     {
         if (quality_type == QualityType::kASIL_QM)
@@ -414,8 +404,8 @@ class SkeletonMockedMemoryFixture : public ::testing::Test
     impl::tracing::mock_binding::TracingRuntime binding_tracing_runtime_mock_{};
 
     memory::shared::SharedMemoryFactoryMock shared_memory_factory_mock_{};
-    ShmPathBuilderMock* shm_path_builder_mock_{nullptr};
-    PartialRestartPathBuilderMock* partial_restart_path_builder_mock_{nullptr};
+    ShmPathBuilderMock shm_path_builder_mock_{};
+    PartialRestartPathBuilderMock partial_restart_path_builder_mock_{};
 
     std::shared_ptr<memory::shared::SharedMemoryResourceHeapAllocatorMock> control_qm_shared_memory_resource_mock_{
         std::make_shared<memory::shared::SharedMemoryResourceHeapAllocatorMock>(test::kControlQmMemoryResourceId)};

@@ -165,34 +165,31 @@ void SkeletonMockedMemoryFixture::InitialiseSkeleton(const InstanceIdentifier& i
         std::get_if<LolaServiceTypeDeployment>(&service_type_depl_info.binding_info_);
     ASSERT_NE(lola_service_type_deployment_ptr, nullptr);
 
-    skeleton_ = std::make_unique<Skeleton>(instance_identifier,
-                                           *lola_service_instance_deployment_ptr,
-                                           *lola_service_type_deployment_ptr,
-                                           filesystem_fake_.CreateInstance(),
-                                           std::make_unique<ShmPathBuilderMock>(),
-                                           std::make_unique<PartialRestartPathBuilderMock>(),
-                                           std::optional<memory::shared::LockFile>{},
-                                           nullptr);
+    skeleton_ = std::make_unique<Skeleton>(
+        instance_identifier,
+        *lola_service_instance_deployment_ptr,
+        *lola_service_type_deployment_ptr,
+        filesystem_fake_.CreateInstance(),
+        std::make_unique<ShmPathBuilderFacade>(shm_path_builder_mock_),
+        std::make_unique<PartialRestartPathBuilderFacade>(partial_restart_path_builder_mock_),
+        std::optional<memory::shared::LockFile>{},
+        nullptr);
 
     SkeletonAttorney skeleton_attorney{*skeleton_};
-    shm_path_builder_mock_ = skeleton_attorney.GetIShmPathBuilder();
-    ASSERT_NE(shm_path_builder_mock_, nullptr);
-    partial_restart_path_builder_mock_ = skeleton_attorney.GetIPartialRestartPathBuilder();
-    ASSERT_NE(partial_restart_path_builder_mock_, nullptr);
     ON_CALL(filesystem_fake_.GetUtils(), CreateDirectories(_, _)).WillByDefault(Return(score::ResultBlank{}));
 
-    ON_CALL(*shm_path_builder_mock_, GetControlChannelShmName(_, QualityType::kASIL_QM))
+    ON_CALL(shm_path_builder_mock_, GetControlChannelShmName(_, QualityType::kASIL_QM))
         .WillByDefault(Return(test::kControlChannelPathQm));
-    ON_CALL(*shm_path_builder_mock_, GetControlChannelShmName(_, QualityType::kASIL_B))
+    ON_CALL(shm_path_builder_mock_, GetControlChannelShmName(_, QualityType::kASIL_B))
         .WillByDefault(Return(test::kControlChannelPathAsilB));
-    ON_CALL(*shm_path_builder_mock_, GetDataChannelShmName(_)).WillByDefault(Return(test::kDataChannelPath));
+    ON_CALL(shm_path_builder_mock_, GetDataChannelShmName(_)).WillByDefault(Return(test::kDataChannelPath));
 }
 
 void SkeletonMockedMemoryFixture::ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed(
     const std::string& service_existence_marker_file_path,
     const std::int32_t lock_file_descriptor) noexcept
 {
-    EXPECT_CALL(*partial_restart_path_builder_mock_, GetServiceInstanceUsageMarkerFilePath(_))
+    EXPECT_CALL(partial_restart_path_builder_mock_, GetServiceInstanceUsageMarkerFilePath(_))
         .WillOnce(Return(service_existence_marker_file_path));
     EXPECT_CALL(*fcntl_mock_, open(StrEq(service_existence_marker_file_path.data()), kCreateOrOpenFlags, _))
         .WillOnce(Return(lock_file_descriptor));

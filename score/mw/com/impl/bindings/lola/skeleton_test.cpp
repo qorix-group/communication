@@ -13,6 +13,8 @@
 #include "score/mw/com/impl/bindings/lola/skeleton.h"
 #include "score/result/result.h"
 #include "score/mw/com/impl/binding_type.h"
+#include "score/mw/com/impl/bindings/lola/partial_restart_path_builder_mock.h"
+#include "score/mw/com/impl/bindings/lola/shm_path_builder_mock.h"
 #include "score/mw/com/impl/bindings/lola/test/skeleton_test_resources.h"
 #include "score/mw/com/impl/bindings/lola/test/transaction_log_test_resources.h"
 #include "score/mw/com/impl/bindings/mock_binding/skeleton_event.h"
@@ -339,7 +341,7 @@ TEST_F(SkeletonPrepareOfferFixture, PrepareOfferFailsIfOpeningServiceUsageMarker
     InitialiseSkeleton(GetValidInstanceIdentifier());
 
     // and that opening the service instance usage marker file fails
-    EXPECT_CALL(*partial_restart_path_builder_mock_, GetServiceInstanceUsageMarkerFilePath(_))
+    EXPECT_CALL(partial_restart_path_builder_mock_, GetServiceInstanceUsageMarkerFilePath(_))
         .WillOnce(Return(kServiceInstanceUsageFilePath));
     EXPECT_CALL(*fcntl_mock_, open(StrEq(kServiceInstanceUsageFilePath.data()), _, _))
         .WillOnce(Return(score::cpp::make_unexpected(os::Error::createFromErrno(EPERM))));
@@ -406,7 +408,7 @@ TEST_F(SkeletonPrepareOfferFixture, PrepareOfferFailsIfOpeningExistingSharedMemo
     ExpectControlSegmentOpened(QualityType::kASIL_QM, service_data_control_qm_);
 
     // and the path builder returns a valid path for the data shared memory
-    EXPECT_CALL(*shm_path_builder_mock_, GetDataChannelShmName(test::kDefaultLolaInstanceId))
+    EXPECT_CALL(shm_path_builder_mock_, GetDataChannelShmName(test::kDefaultLolaInstanceId))
         .WillOnce(Return("dummy_data_path"));
 
     // But when trying to open the data segment fails by returning a nullptr
@@ -430,7 +432,7 @@ TEST_F(SkeletonPrepareOfferFixture, PrepareOfferFailsIfOpeningExistingSharedMemo
     ExpectServiceUsageMarkerFileAlreadyFlocked(kServiceInstanceUsageFileDescriptor);
 
     // and the path builder returns a valid path for the control qm shared memory
-    EXPECT_CALL(*shm_path_builder_mock_, GetControlChannelShmName(test::kDefaultLolaInstanceId, QualityType::kASIL_QM))
+    EXPECT_CALL(shm_path_builder_mock_, GetControlChannelShmName(test::kDefaultLolaInstanceId, QualityType::kASIL_QM))
         .WillOnce(Return("dummy_control_path_qm"));
 
     // But when trying to create a control qm segment fails by returning a nullptr
@@ -618,7 +620,7 @@ TEST_F(SkeletonPrepareStopOfferFixture, PrepareStopOfferRemovesUsageMarkerFileIf
     InitialiseSkeleton(GetValidInstanceIdentifier());
 
     // and that opening the service instance usage marker file succeeds
-    EXPECT_CALL(*partial_restart_path_builder_mock_, GetServiceInstanceUsageMarkerFilePath(_))
+    EXPECT_CALL(partial_restart_path_builder_mock_, GetServiceInstanceUsageMarkerFilePath(_))
         .WillOnce(Return(kServiceInstanceUsageFilePath));
     EXPECT_CALL(*fcntl_mock_, open(StrEq(kServiceInstanceUsageFilePath.data()), _, _))
         .WillOnce(Return(kServiceInstanceUsageFileDescriptor));
@@ -715,7 +717,7 @@ TEST_F(SkeletonPrepareStopOfferFixture, PrepareStopOfferDoesNotRemoveUsageMarker
     InitialiseSkeleton(GetValidInstanceIdentifier());
 
     // and that opening the service instance usage marker file succeeds
-    EXPECT_CALL(*partial_restart_path_builder_mock_, GetServiceInstanceUsageMarkerFilePath(_))
+    EXPECT_CALL(partial_restart_path_builder_mock_, GetServiceInstanceUsageMarkerFilePath(_))
         .WillOnce(Return(kServiceInstanceUsageFilePath));
     EXPECT_CALL(*fcntl_mock_, open(StrEq(kServiceInstanceUsageFilePath.data()), _, _))
         .WillOnce(Return(kServiceInstanceUsageFileDescriptor));
@@ -1494,12 +1496,8 @@ class SkeletonCreateFixture : public Test
     os::MockGuard<os::FcntlMock> fcntl_mock_{};
     os::MockGuard<os::StatMock> stat_mock_{};
 
-    std::unique_ptr<ShmPathBuilderMock> shm_path_builder_mock_ptr_{std::make_unique<ShmPathBuilderMock>()};
-    std::unique_ptr<PartialRestartPathBuilderMock> partial_restart_path_builder_mock_ptr_{
-        std::make_unique<PartialRestartPathBuilderMock>()};
-
-    ShmPathBuilderMock& shm_path_builder_mock_{*shm_path_builder_mock_ptr_};
-    PartialRestartPathBuilderMock& partial_restart_path_builder_mock_{*partial_restart_path_builder_mock_ptr_};
+    ShmPathBuilderMock shm_path_builder_mock_{};
+    PartialRestartPathBuilderMock partial_restart_path_builder_mock_{};
 
     const std::int32_t existence_marker_file_descriptor_{10U};
     const std::int32_t usage_marker_file_descriptor_{11U};
@@ -1507,11 +1505,12 @@ class SkeletonCreateFixture : public Test
 
 TEST_F(SkeletonCreateFixture, CreateWorks)
 {
-    EXPECT_NE(lola::Skeleton::Create(instance_identifier_,
-                                     filesystem::FilesystemFactory{}.CreateInstance(),
-                                     std::move(shm_path_builder_mock_ptr_),
-                                     std::move(partial_restart_path_builder_mock_ptr_)),
-              nullptr);
+    EXPECT_NE(
+        lola::Skeleton::Create(instance_identifier_,
+                               filesystem::FilesystemFactory{}.CreateInstance(),
+                               std::make_unique<ShmPathBuilderFacade>(shm_path_builder_mock_),
+                               std::make_unique<PartialRestartPathBuilderFacade>(partial_restart_path_builder_mock_)),
+        nullptr);
 }
 
 TEST_F(SkeletonCreateFixture, CreatingSkeletonWillCreateExistenceMarkerFile)
@@ -1527,10 +1526,11 @@ TEST_F(SkeletonCreateFixture, CreatingSkeletonWillCreateExistenceMarkerFile)
         .WillOnce(Return(existence_marker_file_descriptor_));
 
     // When creating a Skeleton
-    score::cpp::ignore = lola::Skeleton::Create(instance_identifier_,
-                                         filesystem::FilesystemFactory{}.CreateInstance(),
-                                         std::move(shm_path_builder_mock_ptr_),
-                                         std::move(partial_restart_path_builder_mock_ptr_));
+    score::cpp::ignore =
+        lola::Skeleton::Create(instance_identifier_,
+                               filesystem::FilesystemFactory{}.CreateInstance(),
+                               std::make_unique<ShmPathBuilderFacade>(shm_path_builder_mock_),
+                               std::make_unique<PartialRestartPathBuilderFacade>(partial_restart_path_builder_mock_));
 }
 
 TEST_F(SkeletonCreateFixture, CreatingSkeletonWillTryToLockExistenceMarkerFile)
@@ -1548,18 +1548,20 @@ TEST_F(SkeletonCreateFixture, CreatingSkeletonWillTryToLockExistenceMarkerFile)
         .WillOnce(Return(score::cpp::blank{}));
 
     // When creating a Skeleton
-    score::cpp::ignore = lola::Skeleton::Create(instance_identifier_,
-                                         filesystem::FilesystemFactory{}.CreateInstance(),
-                                         std::move(shm_path_builder_mock_ptr_),
-                                         std::move(partial_restart_path_builder_mock_ptr_));
+    score::cpp::ignore =
+        lola::Skeleton::Create(instance_identifier_,
+                               filesystem::FilesystemFactory{}.CreateInstance(),
+                               std::make_unique<ShmPathBuilderFacade>(shm_path_builder_mock_),
+                               std::make_unique<PartialRestartPathBuilderFacade>(partial_restart_path_builder_mock_));
 }
 
 TEST_F(SkeletonCreateFixture, CreateReturnsNullPtrIfAnotherInstanceOfTheSameSkeletonStillExists)
 {
-    auto skeleton_0 = lola::Skeleton::Create(instance_identifier_,
-                                             filesystem::FilesystemFactory{}.CreateInstance(),
-                                             std::move(shm_path_builder_mock_ptr_),
-                                             std::move(partial_restart_path_builder_mock_ptr_));
+    auto skeleton_0 =
+        lola::Skeleton::Create(instance_identifier_,
+                               filesystem::FilesystemFactory{}.CreateInstance(),
+                               std::make_unique<ShmPathBuilderFacade>(shm_path_builder_mock_),
+                               std::make_unique<PartialRestartPathBuilderFacade>(partial_restart_path_builder_mock_));
     EXPECT_NE(skeleton_0, nullptr);
 
     std::unique_ptr<ShmPathBuilderMock> shm_path_builder_mock_ptr_1{std::make_unique<ShmPathBuilderMock>()};
@@ -1578,11 +1580,12 @@ TEST_F(SkeletonCreateFixture, CreateReturnsNullPtrIfCreatePartialRestartDirFails
     EXPECT_CALL(filesystem_fake.GetUtils(), CreateDirectories(partial_restart_directory_path_, _))
         .WillOnce(Return(MakeUnexpected(score::filesystem::ErrorCode::kCouldNotCreateDirectory)));
 
-    EXPECT_EQ(lola::Skeleton::Create(instance_identifier_,
-                                     filesystem_fake.CreateInstance(),
-                                     std::move(shm_path_builder_mock_ptr_),
-                                     std::move(partial_restart_path_builder_mock_ptr_)),
-              nullptr);
+    EXPECT_EQ(
+        lola::Skeleton::Create(instance_identifier_,
+                               filesystem_fake.CreateInstance(),
+                               std::make_unique<ShmPathBuilderFacade>(shm_path_builder_mock_),
+                               std::make_unique<PartialRestartPathBuilderFacade>(partial_restart_path_builder_mock_)),
+        nullptr);
 }
 
 TEST_F(SkeletonCreateFixture, CreateReturnsNullPtrIfOpeningServiceExistenceMarkerFileFails)
@@ -1590,11 +1593,12 @@ TEST_F(SkeletonCreateFixture, CreateReturnsNullPtrIfOpeningServiceExistenceMarke
     EXPECT_CALL(*fcntl_mock_, open(StrEq(service_existence_marker_file_path_.data()), _, _))
         .WillOnce(Return(score::cpp::make_unexpected(os::Error::createFromErrno(EPERM))));
 
-    EXPECT_EQ(lola::Skeleton::Create(instance_identifier_,
-                                     filesystem::FilesystemFactory{}.CreateInstance(),
-                                     std::move(shm_path_builder_mock_ptr_),
-                                     std::move(partial_restart_path_builder_mock_ptr_)),
-              nullptr);
+    EXPECT_EQ(
+        lola::Skeleton::Create(instance_identifier_,
+                               filesystem::FilesystemFactory{}.CreateInstance(),
+                               std::make_unique<ShmPathBuilderFacade>(shm_path_builder_mock_),
+                               std::make_unique<PartialRestartPathBuilderFacade>(partial_restart_path_builder_mock_)),
+        nullptr);
 }
 
 TEST_F(SkeletonCreateFixture, CreateReturnsSkeletonIfExistenceMarkerFileCanBeExclusivelyLocked)
@@ -1604,11 +1608,12 @@ TEST_F(SkeletonCreateFixture, CreateReturnsSkeletonIfExistenceMarkerFileCanBeExc
     ON_CALL(*fcntl_mock_, flock(existence_marker_file_descriptor_, kUnlockOperation))
         .WillByDefault(Return(score::cpp::blank{}));
 
-    EXPECT_NE(lola::Skeleton::Create(instance_identifier_,
-                                     filesystem::FilesystemFactory{}.CreateInstance(),
-                                     std::move(shm_path_builder_mock_ptr_),
-                                     std::move(partial_restart_path_builder_mock_ptr_)),
-              nullptr);
+    EXPECT_NE(
+        lola::Skeleton::Create(instance_identifier_,
+                               filesystem::FilesystemFactory{}.CreateInstance(),
+                               std::make_unique<ShmPathBuilderFacade>(shm_path_builder_mock_),
+                               std::make_unique<PartialRestartPathBuilderFacade>(partial_restart_path_builder_mock_)),
+        nullptr);
 }
 
 TEST_F(SkeletonCreateFixture, CreateReturnsNullPtrIfExistenceMarkerFileCannotBeExclusivelyLocked)
@@ -1623,11 +1628,12 @@ TEST_F(SkeletonCreateFixture, CreateReturnsNullPtrIfExistenceMarkerFileCannotBeE
     EXPECT_CALL(*fcntl_mock_, flock(existence_marker_file_descriptor_, kNonBlockingExclusiveLockOperation))
         .WillOnce(Return(score::cpp::make_unexpected(os::Error::createFromErrno(EWOULDBLOCK))));
 
-    EXPECT_EQ(lola::Skeleton::Create(instance_identifier_,
-                                     filesystem::FilesystemFactory{}.CreateInstance(),
-                                     std::move(shm_path_builder_mock_ptr_),
-                                     std::move(partial_restart_path_builder_mock_ptr_)),
-              nullptr);
+    EXPECT_EQ(
+        lola::Skeleton::Create(instance_identifier_,
+                               filesystem::FilesystemFactory{}.CreateInstance(),
+                               std::make_unique<ShmPathBuilderFacade>(shm_path_builder_mock_),
+                               std::make_unique<PartialRestartPathBuilderFacade>(partial_restart_path_builder_mock_)),
+        nullptr);
 }
 
 using SkeletonCreateDeathTest = SkeletonCreateFixture;
@@ -1638,10 +1644,11 @@ TEST_F(SkeletonCreateDeathTest,
     // Then the program terminates
     const InstanceIdentifier instance_identifier_with_blank_service_instance_deployment = make_InstanceIdentifier(
         test::kValidMinimalQmInstanceDeploymentWithBlankBinding, test::kValidMinimalTypeDeployment);
-    EXPECT_DEATH(score::cpp::ignore = lola::Skeleton::Create(instance_identifier_with_blank_service_instance_deployment,
-                                                      filesystem::FilesystemFactory{}.CreateInstance(),
-                                                      std::move(shm_path_builder_mock_ptr_),
-                                                      std::move(partial_restart_path_builder_mock_ptr_)),
+    EXPECT_DEATH(score::cpp::ignore = lola::Skeleton::Create(
+                     instance_identifier_with_blank_service_instance_deployment,
+                     filesystem::FilesystemFactory{}.CreateInstance(),
+                     std::make_unique<ShmPathBuilderFacade>(shm_path_builder_mock_),
+                     std::make_unique<PartialRestartPathBuilderFacade>(partial_restart_path_builder_mock_)),
                  ".*");
 }
 
@@ -1652,10 +1659,11 @@ TEST_F(SkeletonCreateDeathTest,
     // Then the program terminates
     const InstanceIdentifier instance_identifier_with_blank_service_instance_deployment = make_InstanceIdentifier(
         test::kValidMinimalQmInstanceDeployment, test::kValidMinimalTypeDeploymentWithBlankBinding);
-    EXPECT_DEATH(score::cpp::ignore = lola::Skeleton::Create(instance_identifier_with_blank_service_instance_deployment,
-                                                      filesystem::FilesystemFactory{}.CreateInstance(),
-                                                      std::move(shm_path_builder_mock_ptr_),
-                                                      std::move(partial_restart_path_builder_mock_ptr_)),
+    EXPECT_DEATH(score::cpp::ignore = lola::Skeleton::Create(
+                     instance_identifier_with_blank_service_instance_deployment,
+                     filesystem::FilesystemFactory{}.CreateInstance(),
+                     std::make_unique<ShmPathBuilderFacade>(shm_path_builder_mock_),
+                     std::make_unique<PartialRestartPathBuilderFacade>(partial_restart_path_builder_mock_)),
                  ".*");
 }
 

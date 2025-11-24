@@ -34,9 +34,6 @@ SkeletonEventFixture::SkeletonEventFixture() : SkeletonMockedMemoryFixture{}
 
     InitialiseSkeleton(GetValidInstanceIdentifier());
 
-    SkeletonAttorney skeleton_attorney{*skeleton_};
-    shm_path_builder_mock_ = skeleton_attorney.GetIShmPathBuilder();
-
     // Expect that the usage marker file path is created and closed
     ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
 
