@@ -345,13 +345,19 @@ class SkeletonMockedMemoryFixture : public ::testing::Test
     SkeletonMockedMemoryFixture();
     virtual ~SkeletonMockedMemoryFixture();
 
-    void InitialiseSkeleton(const InstanceIdentifier& instance_identifier);
+    SkeletonMockedMemoryFixture& InitialiseSkeleton(const InstanceIdentifier& instance_identifier);
+
+    /// \brief Simulates that the instance usage marker file could be exclusively flocked meaning that no Procies are
+    /// using an old shared memory region from this service. This is the "normal" case when we aren't in a partial
+    /// restart scenario.
+    SkeletonMockedMemoryFixture& WithNoConnectedProxy();
+
+    /// \brief Simulates that the instance usage marker file could not be exclusively flocked meaning that a Proxy is
+    /// still using an old shared memory region from this service. This occurs when a skeleton has restarted while a
+    /// Proxy was connected to its shared memory region.
+    SkeletonMockedMemoryFixture& WithAlreadyConnectedProxy();
 
     void ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed() noexcept;
-    void ExpectServiceUsageMarkerFileFlockAcquired(
-        std::int32_t existence_marker_file_descriptor = test::kServiceInstanceUsageFileDescriptor) noexcept;
-    void ExpectServiceUsageMarkerFileAlreadyFlocked(
-        std::int32_t existence_marker_file_descriptor = test::kServiceInstanceUsageFileDescriptor) noexcept;
     void ExpectControlSegmentCreated(QualityType quality_type);
     void ExpectDataSegmentCreated(bool in_typed_memory = false);
 

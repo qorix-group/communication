@@ -277,7 +277,10 @@ TEST_F(SkeletonPrepareOfferFixture, PrepareOfferCreatesSharedMemoryIfOpeningAndF
     ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
 
     // and that flocking the service instance usage marker file succeeds
-    ExpectServiceUsageMarkerFileFlockAcquired();
+    EXPECT_CALL(*fcntl_mock_, flock(test::kServiceInstanceUsageFileDescriptor, test::kNonBlockingExlusiveLockOperation))
+        .WillOnce(Return(score::cpp::blank{}));
+    EXPECT_CALL(*fcntl_mock_, flock(test::kServiceInstanceUsageFileDescriptor, test::kUnlockOperation))
+        .WillOnce(Return(score::cpp::blank{}));
 
     // When trying to create QM control and data segments succeed
     ExpectControlSegmentCreated(QualityType::kASIL_QM);
@@ -297,7 +300,10 @@ TEST_F(SkeletonPrepareOfferFixture,
     ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
 
     // and that flocking the service instance usage marker file succeeds
-    ExpectServiceUsageMarkerFileFlockAcquired();
+    EXPECT_CALL(*fcntl_mock_, flock(test::kServiceInstanceUsageFileDescriptor, test::kNonBlockingExlusiveLockOperation))
+        .WillOnce(Return(score::cpp::blank{}));
+    EXPECT_CALL(*fcntl_mock_, flock(test::kServiceInstanceUsageFileDescriptor, test::kUnlockOperation))
+        .WillOnce(Return(score::cpp::blank{}));
 
     EXPECT_CALL(shared_memory_factory_mock_, RemoveStaleArtefacts(test::kControlChannelPathQm));
     EXPECT_CALL(shared_memory_factory_mock_, RemoveStaleArtefacts(test::kControlChannelPathAsilB));
@@ -336,7 +342,8 @@ TEST_F(SkeletonPrepareOfferFixture, PrepareOfferOpensAndCleansExistingSharedMemo
     InitialiseSkeleton(GetValidASILInstanceIdentifier());
 
     // and that flocking the service instance usage marker file fails
-    ExpectServiceUsageMarkerFileAlreadyFlocked();
+    EXPECT_CALL(*fcntl_mock_, flock(test::kServiceInstanceUsageFileDescriptor, test::kNonBlockingExlusiveLockOperation))
+        .WillOnce(Return(score::cpp::make_unexpected(os::Error::createFromErrno(EWOULDBLOCK))));
 
     // and given that QM and ASIL B control segments contain (previously) allocated slots that are in writing
     auto first_allocation_qm = event_control_qm.data_control.AllocateNextSlot();
@@ -367,10 +374,7 @@ TEST_F(SkeletonPrepareOfferFixture, PrepareOfferOpensAndCleansExistingSharedMemo
 TEST_F(SkeletonPrepareOfferFixture, PrepareOfferFailsIfOpeningExistingSharedMemoryDataFails)
 {
     // Given a Skeleton constructed from a valid identifier referencing a QM deployment
-    InitialiseSkeleton(GetValidInstanceIdentifier());
-
-    // and that flocking the service instance usage marker file fails
-    ExpectServiceUsageMarkerFileAlreadyFlocked();
+    InitialiseSkeleton(GetValidInstanceIdentifier()).WithAlreadyConnectedProxy();
 
     // When trying to open QM control segment succeeds
     ExpectControlSegmentOpened(QualityType::kASIL_QM, service_data_control_qm_);
@@ -390,10 +394,7 @@ TEST_F(SkeletonPrepareOfferFixture, PrepareOfferFailsIfOpeningExistingSharedMemo
 TEST_F(SkeletonPrepareOfferFixture, PrepareOfferFailsIfOpeningExistingSharedMemoryControlQmFails)
 {
     // Given a Skeleton constructed from a valid identifier referencing a QM deployment
-    InitialiseSkeleton(GetValidInstanceIdentifier());
-
-    // and that flocking the service instance usage marker file fails
-    ExpectServiceUsageMarkerFileAlreadyFlocked();
+    InitialiseSkeleton(GetValidInstanceIdentifier()).WithAlreadyConnectedProxy();
 
     // and the path builder returns a valid path for the control qm shared memory
     EXPECT_CALL(shm_path_builder_mock_, GetControlChannelShmName(test::kDefaultLolaInstanceId, QualityType::kASIL_QM))
@@ -410,10 +411,7 @@ TEST_F(SkeletonPrepareOfferFixture, PrepareOfferFailsIfOpeningExistingSharedMemo
 TEST_F(SkeletonPrepareOfferFixture, PrepareOfferFailsIfOpeningExistingSharedMemoryControlAsilBFails)
 {
     // Given a Skeleton constructed from a valid identifier referencing a QM deployment
-    InitialiseSkeleton(GetValidASILInstanceIdentifier());
-
-    // and that flocking the service instance usage marker file fails
-    ExpectServiceUsageMarkerFileAlreadyFlocked();
+    InitialiseSkeleton(GetValidASILInstanceIdentifier()).WithAlreadyConnectedProxy();
 
     // When trying to open QM control segment succeeds
     ExpectControlSegmentOpened(QualityType::kASIL_QM, service_data_control_qm_);
@@ -431,10 +429,7 @@ TEST_F(SkeletonPrepareOfferFixture, PrepareOfferWillUpdateThePidInTheDataSegment
     const pid_t pid{7654};
 
     // Given a Skeleton constructed from a valid identifier referencing a QM deployment
-    InitialiseSkeleton(GetValidInstanceIdentifier());
-
-    // and that flocking the service instance usage marker file fails
-    ExpectServiceUsageMarkerFileAlreadyFlocked();
+    InitialiseSkeleton(GetValidInstanceIdentifier()).WithAlreadyConnectedProxy();
 
     // and that the PID will be retrieved from the lola runtime
     EXPECT_CALL(lola_runtime_mock_, GetPid()).WillOnce(Return(pid));
@@ -462,10 +457,7 @@ TEST_F(SkeletonPrepareOfferFixture, PrepareOfferWillCallRegisterShmObjectTraceCa
         register_shm_object_trace_callback{};
 
     // Given a Skeleton constructed from a valid identifier referencing a QM deployment
-    InitialiseSkeleton(GetValidASILInstanceIdentifier());
-
-    // and that flocking the service instance usage marker file fails
-    ExpectServiceUsageMarkerFileAlreadyFlocked();
+    InitialiseSkeleton(GetValidASILInstanceIdentifier()).WithAlreadyConnectedProxy();
 
     ExpectControlSegmentOpened(QualityType::kASIL_QM, service_data_control_qm_);
     ExpectControlSegmentOpened(QualityType::kASIL_B, service_data_control_asil_b_);
@@ -494,10 +486,7 @@ TEST_F(SkeletonPrepareOfferDeathTest, CallingPrepareOfferWhenLolaRuntimeCannotBe
 {
     auto test_function = [this] {
         // Given a Skeleton constructed from a valid identifier referencing a QM deployment
-        InitialiseSkeleton(GetValidInstanceIdentifier());
-
-        // and that flocking the service instance usage marker file fails
-        ExpectServiceUsageMarkerFileAlreadyFlocked();
+        InitialiseSkeleton(GetValidInstanceIdentifier()).WithAlreadyConnectedProxy();
 
         // and that trying to open QM control segment succeeds
         ExpectControlSegmentOpened(QualityType::kASIL_QM, service_data_control_qm_);
@@ -784,10 +773,7 @@ class SkeletonRegisterParamaterisedFixture : public SkeletonTestMockedSharedMemo
 TEST_P(SkeletonRegisterParamaterisedFixture, RegisterWillCreateEventDataIfShmRegionWasCreated)
 {
     // Given a Skeleton constructed from a valid identifier referencing an ASIL-B deployment
-    InitialiseSkeleton(GetValidASILInstanceIdentifier());
-
-    // and that flocking the service instance usage marker file succeeds
-    ExpectServiceUsageMarkerFileFlockAcquired();
+    InitialiseSkeleton(GetValidASILInstanceIdentifier()).WithNoConnectedProxy();
 
     // and that control (QM and ASIL-B) and data segments are successfully created
     ExpectControlSegmentCreated(QualityType::kASIL_QM);
@@ -831,10 +817,7 @@ TEST_P(SkeletonRegisterParamaterisedFixture, RegisterWillOpenEventDataIfShmRegio
                                                      : GetValidASILInstanceIdentifierWithField()};
 
     // Given a Skeleton constructed from a valid identifier referencing a QM deployment
-    InitialiseSkeleton(instance_identifier);
-
-    // and that flocking the service instance usage marker file fails
-    ExpectServiceUsageMarkerFileAlreadyFlocked();
+    InitialiseSkeleton(instance_identifier).WithAlreadyConnectedProxy();
 
     // and that the control (QM and ASIL-B) and data segments are successfully opened
     ExpectControlSegmentOpened(QualityType::kASIL_QM, service_data_control_qm_);
@@ -884,10 +867,7 @@ TEST_P(SkeletonRegisterParamaterisedFixture, RollbackWillBeCalledIfShmRegionWasO
                                                      : GetValidInstanceIdentifierWithField()};
 
     // Given a Skeleton constructed from a valid identifier referencing a QM deployment
-    InitialiseSkeleton(instance_identifier);
-
-    // and that flocking the service instance usage marker file fails
-    ExpectServiceUsageMarkerFileAlreadyFlocked();
+    InitialiseSkeleton(instance_identifier).WithAlreadyConnectedProxy();
 
     // and that QM control segment and data segments are successfully opened
     ExpectControlSegmentOpened(QualityType::kASIL_QM, service_data_control_qm_);
@@ -929,10 +909,7 @@ TEST_P(SkeletonRegisterParamaterisedFixture, RollbackWillOnlyBeCalledOnQmControl
                                                      : GetValidASILInstanceIdentifierWithField()};
 
     // Given a Skeleton constructed from a valid identifier referencing a QM deployment
-    InitialiseSkeleton(instance_identifier);
-
-    // and that flocking the service instance usage marker file fails
-    ExpectServiceUsageMarkerFileAlreadyFlocked();
+    InitialiseSkeleton(instance_identifier).WithAlreadyConnectedProxy();
 
     // and that the control (QM and ASIL-B) and data segments are successfully opened
     ExpectControlSegmentOpened(QualityType::kASIL_QM, service_data_control_qm_);
@@ -975,10 +952,7 @@ TEST_P(SkeletonRegisterParamaterisedFixture, TracingWillBeDisabledAndTransaction
                                                      : GetValidInstanceIdentifierWithField()};
 
     // Given a Skeleton constructed from a valid identifier referencing a QM deployment
-    InitialiseSkeleton(instance_identifier);
-
-    // and that flocking the service instance usage marker file fails
-    ExpectServiceUsageMarkerFileAlreadyFlocked();
+    InitialiseSkeleton(instance_identifier).WithAlreadyConnectedProxy();
 
     // and that the QM control and data segments are successfully opened
     ExpectControlSegmentOpened(QualityType::kASIL_QM, service_data_control_qm_);

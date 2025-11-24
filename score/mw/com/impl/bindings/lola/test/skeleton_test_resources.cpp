@@ -168,17 +168,18 @@ SkeletonMockedMemoryFixture::~SkeletonMockedMemoryFixture()
     memory::shared::SharedMemoryFactory::InjectMock(nullptr);
 }
 
-void SkeletonMockedMemoryFixture::InitialiseSkeleton(const InstanceIdentifier& instance_identifier)
+SkeletonMockedMemoryFixture& SkeletonMockedMemoryFixture::InitialiseSkeleton(
+    const InstanceIdentifier& instance_identifier)
 {
     const auto& instance_depl_info = InstanceIdentifierView{instance_identifier}.GetServiceInstanceDeployment();
     const auto* lola_service_instance_deployment_ptr =
         std::get_if<LolaServiceInstanceDeployment>(&instance_depl_info.bindingInfo_);
-    ASSERT_NE(lola_service_instance_deployment_ptr, nullptr);
+    EXPECT_NE(lola_service_instance_deployment_ptr, nullptr);
 
     const auto& service_type_depl_info = InstanceIdentifierView{instance_identifier}.GetServiceTypeDeployment();
     const auto* lola_service_type_deployment_ptr =
         std::get_if<LolaServiceTypeDeployment>(&service_type_depl_info.binding_info_);
-    ASSERT_NE(lola_service_type_deployment_ptr, nullptr);
+    EXPECT_NE(lola_service_type_deployment_ptr, nullptr);
 
     skeleton_ = std::make_unique<Skeleton>(
         instance_identifier,
@@ -189,6 +190,24 @@ void SkeletonMockedMemoryFixture::InitialiseSkeleton(const InstanceIdentifier& i
         std::make_unique<PartialRestartPathBuilderFacade>(partial_restart_path_builder_mock_),
         std::optional<memory::shared::LockFile>{},
         nullptr);
+
+    return *this;
+}
+
+SkeletonMockedMemoryFixture& SkeletonMockedMemoryFixture::WithNoConnectedProxy()
+{
+    ON_CALL(*fcntl_mock_, flock(test::kServiceInstanceUsageFileDescriptor, test::kNonBlockingExlusiveLockOperation))
+        .WillByDefault(Return(score::cpp::blank{}));
+    ON_CALL(*fcntl_mock_, flock(test::kServiceInstanceUsageFileDescriptor, test::kUnlockOperation))
+        .WillByDefault(Return(score::cpp::blank{}));
+    return *this;
+}
+
+SkeletonMockedMemoryFixture& SkeletonMockedMemoryFixture::WithAlreadyConnectedProxy()
+{
+    ON_CALL(*fcntl_mock_, flock(test::kServiceInstanceUsageFileDescriptor, test::kNonBlockingExlusiveLockOperation))
+        .WillByDefault(Return(score::cpp::make_unexpected(os::Error::createFromErrno(EWOULDBLOCK))));
+    return *this;
 }
 
 void SkeletonMockedMemoryFixture::ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed() noexcept
@@ -201,25 +220,6 @@ void SkeletonMockedMemoryFixture::ExpectServiceUsageMarkerFileCreatedOrOpenedAnd
     EXPECT_CALL(*unistd_mock_, close(test::kServiceInstanceUsageFileDescriptor));
     // we explicitly expect NO calls to unlink! See Skeleton::CreateOrOpenServiceInstanceUsageMarkerFile!
     EXPECT_CALL(*unistd_mock_, unlink(StrEq(test::kServiceInstanceUsageFilePath))).Times(0);
-}
-
-void SkeletonMockedMemoryFixture::ExpectServiceUsageMarkerFileFlockAcquired(
-    const std::int32_t existence_marker_file_descriptor) noexcept
-{
-    EXPECT_CALL(*fcntl_mock_, flock(existence_marker_file_descriptor, test::kNonBlockingExlusiveLockOperation))
-        .WillOnce(Return(score::cpp::blank{}));
-    EXPECT_CALL(*fcntl_mock_, flock(existence_marker_file_descriptor, test::kUnlockOperation))
-        .WillOnce(Return(score::cpp::blank{}));
-}
-
-void SkeletonMockedMemoryFixture::ExpectServiceUsageMarkerFileAlreadyFlocked(
-    const std::int32_t existence_marker_file_descriptor) noexcept
-{
-    const os::Fcntl::Operation non_blocking_exclusive_lock_operation =
-        os::Fcntl::Operation::kLockExclusive | score::os::Fcntl::Operation::kLockNB;
-
-    EXPECT_CALL(*fcntl_mock_, flock(existence_marker_file_descriptor, non_blocking_exclusive_lock_operation))
-        .WillOnce(Return(score::cpp::make_unexpected(os::Error::createFromErrno(EWOULDBLOCK))));
 }
 
 void SkeletonMockedMemoryFixture::ExpectControlSegmentCreated(const QualityType quality_type)
