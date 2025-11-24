@@ -1493,11 +1493,11 @@ class SkeletonCreateFixture : public Test
 
     InstanceIdentifier instance_identifier_ =
         make_InstanceIdentifier(test::kValidMinimalAsilInstanceDeployment, test::kValidMinimalTypeDeployment);
-    os::MockGuard<os::FcntlMock> fcntl_mock_{};
-    os::MockGuard<os::StatMock> stat_mock_{};
+    os::MockGuard<::testing::NiceMock<os::FcntlMock>> fcntl_mock_{};
+    os::MockGuard<::testing::NiceMock<os::StatMock>> stat_mock_{};
 
-    ShmPathBuilderMock shm_path_builder_mock_{};
-    PartialRestartPathBuilderMock partial_restart_path_builder_mock_{};
+    ::testing::NiceMock<ShmPathBuilderMock> shm_path_builder_mock_{};
+    ::testing::NiceMock<PartialRestartPathBuilderMock> partial_restart_path_builder_mock_{};
 
     const std::int32_t existence_marker_file_descriptor_{10U};
     const std::int32_t usage_marker_file_descriptor_{11U};

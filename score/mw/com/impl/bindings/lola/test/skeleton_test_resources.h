@@ -394,25 +394,31 @@ class SkeletonMockedMemoryFixture : public ::testing::Test
 
     void CleanUpSkeleton();
 
-    impl::RuntimeMock runtime_mock_{};
-    lola::RuntimeMock lola_runtime_mock_{};
-    os::MockGuard<os::FcntlMock> fcntl_mock_{};
-    os::MockGuard<os::StatMock> stat_mock_{};
-    os::MockGuard<os::UnistdMock> unistd_mock_{};
-    filesystem::FilesystemFactoryFake filesystem_fake_{};
-    impl::tracing::TracingRuntimeMock tracing_runtime_mock_{};
-    impl::tracing::mock_binding::TracingRuntime binding_tracing_runtime_mock_{};
+    ::testing::NiceMock<impl::RuntimeMock> runtime_mock_{};
+    ::testing::NiceMock<lola::RuntimeMock> lola_runtime_mock_{};
+    os::MockGuard<::testing::NiceMock<os::FcntlMock>> fcntl_mock_{};
+    os::MockGuard<::testing::NiceMock<os::StatMock>> stat_mock_{};
+    os::MockGuard<::testing::NiceMock<os::UnistdMock>> unistd_mock_{};
+    ::testing::NiceMock<filesystem::FilesystemFactoryFake> filesystem_fake_{};
+    ::testing::NiceMock<impl::tracing::TracingRuntimeMock> tracing_runtime_mock_{};
+    ::testing::NiceMock<impl::tracing::mock_binding::TracingRuntime> binding_tracing_runtime_mock_{};
 
-    memory::shared::SharedMemoryFactoryMock shared_memory_factory_mock_{};
-    ShmPathBuilderMock shm_path_builder_mock_{};
-    PartialRestartPathBuilderMock partial_restart_path_builder_mock_{};
+    ::testing::NiceMock<memory::shared::SharedMemoryFactoryMock> shared_memory_factory_mock_{};
+    ::testing::NiceMock<ShmPathBuilderMock> shm_path_builder_mock_{};
+    ::testing::NiceMock<PartialRestartPathBuilderMock> partial_restart_path_builder_mock_{};
 
-    std::shared_ptr<memory::shared::SharedMemoryResourceHeapAllocatorMock> control_qm_shared_memory_resource_mock_{
-        std::make_shared<memory::shared::SharedMemoryResourceHeapAllocatorMock>(test::kControlQmMemoryResourceId)};
-    std::shared_ptr<memory::shared::SharedMemoryResourceHeapAllocatorMock> control_asil_b_shared_memory_resource_mock_{
-        std::make_shared<memory::shared::SharedMemoryResourceHeapAllocatorMock>(test::kControlAsilBMemoryResourceId)};
-    std::shared_ptr<memory::shared::SharedMemoryResourceHeapAllocatorMock> data_shared_memory_resource_mock_{
-        std::make_shared<memory::shared::SharedMemoryResourceHeapAllocatorMock>(test::kDataMemoryResourceId)};
+    std::shared_ptr<::testing::NiceMock<memory::shared::SharedMemoryResourceHeapAllocatorMock>>
+        control_qm_shared_memory_resource_mock_{
+            std::make_shared<::testing::NiceMock<memory::shared::SharedMemoryResourceHeapAllocatorMock>>(
+                test::kControlQmMemoryResourceId)};
+    std::shared_ptr<::testing::NiceMock<memory::shared::SharedMemoryResourceHeapAllocatorMock>>
+        control_asil_b_shared_memory_resource_mock_{
+            std::make_shared<::testing::NiceMock<memory::shared::SharedMemoryResourceHeapAllocatorMock>>(
+                test::kControlAsilBMemoryResourceId)};
+    std::shared_ptr<::testing::NiceMock<memory::shared::SharedMemoryResourceHeapAllocatorMock>>
+        data_shared_memory_resource_mock_{
+            std::make_shared<::testing::NiceMock<memory::shared::SharedMemoryResourceHeapAllocatorMock>>(
+                test::kDataMemoryResourceId)};
 
     std::unique_ptr<Skeleton> skeleton_{nullptr};
 };
