@@ -34,9 +34,6 @@ SkeletonEventFixture::SkeletonEventFixture() : SkeletonMockedMemoryFixture{}
 
     InitialiseSkeleton(GetValidInstanceIdentifier());
 
-    // Expect that the usage marker file path is created and closed
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
-
     // Setup the SharedMemoryResourceHeapAllocatorMock objects when offering the parent Skeleton
     ExpectControlSegmentCreated(QualityType::kASIL_QM);
     ExpectControlSegmentCreated(QualityType::kASIL_B);

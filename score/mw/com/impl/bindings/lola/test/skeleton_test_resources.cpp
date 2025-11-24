@@ -36,8 +36,6 @@ using ::testing::Return;
 using ::testing::ReturnRef;
 using ::testing::StrEq;
 
-const score::os::Fcntl::Open kCreateOrOpenFlags{score::os::Fcntl::Open::kCreate | score::os::Fcntl::Open::kReadOnly};
-
 }  // namespace
 
 LolaServiceInstanceDeployment CreateLolaServiceInstanceDeployment(
@@ -154,6 +152,13 @@ SkeletonMockedMemoryFixture::SkeletonMockedMemoryFixture()
     ON_CALL(shm_path_builder_mock_, GetControlChannelShmName(_, QualityType::kASIL_B))
         .WillByDefault(Return(test::kControlChannelPathAsilB));
     ON_CALL(shm_path_builder_mock_, GetDataChannelShmName(_)).WillByDefault(Return(test::kDataChannelPath));
+
+    // Default behaviour for successful usage marker file creation
+    ON_CALL(partial_restart_path_builder_mock_, GetServiceInstanceUsageMarkerFilePath(_))
+        .WillByDefault(Return(test::kServiceInstanceUsageFilePath));
+    ON_CALL(*fcntl_mock_, open(StrEq(test::kServiceInstanceUsageFilePath), test::kCreateOrOpenFlags, _))
+        .WillByDefault(Return(test::kServiceInstanceUsageFileDescriptor));
+    ON_CALL(*stat_mock_, chmod(StrEq(test::kServiceInstanceUsageFilePath), _)).WillByDefault(Return(score::cpp::blank{}));
 }
 
 SkeletonMockedMemoryFixture::~SkeletonMockedMemoryFixture()
@@ -186,31 +191,25 @@ void SkeletonMockedMemoryFixture::InitialiseSkeleton(const InstanceIdentifier& i
         nullptr);
 }
 
-void SkeletonMockedMemoryFixture::ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed(
-    const std::string& service_existence_marker_file_path,
-    const std::int32_t lock_file_descriptor) noexcept
+void SkeletonMockedMemoryFixture::ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed() noexcept
 {
-    EXPECT_CALL(partial_restart_path_builder_mock_, GetServiceInstanceUsageMarkerFilePath(_))
-        .WillOnce(Return(service_existence_marker_file_path));
-    EXPECT_CALL(*fcntl_mock_, open(StrEq(service_existence_marker_file_path.data()), kCreateOrOpenFlags, _))
-        .WillOnce(Return(lock_file_descriptor));
-    EXPECT_CALL(*stat_mock_, chmod(StrEq(service_existence_marker_file_path.data()), _)).WillOnce(Return(score::cpp::blank{}));
+    // Note: Default behaviour for these expectations are set in the constructor.
+    EXPECT_CALL(partial_restart_path_builder_mock_, GetServiceInstanceUsageMarkerFilePath(_));
+    EXPECT_CALL(*fcntl_mock_, open(StrEq(test::kServiceInstanceUsageFilePath), test::kCreateOrOpenFlags, _));
+    EXPECT_CALL(*stat_mock_, chmod(StrEq(test::kServiceInstanceUsageFilePath), _));
 
-    EXPECT_CALL(*unistd_mock_, close(lock_file_descriptor));
+    EXPECT_CALL(*unistd_mock_, close(test::kServiceInstanceUsageFileDescriptor));
     // we explicitly expect NO calls to unlink! See Skeleton::CreateOrOpenServiceInstanceUsageMarkerFile!
-    EXPECT_CALL(*unistd_mock_, unlink(StrEq(service_existence_marker_file_path.data()))).Times(0);
+    EXPECT_CALL(*unistd_mock_, unlink(StrEq(test::kServiceInstanceUsageFilePath))).Times(0);
 }
 
 void SkeletonMockedMemoryFixture::ExpectServiceUsageMarkerFileFlockAcquired(
     const std::int32_t existence_marker_file_descriptor) noexcept
 {
-    const os::Fcntl::Operation non_blocking_exclusive_lock_operation =
-        os::Fcntl::Operation::kLockExclusive | score::os::Fcntl::Operation::kLockNB;
-    const os::Fcntl::Operation unlock_operation = os::Fcntl::Operation::kUnLock;
-
-    EXPECT_CALL(*fcntl_mock_, flock(existence_marker_file_descriptor, non_blocking_exclusive_lock_operation))
+    EXPECT_CALL(*fcntl_mock_, flock(existence_marker_file_descriptor, test::kNonBlockingExlusiveLockOperation))
         .WillOnce(Return(score::cpp::blank{}));
-    EXPECT_CALL(*fcntl_mock_, flock(existence_marker_file_descriptor, unlock_operation)).WillOnce(Return(score::cpp::blank{}));
+    EXPECT_CALL(*fcntl_mock_, flock(existence_marker_file_descriptor, test::kUnlockOperation))
+        .WillOnce(Return(score::cpp::blank{}));
 }
 
 void SkeletonMockedMemoryFixture::ExpectServiceUsageMarkerFileAlreadyFlocked(

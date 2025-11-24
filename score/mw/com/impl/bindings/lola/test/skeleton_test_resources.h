@@ -292,6 +292,12 @@ const auto kDataChannelPath{"/lola-data-0000000000000001-00016"};
 static const std::string kServiceInstanceUsageFilePath{"/test_service_instance_usage_file_path"};
 static const std::int32_t kServiceInstanceUsageFileDescriptor{7890};
 
+static const score::os::Fcntl::Open kCreateOrOpenFlags{score::os::Fcntl::Open::kCreate | score::os::Fcntl::Open::kReadOnly};
+
+static const os::Fcntl::Operation kNonBlockingExlusiveLockOperation =
+    os::Fcntl::Operation::kLockExclusive | score::os::Fcntl::Operation::kLockNB;
+static const os::Fcntl::Operation kUnlockOperation = os::Fcntl::Operation::kUnLock;
+
 }  // namespace test
 
 class SkeletonAttorney
@@ -341,9 +347,7 @@ class SkeletonMockedMemoryFixture : public ::testing::Test
 
     void InitialiseSkeleton(const InstanceIdentifier& instance_identifier);
 
-    void ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed(
-        const std::string& service_existence_marker_file_path = test::kServiceInstanceUsageFilePath,
-        const std::int32_t lock_file_descriptor = test::kServiceInstanceUsageFileDescriptor) noexcept;
+    void ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed() noexcept;
     void ExpectServiceUsageMarkerFileFlockAcquired(
         std::int32_t existence_marker_file_descriptor = test::kServiceInstanceUsageFileDescriptor) noexcept;
     void ExpectServiceUsageMarkerFileAlreadyFlocked(

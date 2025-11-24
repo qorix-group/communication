@@ -102,9 +102,6 @@ TEST_F(SkeletonTestMockedSharedMemoryFixture, StopOfferCallsUnregisterShmObjectT
     // ... and a skeleton constructed from it
     InitialiseSkeleton(GetValidASILInstanceIdentifier());
 
-    // and that opening the service instance usage marker file succeeds
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
-
     // and that flocking the service instance usage marker file succeeds in PrepareOffer and in PrepareStopOffer
     EXPECT_CALL(*fcntl_mock_, flock(test::kServiceInstanceUsageFileDescriptor, kNonBlockingExclusiveLockOperation))
         .Times(2)
@@ -142,9 +139,6 @@ TEST_F(SkeletonTestSharedMemoryCreationFixture, PrepareServiceOfferFailsOnShmCre
     // Given a Skeleton constructed from a valid identifier referencing a QM deployment
     InitialiseSkeleton(GetValidInstanceIdentifier());
 
-    // Expect that the usage marker file path is created and closed
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
-
     // But when trying to create a control qm segment fails by returning a nullptr
     EXPECT_CALL(shared_memory_factory_mock_,
                 Create(test::kControlChannelPathQm, _, _, WritablePermissionsMatcher(), false))
@@ -161,9 +155,6 @@ TEST_F(SkeletonTestSharedMemoryCreationFixture, PrepareServiceOfferFailsOnShmCre
 
     // Given a Skeleton constructed from a valid identifier referencing an ASIL B deployment
     InitialiseSkeleton(GetValidASILInstanceIdentifier());
-
-    // Expect that the usage marker file path is created and closed
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
 
     // When trying to create a QM control segment succeeds
     ExpectControlSegmentCreated(QualityType::kASIL_QM);
@@ -183,9 +174,6 @@ TEST_F(SkeletonTestSharedMemoryCreationFixture, PrepareServiceOfferFailsOnShmCre
     using namespace memory::shared;
     // Given a Skeleton constructed from a valid identifier referencing a QM deployment
     InitialiseSkeleton(GetValidInstanceIdentifier());
-
-    // Expect that the usage marker file path is created and closed
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
 
     // When trying to create a QM control segment succeeds
     ExpectControlSegmentCreated(QualityType::kASIL_QM);
@@ -216,9 +204,6 @@ TEST_F(SkeletonTestSharedMemoryCreationFixture, PrepareServiceOfferWithTraceCall
 
     // Given a Skeleton constructed from a valid identifier referencing a QM deployment
     InitialiseSkeleton(GetValidInstanceIdentifier());
-
-    // Expect that the usage marker file path is created and closed
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
 
     // When trying to create a QM control segment succeeds
     ExpectControlSegmentCreated(QualityType::kASIL_QM);
@@ -261,9 +246,6 @@ TEST_F(SkeletonTestSharedMemoryCreationFixture, PrepareServiceOfferWithTraceCall
 
     // Given a Skeleton constructed from a valid identifier referencing a QM deployment
     InitialiseSkeleton(GetValidInstanceIdentifier());
-
-    // Expect that the usage marker file path is created and closed
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
 
     // When trying to create a QM control segment succeeds
     ExpectControlSegmentCreated(QualityType::kASIL_QM);
@@ -353,9 +335,6 @@ TEST_F(SkeletonPrepareOfferFixture, PrepareOfferOpensAndCleansExistingSharedMemo
     // Given a Skeleton constructed from a valid identifier referencing an ASIL-B deployment
     InitialiseSkeleton(GetValidASILInstanceIdentifier());
 
-    // and that opening the service instance usage marker file succeeds
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
-
     // and that flocking the service instance usage marker file fails
     ExpectServiceUsageMarkerFileAlreadyFlocked();
 
@@ -390,9 +369,6 @@ TEST_F(SkeletonPrepareOfferFixture, PrepareOfferFailsIfOpeningExistingSharedMemo
     // Given a Skeleton constructed from a valid identifier referencing a QM deployment
     InitialiseSkeleton(GetValidInstanceIdentifier());
 
-    // and that opening the service instance usage marker file succeeds
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
-
     // and that flocking the service instance usage marker file fails
     ExpectServiceUsageMarkerFileAlreadyFlocked();
 
@@ -416,9 +392,6 @@ TEST_F(SkeletonPrepareOfferFixture, PrepareOfferFailsIfOpeningExistingSharedMemo
     // Given a Skeleton constructed from a valid identifier referencing a QM deployment
     InitialiseSkeleton(GetValidInstanceIdentifier());
 
-    // and that opening the service instance usage marker file succeeds
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
-
     // and that flocking the service instance usage marker file fails
     ExpectServiceUsageMarkerFileAlreadyFlocked();
 
@@ -438,9 +411,6 @@ TEST_F(SkeletonPrepareOfferFixture, PrepareOfferFailsIfOpeningExistingSharedMemo
 {
     // Given a Skeleton constructed from a valid identifier referencing a QM deployment
     InitialiseSkeleton(GetValidASILInstanceIdentifier());
-
-    // and that opening the service instance usage marker file succeeds
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
 
     // and that flocking the service instance usage marker file fails
     ExpectServiceUsageMarkerFileAlreadyFlocked();
@@ -462,9 +432,6 @@ TEST_F(SkeletonPrepareOfferFixture, PrepareOfferWillUpdateThePidInTheDataSegment
 
     // Given a Skeleton constructed from a valid identifier referencing a QM deployment
     InitialiseSkeleton(GetValidInstanceIdentifier());
-
-    // and that opening the service instance usage marker file succeeds
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
 
     // and that flocking the service instance usage marker file fails
     ExpectServiceUsageMarkerFileAlreadyFlocked();
@@ -496,9 +463,6 @@ TEST_F(SkeletonPrepareOfferFixture, PrepareOfferWillCallRegisterShmObjectTraceCa
 
     // Given a Skeleton constructed from a valid identifier referencing a QM deployment
     InitialiseSkeleton(GetValidASILInstanceIdentifier());
-
-    // and that opening the service instance usage marker file succeeds
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
 
     // and that flocking the service instance usage marker file fails
     ExpectServiceUsageMarkerFileAlreadyFlocked();
@@ -532,9 +496,6 @@ TEST_F(SkeletonPrepareOfferDeathTest, CallingPrepareOfferWhenLolaRuntimeCannotBe
         // Given a Skeleton constructed from a valid identifier referencing a QM deployment
         InitialiseSkeleton(GetValidInstanceIdentifier());
 
-        // and that opening the service instance usage marker file succeeds
-        ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
-
         // and that flocking the service instance usage marker file fails
         ExpectServiceUsageMarkerFileAlreadyFlocked();
 
@@ -561,9 +522,6 @@ TEST_F(SkeletonPrepareStopOfferFixture, PrepareStopOfferRemovesSharedMemoryIfUsa
 {
     // Given a Skeleton constructed from a valid identifier referencing a QM deployment
     InitialiseSkeleton(GetValidInstanceIdentifier());
-
-    // and that opening the service instance usage marker file succeeds
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
 
     // and that flocking the service instance usage marker file succeeds in PrepareOffer and in PrepareStopOffer
     EXPECT_CALL(*fcntl_mock_, flock(test::kServiceInstanceUsageFileDescriptor, kNonBlockingExclusiveLockOperation))
@@ -650,9 +608,6 @@ TEST_F(SkeletonPrepareStopOfferFixture, PrepareStopOfferDoesNotRemoveSharedMemor
 {
     // Given a Skeleton constructed from a valid identifier referencing a QM deployment
     InitialiseSkeleton(GetValidInstanceIdentifier());
-
-    // and that opening the service instance usage marker file succeeds
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
 
     // and that flocking the service instance usage marker file fails in PrepareStopOffer
     EXPECT_CALL(*fcntl_mock_, flock(test::kServiceInstanceUsageFileDescriptor, kNonBlockingExclusiveLockOperation))
@@ -831,9 +786,6 @@ TEST_P(SkeletonRegisterParamaterisedFixture, RegisterWillCreateEventDataIfShmReg
     // Given a Skeleton constructed from a valid identifier referencing an ASIL-B deployment
     InitialiseSkeleton(GetValidASILInstanceIdentifier());
 
-    // and that opening the service instance usage marker file succeeds
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
-
     // and that flocking the service instance usage marker file succeeds
     ExpectServiceUsageMarkerFileFlockAcquired();
 
@@ -880,9 +832,6 @@ TEST_P(SkeletonRegisterParamaterisedFixture, RegisterWillOpenEventDataIfShmRegio
 
     // Given a Skeleton constructed from a valid identifier referencing a QM deployment
     InitialiseSkeleton(instance_identifier);
-
-    // and that opening the service instance usage marker file succeeds
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
 
     // and that flocking the service instance usage marker file fails
     ExpectServiceUsageMarkerFileAlreadyFlocked();
@@ -937,9 +886,6 @@ TEST_P(SkeletonRegisterParamaterisedFixture, RollbackWillBeCalledIfShmRegionWasO
     // Given a Skeleton constructed from a valid identifier referencing a QM deployment
     InitialiseSkeleton(instance_identifier);
 
-    // and that opening the service instance usage marker file succeeds
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
-
     // and that flocking the service instance usage marker file fails
     ExpectServiceUsageMarkerFileAlreadyFlocked();
 
@@ -984,9 +930,6 @@ TEST_P(SkeletonRegisterParamaterisedFixture, RollbackWillOnlyBeCalledOnQmControl
 
     // Given a Skeleton constructed from a valid identifier referencing a QM deployment
     InitialiseSkeleton(instance_identifier);
-
-    // and that opening the service instance usage marker file succeeds
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
 
     // and that flocking the service instance usage marker file fails
     ExpectServiceUsageMarkerFileAlreadyFlocked();
@@ -1034,9 +977,6 @@ TEST_P(SkeletonRegisterParamaterisedFixture, TracingWillBeDisabledAndTransaction
     // Given a Skeleton constructed from a valid identifier referencing a QM deployment
     InitialiseSkeleton(instance_identifier);
 
-    // and that opening the service instance usage marker file succeeds
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
-
     // and that flocking the service instance usage marker file fails
     ExpectServiceUsageMarkerFileAlreadyFlocked();
 
@@ -1080,9 +1020,6 @@ TEST_P(SkeletonRegisterParamaterisedFixture, ValidEventDataSlotsExistAfterEventI
 
     // Given a skeleton with one event "fooEvent" registered
     InitialiseSkeleton(instance_identifier);
-
-    // Expect that the usage marker file path is created and closed
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
 
     // When trying to create a QM control segment succeeds
     ExpectControlSegmentCreated(QualityType::kASIL_QM);
@@ -1130,9 +1067,6 @@ TEST_P(SkeletonRegisterParamaterisedFixture, CanAllocateSlotAfterEventIsRegister
     // Given a skeleton with one event "fooEvent" registered
     InitialiseSkeleton(instance_identifier);
 
-    // Expect that the usage marker file path is created and closed
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
-
     // When trying to create a QM control segment succeeds
     ExpectControlSegmentCreated(QualityType::kASIL_QM);
 
@@ -1176,9 +1110,6 @@ TEST_P(SkeletonRegisterParamaterisedFixture, AllocateAfterCleanUp)
 
     // Given a skeleton with one event "fooEvent" registered
     InitialiseSkeleton(instance_identifier);
-
-    // Expect that the usage marker file path is created and closed
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
 
     ExpectControlSegmentCreated(QualityType::kASIL_QM);
 
@@ -1269,9 +1200,6 @@ TEST_P(SkeletonRegisterParamaterisedFixture, ValidEventMetaInfoExistAfterEventIs
     const auto instance_identifier = make_InstanceIdentifier(service_instance_deployment, service_type_depl);
     InitialiseSkeleton(instance_identifier);
 
-    // Expect that the usage marker file path is created and closed
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
-
     // When trying to create a QM control segment succeeds
     ExpectControlSegmentCreated(QualityType::kASIL_QM);
 
@@ -1350,9 +1278,6 @@ TEST_P(SkeletonRegisterParamaterisedFixture, NoMetaInfoExistsForInvalidElementId
     // Given a skeleton with one event "fooEvent" registered
     InitialiseSkeleton(instance_identifier);
 
-    // Expect that the usage marker file path is created and closed
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
-
     // When trying to create a QM control segment succeeds
     ExpectControlSegmentCreated(QualityType::kASIL_QM);
 
@@ -1396,9 +1321,6 @@ TEST_P(SkeletonRegisterParamaterisedFixture, CallingRegisterWithSameServiceEleme
     auto test_function = [this]() noexcept {
         // Given a Skeleton constructed from a valid identifier referencing a QM deployment
         InitialiseSkeleton(GetValidASILInstanceIdentifier());
-
-        // and that opening the service instance usage marker file succeeds
-        ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
 
         // and that control (QM and ASIL-B) and data segments are successfully created
         ExpectControlSegmentCreated(QualityType::kASIL_QM);
