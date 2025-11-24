@@ -289,6 +289,9 @@ const auto kControlChannelPathQm{"/lola-ctl-0000000000000001-00016"};
 const auto kControlChannelPathAsilB{"/lola-ctl-0000000000000001-00016-b"};
 const auto kDataChannelPath{"/lola-data-0000000000000001-00016"};
 
+static const std::string kServiceInstanceUsageFilePath{"/test_service_instance_usage_file_path"};
+static const std::int32_t kServiceInstanceUsageFileDescriptor{7890};
+
 }  // namespace test
 
 class SkeletonAttorney
@@ -339,10 +342,12 @@ class SkeletonMockedMemoryFixture : public ::testing::Test
     void InitialiseSkeleton(const InstanceIdentifier& instance_identifier);
 
     void ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed(
-        const std::string& service_existence_marker_file_path = "/test_service_existence_marker_file_path",
-        const std::int32_t lock_file_descriptor = 2345) noexcept;
-    void ExpectServiceUsageMarkerFileFlockAcquired(std::int32_t existence_marker_file_descriptor) noexcept;
-    void ExpectServiceUsageMarkerFileAlreadyFlocked(std::int32_t existence_marker_file_descriptor) noexcept;
+        const std::string& service_existence_marker_file_path = test::kServiceInstanceUsageFilePath,
+        const std::int32_t lock_file_descriptor = test::kServiceInstanceUsageFileDescriptor) noexcept;
+    void ExpectServiceUsageMarkerFileFlockAcquired(
+        std::int32_t existence_marker_file_descriptor = test::kServiceInstanceUsageFileDescriptor) noexcept;
+    void ExpectServiceUsageMarkerFileAlreadyFlocked(
+        std::int32_t existence_marker_file_descriptor = test::kServiceInstanceUsageFileDescriptor) noexcept;
     void ExpectControlSegmentCreated(QualityType quality_type);
     void ExpectDataSegmentCreated(bool in_typed_memory = false);
 

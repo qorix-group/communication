@@ -42,9 +42,6 @@ namespace
 
 using namespace ::testing;
 
-const std::string kServiceInstanceUsageFilePath{"/test_service_instance_usage_file_path"};
-const std::int32_t kServiceInstanceUsageFileDescriptor{7890};
-
 const os::Fcntl::Operation kNonBlockingExclusiveLockOperation =
     os::Fcntl::Operation::kLockExclusive | score::os::Fcntl::Operation::kLockNB;
 const os::Fcntl::Operation kUnlockOperation = os::Fcntl::Operation::kUnLock;
@@ -106,14 +103,13 @@ TEST_F(SkeletonTestMockedSharedMemoryFixture, StopOfferCallsUnregisterShmObjectT
     InitialiseSkeleton(GetValidASILInstanceIdentifier());
 
     // and that opening the service instance usage marker file succeeds
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed(kServiceInstanceUsageFilePath,
-                                                         kServiceInstanceUsageFileDescriptor);
+    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
 
     // and that flocking the service instance usage marker file succeeds in PrepareOffer and in PrepareStopOffer
-    EXPECT_CALL(*fcntl_mock_, flock(kServiceInstanceUsageFileDescriptor, kNonBlockingExclusiveLockOperation))
+    EXPECT_CALL(*fcntl_mock_, flock(test::kServiceInstanceUsageFileDescriptor, kNonBlockingExclusiveLockOperation))
         .Times(2)
         .WillRepeatedly(Return(score::cpp::blank{}));
-    EXPECT_CALL(*fcntl_mock_, flock(kServiceInstanceUsageFileDescriptor, kUnlockOperation))
+    EXPECT_CALL(*fcntl_mock_, flock(test::kServiceInstanceUsageFileDescriptor, kUnlockOperation))
         .Times(2)
         .WillRepeatedly(Return(score::cpp::blank{}));
 
@@ -296,11 +292,10 @@ TEST_F(SkeletonPrepareOfferFixture, PrepareOfferCreatesSharedMemoryIfOpeningAndF
     InitialiseSkeleton(GetValidInstanceIdentifier());
 
     // and that opening the service instance usage marker file succeeds
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed(kServiceInstanceUsageFilePath,
-                                                         kServiceInstanceUsageFileDescriptor);
+    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
 
     // and that flocking the service instance usage marker file succeeds
-    ExpectServiceUsageMarkerFileFlockAcquired(kServiceInstanceUsageFileDescriptor);
+    ExpectServiceUsageMarkerFileFlockAcquired();
 
     // When trying to create QM control and data segments succeed
     ExpectControlSegmentCreated(QualityType::kASIL_QM);
@@ -317,11 +312,10 @@ TEST_F(SkeletonPrepareOfferFixture,
     InitialiseSkeleton(GetValidInstanceIdentifier());
 
     // and that opening the service instance usage marker file succeeds
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed(kServiceInstanceUsageFilePath,
-                                                         kServiceInstanceUsageFileDescriptor);
+    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
 
     // and that flocking the service instance usage marker file succeeds
-    ExpectServiceUsageMarkerFileFlockAcquired(kServiceInstanceUsageFileDescriptor);
+    ExpectServiceUsageMarkerFileFlockAcquired();
 
     EXPECT_CALL(shared_memory_factory_mock_, RemoveStaleArtefacts(test::kControlChannelPathQm));
     EXPECT_CALL(shared_memory_factory_mock_, RemoveStaleArtefacts(test::kControlChannelPathAsilB));
@@ -342,8 +336,8 @@ TEST_F(SkeletonPrepareOfferFixture, PrepareOfferFailsIfOpeningServiceUsageMarker
 
     // and that opening the service instance usage marker file fails
     EXPECT_CALL(partial_restart_path_builder_mock_, GetServiceInstanceUsageMarkerFilePath(_))
-        .WillOnce(Return(kServiceInstanceUsageFilePath));
-    EXPECT_CALL(*fcntl_mock_, open(StrEq(kServiceInstanceUsageFilePath.data()), _, _))
+        .WillOnce(Return(test::kServiceInstanceUsageFilePath));
+    EXPECT_CALL(*fcntl_mock_, open(StrEq(test::kServiceInstanceUsageFilePath.data()), _, _))
         .WillOnce(Return(score::cpp::make_unexpected(os::Error::createFromErrno(EPERM))));
 
     // Then PrepareOffer will fail
@@ -360,11 +354,10 @@ TEST_F(SkeletonPrepareOfferFixture, PrepareOfferOpensAndCleansExistingSharedMemo
     InitialiseSkeleton(GetValidASILInstanceIdentifier());
 
     // and that opening the service instance usage marker file succeeds
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed(kServiceInstanceUsageFilePath,
-                                                         kServiceInstanceUsageFileDescriptor);
+    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
 
     // and that flocking the service instance usage marker file fails
-    ExpectServiceUsageMarkerFileAlreadyFlocked(kServiceInstanceUsageFileDescriptor);
+    ExpectServiceUsageMarkerFileAlreadyFlocked();
 
     // and given that QM and ASIL B control segments contain (previously) allocated slots that are in writing
     auto first_allocation_qm = event_control_qm.data_control.AllocateNextSlot();
@@ -398,11 +391,10 @@ TEST_F(SkeletonPrepareOfferFixture, PrepareOfferFailsIfOpeningExistingSharedMemo
     InitialiseSkeleton(GetValidInstanceIdentifier());
 
     // and that opening the service instance usage marker file succeeds
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed(kServiceInstanceUsageFilePath,
-                                                         kServiceInstanceUsageFileDescriptor);
+    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
 
     // and that flocking the service instance usage marker file fails
-    ExpectServiceUsageMarkerFileAlreadyFlocked(kServiceInstanceUsageFileDescriptor);
+    ExpectServiceUsageMarkerFileAlreadyFlocked();
 
     // When trying to open QM control segment succeeds
     ExpectControlSegmentOpened(QualityType::kASIL_QM, service_data_control_qm_);
@@ -425,11 +417,10 @@ TEST_F(SkeletonPrepareOfferFixture, PrepareOfferFailsIfOpeningExistingSharedMemo
     InitialiseSkeleton(GetValidInstanceIdentifier());
 
     // and that opening the service instance usage marker file succeeds
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed(kServiceInstanceUsageFilePath,
-                                                         kServiceInstanceUsageFileDescriptor);
+    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
 
     // and that flocking the service instance usage marker file fails
-    ExpectServiceUsageMarkerFileAlreadyFlocked(kServiceInstanceUsageFileDescriptor);
+    ExpectServiceUsageMarkerFileAlreadyFlocked();
 
     // and the path builder returns a valid path for the control qm shared memory
     EXPECT_CALL(shm_path_builder_mock_, GetControlChannelShmName(test::kDefaultLolaInstanceId, QualityType::kASIL_QM))
@@ -449,11 +440,10 @@ TEST_F(SkeletonPrepareOfferFixture, PrepareOfferFailsIfOpeningExistingSharedMemo
     InitialiseSkeleton(GetValidASILInstanceIdentifier());
 
     // and that opening the service instance usage marker file succeeds
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed(kServiceInstanceUsageFilePath,
-                                                         kServiceInstanceUsageFileDescriptor);
+    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
 
     // and that flocking the service instance usage marker file fails
-    ExpectServiceUsageMarkerFileAlreadyFlocked(kServiceInstanceUsageFileDescriptor);
+    ExpectServiceUsageMarkerFileAlreadyFlocked();
 
     // When trying to open QM control segment succeeds
     ExpectControlSegmentOpened(QualityType::kASIL_QM, service_data_control_qm_);
@@ -474,11 +464,10 @@ TEST_F(SkeletonPrepareOfferFixture, PrepareOfferWillUpdateThePidInTheDataSegment
     InitialiseSkeleton(GetValidInstanceIdentifier());
 
     // and that opening the service instance usage marker file succeeds
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed(kServiceInstanceUsageFilePath,
-                                                         kServiceInstanceUsageFileDescriptor);
+    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
 
     // and that flocking the service instance usage marker file fails
-    ExpectServiceUsageMarkerFileAlreadyFlocked(kServiceInstanceUsageFileDescriptor);
+    ExpectServiceUsageMarkerFileAlreadyFlocked();
 
     // and that the PID will be retrieved from the lola runtime
     EXPECT_CALL(lola_runtime_mock_, GetPid()).WillOnce(Return(pid));
@@ -509,11 +498,10 @@ TEST_F(SkeletonPrepareOfferFixture, PrepareOfferWillCallRegisterShmObjectTraceCa
     InitialiseSkeleton(GetValidASILInstanceIdentifier());
 
     // and that opening the service instance usage marker file succeeds
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed(kServiceInstanceUsageFilePath,
-                                                         kServiceInstanceUsageFileDescriptor);
+    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
 
     // and that flocking the service instance usage marker file fails
-    ExpectServiceUsageMarkerFileAlreadyFlocked(kServiceInstanceUsageFileDescriptor);
+    ExpectServiceUsageMarkerFileAlreadyFlocked();
 
     ExpectControlSegmentOpened(QualityType::kASIL_QM, service_data_control_qm_);
     ExpectControlSegmentOpened(QualityType::kASIL_B, service_data_control_asil_b_);
@@ -545,11 +533,10 @@ TEST_F(SkeletonPrepareOfferDeathTest, CallingPrepareOfferWhenLolaRuntimeCannotBe
         InitialiseSkeleton(GetValidInstanceIdentifier());
 
         // and that opening the service instance usage marker file succeeds
-        ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed(kServiceInstanceUsageFilePath,
-                                                             kServiceInstanceUsageFileDescriptor);
+        ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
 
         // and that flocking the service instance usage marker file fails
-        ExpectServiceUsageMarkerFileAlreadyFlocked(kServiceInstanceUsageFileDescriptor);
+        ExpectServiceUsageMarkerFileAlreadyFlocked();
 
         // and that trying to open QM control segment succeeds
         ExpectControlSegmentOpened(QualityType::kASIL_QM, service_data_control_qm_);
@@ -576,14 +563,13 @@ TEST_F(SkeletonPrepareStopOfferFixture, PrepareStopOfferRemovesSharedMemoryIfUsa
     InitialiseSkeleton(GetValidInstanceIdentifier());
 
     // and that opening the service instance usage marker file succeeds
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed(kServiceInstanceUsageFilePath,
-                                                         kServiceInstanceUsageFileDescriptor);
+    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
 
     // and that flocking the service instance usage marker file succeeds in PrepareOffer and in PrepareStopOffer
-    EXPECT_CALL(*fcntl_mock_, flock(kServiceInstanceUsageFileDescriptor, kNonBlockingExclusiveLockOperation))
+    EXPECT_CALL(*fcntl_mock_, flock(test::kServiceInstanceUsageFileDescriptor, kNonBlockingExclusiveLockOperation))
         .Times(2)
         .WillRepeatedly(Return(score::cpp::blank{}));
-    EXPECT_CALL(*fcntl_mock_, flock(kServiceInstanceUsageFileDescriptor, kUnlockOperation))
+    EXPECT_CALL(*fcntl_mock_, flock(test::kServiceInstanceUsageFileDescriptor, kUnlockOperation))
         .Times(2)
         .WillRepeatedly(Return(score::cpp::blank{}));
 
@@ -621,15 +607,15 @@ TEST_F(SkeletonPrepareStopOfferFixture, PrepareStopOfferRemovesUsageMarkerFileIf
 
     // and that opening the service instance usage marker file succeeds
     EXPECT_CALL(partial_restart_path_builder_mock_, GetServiceInstanceUsageMarkerFilePath(_))
-        .WillOnce(Return(kServiceInstanceUsageFilePath));
-    EXPECT_CALL(*fcntl_mock_, open(StrEq(kServiceInstanceUsageFilePath.data()), _, _))
-        .WillOnce(Return(kServiceInstanceUsageFileDescriptor));
+        .WillOnce(Return(test::kServiceInstanceUsageFilePath));
+    EXPECT_CALL(*fcntl_mock_, open(StrEq(test::kServiceInstanceUsageFilePath.data()), _, _))
+        .WillOnce(Return(test::kServiceInstanceUsageFileDescriptor));
 
     // and that flocking the service instance usage marker file succeeds in PrepareOffer and in PrepareStopOffer
-    EXPECT_CALL(*fcntl_mock_, flock(kServiceInstanceUsageFileDescriptor, kNonBlockingExclusiveLockOperation))
+    EXPECT_CALL(*fcntl_mock_, flock(test::kServiceInstanceUsageFileDescriptor, kNonBlockingExclusiveLockOperation))
         .Times(2)
         .WillRepeatedly(Return(score::cpp::blank{}));
-    EXPECT_CALL(*fcntl_mock_, flock(kServiceInstanceUsageFileDescriptor, kUnlockOperation))
+    EXPECT_CALL(*fcntl_mock_, flock(test::kServiceInstanceUsageFileDescriptor, kUnlockOperation))
         .Times(2)
         .WillRepeatedly(Return(score::cpp::blank{}));
 
@@ -642,7 +628,7 @@ TEST_F(SkeletonPrepareStopOfferFixture, PrepareStopOfferRemovesUsageMarkerFileIf
     EXPECT_CALL(shared_memory_factory_mock_, Remove(test::kDataChannelPath));
 
     // and the service usage marker file will be closed in PrepareStopOffer
-    EXPECT_CALL(*unistd_mock_, close(kServiceInstanceUsageFileDescriptor))
+    EXPECT_CALL(*unistd_mock_, close(test::kServiceInstanceUsageFileDescriptor))
         .WillOnce(InvokeWithoutArgs(
             [&was_usage_marker_file_closed]() mutable noexcept -> score::cpp::expected_blank<score::os::Error> {
                 was_usage_marker_file_closed = true;
@@ -666,18 +652,17 @@ TEST_F(SkeletonPrepareStopOfferFixture, PrepareStopOfferDoesNotRemoveSharedMemor
     InitialiseSkeleton(GetValidInstanceIdentifier());
 
     // and that opening the service instance usage marker file succeeds
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed(kServiceInstanceUsageFilePath,
-                                                         kServiceInstanceUsageFileDescriptor);
+    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
 
     // and that flocking the service instance usage marker file fails in PrepareStopOffer
-    EXPECT_CALL(*fcntl_mock_, flock(kServiceInstanceUsageFileDescriptor, kNonBlockingExclusiveLockOperation))
+    EXPECT_CALL(*fcntl_mock_, flock(test::kServiceInstanceUsageFileDescriptor, kNonBlockingExclusiveLockOperation))
         .WillRepeatedly(Return(score::cpp::make_unexpected(os::Error::createFromErrno(EWOULDBLOCK))));
 
     // but succeeds in PrepareOffer
-    EXPECT_CALL(*fcntl_mock_, flock(kServiceInstanceUsageFileDescriptor, kNonBlockingExclusiveLockOperation))
+    EXPECT_CALL(*fcntl_mock_, flock(test::kServiceInstanceUsageFileDescriptor, kNonBlockingExclusiveLockOperation))
         .WillOnce(Return(score::cpp::blank{}))
         .RetiresOnSaturation();
-    EXPECT_CALL(*fcntl_mock_, flock(kServiceInstanceUsageFileDescriptor, kUnlockOperation))
+    EXPECT_CALL(*fcntl_mock_, flock(test::kServiceInstanceUsageFileDescriptor, kUnlockOperation))
         .WillOnce(Return(score::cpp::blank{}))
         .RetiresOnSaturation();
 
@@ -718,19 +703,19 @@ TEST_F(SkeletonPrepareStopOfferFixture, PrepareStopOfferDoesNotRemoveUsageMarker
 
     // and that opening the service instance usage marker file succeeds
     EXPECT_CALL(partial_restart_path_builder_mock_, GetServiceInstanceUsageMarkerFilePath(_))
-        .WillOnce(Return(kServiceInstanceUsageFilePath));
-    EXPECT_CALL(*fcntl_mock_, open(StrEq(kServiceInstanceUsageFilePath.data()), _, _))
-        .WillOnce(Return(kServiceInstanceUsageFileDescriptor));
+        .WillOnce(Return(test::kServiceInstanceUsageFilePath));
+    EXPECT_CALL(*fcntl_mock_, open(StrEq(test::kServiceInstanceUsageFilePath.data()), _, _))
+        .WillOnce(Return(test::kServiceInstanceUsageFileDescriptor));
 
     // and that flocking the service instance usage marker file fails in PrepareStopOffer
-    EXPECT_CALL(*fcntl_mock_, flock(kServiceInstanceUsageFileDescriptor, kNonBlockingExclusiveLockOperation))
+    EXPECT_CALL(*fcntl_mock_, flock(test::kServiceInstanceUsageFileDescriptor, kNonBlockingExclusiveLockOperation))
         .WillRepeatedly(Return(score::cpp::make_unexpected(os::Error::createFromErrno(EWOULDBLOCK))));
 
     // but succeeds in PrepareOffer
-    EXPECT_CALL(*fcntl_mock_, flock(kServiceInstanceUsageFileDescriptor, kNonBlockingExclusiveLockOperation))
+    EXPECT_CALL(*fcntl_mock_, flock(test::kServiceInstanceUsageFileDescriptor, kNonBlockingExclusiveLockOperation))
         .WillOnce(Return(score::cpp::blank{}))
         .RetiresOnSaturation();
-    EXPECT_CALL(*fcntl_mock_, flock(kServiceInstanceUsageFileDescriptor, kUnlockOperation))
+    EXPECT_CALL(*fcntl_mock_, flock(test::kServiceInstanceUsageFileDescriptor, kUnlockOperation))
         .WillOnce(Return(score::cpp::blank{}))
         .RetiresOnSaturation();
 
@@ -742,7 +727,7 @@ TEST_F(SkeletonPrepareStopOfferFixture, PrepareStopOfferDoesNotRemoveUsageMarker
     std::weak_ptr<bool> was_usage_marker_file_closed_weak_ptr{was_usage_marker_file_closed};
 
     // and the service usage marker file will be closed when the Skeleton is destructed
-    EXPECT_CALL(*unistd_mock_, close(kServiceInstanceUsageFileDescriptor))
+    EXPECT_CALL(*unistd_mock_, close(test::kServiceInstanceUsageFileDescriptor))
         .WillOnce(InvokeWithoutArgs(
             [was_usage_marker_file_closed_weak_ptr]() mutable noexcept -> score::cpp::expected_blank<score::os::Error> {
                 if (std::shared_ptr<bool> was_usage_marker_file_closed_shared_ptr =
@@ -847,11 +832,10 @@ TEST_P(SkeletonRegisterParamaterisedFixture, RegisterWillCreateEventDataIfShmReg
     InitialiseSkeleton(GetValidASILInstanceIdentifier());
 
     // and that opening the service instance usage marker file succeeds
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed(kServiceInstanceUsageFilePath,
-                                                         kServiceInstanceUsageFileDescriptor);
+    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
 
     // and that flocking the service instance usage marker file succeeds
-    ExpectServiceUsageMarkerFileFlockAcquired(kServiceInstanceUsageFileDescriptor);
+    ExpectServiceUsageMarkerFileFlockAcquired();
 
     // and that control (QM and ASIL-B) and data segments are successfully created
     ExpectControlSegmentCreated(QualityType::kASIL_QM);
@@ -898,11 +882,10 @@ TEST_P(SkeletonRegisterParamaterisedFixture, RegisterWillOpenEventDataIfShmRegio
     InitialiseSkeleton(instance_identifier);
 
     // and that opening the service instance usage marker file succeeds
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed(kServiceInstanceUsageFilePath,
-                                                         kServiceInstanceUsageFileDescriptor);
+    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
 
     // and that flocking the service instance usage marker file fails
-    ExpectServiceUsageMarkerFileAlreadyFlocked(kServiceInstanceUsageFileDescriptor);
+    ExpectServiceUsageMarkerFileAlreadyFlocked();
 
     // and that the control (QM and ASIL-B) and data segments are successfully opened
     ExpectControlSegmentOpened(QualityType::kASIL_QM, service_data_control_qm_);
@@ -955,11 +938,10 @@ TEST_P(SkeletonRegisterParamaterisedFixture, RollbackWillBeCalledIfShmRegionWasO
     InitialiseSkeleton(instance_identifier);
 
     // and that opening the service instance usage marker file succeeds
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed(kServiceInstanceUsageFilePath,
-                                                         kServiceInstanceUsageFileDescriptor);
+    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
 
     // and that flocking the service instance usage marker file fails
-    ExpectServiceUsageMarkerFileAlreadyFlocked(kServiceInstanceUsageFileDescriptor);
+    ExpectServiceUsageMarkerFileAlreadyFlocked();
 
     // and that QM control segment and data segments are successfully opened
     ExpectControlSegmentOpened(QualityType::kASIL_QM, service_data_control_qm_);
@@ -1004,11 +986,10 @@ TEST_P(SkeletonRegisterParamaterisedFixture, RollbackWillOnlyBeCalledOnQmControl
     InitialiseSkeleton(instance_identifier);
 
     // and that opening the service instance usage marker file succeeds
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed(kServiceInstanceUsageFilePath,
-                                                         kServiceInstanceUsageFileDescriptor);
+    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
 
     // and that flocking the service instance usage marker file fails
-    ExpectServiceUsageMarkerFileAlreadyFlocked(kServiceInstanceUsageFileDescriptor);
+    ExpectServiceUsageMarkerFileAlreadyFlocked();
 
     // and that the control (QM and ASIL-B) and data segments are successfully opened
     ExpectControlSegmentOpened(QualityType::kASIL_QM, service_data_control_qm_);
@@ -1054,11 +1035,10 @@ TEST_P(SkeletonRegisterParamaterisedFixture, TracingWillBeDisabledAndTransaction
     InitialiseSkeleton(instance_identifier);
 
     // and that opening the service instance usage marker file succeeds
-    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed(kServiceInstanceUsageFilePath,
-                                                         kServiceInstanceUsageFileDescriptor);
+    ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
 
     // and that flocking the service instance usage marker file fails
-    ExpectServiceUsageMarkerFileAlreadyFlocked(kServiceInstanceUsageFileDescriptor);
+    ExpectServiceUsageMarkerFileAlreadyFlocked();
 
     // and that the QM control and data segments are successfully opened
     ExpectControlSegmentOpened(QualityType::kASIL_QM, service_data_control_qm_);
@@ -1418,8 +1398,7 @@ TEST_P(SkeletonRegisterParamaterisedFixture, CallingRegisterWithSameServiceEleme
         InitialiseSkeleton(GetValidASILInstanceIdentifier());
 
         // and that opening the service instance usage marker file succeeds
-        ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed(kServiceInstanceUsageFilePath,
-                                                             kServiceInstanceUsageFileDescriptor);
+        ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
 
         // and that control (QM and ASIL-B) and data segments are successfully created
         ExpectControlSegmentCreated(QualityType::kASIL_QM);
