@@ -48,7 +48,6 @@ const os::Fcntl::Operation kUnlockOperation = os::Fcntl::Operation::kUnLock;
 
 std::optional<SkeletonBinding::RegisterShmObjectTraceCallback> kEmptyRegisterShmObjectTraceCallback{};
 
-const ElementFqId kDummyElementFqId{1U, 2U, 3U, ServiceElementType::EVENT};
 void* const kDummyShmObjectBaseAddress = reinterpret_cast<void*>(static_cast<uintptr_t>(1000));
 const memory::shared::ISharedMemoryResource::FileDescriptor kDummyShmObjectFileDescriptor{55};
 
@@ -69,14 +68,6 @@ class SkeletonTestMockedSharedMemoryFixture : public SkeletonMockedMemoryFixture
 
     SkeletonBinding::SkeletonEventBindings events_{};
     SkeletonBinding::SkeletonFieldBindings fields_{};
-
-    ServiceDataControl service_data_control_qm_{
-        CreateServiceDataControlWithEvent(kDummyElementFqId, QualityType::kASIL_QM)};
-    ServiceDataControl service_data_control_asil_b_{
-        CreateServiceDataControlWithEvent(kDummyElementFqId, QualityType::kASIL_B)};
-
-    ServiceDataStorage service_data_storage_{
-        CreateServiceDataStorageWithEvent<test::TestSampleType>(kDummyElementFqId)};
 
     mock_binding::SkeletonEvent<std::string> mock_event_binding_{};
 };
@@ -109,11 +100,6 @@ TEST_F(SkeletonTestMockedSharedMemoryFixture, StopOfferCallsUnregisterShmObjectT
     EXPECT_CALL(*fcntl_mock_, flock(test::kServiceInstanceUsageFileDescriptor, kUnlockOperation))
         .Times(2)
         .WillRepeatedly(Return(score::cpp::blank{}));
-
-    // When trying to create QM control and data segments succeed
-    ExpectControlSegmentCreated(QualityType::kASIL_QM);
-    ExpectControlSegmentCreated(QualityType::kASIL_B);
-    ExpectDataSegmentCreated();
 
     // Then the shared memory will be cleaned up in PrepareStopOffer
     EXPECT_CALL(shared_memory_factory_mock_, Remove(test::kControlChannelPathQm));
@@ -156,8 +142,9 @@ TEST_F(SkeletonTestSharedMemoryCreationFixture, PrepareServiceOfferFailsOnShmCre
     // Given a Skeleton constructed from a valid identifier referencing an ASIL B deployment
     InitialiseSkeleton(GetValidASILInstanceIdentifier());
 
-    // When trying to create a QM control segment succeeds
-    ExpectControlSegmentCreated(QualityType::kASIL_QM);
+    // Expecting that creating QM control segment succeeds
+    EXPECT_CALL(shared_memory_factory_mock_,
+                Create(test::kControlChannelPathQm, _, _, WritablePermissionsMatcher(), false));
 
     // But when trying to create an ASIL B control segment fails by returning a nullptr
     EXPECT_CALL(shared_memory_factory_mock_,
@@ -175,8 +162,9 @@ TEST_F(SkeletonTestSharedMemoryCreationFixture, PrepareServiceOfferFailsOnShmCre
     // Given a Skeleton constructed from a valid identifier referencing a QM deployment
     InitialiseSkeleton(GetValidInstanceIdentifier());
 
-    // When trying to create a QM control segment succeeds
-    ExpectControlSegmentCreated(QualityType::kASIL_QM);
+    // Expecting that creating control section succeeds
+    EXPECT_CALL(shared_memory_factory_mock_,
+                Create(test::kControlChannelPathQm, _, _, WritablePermissionsMatcher(), false));
 
     // But when trying to create a data segment fails by returning a nullptr
     EXPECT_CALL(shared_memory_factory_mock_, Create(test::kDataChannelPath, _, _, ReadablePermissionsMatcher(), false))
@@ -204,12 +192,6 @@ TEST_F(SkeletonTestSharedMemoryCreationFixture, PrepareServiceOfferWithTraceCall
 
     // Given a Skeleton constructed from a valid identifier referencing a QM deployment
     InitialiseSkeleton(GetValidInstanceIdentifier());
-
-    // When trying to create a QM control segment succeeds
-    ExpectControlSegmentCreated(QualityType::kASIL_QM);
-
-    // and trying to create a data segment in typed-mem succeeds
-    ExpectDataSegmentCreated(true);
 
     EXPECT_CALL(*data_shared_memory_resource_mock_, IsShmInTypedMemory()).WillOnce(Return(true));
 
@@ -245,13 +227,7 @@ TEST_F(SkeletonTestSharedMemoryCreationFixture, PrepareServiceOfferWithTraceCall
         register_shm_object_trace_callback{};
 
     // Given a Skeleton constructed from a valid identifier referencing a QM deployment
-    InitialiseSkeleton(GetValidInstanceIdentifier());
-
-    // When trying to create a QM control segment succeeds
-    ExpectControlSegmentCreated(QualityType::kASIL_QM);
-
-    // and trying to create a data segment in typed-mem succeeds
-    ExpectDataSegmentCreated(true);
+    InitialiseSkeleton(GetValidInstanceIdentifier()).WithNoConnectedProxy();
 
     // and that the shared memory resource cannot be created in typed memory
     EXPECT_CALL(*data_shared_memory_resource_mock_, IsShmInTypedMemory()).WillOnce(Return(false));
@@ -271,7 +247,7 @@ using SkeletonPrepareOfferFixture = SkeletonTestMockedSharedMemoryFixture;
 TEST_F(SkeletonPrepareOfferFixture, PrepareOfferCreatesSharedMemoryIfOpeningAndFLockingServiceUsageMarkerFileSucceeds)
 {
     // Given a Skeleton constructed from a valid identifier referencing a QM deployment
-    InitialiseSkeleton(GetValidInstanceIdentifier());
+    InitialiseSkeleton(GetValidASILInstanceIdentifier());
 
     // and that opening the service instance usage marker file succeeds
     ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
@@ -282,9 +258,17 @@ TEST_F(SkeletonPrepareOfferFixture, PrepareOfferCreatesSharedMemoryIfOpeningAndF
     EXPECT_CALL(*fcntl_mock_, flock(test::kServiceInstanceUsageFileDescriptor, test::kUnlockOperation))
         .WillOnce(Return(score::cpp::blank{}));
 
-    // When trying to create QM control and data segments succeed
-    ExpectControlSegmentCreated(QualityType::kASIL_QM);
-    ExpectDataSegmentCreated();
+    // Expecting that QM and ASIL-B control sections and a data section are successfully created
+    EXPECT_CALL(shared_memory_factory_mock_,
+                Create(test::kControlChannelPathQm, _, _, WritablePermissionsMatcher(), false));
+    EXPECT_CALL(shared_memory_factory_mock_,
+                Create(test::kControlChannelPathAsilB, _, _, WritablePermissionsMatcher(), false));
+    EXPECT_CALL(shared_memory_factory_mock_, Create(test::kDataChannelPath, _, _, ReadablePermissionsMatcher(), false))
+        .WillOnce(
+            WithArg<1>([this](auto initialize_callback) -> std::shared_ptr<memory::shared::ISharedMemoryResource> {
+                std::invoke(initialize_callback, data_shared_memory_resource_mock_);
+                return data_shared_memory_resource_mock_;
+            }));
 
     // Then PrepareOffer will succeed
     EXPECT_TRUE(skeleton_->PrepareOffer(events_, fields_, std::move(kEmptyRegisterShmObjectTraceCallback)).has_value());
@@ -294,7 +278,7 @@ TEST_F(SkeletonPrepareOfferFixture,
        PrepareOfferRemovesOldSharedMemoryArtefactsIfOpeningAndFLockingServiceUsageMarkerFileSucceeds)
 {
     // Given a Skeleton constructed from a valid identifier referencing a QM deployment
-    InitialiseSkeleton(GetValidInstanceIdentifier());
+    InitialiseSkeleton(GetValidInstanceIdentifier()).WithNoConnectedProxy();
 
     // and that opening the service instance usage marker file succeeds
     ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed();
@@ -308,10 +292,6 @@ TEST_F(SkeletonPrepareOfferFixture,
     EXPECT_CALL(shared_memory_factory_mock_, RemoveStaleArtefacts(test::kControlChannelPathQm));
     EXPECT_CALL(shared_memory_factory_mock_, RemoveStaleArtefacts(test::kControlChannelPathAsilB));
     EXPECT_CALL(shared_memory_factory_mock_, RemoveStaleArtefacts(test::kDataChannelPath));
-
-    // When trying to create QM control and data segments succeed
-    ExpectControlSegmentCreated(QualityType::kASIL_QM);
-    ExpectDataSegmentCreated();
 
     // Then PrepareOffer will succeed
     EXPECT_TRUE(skeleton_->PrepareOffer(events_, fields_, std::move(kEmptyRegisterShmObjectTraceCallback)).has_value());
@@ -335,8 +315,11 @@ TEST_F(SkeletonPrepareOfferFixture, PrepareOfferFailsIfOpeningServiceUsageMarker
 
 TEST_F(SkeletonPrepareOfferFixture, PrepareOfferOpensAndCleansExistingSharedMemoryIfFLockingServiceUsageMarkerFilefails)
 {
-    auto& event_control_qm = GetEventControlFromServiceDataControl(kDummyElementFqId, service_data_control_qm_);
-    auto& event_control_asil_b = GetEventControlFromServiceDataControl(kDummyElementFqId, service_data_control_asil_b_);
+    SCORE_LANGUAGE_FUTURECPP_ASSERT(service_data_control_qm_ != nullptr);
+    SCORE_LANGUAGE_FUTURECPP_ASSERT(service_data_control_asil_b_ != nullptr);
+    auto& event_control_qm = GetEventControlFromServiceDataControl(test::kDummyElementFqId, *service_data_control_qm_);
+    auto& event_control_asil_b =
+        GetEventControlFromServiceDataControl(test::kDummyElementFqId, *service_data_control_asil_b_);
 
     // Given a Skeleton constructed from a valid identifier referencing an ASIL-B deployment
     InitialiseSkeleton(GetValidASILInstanceIdentifier());
@@ -352,11 +335,10 @@ TEST_F(SkeletonPrepareOfferFixture, PrepareOfferOpensAndCleansExistingSharedMemo
     auto first_allocation_asil_b = event_control_asil_b.data_control.AllocateNextSlot();
     ASSERT_TRUE(first_allocation_asil_b.IsValid());
 
-    ExpectControlSegmentOpened(QualityType::kASIL_QM, service_data_control_qm_);
-    ExpectControlSegmentOpened(QualityType::kASIL_B, service_data_control_asil_b_);
-
-    // and when opening the data segment
-    ExpectDataSegmentOpened(service_data_storage_);
+    EXPECT_CALL(shared_memory_factory_mock_, Open(test::kControlChannelPathQm, true, _));
+    EXPECT_CALL(shared_memory_factory_mock_, Open(test::kControlChannelPathAsilB, true, _));
+    EXPECT_CALL(shared_memory_factory_mock_, Open(test::kDataChannelPath, true, _))
+        .WillOnce(Return(data_shared_memory_resource_mock_));
 
     // Then PrepareOffer will succeed and clean up the service data controls
     EXPECT_TRUE(skeleton_->PrepareOffer(events_, fields_, std::move(kEmptyRegisterShmObjectTraceCallback)).has_value());
@@ -376,15 +358,11 @@ TEST_F(SkeletonPrepareOfferFixture, PrepareOfferFailsIfOpeningExistingSharedMemo
     // Given a Skeleton constructed from a valid identifier referencing a QM deployment
     InitialiseSkeleton(GetValidInstanceIdentifier()).WithAlreadyConnectedProxy();
 
-    // When trying to open QM control segment succeeds
-    ExpectControlSegmentOpened(QualityType::kASIL_QM, service_data_control_qm_);
+    // Expecting that the QM control section is successfully opened
+    EXPECT_CALL(shared_memory_factory_mock_, Open(test::kControlChannelPathQm, true, _));
 
-    // and the path builder returns a valid path for the data shared memory
-    EXPECT_CALL(shm_path_builder_mock_, GetDataChannelShmName(test::kDefaultLolaInstanceId))
-        .WillOnce(Return("dummy_data_path"));
-
-    // But when trying to open the data segment fails by returning a nullptr
-    EXPECT_CALL(shared_memory_factory_mock_, Open("dummy_data_path", true, _)).WillOnce(Return(nullptr));
+    // But expecting that when trying to open the data segment fails by returning a nullptr
+    EXPECT_CALL(shared_memory_factory_mock_, Open(test::kDataChannelPath, true, _)).WillOnce(Return(nullptr));
 
     // Then PrepareOffer will fail
     EXPECT_FALSE(
@@ -396,12 +374,8 @@ TEST_F(SkeletonPrepareOfferFixture, PrepareOfferFailsIfOpeningExistingSharedMemo
     // Given a Skeleton constructed from a valid identifier referencing a QM deployment
     InitialiseSkeleton(GetValidInstanceIdentifier()).WithAlreadyConnectedProxy();
 
-    // and the path builder returns a valid path for the control qm shared memory
-    EXPECT_CALL(shm_path_builder_mock_, GetControlChannelShmName(test::kDefaultLolaInstanceId, QualityType::kASIL_QM))
-        .WillOnce(Return("dummy_control_path_qm"));
-
-    // But when trying to create a control qm segment fails by returning a nullptr
-    EXPECT_CALL(shared_memory_factory_mock_, Open("dummy_control_path_qm", true, _)).WillOnce(Return(nullptr));
+    // Expecting that when trying to open a control qm segment fails by returning a nullptr
+    EXPECT_CALL(shared_memory_factory_mock_, Open(test::kControlChannelPathQm, true, _)).WillOnce(Return(nullptr));
 
     // Then PrepareOffer will fail
     EXPECT_FALSE(
@@ -413,10 +387,10 @@ TEST_F(SkeletonPrepareOfferFixture, PrepareOfferFailsIfOpeningExistingSharedMemo
     // Given a Skeleton constructed from a valid identifier referencing a QM deployment
     InitialiseSkeleton(GetValidASILInstanceIdentifier()).WithAlreadyConnectedProxy();
 
-    // When trying to open QM control segment succeeds
-    ExpectControlSegmentOpened(QualityType::kASIL_QM, service_data_control_qm_);
+    // Expecting that the QM control section is successfully opened
+    EXPECT_CALL(shared_memory_factory_mock_, Open(test::kControlChannelPathQm, true, _));
 
-    // But when trying to create a control asil b segment fails by returning a nullptr
+    // But expecting that when trying to create a control asil b segment fails by returning a nullptr
     EXPECT_CALL(shared_memory_factory_mock_, Open(test::kControlChannelPathAsilB, true, _)).WillOnce(Return(nullptr));
 
     // Then PrepareOffer will fail
@@ -434,17 +408,11 @@ TEST_F(SkeletonPrepareOfferFixture, PrepareOfferWillUpdateThePidInTheDataSegment
     // and that the PID will be retrieved from the lola runtime
     EXPECT_CALL(lola_runtime_mock_, GetPid()).WillOnce(Return(pid));
 
-    // When trying to open QM control segment succeeds
-    ExpectControlSegmentOpened(QualityType::kASIL_QM, service_data_control_qm_);
-
-    // and when opening the data segment succeeds
-    ExpectDataSegmentOpened(service_data_storage_);
-
     // Then PrepareOffer will succeed and clean up the service data controls
     EXPECT_TRUE(skeleton_->PrepareOffer(events_, fields_, std::move(kEmptyRegisterShmObjectTraceCallback)).has_value());
 
     // and the ServiceDataStorage contains the PID returned by the lola runtime
-    EXPECT_EQ(service_data_storage_.skeleton_pid_, pid);
+    EXPECT_EQ(service_data_storage_->skeleton_pid_, pid);
 }
 
 TEST_F(SkeletonPrepareOfferFixture, PrepareOfferWillCallRegisterShmObjectTraceCallbackWhenOpeningSharedMemory)
@@ -458,12 +426,6 @@ TEST_F(SkeletonPrepareOfferFixture, PrepareOfferWillCallRegisterShmObjectTraceCa
 
     // Given a Skeleton constructed from a valid identifier referencing a QM deployment
     InitialiseSkeleton(GetValidASILInstanceIdentifier()).WithAlreadyConnectedProxy();
-
-    ExpectControlSegmentOpened(QualityType::kASIL_QM, service_data_control_qm_);
-    ExpectControlSegmentOpened(QualityType::kASIL_B, service_data_control_asil_b_);
-
-    // and when opening the data segment
-    ExpectDataSegmentOpened(service_data_storage_);
 
     ON_CALL(*memory_resource_mock, IsShmInTypedMemory()).WillByDefault(Return(true));
     ON_CALL(*memory_resource_mock, GetFileDescriptor()).WillByDefault(Return(kDummyShmObjectFileDescriptor));
@@ -487,12 +449,6 @@ TEST_F(SkeletonPrepareOfferDeathTest, CallingPrepareOfferWhenLolaRuntimeCannotBe
     auto test_function = [this] {
         // Given a Skeleton constructed from a valid identifier referencing a QM deployment
         InitialiseSkeleton(GetValidInstanceIdentifier()).WithAlreadyConnectedProxy();
-
-        // and that trying to open QM control segment succeeds
-        ExpectControlSegmentOpened(QualityType::kASIL_QM, service_data_control_qm_);
-
-        // and that opening the data segment succeeds
-        ExpectDataSegmentOpened(service_data_storage_);
 
         // and that when trying to get the Lola runtime from the runtime a nullptr is returned
         ON_CALL(runtime_mock_, GetBindingRuntime(_)).WillByDefault(Return(nullptr));
@@ -519,10 +475,6 @@ TEST_F(SkeletonPrepareStopOfferFixture, PrepareStopOfferRemovesSharedMemoryIfUsa
     EXPECT_CALL(*fcntl_mock_, flock(test::kServiceInstanceUsageFileDescriptor, kUnlockOperation))
         .Times(2)
         .WillRepeatedly(Return(score::cpp::blank{}));
-
-    // When trying to create QM control and data segments succeed
-    ExpectControlSegmentCreated(QualityType::kASIL_QM);
-    ExpectDataSegmentCreated();
 
     // Then the shared memory will be cleaned up in PrepareStopOffer
     EXPECT_CALL(shared_memory_factory_mock_, Remove(test::kControlChannelPathQm));
@@ -566,10 +518,6 @@ TEST_F(SkeletonPrepareStopOfferFixture, PrepareStopOfferRemovesUsageMarkerFileIf
         .Times(2)
         .WillRepeatedly(Return(score::cpp::blank{}));
 
-    // When trying to create QM control and data segments succeed
-    ExpectControlSegmentCreated(QualityType::kASIL_QM);
-    ExpectDataSegmentCreated();
-
     // Then the shared memory will be cleaned up in PrepareStopOffer
     EXPECT_CALL(shared_memory_factory_mock_, Remove(test::kControlChannelPathQm));
     EXPECT_CALL(shared_memory_factory_mock_, Remove(test::kDataChannelPath));
@@ -609,10 +557,6 @@ TEST_F(SkeletonPrepareStopOfferFixture, PrepareStopOfferDoesNotRemoveSharedMemor
     EXPECT_CALL(*fcntl_mock_, flock(test::kServiceInstanceUsageFileDescriptor, kUnlockOperation))
         .WillOnce(Return(score::cpp::blank{}))
         .RetiresOnSaturation();
-
-    // When trying to create QM control and data segments succeed
-    ExpectControlSegmentCreated(QualityType::kASIL_QM);
-    ExpectDataSegmentCreated();
 
     // Then the shared memory will be not be cleaned up in PrepareStopOffer
     EXPECT_CALL(shared_memory_factory_mock_, Remove(test::kControlChannelPathQm)).Times(0);
@@ -662,10 +606,6 @@ TEST_F(SkeletonPrepareStopOfferFixture, PrepareStopOfferDoesNotRemoveUsageMarker
     EXPECT_CALL(*fcntl_mock_, flock(test::kServiceInstanceUsageFileDescriptor, kUnlockOperation))
         .WillOnce(Return(score::cpp::blank{}))
         .RetiresOnSaturation();
-
-    // When trying to create QM control and data segments succeed
-    ExpectControlSegmentCreated(QualityType::kASIL_QM);
-    ExpectDataSegmentCreated();
 
     // and the service usage marker file will be closed and unlinked when the Skeleton is destructed
     std::weak_ptr<bool> was_usage_marker_file_closed_weak_ptr{was_usage_marker_file_closed};
@@ -775,11 +715,6 @@ TEST_P(SkeletonRegisterParamaterisedFixture, RegisterWillCreateEventDataIfShmReg
     // Given a Skeleton constructed from a valid identifier referencing an ASIL-B deployment
     InitialiseSkeleton(GetValidASILInstanceIdentifier()).WithNoConnectedProxy();
 
-    // and that control (QM and ASIL-B) and data segments are successfully created
-    ExpectControlSegmentCreated(QualityType::kASIL_QM);
-    ExpectControlSegmentCreated(QualityType::kASIL_B);
-    ExpectDataSegmentCreated();
-
     // when calling PrepareOffer ... expect, that it succeeds
     EXPECT_TRUE(skeleton_->PrepareOffer(events_, fields_, std::move(kEmptyRegisterShmObjectTraceCallback)).has_value());
 
@@ -819,24 +754,20 @@ TEST_P(SkeletonRegisterParamaterisedFixture, RegisterWillOpenEventDataIfShmRegio
     // Given a Skeleton constructed from a valid identifier referencing a QM deployment
     InitialiseSkeleton(instance_identifier).WithAlreadyConnectedProxy();
 
-    // and that the control (QM and ASIL-B) and data segments are successfully opened
-    ExpectControlSegmentOpened(QualityType::kASIL_QM, service_data_control_qm_);
-    ExpectControlSegmentOpened(QualityType::kASIL_B, service_data_control_asil_b_);
-    ExpectDataSegmentOpened(service_data_storage_);
-
     // when calling PrepareOffer ... expect, that it succeeds
     EXPECT_TRUE(skeleton_->PrepareOffer(events_, fields_, std::move(kEmptyRegisterShmObjectTraceCallback)).has_value());
 
     // when the event is registered with the skeleton
     auto [typed_event_data_storage_ptr, event_data_control_composite] =
-        skeleton_->Register<test::TestSampleType>(kDummyElementFqId, test::kDefaultEventProperties);
+        skeleton_->Register<test::TestSampleType>(test::kDummyElementFqId, test::kDefaultEventProperties);
 
     // Then the Register call should return pointers to the opened control and data sections in the opened shared
     // memory region
-    auto& event_control_qm = GetEventControlFromServiceDataControl(kDummyElementFqId, service_data_control_qm_);
-    auto& event_control_asil_b = GetEventControlFromServiceDataControl(kDummyElementFqId, service_data_control_asil_b_);
+    auto& event_control_qm = GetEventControlFromServiceDataControl(test::kDummyElementFqId, *service_data_control_qm_);
+    auto& event_control_asil_b =
+        GetEventControlFromServiceDataControl(test::kDummyElementFqId, *service_data_control_asil_b_);
     auto& event_data_storage =
-        GetEventStorageFromServiceDataStorage<test::TestSampleType>(kDummyElementFqId, service_data_storage_);
+        GetEventStorageFromServiceDataStorage<test::TestSampleType>(test::kDummyElementFqId, *service_data_storage_);
 
     EXPECT_EQ(&event_data_control_composite.GetQmEventDataControl(), &event_control_qm.data_control);
     ASSERT_TRUE(event_data_control_composite.GetAsilBEventDataControl().has_value());
@@ -848,7 +779,7 @@ TEST_P(SkeletonRegisterParamaterisedFixture, RollbackWillBeCalledIfShmRegionWasO
 {
     // Given a QM ServiceDataControl which contains a TransactionLogSet with valid transactions
     auto& event_data_control_qm =
-        GetEventControlFromServiceDataControl(kDummyElementFqId, service_data_control_qm_).data_control;
+        GetEventControlFromServiceDataControl(test::kDummyElementFqId, *service_data_control_qm_).data_control;
     InsertSkeletonTransactionLogWithValidTransactions(event_data_control_qm);
     EXPECT_TRUE(IsSkeletonTransactionLogRegistered(event_data_control_qm));
 
@@ -869,15 +800,11 @@ TEST_P(SkeletonRegisterParamaterisedFixture, RollbackWillBeCalledIfShmRegionWasO
     // Given a Skeleton constructed from a valid identifier referencing a QM deployment
     InitialiseSkeleton(instance_identifier).WithAlreadyConnectedProxy();
 
-    // and that QM control segment and data segments are successfully opened
-    ExpectControlSegmentOpened(QualityType::kASIL_QM, service_data_control_qm_);
-    ExpectDataSegmentOpened(service_data_storage_);
-
     // when calling PrepareOffer ... expect, that it succeeds
     EXPECT_TRUE(skeleton_->PrepareOffer(events_, fields_, std::move(kEmptyRegisterShmObjectTraceCallback)).has_value());
 
     // when the event is registered with the skeleton
-    score::cpp::ignore = skeleton_->Register<test::TestSampleType>(kDummyElementFqId, test::kDefaultEventProperties);
+    score::cpp::ignore = skeleton_->Register<test::TestSampleType>(test::kDummyElementFqId, test::kDefaultEventProperties);
 
     // Then the TransactionLog should be rollbacked during construction and removed
     EXPECT_FALSE(IsSkeletonTransactionLogRegistered(event_data_control_qm));
@@ -890,7 +817,7 @@ TEST_P(SkeletonRegisterParamaterisedFixture, RollbackWillOnlyBeCalledOnQmControl
 
     // Given an Asil B ServiceDataControl which contains a TransactionLogSet with valid transactions
     auto& event_data_control_asil_b =
-        GetEventControlFromServiceDataControl(kDummyElementFqId, service_data_control_asil_b_).data_control;
+        GetEventControlFromServiceDataControl(test::kDummyElementFqId, *service_data_control_asil_b_).data_control;
     InsertSkeletonTransactionLogWithValidTransactions(event_data_control_asil_b);
     EXPECT_TRUE(IsSkeletonTransactionLogRegistered(event_data_control_asil_b));
 
@@ -911,16 +838,11 @@ TEST_P(SkeletonRegisterParamaterisedFixture, RollbackWillOnlyBeCalledOnQmControl
     // Given a Skeleton constructed from a valid identifier referencing a QM deployment
     InitialiseSkeleton(instance_identifier).WithAlreadyConnectedProxy();
 
-    // and that the control (QM and ASIL-B) and data segments are successfully opened
-    ExpectControlSegmentOpened(QualityType::kASIL_QM, service_data_control_qm_);
-    ExpectControlSegmentOpened(QualityType::kASIL_B, service_data_control_asil_b_);
-    ExpectDataSegmentOpened(service_data_storage_);
-
     // when calling PrepareOffer ... expect, that it succeeds
     EXPECT_TRUE(skeleton_->PrepareOffer(events_, fields_, std::move(kEmptyRegisterShmObjectTraceCallback)).has_value());
 
     // when the event is registered with the skeleton
-    score::cpp::ignore = skeleton_->Register<test::TestSampleType>(kDummyElementFqId, test::kDefaultEventProperties);
+    score::cpp::ignore = skeleton_->Register<test::TestSampleType>(test::kDummyElementFqId, test::kDefaultEventProperties);
 
     // Then the Asil B TransactionLog will still exist as it was not rolled back
     EXPECT_TRUE(IsSkeletonTransactionLogRegistered(event_data_control_asil_b));
@@ -933,7 +855,7 @@ TEST_P(SkeletonRegisterParamaterisedFixture, TracingWillBeDisabledAndTransaction
 
     // Given a QM ServiceDataControl which contains a TransactionLogSet with invalid transactions
     auto& event_data_control_qm =
-        GetEventControlFromServiceDataControl(kDummyElementFqId, service_data_control_qm_).data_control;
+        GetEventControlFromServiceDataControl(test::kDummyElementFqId, *service_data_control_qm_).data_control;
     InsertSkeletonTransactionLogWithInvalidTransactions(event_data_control_qm);
     EXPECT_TRUE(IsSkeletonTransactionLogRegistered(event_data_control_qm));
 
@@ -954,10 +876,6 @@ TEST_P(SkeletonRegisterParamaterisedFixture, TracingWillBeDisabledAndTransaction
     // Given a Skeleton constructed from a valid identifier referencing a QM deployment
     InitialiseSkeleton(instance_identifier).WithAlreadyConnectedProxy();
 
-    // and that the QM control and data segments are successfully opened
-    ExpectControlSegmentOpened(QualityType::kASIL_QM, service_data_control_qm_);
-    ExpectDataSegmentOpened(service_data_storage_);
-
     // and that tracing will be disabled
     EXPECT_CALL(tracing_runtime_mock, DisableTracing());
 
@@ -965,7 +883,7 @@ TEST_P(SkeletonRegisterParamaterisedFixture, TracingWillBeDisabledAndTransaction
     skeleton_->PrepareOffer(events_, fields_, std::move(kEmptyRegisterShmObjectTraceCallback));
 
     // when the event is registered with the skeleton
-    score::cpp::ignore = skeleton_->Register<test::TestSampleType>(kDummyElementFqId, test::kDefaultEventProperties);
+    score::cpp::ignore = skeleton_->Register<test::TestSampleType>(test::kDummyElementFqId, test::kDefaultEventProperties);
 
     // Then the TransactionLog should still exist as it was not removed due to the rollback failing
     EXPECT_TRUE(IsSkeletonTransactionLogRegistered(event_data_control_qm));
@@ -994,12 +912,6 @@ TEST_P(SkeletonRegisterParamaterisedFixture, ValidEventDataSlotsExistAfterEventI
 
     // Given a skeleton with one event "fooEvent" registered
     InitialiseSkeleton(instance_identifier);
-
-    // When trying to create a QM control segment succeeds
-    ExpectControlSegmentCreated(QualityType::kASIL_QM);
-
-    // and trying to create a data segment succeeds
-    ExpectDataSegmentCreated();
 
     // when PrepareOffer the service
     skeleton_->PrepareOffer(events_, fields_, std::move(kEmptyRegisterShmObjectTraceCallback));
@@ -1041,12 +953,6 @@ TEST_P(SkeletonRegisterParamaterisedFixture, CanAllocateSlotAfterEventIsRegister
     // Given a skeleton with one event "fooEvent" registered
     InitialiseSkeleton(instance_identifier);
 
-    // When trying to create a QM control segment succeeds
-    ExpectControlSegmentCreated(QualityType::kASIL_QM);
-
-    // and trying to create a data segment succeeds
-    ExpectDataSegmentCreated();
-
     // when PrepareOffer the service
     skeleton_->PrepareOffer(events_, fields_, std::move(kEmptyRegisterShmObjectTraceCallback));
 
@@ -1084,10 +990,6 @@ TEST_P(SkeletonRegisterParamaterisedFixture, AllocateAfterCleanUp)
 
     // Given a skeleton with one event "fooEvent" registered
     InitialiseSkeleton(instance_identifier);
-
-    ExpectControlSegmentCreated(QualityType::kASIL_QM);
-
-    ExpectDataSegmentCreated();
 
     skeleton_->PrepareOffer(events_, fields_, std::move(kEmptyRegisterShmObjectTraceCallback));
 
@@ -1174,12 +1076,6 @@ TEST_P(SkeletonRegisterParamaterisedFixture, ValidEventMetaInfoExistAfterEventIs
     const auto instance_identifier = make_InstanceIdentifier(service_instance_deployment, service_type_depl);
     InitialiseSkeleton(instance_identifier);
 
-    // When trying to create a QM control segment succeeds
-    ExpectControlSegmentCreated(QualityType::kASIL_QM);
-
-    // and trying to create a data segment succeeds
-    ExpectDataSegmentCreated();
-
     // when the service offering is prepared
     skeleton_->PrepareOffer(events_, fields_, std::move(kEmptyRegisterShmObjectTraceCallback));
 
@@ -1252,12 +1148,6 @@ TEST_P(SkeletonRegisterParamaterisedFixture, NoMetaInfoExistsForInvalidElementId
     // Given a skeleton with one event "fooEvent" registered
     InitialiseSkeleton(instance_identifier);
 
-    // When trying to create a QM control segment succeeds
-    ExpectControlSegmentCreated(QualityType::kASIL_QM);
-
-    // and trying to create a data segment succeeds
-    ExpectDataSegmentCreated();
-
     // when PrepareOffer the service
     skeleton_->PrepareOffer(events_, fields_, std::move(kEmptyRegisterShmObjectTraceCallback));
 
@@ -1295,11 +1185,6 @@ TEST_P(SkeletonRegisterParamaterisedFixture, CallingRegisterWithSameServiceEleme
     auto test_function = [this]() noexcept {
         // Given a Skeleton constructed from a valid identifier referencing a QM deployment
         InitialiseSkeleton(GetValidASILInstanceIdentifier());
-
-        // and that control (QM and ASIL-B) and data segments are successfully created
-        ExpectControlSegmentCreated(QualityType::kASIL_QM);
-        ExpectControlSegmentCreated(QualityType::kASIL_B);
-        ExpectDataSegmentCreated();
 
         EXPECT_TRUE(
             skeleton_->PrepareOffer(events_, fields_, std::move(kEmptyRegisterShmObjectTraceCallback)).has_value());

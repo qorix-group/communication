@@ -34,11 +34,6 @@ SkeletonEventFixture::SkeletonEventFixture() : SkeletonMockedMemoryFixture{}
 
     InitialiseSkeleton(GetValidInstanceIdentifier());
 
-    // Setup the SharedMemoryResourceHeapAllocatorMock objects when offering the parent Skeleton
-    ExpectControlSegmentCreated(QualityType::kASIL_QM);
-    ExpectControlSegmentCreated(QualityType::kASIL_B);
-    ExpectDataSegmentCreated();
-
     SkeletonBinding::SkeletonEventBindings events{};
     SkeletonBinding::SkeletonFieldBindings fields{};
     std::optional<SkeletonBinding::RegisterShmObjectTraceCallback> register_shm_object_trace_callback{};

@@ -24,6 +24,7 @@
 #include <unistd.h>
 #include <stdint.h>
 #include <functional>
+#include <memory>
 
 namespace score::mw::com::impl::lola
 {
@@ -161,6 +162,53 @@ SkeletonMockedMemoryFixture::SkeletonMockedMemoryFixture()
     ON_CALL(*fcntl_mock_, open(StrEq(test::kServiceInstanceUsageFilePath), test::kCreateOrOpenFlags, _))
         .WillByDefault(Return(test::kServiceInstanceUsageFileDescriptor));
     ON_CALL(*stat_mock_, chmod(StrEq(test::kServiceInstanceUsageFilePath), _)).WillByDefault(Return(score::cpp::blank{}));
+
+    // Default behaviour for creating QM and ASIL-B shared memory resources - occurs when there is no connected proxy.
+    ON_CALL(shared_memory_factory_mock_, Create(test::kControlChannelPathQm, _, _, _, false))
+        .WillByDefault(
+            WithArg<1>([this](auto initialize_callback) -> std::shared_ptr<memory::shared::ISharedMemoryResource> {
+                std::invoke(initialize_callback, control_qm_shared_memory_resource_mock_);
+                return control_qm_shared_memory_resource_mock_;
+            }));
+    ON_CALL(shared_memory_factory_mock_, Create(test::kControlChannelPathAsilB, _, _, _, false))
+        .WillByDefault(
+            WithArg<1>([this](auto initialize_callback) -> std::shared_ptr<memory::shared::ISharedMemoryResource> {
+                std::invoke(initialize_callback, control_asil_b_shared_memory_resource_mock_);
+                return control_asil_b_shared_memory_resource_mock_;
+            }));
+
+    // Default behaviour for opening QM and ASIL-B shared memory resources - occurs when there is a connected proxy.
+    ON_CALL(shared_memory_factory_mock_, Open(test::kControlChannelPathQm, true, _))
+        .WillByDefault(Return(control_qm_shared_memory_resource_mock_));
+    ON_CALL(shared_memory_factory_mock_, Open(test::kControlChannelPathAsilB, true, _))
+        .WillByDefault(Return(control_asil_b_shared_memory_resource_mock_));
+
+    // Default behaviour for opening / creating data shared memory resource
+    ON_CALL(shared_memory_factory_mock_, Create(test::kDataChannelPath, _, _, _, _))
+        .WillByDefault(
+            WithArg<1>([this](auto initialize_callback) -> std::shared_ptr<memory::shared::ISharedMemoryResource> {
+                std::invoke(initialize_callback, data_shared_memory_resource_mock_);
+                return data_shared_memory_resource_mock_;
+            }));
+    ON_CALL(shared_memory_factory_mock_, Open(test::kDataChannelPath, true, _))
+        .WillByDefault(Return(data_shared_memory_resource_mock_));
+
+    // Construct ServiceDataControl / Storage using mocked memory resources
+    service_data_control_qm_ = std::make_unique<ServiceDataControl>(
+        CreateServiceDataControlWithEvent(test::kDummyElementFqId, QualityType::kASIL_QM));
+    service_data_control_asil_b_ = std::make_unique<ServiceDataControl>(
+        CreateServiceDataControlWithEvent(test::kDummyElementFqId, QualityType::kASIL_B));
+    service_data_storage_ = std::make_unique<ServiceDataStorage>(
+        CreateServiceDataStorageWithEvent<test::TestSampleType>(test::kDummyElementFqId));
+
+    // Default behaviour for get the usable base addresses of the mocked memory resources using the constructed
+    // ServiceDataControl / Storage created above.
+    ON_CALL(*control_qm_shared_memory_resource_mock_, getUsableBaseAddress())
+        .WillByDefault(Return(static_cast<void*>(service_data_control_qm_.get())));
+    ON_CALL(*control_asil_b_shared_memory_resource_mock_, getUsableBaseAddress())
+        .WillByDefault(Return(static_cast<void*>(service_data_control_asil_b_.get())));
+    ON_CALL(*data_shared_memory_resource_mock_, getUsableBaseAddress())
+        .WillByDefault(Return(static_cast<void*>(service_data_storage_.get())));
 }
 
 SkeletonMockedMemoryFixture::~SkeletonMockedMemoryFixture()
@@ -222,59 +270,6 @@ void SkeletonMockedMemoryFixture::ExpectServiceUsageMarkerFileCreatedOrOpenedAnd
     EXPECT_CALL(*unistd_mock_, close(test::kServiceInstanceUsageFileDescriptor));
     // we explicitly expect NO calls to unlink! See Skeleton::CreateOrOpenServiceInstanceUsageMarkerFile!
     EXPECT_CALL(*unistd_mock_, unlink(StrEq(test::kServiceInstanceUsageFilePath))).Times(0);
-}
-
-void SkeletonMockedMemoryFixture::ExpectControlSegmentCreated(const QualityType quality_type)
-{
-    const auto control_channel_path =
-        (quality_type == QualityType::kASIL_QM) ? test::kControlChannelPathQm : test::kControlChannelPathAsilB;
-    const auto created_resource = (quality_type == QualityType::kASIL_QM) ? control_qm_shared_memory_resource_mock_
-                                                                          : control_asil_b_shared_memory_resource_mock_;
-
-    // When we attempt to create a shared memory region which returns a pointer to a resource
-    EXPECT_CALL(shared_memory_factory_mock_, Create(control_channel_path, _, _, WritablePermissionsMatcher(), false))
-        .WillOnce(WithArg<1>(
-            [created_resource](auto initialize_callback) -> std::shared_ptr<memory::shared::ISharedMemoryResource> {
-                std::invoke(initialize_callback, created_resource);
-                return created_resource;
-            }));
-}
-
-void SkeletonMockedMemoryFixture::ExpectDataSegmentCreated(const bool in_typed_memory)
-{
-    // When we attempt to create a shared memory region which returns a pointer to a resource
-    EXPECT_CALL(shared_memory_factory_mock_,
-                Create(test::kDataChannelPath, _, _, ReadablePermissionsMatcher(), in_typed_memory))
-        .WillOnce(
-            WithArg<1>([this](auto initialize_callback) -> std::shared_ptr<memory::shared::ISharedMemoryResource> {
-                std::invoke(initialize_callback, data_shared_memory_resource_mock_);
-                return data_shared_memory_resource_mock_;
-            }));
-}
-
-void SkeletonMockedMemoryFixture::ExpectControlSegmentOpened(const QualityType quality_type,
-                                                             ServiceDataControl& existing_service_data_control) noexcept
-{
-    const auto control_channel_path =
-        (quality_type == QualityType::kASIL_QM) ? test::kControlChannelPathQm : test::kControlChannelPathAsilB;
-    const auto created_resource = (quality_type == QualityType::kASIL_QM) ? control_qm_shared_memory_resource_mock_
-                                                                          : control_asil_b_shared_memory_resource_mock_;
-
-    // When we attempt to open a shared memory region which returns a pointer to a resource
-    EXPECT_CALL(shared_memory_factory_mock_, Open(control_channel_path, true, _)).WillOnce(Return(created_resource));
-
-    EXPECT_CALL(*created_resource, getUsableBaseAddress())
-        .WillOnce(Return(static_cast<void*>(&existing_service_data_control)));
-}
-
-void SkeletonMockedMemoryFixture::ExpectDataSegmentOpened(ServiceDataStorage& existing_service_data_storage) noexcept
-{
-    // When we attempt to open a shared memory region which returns a pointer to a resource
-    EXPECT_CALL(shared_memory_factory_mock_, Open(test::kDataChannelPath, true, _))
-        .WillOnce(Return(data_shared_memory_resource_mock_));
-
-    EXPECT_CALL(*data_shared_memory_resource_mock_, getUsableBaseAddress())
-        .WillOnce(Return(static_cast<void*>(&existing_service_data_storage)));
 }
 
 ServiceDataControl SkeletonMockedMemoryFixture::CreateServiceDataControlWithEvent(ElementFqId element_fq_id,

@@ -298,6 +298,8 @@ static const os::Fcntl::Operation kNonBlockingExlusiveLockOperation =
     os::Fcntl::Operation::kLockExclusive | score::os::Fcntl::Operation::kLockNB;
 static const os::Fcntl::Operation kUnlockOperation = os::Fcntl::Operation::kUnLock;
 
+static const ElementFqId kDummyElementFqId{1U, 2U, 3U, ServiceElementType::EVENT};
+
 }  // namespace test
 
 class SkeletonAttorney
@@ -344,12 +346,6 @@ class SkeletonMockedMemoryFixture : public ::testing::Test
     SkeletonMockedMemoryFixture& WithAlreadyConnectedProxy();
 
     void ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed() noexcept;
-    void ExpectControlSegmentCreated(QualityType quality_type);
-    void ExpectDataSegmentCreated(bool in_typed_memory = false);
-
-    void ExpectControlSegmentOpened(QualityType quality_type,
-                                    ServiceDataControl& existing_service_data_control) noexcept;
-    void ExpectDataSegmentOpened(ServiceDataStorage& existing_service_data_storage) noexcept;
 
     ServiceDataControl CreateServiceDataControlWithEvent(ElementFqId element_fq_id, QualityType quality_type) noexcept;
     EventControl& GetEventControlFromServiceDataControl(ElementFqId element_fq_id,
@@ -420,6 +416,12 @@ class SkeletonMockedMemoryFixture : public ::testing::Test
         data_shared_memory_resource_mock_{
             std::make_shared<::testing::NiceMock<memory::shared::SharedMemoryResourceHeapAllocatorMock>>(
                 test::kDataMemoryResourceId)};
+
+    // Since these objects rely on the default behaviour of some mocks (e.g. the mocked lola Runtime), we create them
+    // after setting the default mock behaviours in the body of the constructor.
+    std::unique_ptr<ServiceDataControl> service_data_control_qm_{nullptr};
+    std::unique_ptr<ServiceDataControl> service_data_control_asil_b_{nullptr};
+    std::unique_ptr<ServiceDataStorage> service_data_storage_{nullptr};
 
     std::unique_ptr<Skeleton> skeleton_{nullptr};
 };
