@@ -136,6 +136,7 @@ InstanceIdentifier GetValidASILInstanceIdentifierWithField()
 
 SkeletonMockedMemoryFixture::SkeletonMockedMemoryFixture()
 {
+    // Default behaviour for impl and lola runtimes
     impl::Runtime::InjectMock(&runtime_mock_);
     ON_CALL(runtime_mock_, GetBindingRuntime(BindingType::kLoLa)).WillByDefault(::testing::Return(&lola_runtime_mock_));
     memory::shared::SharedMemoryFactory::InjectMock(&shared_memory_factory_mock_);
@@ -144,6 +145,15 @@ SkeletonMockedMemoryFixture::SkeletonMockedMemoryFixture()
     ON_CALL(runtime_mock_, GetTracingRuntime()).WillByDefault(Return(&tracing_runtime_mock_));
     ON_CALL(tracing_runtime_mock_, GetBindingTracingRuntime(BindingType::kLoLa))
         .WillByDefault(ReturnRef(binding_tracing_runtime_mock_));
+
+    ON_CALL(filesystem_fake_.GetUtils(), CreateDirectories(_, _)).WillByDefault(Return(score::ResultBlank{}));
+
+    // Default behaviour for path builders
+    ON_CALL(shm_path_builder_mock_, GetControlChannelShmName(_, QualityType::kASIL_QM))
+        .WillByDefault(Return(test::kControlChannelPathQm));
+    ON_CALL(shm_path_builder_mock_, GetControlChannelShmName(_, QualityType::kASIL_B))
+        .WillByDefault(Return(test::kControlChannelPathAsilB));
+    ON_CALL(shm_path_builder_mock_, GetDataChannelShmName(_)).WillByDefault(Return(test::kDataChannelPath));
 }
 
 SkeletonMockedMemoryFixture::~SkeletonMockedMemoryFixture()
@@ -174,15 +184,6 @@ void SkeletonMockedMemoryFixture::InitialiseSkeleton(const InstanceIdentifier& i
         std::make_unique<PartialRestartPathBuilderFacade>(partial_restart_path_builder_mock_),
         std::optional<memory::shared::LockFile>{},
         nullptr);
-
-    SkeletonAttorney skeleton_attorney{*skeleton_};
-    ON_CALL(filesystem_fake_.GetUtils(), CreateDirectories(_, _)).WillByDefault(Return(score::ResultBlank{}));
-
-    ON_CALL(shm_path_builder_mock_, GetControlChannelShmName(_, QualityType::kASIL_QM))
-        .WillByDefault(Return(test::kControlChannelPathQm));
-    ON_CALL(shm_path_builder_mock_, GetControlChannelShmName(_, QualityType::kASIL_B))
-        .WillByDefault(Return(test::kControlChannelPathAsilB));
-    ON_CALL(shm_path_builder_mock_, GetDataChannelShmName(_)).WillByDefault(Return(test::kDataChannelPath));
 }
 
 void SkeletonMockedMemoryFixture::ExpectServiceUsageMarkerFileCreatedOrOpenedAndClosed(
