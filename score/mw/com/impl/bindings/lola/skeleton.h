@@ -60,11 +60,10 @@ class Skeleton final : public SkeletonBinding
     friend class SkeletonAttorney;
 
   public:
-    static std::unique_ptr<Skeleton> Create(
-        const InstanceIdentifier& identifier,
-        score::filesystem::Filesystem filesystem,
-        std::unique_ptr<IShmPathBuilder> shm_path_builder,
-        std::unique_ptr<IPartialRestartPathBuilder> partial_restart_path_builder) noexcept;
+    static std::unique_ptr<Skeleton> Create(const InstanceIdentifier& identifier,
+                                            score::filesystem::Filesystem filesystem,
+                                            std::unique_ptr<IShmPathBuilder> shm_path_builder,
+                                            std::unique_ptr<IPartialRestartPathBuilder> partial_restart_path_builder);
 
     /// \brief Construct a Skeleton instance for this specific instance with possibility of passing mock objects during
     /// construction. It is only for testing. For production code Skeleton::Create shall be used.
@@ -85,10 +84,9 @@ class Skeleton final : public SkeletonBinding
     Skeleton(Skeleton&& other) = delete;
     Skeleton& operator=(Skeleton&& other) = delete;
 
-    ResultBlank PrepareOffer(
-        SkeletonEventBindings& events,
-        SkeletonFieldBindings& fields,
-        std::optional<RegisterShmObjectTraceCallback> register_shm_object_trace_callback) noexcept override;
+    ResultBlank PrepareOffer(SkeletonEventBindings& events,
+                             SkeletonFieldBindings& fields,
+                             std::optional<RegisterShmObjectTraceCallback> register_shm_object_trace_callback) override;
 
     void PrepareStopOffer(
         std::optional<UnregisterShmObjectTraceCallback> unregister_shm_object_callback) noexcept override;
@@ -110,57 +108,53 @@ class Skeleton final : public SkeletonBinding
     template <typename SampleType>
     std::pair<EventDataStorage<SampleType>*, EventDataControlComposite> Register(
         const ElementFqId element_fq_id,
-        SkeletonEventProperties element_properties) noexcept;
+        SkeletonEventProperties element_properties);
 
     /// \brief Returns the meta-info for the given registered event.
     /// \param element_fq_id identification of the event.
     /// \return Events meta-info, if it has been registered, null else.
-    score::cpp::optional<EventMetaInfo> GetEventMetaInfo(const ElementFqId element_fq_id) const noexcept;
+    score::cpp::optional<EventMetaInfo> GetEventMetaInfo(const ElementFqId element_fq_id) const;
 
-    QualityType GetInstanceQualityType() const noexcept;
+    QualityType GetInstanceQualityType() const;
 
     /// \brief Cleans up all allocated slots for this SkeletonEvent of any previous running instance
     /// \details Note: Only invoke _after_ a crash was detected!
-    void CleanupSharedMemoryAfterCrash() noexcept;
+    void CleanupSharedMemoryAfterCrash();
 
     /// \brief "Disconnects" unsafe QM consumers by stop-offering the service instances QM part.
     /// \details Only supported/valid for a skeleton instance, where GetInstanceQualityType() returns
     ///          QualityType::kASIL_B. Calling it for a skeleton, which returns QualityType::kASIL_QM, will lead to
     ///          an assert/termination.
-    void DisconnectQmConsumers() noexcept;
+    void DisconnectQmConsumers();
 
   private:
     ResultBlank OpenExistingSharedMemory(
-        std::optional<RegisterShmObjectTraceCallback> register_shm_object_trace_callback) noexcept;
-    ResultBlank CreateSharedMemory(
-        SkeletonEventBindings& events,
-        SkeletonFieldBindings& fields,
-        std::optional<RegisterShmObjectTraceCallback> register_shm_object_trace_callback) noexcept;
+        std::optional<RegisterShmObjectTraceCallback> register_shm_object_trace_callback);
+    ResultBlank CreateSharedMemory(SkeletonEventBindings& events,
+                                   SkeletonFieldBindings& fields,
+                                   std::optional<RegisterShmObjectTraceCallback> register_shm_object_trace_callback);
 
-    bool CreateSharedMemoryForData(
-        const LolaServiceInstanceDeployment&,
-        const std::size_t shm_size,
-        std::optional<RegisterShmObjectTraceCallback> register_shm_object_trace_callback) noexcept;
+    bool CreateSharedMemoryForData(const LolaServiceInstanceDeployment&,
+                                   const std::size_t shm_size,
+                                   std::optional<RegisterShmObjectTraceCallback> register_shm_object_trace_callback);
     bool CreateSharedMemoryForControl(const LolaServiceInstanceDeployment& instance,
                                       const QualityType asil_level,
-                                      const std::size_t shm_size) noexcept;
+                                      const std::size_t shm_size);
     bool OpenSharedMemoryForData(
-        const std::optional<RegisterShmObjectTraceCallback> register_shm_object_trace_callback) noexcept;
-    bool OpenSharedMemoryForControl(const QualityType asil_level) noexcept;
-    void InitializeSharedMemoryForData(
-        const std::shared_ptr<score::memory::shared::ManagedMemoryResource>& memory) noexcept;
-    void InitializeSharedMemoryForControl(
-        const QualityType asil_level,
-        const std::shared_ptr<score::memory::shared::ManagedMemoryResource>& memory) noexcept;
+        const std::optional<RegisterShmObjectTraceCallback> register_shm_object_trace_callback);
+    bool OpenSharedMemoryForControl(const QualityType asil_level);
+    void InitializeSharedMemoryForData(const std::shared_ptr<score::memory::shared::ManagedMemoryResource>& memory);
+    void InitializeSharedMemoryForControl(const QualityType asil_level,
+                                          const std::shared_ptr<score::memory::shared::ManagedMemoryResource>& memory);
 
     template <typename SampleType>
     std::pair<EventDataStorage<SampleType>*, EventDataControlComposite> OpenEventDataFromOpenedSharedMemory(
-        const ElementFqId element_fq_id) noexcept;
+        const ElementFqId element_fq_id);
 
     template <typename SampleType>
     std::pair<EventDataStorage<SampleType>*, EventDataControlComposite> CreateEventDataFromOpenedSharedMemory(
         const ElementFqId element_fq_id,
-        const SkeletonEventProperties& element_properties) noexcept;
+        const SkeletonEventProperties& element_properties);
 
     class ShmResourceStorageSizes
     {
@@ -180,20 +174,20 @@ class Skeleton final : public SkeletonBinding
     /// depending on config.
     /// \return storage sizes for the different shm-objects
     ShmResourceStorageSizes CalculateShmResourceStorageSizes(SkeletonEventBindings& events,
-                                                             SkeletonFieldBindings& fields) noexcept;
+                                                             SkeletonFieldBindings& fields);
     /// \brief Calculates needed sizes for shm-objects for data and ctrl via simulation of allocations against a heap
     /// backed memory resource.
     /// \return storage sizes for the different shm-objects
     ShmResourceStorageSizes CalculateShmResourceStorageSizesBySimulation(SkeletonEventBindings& events,
-                                                                         SkeletonFieldBindings& fields) noexcept;
+                                                                         SkeletonFieldBindings& fields);
     /// \brief Calculates needed sizes for shm-objects for data and ctrl via estimation based on sizeof info of related
     /// data types.
     /// \return storage sizes for the different shm-objects
     ShmResourceStorageSizes CalculateShmResourceStorageSizesByEstimation(SkeletonEventBindings& events,
-                                                                         SkeletonFieldBindings& fields) const noexcept;
+                                                                         SkeletonFieldBindings& fields) const;
 
-    void RemoveSharedMemory() noexcept;
-    void RemoveStaleSharedMemoryArtefacts() const noexcept;
+    void RemoveSharedMemory();
+    void RemoveStaleSharedMemoryArtefacts() const;
 
     InstanceIdentifier identifier_;
     const LolaServiceInstanceDeployment& lola_service_instance_deployment_;
@@ -227,12 +221,12 @@ class Skeleton final : public SkeletonBinding
 namespace detail_skeleton
 {
 
-bool HasAsilBSupport(const InstanceIdentifier& identifier) noexcept;
+bool HasAsilBSupport(const InstanceIdentifier& identifier);
 
 }  // namespace detail_skeleton
 
 template <typename SampleType>
-auto Skeleton::Register(const ElementFqId element_fq_id, SkeletonEventProperties element_properties) noexcept
+auto Skeleton::Register(const ElementFqId element_fq_id, SkeletonEventProperties element_properties)
     -> std::pair<EventDataStorage<SampleType>*, EventDataControlComposite>
 {
     // If the skeleton previously crashed and there are active proxies connected to the old shared memory, then we
@@ -245,7 +239,7 @@ auto Skeleton::Register(const ElementFqId element_fq_id, SkeletonEventProperties
 
         auto& event_data_control_qm = event_data_control_composite.GetQmEventDataControl();
         auto rollback_result = event_data_control_qm.GetTransactionLogSet().RollbackSkeletonTracingTransactions(
-            [&event_data_control_qm](const TransactionLog::SlotIndexType slot_index) noexcept {
+            [&event_data_control_qm](const TransactionLog::SlotIndexType slot_index) {
                 event_data_control_qm.DereferenceEventWithoutTransactionLogging(slot_index);
             });
         if (!rollback_result.has_value())
@@ -273,10 +267,10 @@ template <typename SampleType>
 // file, it does not violate the One Definition Rule
 // Suppress "AUTOSAR C++14 A15-5-3" rule findings. This rule states: "The std::terminate() function shall not be called
 // implicitly". No way for 'OffsetPtr::get()' which called from 'event_data_storage_it->second.template' to throw an
-// exception but we can't mark 'OffsetPtr::get()' as 'noexcept'.
+// exception but we can't mark 'OffsetPtr::get()' as ''.
 // coverity[autosar_cpp14_m3_2_2_violation]
 // coverity[autosar_cpp14_a15_5_3_violation]
-auto Skeleton::OpenEventDataFromOpenedSharedMemory(const ElementFqId element_fq_id) noexcept
+auto Skeleton::OpenEventDataFromOpenedSharedMemory(const ElementFqId element_fq_id)
     -> std::pair<EventDataStorage<SampleType>*, EventDataControlComposite>
 {
     // Suppress "AUTOSAR C++14 A15-5-3" rule findings. This rule states: "The std::terminate() function shall not be
@@ -284,7 +278,7 @@ auto Skeleton::OpenEventDataFromOpenedSharedMemory(const ElementFqId element_fq_
     // if the key value is not comparable and in our case the key is comparable. so no way for 'event_controls_.find()'
     // to throw an exception.
     // coverity[autosar_cpp14_a15_5_3_violation : FALSE]
-    auto find_element = [](auto& map, const ElementFqId& target_element_fq_id) noexcept -> auto {
+    auto find_element = [](auto& map, const ElementFqId& target_element_fq_id) -> auto {
         const auto it = map.find(target_element_fq_id);
         SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(it != map.cend(), "Could not find element fq id in map");
         return it;
@@ -342,7 +336,7 @@ template <typename SampleType>
 // coverity[autosar_cpp14_m3_2_2_violation]
 // coverity[autosar_cpp14_a15_5_3_violation : FALSE]
 auto Skeleton::CreateEventDataFromOpenedSharedMemory(const ElementFqId element_fq_id,
-                                                     const SkeletonEventProperties& element_properties) noexcept
+                                                     const SkeletonEventProperties& element_properties)
     -> std::pair<EventDataStorage<SampleType>*, EventDataControlComposite>
 {
     auto* typed_event_data_storage_ptr = storage_resource_->construct<EventDataStorage<SampleType>>(

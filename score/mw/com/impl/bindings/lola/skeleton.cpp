@@ -48,7 +48,7 @@ namespace score::mw::com::impl::lola
 namespace
 {
 
-const LolaServiceTypeDeployment& GetLolaServiceTypeDeployment(const InstanceIdentifier& identifier) noexcept
+const LolaServiceTypeDeployment& GetLolaServiceTypeDeployment(const InstanceIdentifier& identifier)
 {
     const auto& service_type_depl_info = InstanceIdentifierView{identifier}.GetServiceTypeDeployment();
     const auto* lola_service_type_deployment_ptr =
@@ -62,7 +62,7 @@ const LolaServiceTypeDeployment& GetLolaServiceTypeDeployment(const InstanceIden
     return *lola_service_type_deployment_ptr;
 }
 
-const LolaServiceInstanceDeployment& GetLolaServiceInstanceDeployment(const InstanceIdentifier& identifier) noexcept
+const LolaServiceInstanceDeployment& GetLolaServiceInstanceDeployment(const InstanceIdentifier& identifier)
 {
     const auto& instance_depl_info = InstanceIdentifierView{identifier}.GetServiceInstanceDeployment();
     const auto* lola_service_instance_deployment_ptr =
@@ -76,7 +76,7 @@ const LolaServiceInstanceDeployment& GetLolaServiceInstanceDeployment(const Inst
     return *lola_service_instance_deployment_ptr;
 }
 
-ServiceDataControl* GetServiceDataControlSkeletonSide(const memory::shared::ManagedMemoryResource& control) noexcept
+ServiceDataControl* GetServiceDataControlSkeletonSide(const memory::shared::ManagedMemoryResource& control)
 {
     // Suppress "AUTOSAR C++14 M5-2-8" rule. The rule declares:
     // An object with integer type or pointer to void type shall not be converted to an object with pointer type.
@@ -87,7 +87,7 @@ ServiceDataControl* GetServiceDataControlSkeletonSide(const memory::shared::Mana
     return service_data_control;
 }
 
-ServiceDataStorage* GetServiceDataStorageSkeletonSide(const memory::shared::ManagedMemoryResource& data) noexcept
+ServiceDataStorage* GetServiceDataStorageSkeletonSide(const memory::shared::ManagedMemoryResource& data)
 {
     // Suppress "AUTOSAR C++14 M5-2-8" rule. The rule declares:
     // An object with integer type or pointer to void type shall not be converted to an object with pointer type.
@@ -108,14 +108,14 @@ enum class ShmObjectType : std::uint8_t
 
 std::uint64_t CalculateMemoryResourceId(const LolaServiceTypeDeployment::ServiceId lola_service_id,
                                         const LolaServiceInstanceId::InstanceId lola_instance_id,
-                                        const ShmObjectType object_type) noexcept
+                                        const ShmObjectType object_type)
 {
     return ((static_cast<std::uint64_t>(lola_service_id) << 24U) +
             (static_cast<std::uint64_t>(lola_instance_id) << 8U) + static_cast<std::uint8_t>(object_type));
 }
 
 bool CreatePartialRestartDirectory(const score::filesystem::Filesystem& filesystem,
-                                   const IPartialRestartPathBuilder& partial_restart_path_builder) noexcept
+                                   const IPartialRestartPathBuilder& partial_restart_path_builder)
 {
     const auto partial_restart_dir_path = partial_restart_path_builder.GetLolaPartialRestartDirectoryPath();
 
@@ -133,7 +133,7 @@ bool CreatePartialRestartDirectory(const score::filesystem::Filesystem& filesyst
 
 std::optional<memory::shared::LockFile> CreateOrOpenServiceInstanceExistenceMarkerFile(
     const LolaServiceInstanceId::InstanceId lola_instance_id,
-    const IPartialRestartPathBuilder& partial_restart_path_builder) noexcept
+    const IPartialRestartPathBuilder& partial_restart_path_builder)
 {
     auto service_instance_existence_marker_file_path =
         partial_restart_path_builder.GetServiceInstanceExistenceMarkerFilePath(lola_instance_id);
@@ -149,7 +149,7 @@ std::optional<memory::shared::LockFile> CreateOrOpenServiceInstanceExistenceMark
 
 std::optional<memory::shared::LockFile> CreateOrOpenServiceInstanceUsageMarkerFile(
     const LolaServiceInstanceId::InstanceId lola_instance_id,
-    const IPartialRestartPathBuilder& partial_restart_path_builder) noexcept
+    const IPartialRestartPathBuilder& partial_restart_path_builder)
 {
     auto service_instance_usage_marker_file_path =
         partial_restart_path_builder.GetServiceInstanceUsageMarkerFilePath(lola_instance_id);
@@ -165,14 +165,14 @@ std::optional<memory::shared::LockFile> CreateOrOpenServiceInstanceUsageMarkerFi
 
 std::string GetControlChannelShmPath(const LolaServiceInstanceDeployment& lola_service_instance_deployment,
                                      const QualityType quality_type,
-                                     const IShmPathBuilder& shm_path_builder) noexcept
+                                     const IShmPathBuilder& shm_path_builder)
 {
     const auto instance_id = lola_service_instance_deployment.instance_id_.value().GetId();
     return shm_path_builder.GetControlChannelShmName(instance_id, quality_type);
 }
 
 std::string GetDataChannelShmPath(const LolaServiceInstanceDeployment& lola_service_instance_deployment,
-                                  const IShmPathBuilder& shm_path_builder) noexcept
+                                  const IShmPathBuilder& shm_path_builder)
 {
     const auto instance_id = lola_service_instance_deployment.instance_id_.value().GetId();
     return shm_path_builder.GetDataChannelShmName(instance_id);
@@ -183,7 +183,7 @@ std::string GetDataChannelShmPath(const LolaServiceInstanceDeployment& lola_serv
 namespace detail_skeleton
 {
 
-bool HasAsilBSupport(const InstanceIdentifier& identifier) noexcept
+bool HasAsilBSupport(const InstanceIdentifier& identifier)
 {
     return (InstanceIdentifierView{identifier}.GetServiceInstanceDeployment().asilLevel_ == QualityType::kASIL_B);
 }
@@ -195,11 +195,10 @@ bool HasAsilBSupport(const InstanceIdentifier& identifier) noexcept
 // 'service_instance_existence_marker_file' doesn't have value but as we check before with 'has_value()' so no way for
 // throwing std::bad_optional_access which leds to std::terminate().
 // coverity[autosar_cpp14_a15_5_3_violation : FALSE]
-std::unique_ptr<Skeleton> Skeleton::Create(
-    const InstanceIdentifier& identifier,
-    score::filesystem::Filesystem filesystem,
-    std::unique_ptr<IShmPathBuilder> shm_path_builder,
-    std::unique_ptr<IPartialRestartPathBuilder> partial_restart_path_builder) noexcept
+std::unique_ptr<Skeleton> Skeleton::Create(const InstanceIdentifier& identifier,
+                                           score::filesystem::Filesystem filesystem,
+                                           std::unique_ptr<IShmPathBuilder> shm_path_builder,
+                                           std::unique_ptr<IPartialRestartPathBuilder> partial_restart_path_builder)
 {
     SCORE_LANGUAGE_FUTURECPP_PRECONDITION_PRD_MESSAGE(partial_restart_path_builder != nullptr,
                                  "Skeleton::Create: partial restart path builder pointer is Null");
@@ -283,7 +282,7 @@ Skeleton::Skeleton(const InstanceIdentifier& identifier,
 
 auto Skeleton::PrepareOffer(SkeletonEventBindings& events,
                             SkeletonFieldBindings& fields,
-                            std::optional<RegisterShmObjectTraceCallback> register_shm_object_trace_callback) noexcept
+                            std::optional<RegisterShmObjectTraceCallback> register_shm_object_trace_callback)
     -> ResultBlank
 {
     SCORE_LANGUAGE_FUTURECPP_PRECONDITION_PRD_MESSAGE(partial_restart_path_builder_ != nullptr,
@@ -347,8 +346,8 @@ auto Skeleton::PrepareStopOffer(std::optional<UnregisterShmObjectTraceCallback> 
     if (unregister_shm_object_callback.has_value())
     {
         // Suppress "AUTOSAR C++14 A15-4-2" rule finding. This rule states: "I a function is declared to be
-        // noexcept, noexcept(true) or noexcept(<true condition>), then it shall not exit with an exception"
-        // we can't add noexcept to score::cpp::callback signature.
+        // , (true) or (<true condition>), then it shall not exit with an exception"
+        // we can't add  to score::cpp::callback signature.
         // coverity[autosar_cpp14_a15_4_2_violation]
         unregister_shm_object_callback.value()(
             tracing::TracingRuntime::kDummyElementNameForShmRegisterCallback,
@@ -383,10 +382,10 @@ auto Skeleton::PrepareStopOffer(std::optional<UnregisterShmObjectTraceCallback> 
     control_asil_b_ = nullptr;
 }
 
-auto Skeleton::CreateSharedMemory(
-    SkeletonEventBindings& events,
-    SkeletonFieldBindings& fields,
-    std::optional<RegisterShmObjectTraceCallback> register_shm_object_trace_callback) noexcept -> ResultBlank
+auto Skeleton::CreateSharedMemory(SkeletonEventBindings& events,
+                                  SkeletonFieldBindings& fields,
+                                  std::optional<RegisterShmObjectTraceCallback> register_shm_object_trace_callback)
+    -> ResultBlank
 {
     const auto storage_size_calc_result = CalculateShmResourceStorageSizes(events, fields);
 
@@ -415,7 +414,7 @@ auto Skeleton::CreateSharedMemory(
 }
 
 auto Skeleton::OpenExistingSharedMemory(
-    std::optional<RegisterShmObjectTraceCallback> register_shm_object_trace_callback) noexcept -> ResultBlank
+    std::optional<RegisterShmObjectTraceCallback> register_shm_object_trace_callback) -> ResultBlank
 {
     if (!OpenSharedMemoryForControl(QualityType::kASIL_QM))
     {
@@ -443,7 +442,7 @@ auto Skeleton::OpenExistingSharedMemory(
 bool Skeleton::CreateSharedMemoryForData(
     const LolaServiceInstanceDeployment& instance,
     const std::size_t shm_size,
-    std::optional<RegisterShmObjectTraceCallback> register_shm_object_trace_callback) noexcept
+    std::optional<RegisterShmObjectTraceCallback> register_shm_object_trace_callback)
 {
     memory::shared::SharedMemoryFactory::UserPermissionsMap permissions{};
     for (const auto& allowed_consumer : instance.allowed_consumer_)
@@ -483,8 +482,8 @@ bool Skeleton::CreateSharedMemoryForData(
         // Other bindings, which might create shm-objects per service-element would call
         // register_shm_object_trace_callback for each service-element and then use their "real" name and type ...
         // Suppress "AUTOSAR C++14 A15-4-2" rule finding. This rule states: "I a function is declared to be
-        // noexcept, noexcept(true) or noexcept(<true condition>), then it shall not exit with an exception"
-        // we can't add noexcept to score::cpp::callback signature.
+        // , (true) or (<true condition>), then it shall not exit with an exception"
+        // we can't add  to score::cpp::callback signature.
         // coverity[autosar_cpp14_a15_4_2_violation]
         register_shm_object_trace_callback.value()(
             tracing::TracingRuntime::kDummyElementNameForShmRegisterCallback,
@@ -506,7 +505,7 @@ bool Skeleton::CreateSharedMemoryForData(
 
 bool Skeleton::CreateSharedMemoryForControl(const LolaServiceInstanceDeployment& instance,
                                             const QualityType asil_level,
-                                            const std::size_t shm_size) noexcept
+                                            const std::size_t shm_size)
 {
     const auto path = shm_path_builder_->GetControlChannelShmName(lola_instance_id_, asil_level);
 
@@ -550,7 +549,7 @@ bool Skeleton::CreateSharedMemoryForControl(const LolaServiceInstanceDeployment&
 // [Ticket-173043](broken_link_j/Ticket-173043)
 // coverity[autosar_cpp14_a15_5_3_violation : FALSE]
 bool Skeleton::OpenSharedMemoryForData(
-    const std::optional<RegisterShmObjectTraceCallback> register_shm_object_trace_callback) noexcept
+    const std::optional<RegisterShmObjectTraceCallback> register_shm_object_trace_callback)
 {
     SCORE_LANGUAGE_FUTURECPP_PRECONDITION_PRD_MESSAGE(shm_path_builder_ != nullptr,
                                  "Skeleton::OpenSharedMemoryForData: shared memory path builder pointer is Null");
@@ -579,8 +578,8 @@ bool Skeleton::OpenSharedMemoryForData(
         // register_shm_object_trace_callback, because only then the shm-object can be accessed by tracing
         // subsystem.
         // Suppress "AUTOSAR C++14 A15-4-2" rule finding. This rule states: "I a function is declared to be
-        // noexcept, noexcept(true) or noexcept(<true condition>), then it shall not exit with an exception"
-        // we can't add noexcept to score::cpp::callback signature.
+        // , (true) or (<true condition>), then it shall not exit with an exception"
+        // we can't add  to score::cpp::callback signature.
         // coverity[autosar_cpp14_a15_4_2_violation]
         register_shm_object_trace_callback.value()(
             tracing::TracingRuntime::kDummyElementNameForShmRegisterCallback,
@@ -597,7 +596,7 @@ bool Skeleton::OpenSharedMemoryForData(
     return true;
 }
 
-bool Skeleton::OpenSharedMemoryForControl(const QualityType asil_level) noexcept
+bool Skeleton::OpenSharedMemoryForControl(const QualityType asil_level)
 {
     SCORE_LANGUAGE_FUTURECPP_PRECONDITION_PRD_MESSAGE(shm_path_builder_ != nullptr,
                                  "Skeleton::OpenSharedMemoryForControl: shared memory path builder pointer is Null");
@@ -621,7 +620,7 @@ bool Skeleton::OpenSharedMemoryForControl(const QualityType asil_level) noexcept
     return true;
 }
 
-void Skeleton::RemoveSharedMemory() noexcept
+void Skeleton::RemoveSharedMemory()
 {
     constexpr auto RemoveMemoryIfExists = [](const score::cpp::optional<std::string>& path) -> void {
         if (path.has_value())
@@ -638,7 +637,7 @@ void Skeleton::RemoveSharedMemory() noexcept
     control_asil_resource_.reset();
 }
 
-void Skeleton::RemoveStaleSharedMemoryArtefacts() const noexcept
+void Skeleton::RemoveStaleSharedMemoryArtefacts() const
 {
     SCORE_LANGUAGE_FUTURECPP_PRECONDITION_PRD_MESSAGE(
         shm_path_builder_ != nullptr,
@@ -654,9 +653,8 @@ void Skeleton::RemoveStaleSharedMemoryArtefacts() const noexcept
     memory::shared::SharedMemoryFactory::RemoveStaleArtefacts(data_path);
 }
 
-Skeleton::ShmResourceStorageSizes Skeleton::CalculateShmResourceStorageSizesBySimulation(
-    SkeletonEventBindings& events,
-    SkeletonFieldBindings& fields) noexcept
+Skeleton::ShmResourceStorageSizes Skeleton::CalculateShmResourceStorageSizesBySimulation(SkeletonEventBindings& events,
+                                                                                         SkeletonFieldBindings& fields)
 {
     using NewDeleteDelegateMemoryResource = memory::shared::NewDeleteDelegateMemoryResource;
 
@@ -712,7 +710,7 @@ Skeleton::ShmResourceStorageSizes Skeleton::CalculateShmResourceStorageSizesBySi
 }
 
 Skeleton::ShmResourceStorageSizes Skeleton::CalculateShmResourceStorageSizes(SkeletonEventBindings& events,
-                                                                             SkeletonFieldBindings& fields) noexcept
+                                                                             SkeletonFieldBindings& fields)
 {
     SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(GetBindingRuntime<lola::IRuntime>(BindingType::kLoLa).GetShmSizeCalculationMode() ==
                                ShmSizeCalculationMode::kSimulation,
@@ -797,7 +795,7 @@ Skeleton::ShmResourceStorageSizes Skeleton::CalculateShmResourceStorageSizes(Ske
 // key value is not comparable and in our case the key is comparable. so no way for 'event_controls_.find()' to throw
 // an exception.
 // coverity[autosar_cpp14_a15_5_3_violation : FALSE]
-score::cpp::optional<EventMetaInfo> Skeleton::GetEventMetaInfo(const ElementFqId element_fq_id) const noexcept
+score::cpp::optional<EventMetaInfo> Skeleton::GetEventMetaInfo(const ElementFqId element_fq_id) const
 {
     auto search = storage_->events_metainfo_.find(element_fq_id);
     if (search == storage_->events_metainfo_.cend())
@@ -815,7 +813,7 @@ score::cpp::optional<EventMetaInfo> Skeleton::GetEventMetaInfo(const ElementFqId
     }
 }
 
-QualityType Skeleton::GetInstanceQualityType() const noexcept
+QualityType Skeleton::GetInstanceQualityType() const
 {
     return InstanceIdentifierView{identifier_}.GetServiceInstanceDeployment().asilLevel_;
 }
@@ -823,7 +821,7 @@ QualityType Skeleton::GetInstanceQualityType() const noexcept
 // Suppress "AUTOSAR C++14 A15-5-3" rule findings. This rule states: "The std::terminate() function shall not be called
 // implicitly". This is a false positive, there is no way for calling std::terminate().
 // coverity[autosar_cpp14_a15_5_3_violation : FALSE]
-void Skeleton::CleanupSharedMemoryAfterCrash() noexcept
+void Skeleton::CleanupSharedMemoryAfterCrash()
 {
     for (auto& event : control_qm_->event_controls_)
     {
@@ -839,7 +837,7 @@ void Skeleton::CleanupSharedMemoryAfterCrash() noexcept
     }
 }
 
-void Skeleton::DisconnectQmConsumers() noexcept
+void Skeleton::DisconnectQmConsumers()
 {
     SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(GetInstanceQualityType() == QualityType::kASIL_B,
                            "DisconnectQmConsumers() called on a QualityType::kASIL_QM instance!");
@@ -857,8 +855,7 @@ void Skeleton::DisconnectQmConsumers() noexcept
 // Suppress "AUTOSAR C++14 A15-5-3" rule findings. This rule states: "The std::terminate() function shall not be called
 // implicitly". This is a false positive, there is no way for calling std::terminate().
 // coverity[autosar_cpp14_a15_5_3_violation : FALSE]
-void Skeleton::InitializeSharedMemoryForData(
-    const std::shared_ptr<score::memory::shared::ManagedMemoryResource>& memory) noexcept
+void Skeleton::InitializeSharedMemoryForData(const std::shared_ptr<score::memory::shared::ManagedMemoryResource>& memory)
 {
     storage_ = memory->construct<ServiceDataStorage>(memory->getMemoryResourceProxy());
     storage_resource_ = memory;
@@ -875,7 +872,7 @@ void Skeleton::InitializeSharedMemoryForData(
 // coverity[autosar_cpp14_a15_5_3_violation : FALSE]
 void Skeleton::InitializeSharedMemoryForControl(
     const QualityType asil_level,
-    const std::shared_ptr<score::memory::shared::ManagedMemoryResource>& memory) noexcept
+    const std::shared_ptr<score::memory::shared::ManagedMemoryResource>& memory)
 {
     auto& control = (asil_level == QualityType::kASIL_QM) ? control_qm_ : control_asil_b_;
     control = memory->construct<ServiceDataControl>(memory->getMemoryResourceProxy());
