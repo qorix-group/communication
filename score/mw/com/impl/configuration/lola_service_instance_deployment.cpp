@@ -30,6 +30,7 @@ constexpr auto kControlAsilBMemorySizeKeyInstDepl = "controlAsilBMemorySize";
 constexpr auto kControlQmMemorySizeKeyInstDepl = "controlQmMemorySize";
 constexpr auto kEventsKeyInstDepl = "events";
 constexpr auto kFieldsKeyInstDepl = "fields";
+constexpr auto kMethodsKeyInstDepl = "methods";
 constexpr auto kStrictKeyInstDepl = "strict";
 constexpr auto kAllowedConsumerKeyInstDepl = "allowedConsumer";
 constexpr auto kAllowedProviderKeyInstDepl = "allowedProvider";
@@ -115,8 +116,9 @@ bool operator==(const LolaServiceInstanceDeployment& lhs, const LolaServiceInsta
     return ((lhs.instance_id_ == rhs.instance_id_) && (lhs.shared_memory_size_ == rhs.shared_memory_size_) &&
             (lhs.control_asil_b_memory_size_ == rhs.control_asil_b_memory_size_) &&
             (lhs.control_qm_memory_size_ == rhs.control_qm_memory_size_) && (lhs.events_ == rhs.events_) &&
-            (lhs.fields_ == rhs.fields_) && (lhs.strict_permissions_ == rhs.strict_permissions_) &&
-            (lhs.allowed_consumer_ == rhs.allowed_consumer_) && (lhs.allowed_provider_ == rhs.allowed_provider_));
+            (lhs.fields_ == rhs.fields_) && (lhs.methods_ == rhs.methods_) &&
+            (lhs.strict_permissions_ == rhs.strict_permissions_) && (lhs.allowed_consumer_ == rhs.allowed_consumer_) &&
+            (lhs.allowed_provider_ == rhs.allowed_provider_));
 }
 
 bool operator<(const LolaServiceInstanceDeployment& lhs, const LolaServiceInstanceDeployment& rhs) noexcept
@@ -137,6 +139,7 @@ LolaServiceInstanceDeployment::LolaServiceInstanceDeployment(const score::json::
       control_qm_memory_size_{},
       events_{ConvertJsonToServiceElementMap<EventInstanceMapping>(json_object, kEventsKeyInstDepl)},
       fields_{ConvertJsonToServiceElementMap<FieldInstanceMapping>(json_object, kFieldsKeyInstDepl)},
+      methods_{ConvertJsonToServiceElementMap<MethodInstanceMapping>(json_object, kMethodsKeyInstDepl)},
       strict_permissions_{GetValueFromJson<bool>(json_object, kStrictKeyInstDepl)},
       allowed_consumer_{ConvertJsonToUidMap(json_object, kAllowedConsumerKeyInstDepl)},
       allowed_provider_{ConvertJsonToUidMap(json_object, kAllowedProviderKeyInstDepl)}
@@ -176,6 +179,7 @@ LolaServiceInstanceDeployment::LolaServiceInstanceDeployment(
     const score::cpp::optional<LolaServiceInstanceId> instance_id,
     EventInstanceMapping events,
     FieldInstanceMapping fields,
+    MethodInstanceMapping methods,
     const bool strict_permission,
     std::unordered_map<QualityType, std::vector<uid_t>> allowed_consumer,
     std::unordered_map<QualityType, std::vector<uid_t>> allowed_provider) noexcept
@@ -185,6 +189,7 @@ LolaServiceInstanceDeployment::LolaServiceInstanceDeployment(
       control_qm_memory_size_{},
       events_{std::move(events)},
       fields_{std::move(fields)},
+      methods_{std::move(methods)},
       strict_permissions_{strict_permission},
       allowed_consumer_{std::move(allowed_consumer)},
       allowed_provider_{std::move(allowed_provider)}
@@ -218,6 +223,7 @@ score::json::Object LolaServiceInstanceDeployment::Serialize() const noexcept
 
     json_object[kEventsKeyInstDepl] = ConvertServiceElementMapToJson(events_);
     json_object[kFieldsKeyInstDepl] = ConvertServiceElementMapToJson(fields_);
+    json_object[kMethodsKeyInstDepl] = ConvertServiceElementMapToJson(methods_);
 
     json_object[kStrictKeyInstDepl] = strict_permissions_;
 
@@ -235,6 +241,11 @@ bool LolaServiceInstanceDeployment::ContainsEvent(const std::string& event_name)
 bool LolaServiceInstanceDeployment::ContainsField(const std::string& field_name) const noexcept
 {
     return (fields_.find(field_name) != fields_.end());
+}
+
+bool LolaServiceInstanceDeployment::ContainsMethod(const std::string& method_name) const noexcept
+{
+    return (methods_.find(method_name) != methods_.end());
 }
 
 }  // namespace score::mw::com::impl
