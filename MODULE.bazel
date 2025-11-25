@@ -127,7 +127,7 @@ bazel_dep(name = "rules_doxygen", version = "2.5.0")
 bazel_dep(name = "score_baselibs", version = "0.2.0")
 git_override(
     module_name = "score_baselibs",
-    commit = "cfca402173a7a3261ca637a012087ebfbc8cdb11",
+    commit = "8d556711421cbdd804dffee049967fa5061ca2ea",
     remote = "https://github.com/eclipse-score/baselibs.git",
 )
 
