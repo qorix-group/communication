@@ -1,0 +1,10 @@
+@startuml
+
+allow_mixing
+
+interface "Public API" as SampleLibraryAPI {
+    +GetNumber(): int
+    +SetNumber(num: int): void
+}
+
+@enduml
