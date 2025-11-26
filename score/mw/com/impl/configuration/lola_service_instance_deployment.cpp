@@ -133,16 +133,14 @@ bool operator<(const LolaServiceInstanceDeployment& lhs, const LolaServiceInstan
 // coverity[autosar_cpp14_a12_1_5_violation]
 // coverity[autosar_cpp14_a15_5_3_violation]
 LolaServiceInstanceDeployment::LolaServiceInstanceDeployment(const score::json::Object& json_object) noexcept
-    : instance_id_{},
-      shared_memory_size_{},
-      control_asil_b_memory_size_{},
-      control_qm_memory_size_{},
-      events_{ConvertJsonToServiceElementMap<EventInstanceMapping>(json_object, kEventsKeyInstDepl)},
-      fields_{ConvertJsonToServiceElementMap<FieldInstanceMapping>(json_object, kFieldsKeyInstDepl)},
-      methods_{ConvertJsonToServiceElementMap<MethodInstanceMapping>(json_object, kMethodsKeyInstDepl)},
-      strict_permissions_{GetValueFromJson<bool>(json_object, kStrictKeyInstDepl)},
-      allowed_consumer_{ConvertJsonToUidMap(json_object, kAllowedConsumerKeyInstDepl)},
-      allowed_provider_{ConvertJsonToUidMap(json_object, kAllowedProviderKeyInstDepl)}
+    : LolaServiceInstanceDeployment{
+          {},
+          ConvertJsonToServiceElementMap<EventInstanceMapping>(json_object, kEventsKeyInstDepl),
+          ConvertJsonToServiceElementMap<FieldInstanceMapping>(json_object, kFieldsKeyInstDepl),
+          ConvertJsonToServiceElementMap<MethodInstanceMapping>(json_object, kMethodsKeyInstDepl),
+          GetValueFromJson<bool>(json_object, kStrictKeyInstDepl),
+          ConvertJsonToUidMap(json_object, kAllowedConsumerKeyInstDepl),
+          ConvertJsonToUidMap(json_object, kAllowedProviderKeyInstDepl)}
 {
     const auto serialization_version = GetValueFromJson<std::uint32_t>(json_object, kSerializationVersionKeyInstDepl);
     if (serialization_version != serializationVersion)
