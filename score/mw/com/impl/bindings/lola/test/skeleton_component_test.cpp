@@ -190,6 +190,7 @@ class SkeletonComponentTestFixture : public ::testing::Test
                                                 lola_field_instance_deployments_,
                                                 {},
                                                 {},
+                                                {},
                                                 configured_shared_memory_size,
                                                 configured_control_asil_b_shared_memory_size,
                                                 configured_control_qm_shared_memory_size),
