@@ -254,7 +254,7 @@ TEST_F(MessagePassingServiceInstanceTest, DoesntTerminateUponReceivingOutdatedNo
                                     Serialize(std::get<uintptr_t>(user_data_), MessageType::kOutdatedNodeId, false));
 }
 
-TEST_F(MessagePassingServiceInstanceTest, NotfiyEventLocallyCallsRegisteredHandler)
+TEST_F(MessagePassingServiceInstanceTest, NotifyEventLocallyCallsRegisteredHandler)
 {
     // Given service instance
     MessagePassingServiceInstance instance{
@@ -278,7 +278,7 @@ TEST_F(MessagePassingServiceInstanceTest, NotfiyEventLocallyCallsRegisteredHandl
     EXPECT_TRUE(handler_called);
 }
 
-TEST_F(MessagePassingServiceInstanceTest, NotfiyEventLocallyDoesntTerminateUponEncounteringDestroyedHandler)
+TEST_F(MessagePassingServiceInstanceTest, NotifyEventLocallyDoesntTerminateUponEncounteringDestroyedHandler)
 {
     // Given service instance
     MessagePassingServiceInstance instance{
@@ -294,7 +294,7 @@ TEST_F(MessagePassingServiceInstanceTest, NotfiyEventLocallyDoesntTerminateUponE
     (*executor_task_)(stop_token_);
 }
 
-TEST_F(MessagePassingServiceInstanceTest, NotfiyEventLocallyDoesntCallUnregisteredHandler)
+TEST_F(MessagePassingServiceInstanceTest, NotifyEventLocallyDoesntCallUnregisteredHandler)
 {
     // Given service instance
     MessagePassingServiceInstance instance{
@@ -341,7 +341,7 @@ TEST_F(MessagePassingServiceInstanceTest,
     EXPECT_TRUE(handler_called);
 }
 
-TEST_F(MessagePassingServiceInstanceTest, NotfiyEventDoesntPostNotifyEventLocallyIfNothingRegisteredForTheEvent)
+TEST_F(MessagePassingServiceInstanceTest, NotifyEventDoesntPostNotifyEventLocallyIfNothingRegisteredForTheEvent)
 {
     // Given service instance with no registered handlers
     MessagePassingServiceInstance instance{
@@ -568,7 +568,7 @@ TEST_F(MessagePassingServiceInstanceTest, UnregisterEventNotificationRemoteDoesn
 }
 
 // notify remote
-TEST_F(MessagePassingServiceInstanceTest, NotfiyEventRemoteNotifiesClients)
+TEST_F(MessagePassingServiceInstanceTest, NotifyEventRemoteNotifiesClients)
 {
     // Given service instance
     MessagePassingServiceInstance instance{
@@ -590,7 +590,25 @@ TEST_F(MessagePassingServiceInstanceTest, NotfiyEventRemoteNotifiesClients)
     instance.NotifyEvent(event_id_);
 }
 
-TEST_F(MessagePassingServiceInstanceTest, NotfiyEventRemoteNotifiesClientsRegisteredTwice)
+TEST_F(MessagePassingServiceInstanceTest, NotifyEventRemoteWontNotifyClientRegisteredForDifferentEvent)
+{
+    // Given service instance
+    MessagePassingServiceInstance instance{
+        quality_type_, asil_cfg_, server_factory_mock_, client_factory_mock_, executor_mock_};
+
+    // Given register event notifier message is received
+    received_send_message_callback_(*server_connection_mock_,
+                                    Serialize(event_id_, MessageType::kRegisterEventNotifier));
+
+    // Expect client factory mock to not be requested to create a new connection
+    EXPECT_CALL(client_factory_mock_, Create(::testing::_, ::testing::_)).Times(0);
+
+    // When NotifyEvent() for a different event is called
+    ++event_id_.element_id_;
+    instance.NotifyEvent(event_id_);
+}
+
+TEST_F(MessagePassingServiceInstanceTest, NotifyEventRemoteNotifiesClientsRegisteredTwice)
 {
     // Given service instance
     MessagePassingServiceInstance instance{
@@ -637,7 +655,7 @@ TEST_F(MessagePassingServiceInstanceTest, NotifyEventRemoteDoesntTerminateOnSend
     instance.NotifyEvent(event_id_);
 }
 
-TEST_F(MessagePassingServiceInstanceTest, NotfiyEventRemoteNotifiesClientsExceedingTmpNodeBuffer)
+TEST_F(MessagePassingServiceInstanceTest, NotifyEventRemoteNotifiesClientsExceedingTmpNodeBuffer)
 {
     // Given service instance
     MessagePassingServiceInstance instance{
@@ -677,7 +695,7 @@ TEST_F(MessagePassingServiceInstanceTest, NotfiyEventRemoteNotifiesClientsExceed
 }
 
 // unregister message
-TEST_F(MessagePassingServiceInstanceTest, NotfiyEventRemoteDoesntNotifyUnregisteredClient)
+TEST_F(MessagePassingServiceInstanceTest, NotifyEventRemoteDoesntNotifyUnregisteredClient)
 {
     // Given service instance
     MessagePassingServiceInstance instance{
