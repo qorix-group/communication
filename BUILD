@@ -20,6 +20,7 @@ compile_pip_requirements(
     src = "requirements.in",
     data = ["//quality/integration_testing:pip_requirements"],
     requirements_txt = "requirements_lock.txt",
+) 
 
 copyright_checker(
     name = "copyright",
