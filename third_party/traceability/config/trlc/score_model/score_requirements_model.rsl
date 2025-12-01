@@ -83,12 +83,17 @@ enum GuideWord {
     TooLate
     Wrong
     LossOfFunction
+    PartialFunction
+    UnintendedFunction
+    ExceedingFunction
+    DelayedFunction
 }
 
 type FailureMode extends ScoreReq.RequirementSafety {
     guideword               GuideWord
     failureeffect           String
     rationale optional      String
+    potentialcause optional String
     interface optional      String
 }
 
