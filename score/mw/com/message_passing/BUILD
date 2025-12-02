@@ -20,14 +20,9 @@ alias(
         "@platforms//os:qnx": ":message_passing_resmgr",
         "//conditions:default": ":message_passing_mqueue",
     }),
+    deprecation = "DEPRECATED: use @communication//score/message_passing:message_passing instead",
     tags = ["FFI"],
-    visibility = [
-        "//platform/aas/pas/logging:__subpackages__",
-        "//score/mw/com/impl:__subpackages__",
-        "//score/mw/com/message_passing/test:__pkg__",
-        "@score_baselibs//score/mw/log:__subpackages__",
-        "@score_baselibs//score/mw/log/detail/data_router:__pkg__",
-    ],
+    visibility = ["//visibility:public"],
 )
 
 cc_library(
@@ -189,12 +184,9 @@ cc_library(
         "sender_mock.h",
         "sender_traits_mock.h",
     ],
+    deprecation = "DEPRECATED: use @communication//score/message_passing:mock instead",
     features = COMPILER_WARNING_FEATURES,
-    visibility = [
-        "//platform/aas/pas/logging:__subpackages__",
-        "//score/mw/com/impl:__subpackages__",
-        "@score_baselibs//score/mw/log:__subpackages__",
-    ],
+    visibility = ["//visibility:public"],
     deps = [
         ":interface",
         "@googletest//:gtest",
