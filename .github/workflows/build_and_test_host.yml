@@ -11,30 +11,42 @@
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
 
-# Workflow configuration for S-CORE CI - Bazel Build & Test communication module
+# Workflow configuration for S-CORE CI - Bazel Build & Test communication module for host platforms
 # This workflow runs Bazel build and test when triggered by specific pull request events.
 
-name: Bazel Build & Test communication module (with host toolchain GCC12.2)
+name: Bazel Build & Test communication module
 on:
   pull_request:
     types: [opened, reopened, synchronize]
   merge_group:
     types: [checks_requested]
 jobs:
-    build_and_test_gcc_host_gcc12:
+    build_and_test_host:
+      strategy:
+        matrix:
+          toolchain: ["@llvm_toolchain//:cc-toolchain-x86_64-linux", "@gcc_toolchain//:host_gcc_12"]
+          include:
+            - toolchain: "@llvm_toolchain//:cc-toolchain-x86_64-linux"
+              non_hermetic_dependencies:
+                - "libtinfo5" # Fixes https://github.com/bazel-contrib/toolchains_llvm/issues/403
       # Starting with Ubuntu 24.04 apparmor breaks Bazels linux-sandbox: https://github.com/bazelbuild/bazel/issues/24081
       runs-on: ubuntu-22.04
       steps:
+        - name: Install non-hermetic dependencies
+          if: ${{ matrix.non_hermetic_dependencies }}
+          run: |
+            sudo apt-get update && true
+            sudo apt install -y ${{ join(matrix.non_hermetic_dependencies, ' ') }}
         - uses: bazel-contrib/setup-bazel@0.15.0
           with:
             bazelisk-cache: true
-            disk-cache: ${{ github.workflow }}
+            disk-cache: ${{ github.workflow }}-${{ matrix.toolchain }}
             repository-cache: true
         - name: Checkout repository
           uses: actions/checkout@v4.2.2
         - name: Bazel build communication targets
           run: |
-            bazel build //...
+            bazel build --extra_toolchains=${{ matrix.toolchain }} //...
         - name: Bazel test communication targets
           run: |
-            bazel test //... --build_tests_only
+            bazel test --extra_toolchains=${{ matrix.toolchain }} //... --build_tests_only
