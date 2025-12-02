@@ -48,6 +48,7 @@ cc_library(
         "//score/mw/com/impl/bindings/lola/methods:skeleton_instance_identifier",
         "//score/mw/com/impl/configuration:quality_type",
         "@score_baselibs//score/language/futurecpp",
+        "@score_baselibs//score/language/safecpp/scoped_function:copyable_scoped_function",
         "@score_baselibs//score/result",
     ],
 )

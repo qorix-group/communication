@@ -16,10 +16,10 @@
 #include "score/mw/com/impl/bindings/lola/element_fq_id.h"
 #include "score/mw/com/impl/bindings/lola/methods/proxy_instance_identifier.h"
 #include "score/mw/com/impl/bindings/lola/methods/skeleton_instance_identifier.h"
-#include "score/mw/com/impl/configuration/lola_service_id.h"
-#include "score/mw/com/impl/configuration/lola_service_instance_id.h"
 #include "score/mw/com/impl/configuration/quality_type.h"
 #include "score/mw/com/impl/scoped_event_receive_handler.h"
+
+#include "score/language/safecpp/scoped_function/copyable_scoped_function.h"
 
 #include "score/result/result.h"
 
@@ -53,10 +53,15 @@ class IMessagePassingService
     /// \brief Handler which will be called when the proxy process sends a message that it has subscribed to a service
     /// method.
     ///
-    /// On creation, a proxy will create the methods shared memory region and then call CallServiceMethodSubscribed
-    /// which will send a message to this process, which will call the ServiceMethodSubscribedHandler registered in
-    /// RegisterOnServiceMethodSubscribedHandler. This message should contain the ProxyInstanceIdentifier. The proxy_uid
-    /// and is_method_asil_b should be retrieved from the message meta data.
+    /// On creation, a proxy will create the methods shared memory region and then call SubscribeServiceMethod
+    /// which will send a message to the Skeleton process. The Skeleton process will then call the
+    /// ServiceMethodSubscribedHandler registered in RegisterOnServiceMethodSubscribedHandler. This message should
+    /// contain the ProxyInstanceIdentifier which will be used to call this handler. The proxy_uid and is_method_asil_b
+    /// should be retrieved from the message meta data.
+    ///
+    /// The handler is a CopyableScopedFunction since it will be stored in a map which can be read-from and written-to
+    /// concurrently. When a handler needs to be called, it will be copied out of the map under lock and called without
+    /// locking. See the docstring for MethodCallHandler below for further details.
     ///
     /// \param proxy_instance_identifier unique identifier of the Proxy instance which subscribed to the method so that
     ///        the Skeleton can identify which methods shared memory region to open.
@@ -74,12 +79,26 @@ class IMessagePassingService
     ///        the new shared memory region and close all methods shared memory regions that were in the process that
     ///        restarted.
     using ServiceMethodSubscribedHandler =
-        score::cpp::callback<score::ResultBlank(ProxyInstanceIdentifier proxy_instance_identifier,
-                                       uid_t proxy_uid,
-                                       QualityType asil_level,
-                                       pid_t proxy_pid)>;
+        safecpp::CopyableScopedFunction<score::ResultBlank(ProxyInstanceIdentifier proxy_instance_identifier,
+                                                         uid_t proxy_uid,
+                                                         QualityType asil_level,
+                                                         pid_t proxy_pid)>;
 
-    using MethodCallHandler = score::cpp::callback<void(std::size_t queue_position)>;
+    /// \brief Handler which will be called when the proxy process sends a message that it has called a method.
+    ///
+    /// This will be triggered when the Proxy process calls CallMethod.
+    ///
+    /// The handler is a CopyableScopedFunction since it will be stored in a map which can be read-from and
+    /// written-to concurrently. When a handler needs to be called, it will be copied out of the map under lock and
+    /// called without locking. This ensures that another thread can then remove the handler from the map under lock
+    /// without having to wait for the method call to finish. This would be required when a Proxy restarts and the
+    /// Skeleton must replace the existing method call handler with a new one (which works with the new shared
+    /// memory region which was created by the restarted Proxy). We use a CopyableScopedFunction rather than moving
+    /// the handler out of the map under lock, calling it outside the lock and moving it back in under lock to
+    /// reduce the number of mutex locks and also avoid potential reallocations when inserting it back into the map.
+    /// Only one copy of the handler will ever be called at one time, so the provided handler does not need to
+    /// ensure it can safely be called concurrently.
+    using MethodCallHandler = safecpp::CopyableScopedFunction<void(std::size_t queue_position)>;
 
     IMessagePassingService() noexcept = default;
 
