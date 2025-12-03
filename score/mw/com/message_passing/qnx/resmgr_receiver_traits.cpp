@@ -475,7 +475,7 @@ std::int32_t ResmgrReceiverTraits::private_message_handler(message_context_t* co
     // This function in a banned list, however according to the requirement
     // broken_link_c/issue/57467 it's allowed for IPC API that is mw::com (aka LoLa)
     // NOLINTNEXTLINE(score-banned-function): See above
-    score::cpp::ignore = os_resources.channel->MsgReply(static_cast<std::int64_t>(ctp->rcvid), EOK, kNoReply, kNoSize);
+    score::cpp::ignore = os_resources.channel->MsgReply(ctp->rcvid, EOK, kNoReply, kNoSize);
 
     return EOK;
 }
