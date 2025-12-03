@@ -26,6 +26,8 @@
 #include <score/callback.hpp>
 #include <score/stop_token.hpp>
 
+#include <sched.h>
+#include <sys/types.h>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -48,8 +50,35 @@ class IMessagePassingService
     ///          The callback is invoked synchronously during handler registration/unregistration.
     using HandlerStatusChangeCallback = score::cpp::callback<void(bool)>;
 
+    /// \brief Handler which will be called when the proxy process sends a message that it has subscribed to a service
+    /// method.
+    ///
+    /// On creation, a proxy will create the methods shared memory region and then call CallServiceMethodSubscribed
+    /// which will send a message to this process, which will call the ServiceMethodSubscribedHandler registered in
+    /// RegisterOnServiceMethodSubscribedHandler. This message should contain the ProxyInstanceIdentifier. The proxy_uid
+    /// and is_method_asil_b should be retrieved from the message meta data.
+    ///
+    /// \param proxy_instance_identifier unique identifier of the Proxy instance which subscribed to the method so that
+    ///        the Skeleton can identify which methods shared memory region to open.
+    /// \param proxy_uid UID of the Proxy instance which subscribed to the method. The Skeleton will check that this UID
+    ///        exists in the allowed_consumer list in the configuration (it's allowed_consumer since this is normally
+    ///        referring to consumers of the event/field shared memory region that the Skeleton creates. However, for
+    ///        methods, the proxy whose UID must be checked is actually the provider of the shared memory region). It's
+    ///        also used in the allowed_provider list when opening the shared memory region.
+    /// \param asil_level (QM or Asil-B) of the Proxy instance which subscribed to the method. This is required so that
+    ///        the Skeleton can check the correct allowed_consumer list (since there's a different list for QM and
+    ///        ASIL-B).
+    /// \param proxy_pid PID of the proxy process which is used to determine whether the call to
+    ///        SubscribeServiceMethod by a proxy is being called after the proxy process restarted and recreated
+    ///        the methods shared memory region. If it is being called after a restart, then the Skeleton needs to open
+    ///        the new shared memory region and close all methods shared memory regions that were in the process that
+    ///        restarted.
     using ServiceMethodSubscribedHandler =
-        score::cpp::callback<score::ResultBlank(ProxyInstanceIdentifier proxy_instance_identifier)>;
+        score::cpp::callback<score::ResultBlank(ProxyInstanceIdentifier proxy_instance_identifier,
+                                       uid_t proxy_uid,
+                                       QualityType asil_level,
+                                       pid_t proxy_pid)>;
+
     using MethodCallHandler = score::cpp::callback<void(std::size_t queue_position)>;
 
     IMessagePassingService() noexcept = default;
