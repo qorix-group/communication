@@ -46,10 +46,12 @@
 //! - Structures
 //! - Tuples
 
+use core::fmt::Debug;
+use core::future::Future;
+use core::ops::{Deref, DerefMut};
+pub mod reloc;
+pub use reloc::Reloc;
 use std::collections::VecDeque;
-use std::fmt::Debug;
-use std::future::Future;
-use std::ops::{Deref, DerefMut};
 use std::path::Path;
 
 /// Error enumeration for different failure cases in the Consumer/Producer/Runtime APIs.
@@ -63,7 +65,7 @@ pub enum Error {
 }
 
 /// Result type alias with std::result::Result using com_api::Error as error type
-pub type Result<T> = std::result::Result<T, Error>;
+pub type Result<T> = core::result::Result<T, Error>;
 
 /// A factory-like trait for constructing complex objects through a builder pattern.
 ///
@@ -91,13 +93,17 @@ pub trait Runtime {
     type ServiceDiscovery<I: Interface>: ServiceDiscovery<I, Self>;
 
     /// Subscriber<T> types for Manages subscriptions to event notifications
-    type Subscriber<T: Reloc + Send>: Subscriber<T, Self>;
+    type Subscriber<T: Reloc + Send + Debug>: Subscriber<T, Self>;
 
     /// ProducerBuilder<I, P> types for Constructs producer instances for offering services
-    type ProducerBuilder<I: Interface, P: Producer<Self, Interface = I>>: ProducerBuilder<I, P, Self>;
+    type ProducerBuilder<I: Interface, P: Producer<Self, Interface = I>>: ProducerBuilder<
+        I,
+        P,
+        Self,
+    >;
 
     /// Publisher<T> types for Publishes event data to subscribers
-    type Publisher<T: Reloc + Send>: Publisher<T, Self>;
+    type Publisher<T: Reloc + Send + Debug>: Publisher<T, Self>;
 
     /// ProviderInfo types for Configuration data for service producers instances
     type ProviderInfo: Send + Clone;
@@ -119,9 +125,8 @@ pub trait Runtime {
     /// Service discovery handle for querying available instances
     fn find_service<I: Interface>(
         &self,
-        _instance_specifier: InstanceSpecifier,
+        instance_specifier: FindServiceSpecifier,
     ) -> Self::ServiceDiscovery<I>;
-
 
     /// Create a producer builder for the given interface and producer type.
     /// Constructs a producer builder for offering services.
@@ -168,19 +173,38 @@ where
 ///
 /// The string shall describe where to find a certain instance of a service. Each level shall look
 /// like this
-/// <InterfaceName>:my/path/to/service_name
-#[derive(Clone)]
+///  /my/path/to/service_name
+/// validation for service name- /my/path/to/service_name
+/// allowed characters: a-z A-Z 0-9 and '/'
+/// Must start with leading/trailing check
+/// Not allowed consecutive '/' characters
+/// '_' is allowed in names
+#[derive(Clone, Debug)]
 pub struct InstanceSpecifier {
-    specifier: Option<String>,
+    specifier: String,
 }
 
 impl InstanceSpecifier {
-    /// Instance specifier that will match any instance. This can be used to find all
-    /// instances of a certain interface during service discovery.
-    pub const MATCH_ANY: Self = InstanceSpecifier { specifier: None };
+    fn check_str(service_name: &str) -> bool {
+        // Must start with exactly one leading slash
+        if !service_name.starts_with('/') || service_name.starts_with("//") {
+            return false;
+        }
 
-    fn check_str(_service_name: &str) -> bool {
-        todo!()
+        // Remove the single leading slash
+        let service_name = service_name.strip_prefix('/').unwrap();
+
+        // Check each character
+        let is_legal_char = |c| {
+            (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_'
+        };
+
+        //validation of each path segment
+        !service_name.is_empty()
+            && service_name.split('/').all(|parts| {
+                // No empty segments (reject trailing "/" and "//" in the middle)
+                !parts.is_empty() && parts.chars().all(|c| is_legal_char(c))
+            })
     }
 
     /// Create a new instance specifier, using the string-like input as the path to the
@@ -197,7 +221,7 @@ impl InstanceSpecifier {
         let service_name = service_name.as_ref();
         if Self::check_str(service_name) {
             Ok(Self {
-                specifier: Some(service_name.to_string()),
+                specifier: service_name.to_string(),
             })
         } else {
             Err(Error::Fail)
@@ -214,10 +238,20 @@ impl TryFrom<&str> for InstanceSpecifier {
 
 impl AsRef<str> for InstanceSpecifier {
     fn as_ref(&self) -> &str {
-        self.specifier
-            .as_ref()
-            .map(String::as_str)
-            .unwrap_or("[ANY]")
+        &self.specifier
+    }
+}
+
+/// Specifies whether to find a specific service instance or any available instance
+pub enum FindServiceSpecifier {
+    Specific(InstanceSpecifier),
+    Any,
+}
+
+/// Convert an InstanceSpecifier into a FindServiceSpecifier
+impl Into<FindServiceSpecifier> for InstanceSpecifier {
+    fn into(self) -> FindServiceSpecifier {
+        FindServiceSpecifier::Specific(self)
     }
 }
 
@@ -235,17 +269,6 @@ impl AsRef<str> for InstanceSpecifier {
 ///
 /// Since it is yet to be proven whether this trait can be implemented safely (assumption is: no) it
 /// is unsafe for now. The expectation is that very few users ever need to implement this manually.
-pub unsafe trait Reloc {}
-
-unsafe impl Reloc for () {}
-unsafe impl Reloc for u32 {}
-unsafe impl Reloc for u64 {}
-unsafe impl Reloc for i32 {}
-unsafe impl Reloc for i64 {}
-unsafe impl Reloc for f32 {}
-unsafe impl Reloc for f64 {}
-unsafe impl Reloc for bool {}
-unsafe impl Reloc for char {}
 
 /// A `Sample` provides a reference to a memory buffer of an event with immutable value.
 ///
@@ -256,9 +279,9 @@ unsafe impl Reloc for char {}
 /// # Type Parameters
 /// * `T` - The relocatable event data type
 // TODO: C++ doesn't yet support this. Expose API to compare SamplePtr ages.
-pub trait Sample<T>: Deref<Target = T> + Send + PartialOrd + Ord
+pub trait Sample<T>: Deref<Target = T> + Send + PartialOrd + Ord + Debug
 where
-    T: Send + Reloc,
+    T: Send + Reloc + Debug,
 {
 }
 
@@ -269,9 +292,9 @@ where
 ///
 /// # Type Parameters
 /// * `T` - The relocatable event data type
-pub trait SampleMut<T>: DerefMut<Target = T>
+pub trait SampleMut<T>: DerefMut<Target = T> + Debug
 where
-    T: Send + Reloc,
+    T: Send + Reloc + Debug,
 {
     /// Sample type for immutable access
     type Sample: Sample<T>;
@@ -301,9 +324,9 @@ where
 ///
 /// TODO: Shall we also require DerefMut<Target=MaybeUninit<T>> from implementing types? How to deal
 /// TODO: with the ambiguous assume_init() then?
-pub trait SampleMaybeUninit<T>
+pub trait SampleMaybeUninit<T>: Debug + AsMut<core::mem::MaybeUninit<T>>
 where
-    T: Send + Reloc,
+    T: Send + Reloc + Debug,
 {
     /// Buffer type for mutable data after initialization
     type SampleMut: SampleMut<T>;
@@ -329,16 +352,6 @@ where
     ///
     /// A `SampleMut` instance providing mutable access to the initialized data.
     fn write(self, value: T) -> Self::SampleMut;
-
-    /// Get a mutable pointer to the internal maybe uninitialized `T`.
-    ///
-    /// The caller has to make sure to initialize the data in the buffer.
-    /// Reading from the received pointer before initialization is undefined behavior.
-    ///
-    /// # Returns
-    ///
-    /// A mutable pointer to the internal maybe uninitialized `T`.
-    fn as_mut_ptr(&mut self) -> *mut T;
 }
 
 /// Service interface contract definition.
@@ -346,6 +359,8 @@ where
 /// Defines the communication schema and roles for a particular service interface.
 /// Implementations specify the consumer and producer types that implement the interface contract.
 pub trait Interface {
+    /// Unique type identifier for this interface
+    const TYPE_ID: &'static str;
     /// consumer type for this interface
     type Consumer<R: Runtime + ?Sized>: Consumer<R>;
     /// producer type for this interface
@@ -411,7 +426,7 @@ pub trait Producer<R: Runtime + ?Sized> {
 /// * `T` - The relocatable event data type
 pub trait Publisher<T, R: Runtime + ?Sized>
 where
-    T: Reloc + Send,
+    T: Reloc + Send + Debug,
 {
     /// Associated sample type for uninitialized event data
     type SampleMaybeUninit<'a>: SampleMaybeUninit<T> + 'a
@@ -506,7 +521,9 @@ pub trait ServiceDiscovery<I: Interface, R: Runtime + ?Sized> {
     /// # Returns
     ///
     #[allow(clippy::manual_async_fn)]
-    fn get_available_instances_async(&self) -> impl Future<Output = Result<Self::ServiceEnumerator>> + Send;
+    fn get_available_instances_async(
+        &self,
+    ) -> impl Future<Output = Result<Self::ServiceEnumerator>> + Send;
 }
 
 /// Metadata and identification for a discovered service instance.
@@ -517,8 +534,8 @@ pub trait ServiceDiscovery<I: Interface, R: Runtime + ?Sized> {
 /// # Type Parameters
 /// * `R` - The runtime managing this service
 pub trait ConsumerDescriptor<R: Runtime + ?Sized> {
-    /// Get the unique instance identifier for this service instance.
-    fn get_instance_id(&self) -> usize; // TODO: Turn return type into separate type
+    /// Get the unique instance specifier for this service instance.
+    fn get_instance_identifier(&self) -> &InstanceSpecifier;
 }
 
 /// Constructor for consumer instances of a specific service.
@@ -542,7 +559,7 @@ pub trait ConsumerBuilder<I: Interface, R: Runtime + ?Sized>:
 /// # Type Parameters
 /// * `T` - The relocatable event data type
 /// * `R` - The runtime managing the subscription
-pub trait Subscriber<T: Reloc + Send, R: Runtime + ?Sized,> {
+pub trait Subscriber<T: Reloc + Send + Debug, R: Runtime + ?Sized> {
     /// Associated subscription type for receiving event samples
     type Subscription: Subscription<T, R>;
 
@@ -599,7 +616,7 @@ impl<S> SampleContainer<S> {
     pub fn iter<'a, T>(&'a self) -> impl Iterator<Item = &'a T>
     where
         S: Sample<T>,
-        T: Reloc + Send + 'a,
+        T: Reloc + Send + 'a + Debug,
     {
         self.inner.iter().map(<S as Deref>::deref)
     }
@@ -636,7 +653,7 @@ impl<S> SampleContainer<S> {
     ///
     /// # Returns
     /// An `Option` containing a reference to the first sample, or `None` if the container is empty.
-    pub fn front<T: Reloc + Send>(&self) -> Option<&T>
+    pub fn front<T: Reloc + Send + Debug>(&self) -> Option<&T>
     where
         S: Sample<T>,
     {
@@ -652,7 +669,7 @@ impl<S> SampleContainer<S> {
 /// # Type Parameters
 /// * `T` - The relocatable event data type
 /// * `R` - The runtime managing the subscription
-pub trait Subscription<T: Reloc + Send, R: Runtime + ?Sized> {
+pub trait Subscription<T: Reloc + Send + Debug, R: Runtime + ?Sized> {
     /// Associated subscriber type for managing the subscription lifecycle
     type Subscriber: Subscriber<T, R>;
     /// Associated sample type for received event data
@@ -730,4 +747,50 @@ pub trait Subscription<T: Reloc + Send, R: Runtime + ?Sized> {
         new_samples: usize,
         max_samples: usize,
     ) -> impl Future<Output = Result<usize>> + Send;
+}
+
+///Test module for InstanceSpecifier validation
+mod tests {
+    #[test]
+    fn test_instance_specifier_validation() {
+        use super::InstanceSpecifier;
+        // Valid specifiers
+        let valid_specifiers = [
+            "/my/service",
+            "/my/path/to/service_name",
+            "/Service_123/AnotherPart",
+            "/A",
+            "/A/abc_123/Xyz",
+        ];
+
+        for spec in &valid_specifiers {
+            assert!(
+                InstanceSpecifier::check_str(spec),
+                "Expected '{}' to be valid",
+                spec
+            );
+        }
+
+        // Invalid specifiers
+        let invalid_specifiers = [
+            "my/service",           // No leading slash
+            "/my//service",         // Consecutive slashes
+            "/my/service/",         // Trailing slash
+            "/my/ser!vice",         // Illegal character '!'
+            "/my/ser vice",         // Illegal character ' '
+            "/",                    // Only root slash
+            "/my/path//to/service", // Consecutive slashes in the middle
+            "/my/path/to//",        // Trailing consecutive slashes
+            "//my/service",         // Leading consecutive slashes
+            "///my/service",        // Leading consecutive slashes
+        ];
+
+        for spec in &invalid_specifiers {
+            assert!(
+                !InstanceSpecifier::check_str(spec),
+                "Expected '{}' to be invalid",
+                spec
+            );
+        }
+    }
 }

@@ -10,13 +10,24 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
-load("@rules_rust//rust:defs.bzl", "rust_library")
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
 
 rust_library(
     name = "com-api-concept",
-    srcs = ["com_api_concept.rs"],
+    srcs = [
+        "com_api_concept.rs",
+        "reloc.rs",
+    ],
+    crate_root = "com_api_concept.rs",
     visibility = [
         "//visibility:public",  # platform_only
     ],
     deps = [],
+)
+
+rust_test(
+    name = "com-api-concept-test",
+    crate = ":com-api-concept",
+    tags = ["manual"],
+    deps = [":com-api-concept"],
 )

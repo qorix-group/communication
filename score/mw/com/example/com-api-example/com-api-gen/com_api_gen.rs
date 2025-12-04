@@ -11,7 +11,9 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
-use com_api::{Consumer, Interface, OfferedProducer, Producer, Publisher, Reloc, Runtime, Subscriber};
+use com_api::{
+    Consumer, Interface, OfferedProducer, Producer, Publisher, Reloc, Runtime, Subscriber,
+};
 
 #[derive(Debug)]
 pub struct Tire {}
@@ -25,6 +27,7 @@ pub struct VehicleInterface {}
 
 /// Generic
 impl Interface for VehicleInterface {
+    const TYPE_ID: &'static str = "VehicleInterface";
     type Consumer<R: Runtime + ?Sized> = VehicleConsumer<R>;
     type Producer<R: Runtime + ?Sized> = VehicleProducer<R>;
 }
@@ -37,16 +40,17 @@ pub struct VehicleConsumer<R: Runtime + ?Sized> {
 impl<R: Runtime + ?Sized> Consumer<R> for VehicleConsumer<R> {
     fn new(instance_info: R::ConsumerInfo) -> Self {
         VehicleConsumer {
-            left_tire: R::Subscriber::new("left_tire", instance_info.clone()).expect("Failed to create subscriber"),
-            exhaust: R::Subscriber::new("exhaust", instance_info.clone()).expect("Failed to create subscriber"),
+            left_tire: R::Subscriber::new("left_tire", instance_info.clone())
+                .expect("Failed to create subscriber"),
+            exhaust: R::Subscriber::new("exhaust", instance_info.clone())
+                .expect("Failed to create subscriber"),
         }
     }
 }
 
 pub struct AnotherInterface {}
 
-pub struct VehicleProducer<R: Runtime + ?Sized>
-{
+pub struct VehicleProducer<R: Runtime + ?Sized> {
     _runtime: core::marker::PhantomData<R>,
     instance_info: R::ProviderInfo,
 }
@@ -57,8 +61,10 @@ impl<R: Runtime + ?Sized> Producer<R> for VehicleProducer<R> {
 
     fn offer(self) -> com_api::Result<Self::OfferedProducer> {
         Ok(VehicleOfferedProducer {
-            left_tire: R::Publisher::new("left_tire", self.instance_info.clone()).expect("Failed to create publisher"),
-            exhaust: R::Publisher::new("exhaust", self.instance_info.clone()).expect("Failed to create publisher"),
+            left_tire: R::Publisher::new("left_tire", self.instance_info.clone())
+                .expect("Failed to create publisher"),
+            exhaust: R::Publisher::new("exhaust", self.instance_info.clone())
+                .expect("Failed to create publisher"),
             instance_info: self.instance_info,
         })
     }
