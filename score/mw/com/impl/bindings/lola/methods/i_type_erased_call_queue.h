@@ -21,7 +21,7 @@
 namespace score::mw::com::impl::lola
 {
 
-/// \brief Interface for class which manages the memory required for the InTypes and ResultType for a specific service
+/// \brief Interface for class which manages the memory required for the InTypes and ReturnType for a specific service
 /// Method
 ///
 /// We provide an interface so that mocks can be used to test higher layers such as ProxyMethod / SkeletonMethod.
@@ -41,9 +41,9 @@ class ITypeErasedCallQueue
     ITypeErasedCallQueue(ITypeErasedCallQueue&&) noexcept = delete;
     ITypeErasedCallQueue& operator=(ITypeErasedCallQueue&&) noexcept = delete;
 
-    virtual std::optional<score::cpp::span<std::byte>> GetInArgsStorage(size_t position) const = 0;
+    virtual std::optional<score::cpp::span<std::byte>> GetInArgValuesStorage(size_t position) const = 0;
 
-    virtual std::optional<score::cpp::span<std::byte>> GetResultStorage(size_t position) const = 0;
+    virtual std::optional<score::cpp::span<std::byte>> GetReturnValueStorage(size_t position) const = 0;
 };
 
 }  // namespace score::mw::com::impl::lola

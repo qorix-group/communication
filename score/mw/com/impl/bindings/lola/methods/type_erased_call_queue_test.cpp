@@ -41,10 +41,10 @@ const std::size_t kQueueSize{9U};
 constexpr memory::DataTypeSizeInfo kValidInArgTypeErasedInfo{104U, 8U};
 const auto kExpectedInArgAllocationSize = kValidInArgTypeErasedInfo.Size() * kQueueSize;
 
-constexpr memory::DataTypeSizeInfo kValidResultTypeErasedInfo{64U, 16U};
-const auto kExpectedResultAllocationSize = kValidResultTypeErasedInfo.Size() * kQueueSize;
+constexpr memory::DataTypeSizeInfo kValidReturnTypeErasedInfo{64U, 16U};
+const auto kExpectedReturnValueAllocationSize = kValidReturnTypeErasedInfo.Size() * kQueueSize;
 
-const std::size_t kExpectedPaddingBeweenInArgsAndResult{8U};
+const std::size_t kExpectedPaddingBeweenInArgsAndReturnValue{8U};
 
 class TypeErasedCallQueueFixture : public ::testing::Test
 {
@@ -60,9 +60,9 @@ class TypeErasedCallQueueFixture : public ::testing::Test
         return *this;
     }
 
-    TypeErasedCallQueueFixture& WithAResultTypeInfo()
+    TypeErasedCallQueueFixture& WithAReturnTypeInfo()
     {
-        type_erased_element_info_.result_type_info = kValidResultTypeErasedInfo;
+        type_erased_element_info_.return_type_info = kValidReturnTypeErasedInfo;
         return *this;
     }
 
@@ -81,9 +81,9 @@ class TypeErasedCallQueueFixture : public ::testing::Test
 };
 
 using TypeErasedCallQueueAllocationFixture = TypeErasedCallQueueFixture;
-TEST_F(TypeErasedCallQueueAllocationFixture, DoesNotAllocatesIfNoInArgTypeOrResultTypeInfoProvided)
+TEST_F(TypeErasedCallQueueAllocationFixture, DoesNotAllocatesIfNoInArgTypeOrReturnTypeInfoProvided)
 {
-    // When constructing a TypeErasedCallQueue with empty InArg and Result TypeInfos
+    // When constructing a TypeErasedCallQueue with empty InArg and Return TypeInfos
     GivenATypeErasedCallQueue();
 
     // Then no memory should have been allocated
@@ -99,23 +99,23 @@ TEST_F(TypeErasedCallQueueAllocationFixture, AllocatesInArgOnConstructionIfInArg
     EXPECT_EQ(fake_memory_resource_.GetUserAllocatedBytes(), kExpectedInArgAllocationSize);
 }
 
-TEST_F(TypeErasedCallQueueAllocationFixture, AllocatesResultOnConstructionIfResultTypeInfoProvided)
+TEST_F(TypeErasedCallQueueAllocationFixture, AllocatesReturnOnConstructionIfReturnTypeInfoProvided)
 {
-    // When constructing a TypeErasedCallQueue with only an Result TypeInfo
-    WithAResultTypeInfo().GivenATypeErasedCallQueue();
+    // When constructing a TypeErasedCallQueue with only an Return TypeInfo
+    WithAReturnTypeInfo().GivenATypeErasedCallQueue();
 
-    // Then memory should have been allocated for the all results in the queue taking into account element padding
-    EXPECT_EQ(fake_memory_resource_.GetUserAllocatedBytes(), kExpectedResultAllocationSize);
+    // Then memory should have been allocated for the all return values in the queue taking into account element padding
+    EXPECT_EQ(fake_memory_resource_.GetUserAllocatedBytes(), kExpectedReturnValueAllocationSize);
 }
 
-TEST_F(TypeErasedCallQueueAllocationFixture, AllocatesResultAndInArgsOnConstructionIfResultAndInArgTypeInfosProvided)
+TEST_F(TypeErasedCallQueueAllocationFixture, AllocatesReturnAndInArgsOnConstructionIfReturnAndInArgTypeInfosProvided)
 {
-    // When constructing a TypeErasedCallQueue with both InArg and result TypeInfos
-    WithAnInArgTypeInfo().WithAResultTypeInfo().GivenATypeErasedCallQueue();
+    // When constructing a TypeErasedCallQueue with both InArg and Return TypeInfos
+    WithAnInArgTypeInfo().WithAReturnTypeInfo().GivenATypeErasedCallQueue();
 
-    // Then memory should have been allocated for the all the in args and results in the queue
+    // Then memory should have been allocated for the all the in args and return values in the queue
     const auto total_allocation_size =
-        kExpectedInArgAllocationSize + kExpectedPaddingBeweenInArgsAndResult + kExpectedResultAllocationSize;
+        kExpectedInArgAllocationSize + kExpectedPaddingBeweenInArgsAndReturnValue + kExpectedReturnValueAllocationSize;
     EXPECT_EQ(fake_memory_resource_.GetUserAllocatedBytes(), total_allocation_size);
 }
 
@@ -141,38 +141,38 @@ TEST_F(TypeErasedCallQueueAllocationFixture, DeallocatesInArgsOnDestructionIfInA
     EXPECT_EQ(fake_memory_resource_.GetUserDeAllocatedBytes(), kExpectedInArgAllocationSize);
 }
 
-TEST_F(TypeErasedCallQueueAllocationFixture, DeallocatesResultOnDestructionIfResultTypeInfoProvided)
+TEST_F(TypeErasedCallQueueAllocationFixture, DeallocatesReturnOnDestructionIfReturnTypeInfoProvided)
 {
-    WithAResultTypeInfo().GivenATypeErasedCallQueue();
+    WithAReturnTypeInfo().GivenATypeErasedCallQueue();
 
     // When destroying the TypeErasedCallQueue
     unit_.reset();
 
-    // Then the memory that was allocated for the Result should have been deallocated
-    EXPECT_EQ(fake_memory_resource_.GetUserDeAllocatedBytes(), kExpectedResultAllocationSize);
+    // Then the memory that was allocated for the Return should have been deallocated
+    EXPECT_EQ(fake_memory_resource_.GetUserDeAllocatedBytes(), kExpectedReturnValueAllocationSize);
 }
 
-TEST_F(TypeErasedCallQueueAllocationFixture, DeallocatesInArgsAndResultOnDestructionIfInArgAndResultTypeInfosProvided)
+TEST_F(TypeErasedCallQueueAllocationFixture, DeallocatesInArgsAndReturnOnDestructionIfInArgAndReturnTypeInfosProvided)
 {
-    WithAnInArgTypeInfo().WithAResultTypeInfo().GivenATypeErasedCallQueue();
+    WithAnInArgTypeInfo().WithAReturnTypeInfo().GivenATypeErasedCallQueue();
 
     // When destroying the TypeErasedCallQueue
     unit_.reset();
 
-    // Then the memory that was allocated for the InArgs and Result should have been deallocated
-    const auto expected_deallocation_size = kExpectedInArgAllocationSize + kExpectedResultAllocationSize;
+    // Then the memory that was allocated for the InArgs and Return should have been deallocated
+    const auto expected_deallocation_size = kExpectedInArgAllocationSize + kExpectedReturnValueAllocationSize;
     EXPECT_EQ(fake_memory_resource_.GetUserDeAllocatedBytes(), expected_deallocation_size);
 }
 
-TEST_F(TypeErasedCallQueueFixture, GetInArgsStoragePointsToCorrectPositionInQueue)
+TEST_F(TypeErasedCallQueueFixture, GetInArgValuesStoragePointsToCorrectPositionInQueue)
 {
     WithAnInArgTypeInfo().GivenATypeErasedCallQueue();
 
-    // When calling GetInArgsStorage with the index of every element in the queue
+    // When calling GetInArgValuesStorage with the index of every element in the queue
     auto* const queue_start_address = fake_memory_resource_.getUsableBaseAddress();
     for (std::size_t i = 0; i < kQueueSize; ++i)
     {
-        auto in_args_storage = unit_->GetInArgsStorage(i);
+        auto in_args_storage = unit_->GetInArgValuesStorage(i);
 
         // Then the returned storage should have the correct address and size
         ASSERT_TRUE(in_args_storage.has_value());
@@ -183,15 +183,15 @@ TEST_F(TypeErasedCallQueueFixture, GetInArgsStoragePointsToCorrectPositionInQueu
     }
 }
 
-TEST_F(TypeErasedCallQueueFixture, GetInArgsStoragePointsToCorrectPositionInQueueWithInArgsAndResultTypeInfos)
+TEST_F(TypeErasedCallQueueFixture, GetInArgValuesStoragePointsToCorrectPositionInQueueWithInArgsAndReturnTypeInfos)
 {
-    WithAnInArgTypeInfo().WithAResultTypeInfo().GivenATypeErasedCallQueue();
+    WithAnInArgTypeInfo().WithAReturnTypeInfo().GivenATypeErasedCallQueue();
 
-    // When calling GetInArgsStorage with the index of every element in the queue
+    // When calling GetInArgValuesStorage with the index of every element in the queue
     auto* const queue_start_address = fake_memory_resource_.getUsableBaseAddress();
     for (std::size_t i = 0; i < kQueueSize; ++i)
     {
-        auto in_args_storage = unit_->GetInArgsStorage(i);
+        auto in_args_storage = unit_->GetInArgValuesStorage(i);
 
         // Then the returned storage should have the correct address and size
         ASSERT_TRUE(in_args_storage.has_value());
@@ -202,91 +202,91 @@ TEST_F(TypeErasedCallQueueFixture, GetInArgsStoragePointsToCorrectPositionInQueu
     }
 }
 
-TEST_F(TypeErasedCallQueueFixture, GetResultStoragePointsToCorrectPositionInQueue)
+TEST_F(TypeErasedCallQueueFixture, GetReturnStoragePointsToCorrectPositionInQueue)
 {
-    WithAResultTypeInfo().GivenATypeErasedCallQueue();
+    WithAReturnTypeInfo().GivenATypeErasedCallQueue();
 
-    // When calling GetInArgsStorage with the index of every element in the queue
+    // When calling GetInArgValuesStorage with the index of every element in the queue
     auto* const queue_start_address = fake_memory_resource_.getUsableBaseAddress();
     for (std::size_t i = 0; i < kQueueSize; ++i)
     {
-        auto results_storage = unit_->GetResultStorage(i);
+        auto return_value_storage = unit_->GetReturnValueStorage(i);
 
         // Then the returned storage should have the correct address and size
-        ASSERT_TRUE(results_storage.has_value());
+        ASSERT_TRUE(return_value_storage.has_value());
         auto* const expected_element_address =
-            memory::shared::AddOffsetToPointer(queue_start_address, i * kValidResultTypeErasedInfo.Size());
-        EXPECT_EQ(results_storage.value().data(), expected_element_address);
-        EXPECT_EQ(results_storage.value().size(), kValidResultTypeErasedInfo.Size());
+            memory::shared::AddOffsetToPointer(queue_start_address, i * kValidReturnTypeErasedInfo.Size());
+        EXPECT_EQ(return_value_storage.value().data(), expected_element_address);
+        EXPECT_EQ(return_value_storage.value().size(), kValidReturnTypeErasedInfo.Size());
     }
 }
 
-TEST_F(TypeErasedCallQueueFixture, GetResultStoragePointsToCorrectPositionInQueueWithInArgsAndResultTypeInfos)
+TEST_F(TypeErasedCallQueueFixture, GetReturnStoragePointsToCorrectPositionInQueueWithInArgsAndReturnTypeInfos)
 {
-    WithAnInArgTypeInfo().WithAResultTypeInfo().GivenATypeErasedCallQueue();
+    WithAnInArgTypeInfo().WithAReturnTypeInfo().GivenATypeErasedCallQueue();
 
-    // When calling GetInArgsStorage with the index of every element in the queue
+    // When calling GetInArgValuesStorage with the index of every element in the queue
     const auto expected_in_arg_allocation_size_plus_padding =
-        kValidInArgTypeErasedInfo.Size() * kQueueSize + kExpectedPaddingBeweenInArgsAndResult;
-    auto* const result_queue_start_address = memory::shared::AddOffsetToPointer(
+        kValidInArgTypeErasedInfo.Size() * kQueueSize + kExpectedPaddingBeweenInArgsAndReturnValue;
+    auto* const return_queue_start_address = memory::shared::AddOffsetToPointer(
         fake_memory_resource_.getUsableBaseAddress(), expected_in_arg_allocation_size_plus_padding);
     for (std::size_t i = 0; i < kQueueSize; ++i)
     {
-        auto results_storage = unit_->GetResultStorage(i);
+        auto return_value_storage = unit_->GetReturnValueStorage(i);
 
         // Then the returned storage should have the correct address and size
-        ASSERT_TRUE(results_storage.has_value());
+        ASSERT_TRUE(return_value_storage.has_value());
         auto* const expected_element_address =
-            memory::shared::AddOffsetToPointer(result_queue_start_address, i * kValidResultTypeErasedInfo.Size());
-        EXPECT_EQ(results_storage.value().data(), expected_element_address);
-        EXPECT_EQ(results_storage.value().size(), kValidResultTypeErasedInfo.Size());
+            memory::shared::AddOffsetToPointer(return_queue_start_address, i * kValidReturnTypeErasedInfo.Size());
+        EXPECT_EQ(return_value_storage.value().data(), expected_element_address);
+        EXPECT_EQ(return_value_storage.value().size(), kValidReturnTypeErasedInfo.Size());
     }
 }
 
 TEST_F(TypeErasedCallQueueFixture, GetInArgPtrWithoutProvidingInArgTypeInfoReturnsEmptyOptional)
 {
-    WithAResultTypeInfo().GivenATypeErasedCallQueue();
+    WithAReturnTypeInfo().GivenATypeErasedCallQueue();
 
-    // When calling GetInArgsStorage with the index of every element in the queue
+    // When calling GetInArgValuesStorage with the index of every element in the queue
     for (std::size_t i = 0; i < kQueueSize; ++i)
     {
-        auto in_args_storage = unit_->GetInArgsStorage(i);
+        auto in_args_storage = unit_->GetInArgValuesStorage(i);
 
         // Then an empty optional should be returned
         EXPECT_FALSE(in_args_storage.has_value());
     }
 }
 
-TEST_F(TypeErasedCallQueueFixture, GetResultStorageWithoutProvidingResultTypeInfoReturnsEmptyOptional)
+TEST_F(TypeErasedCallQueueFixture, GetReturnStorageWithoutProvidingReturnTypeInfoReturnsEmptyOptional)
 {
     WithAnInArgTypeInfo().GivenATypeErasedCallQueue();
 
-    // When calling GetInArgsStorage with the index of every element in the queue
+    // When calling GetInArgValuesStorage with the index of every element in the queue
     for (std::size_t i = 0; i < kQueueSize; ++i)
     {
-        auto results_storage = unit_->GetResultStorage(i);
+        auto return_value_storage = unit_->GetReturnValueStorage(i);
 
         // Then an empty optional should be returned
-        EXPECT_FALSE(results_storage.has_value());
+        EXPECT_FALSE(return_value_storage.has_value());
     }
 }
 
-TEST_F(TypeErasedCallQueueFixture, GetInArgsStorageWithOutOfRangePositionTerminates)
+TEST_F(TypeErasedCallQueueFixture, GetInArgValuesStorageWithOutOfRangePositionTerminates)
 {
-    WithAnInArgTypeInfo().WithAResultTypeInfo().GivenATypeErasedCallQueue();
+    WithAnInArgTypeInfo().WithAReturnTypeInfo().GivenATypeErasedCallQueue();
 
-    // When calling GetInArgsStorage with an index which is out of the queue range
+    // When calling GetInArgValuesStorage with an index which is out of the queue range
     // Then the program terminates
-    SCORE_LANGUAGE_FUTURECPP_EXPECT_CONTRACT_VIOLATED(score::cpp::ignore = unit_->GetInArgsStorage(kQueueSize));
+    SCORE_LANGUAGE_FUTURECPP_EXPECT_CONTRACT_VIOLATED(score::cpp::ignore = unit_->GetInArgValuesStorage(kQueueSize));
 }
 
-TEST_F(TypeErasedCallQueueFixture, GetResultStorageWithOutOfRangePositionTerminates)
+TEST_F(TypeErasedCallQueueFixture, GetReturnStorageWithOutOfRangePositionTerminates)
 {
-    WithAnInArgTypeInfo().WithAResultTypeInfo().GivenATypeErasedCallQueue();
+    WithAnInArgTypeInfo().WithAReturnTypeInfo().GivenATypeErasedCallQueue();
 
-    // When calling GetResultStorage with an index which is out of the queue range
+    // When calling GetReturnValueStorage with an index which is out of the queue range
     // Then the program terminates
-    SCORE_LANGUAGE_FUTURECPP_EXPECT_CONTRACT_VIOLATED(score::cpp::ignore = unit_->GetResultStorage(kQueueSize));
+    SCORE_LANGUAGE_FUTURECPP_EXPECT_CONTRACT_VIOLATED(score::cpp::ignore = unit_->GetReturnValueStorage(kQueueSize));
 }
 
 }  // namespace

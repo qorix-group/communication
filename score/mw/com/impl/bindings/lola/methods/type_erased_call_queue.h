@@ -28,7 +28,7 @@
 namespace score::mw::com::impl::lola
 {
 
-/// \brief Class which manages the memory required for the InTypes and ResultType for a specific service Method
+/// \brief Class which manages the memory required for the InTypes and ReturnType for a specific service Method
 ///
 /// This class allocates the memory region for the call queue on construction and deallocates it on destruction.
 class TypeErasedCallQueue final : public ITypeErasedCallQueue
@@ -37,7 +37,7 @@ class TypeErasedCallQueue final : public ITypeErasedCallQueue
     struct TypeErasedElementInfo
     {
         std::optional<memory::DataTypeSizeInfo> in_arg_type_info;
-        std::optional<memory::DataTypeSizeInfo> result_type_info;
+        std::optional<memory::DataTypeSizeInfo> return_type_info;
         std::size_t queue_size;
     };
 
@@ -51,9 +51,9 @@ class TypeErasedCallQueue final : public ITypeErasedCallQueue
     TypeErasedCallQueue(TypeErasedCallQueue&&) noexcept = delete;
     TypeErasedCallQueue& operator=(TypeErasedCallQueue&&) noexcept = delete;
 
-    std::optional<score::cpp::span<std::byte>> GetInArgsStorage(size_t position) const override;
+    std::optional<score::cpp::span<std::byte>> GetInArgValuesStorage(size_t position) const override;
 
-    std::optional<score::cpp::span<std::byte>> GetResultStorage(size_t position) const override;
+    std::optional<score::cpp::span<std::byte>> GetReturnValueStorage(size_t position) const override;
 
   private:
     std::pair<memory::shared::OffsetPtr<std::byte>, memory::shared::OffsetPtr<std::byte>> AllocateQueue() const;
@@ -68,7 +68,7 @@ class TypeErasedCallQueue final : public ITypeErasedCallQueue
     TypeErasedElementInfo type_erased_element_info_;
 
     memory::shared::OffsetPtr<std::byte> in_args_queue_start_address_;
-    memory::shared::OffsetPtr<std::byte> result_queue_start_address_;
+    memory::shared::OffsetPtr<std::byte> return_queue_start_address_;
 };
 
 }  // namespace score::mw::com::impl::lola

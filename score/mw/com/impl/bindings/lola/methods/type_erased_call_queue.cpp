@@ -34,15 +34,15 @@ TypeErasedCallQueue::TypeErasedCallQueue(const memory::shared::MemoryResourcePro
       resource_proxy_{resource_proxy},
       type_erased_element_info_{type_erased_element_info},
       in_args_queue_start_address_{nullptr},
-      result_queue_start_address_{nullptr}
+      return_queue_start_address_{nullptr}
 {
-    // If we have neither InArgs nor a Result, then we don't need to allocate any memory at all.
+    // If we have neither InArgs nor a Return value, then we don't need to allocate any memory at all.
     if (!(type_erased_element_info_.in_arg_type_info.has_value() ||
-          type_erased_element_info_.result_type_info.has_value()))
+          type_erased_element_info_.return_type_info.has_value()))
     {
         return;
     }
-    std::tie(in_args_queue_start_address_, result_queue_start_address_) = AllocateQueue();
+    std::tie(in_args_queue_start_address_, return_queue_start_address_) = AllocateQueue();
 }
 
 TypeErasedCallQueue::~TypeErasedCallQueue()
@@ -53,15 +53,15 @@ TypeErasedCallQueue::~TypeErasedCallQueue()
         const auto allocated_size = in_arg_type_info.Size() * type_erased_element_info_.queue_size;
         resource_proxy_.deallocate(in_args_queue_start_address_.get(), allocated_size);
     }
-    if (result_queue_start_address_ != nullptr)
+    if (return_queue_start_address_ != nullptr)
     {
-        const auto& result_type_info = type_erased_element_info_.result_type_info.value();
-        const auto allocated_size = result_type_info.Size() * type_erased_element_info_.queue_size;
-        resource_proxy_.deallocate(result_queue_start_address_.get(), allocated_size);
+        const auto& return_type_info = type_erased_element_info_.return_type_info.value();
+        const auto allocated_size = return_type_info.Size() * type_erased_element_info_.queue_size;
+        resource_proxy_.deallocate(return_queue_start_address_.get(), allocated_size);
     }
 }
 
-std::optional<score::cpp::span<std::byte>> TypeErasedCallQueue::GetInArgsStorage(const size_t position) const
+std::optional<score::cpp::span<std::byte>> TypeErasedCallQueue::GetInArgValuesStorage(const size_t position) const
 {
     if (!(type_erased_element_info_.in_arg_type_info.has_value()))
     {
@@ -73,15 +73,15 @@ std::optional<score::cpp::span<std::byte>> TypeErasedCallQueue::GetInArgsStorage
                       type_erased_element_info_.queue_size);
 }
 
-std::optional<score::cpp::span<std::byte>> TypeErasedCallQueue::GetResultStorage(const size_t position) const
+std::optional<score::cpp::span<std::byte>> TypeErasedCallQueue::GetReturnValueStorage(const size_t position) const
 {
-    if (!(type_erased_element_info_.result_type_info.has_value()))
+    if (!(type_erased_element_info_.return_type_info.has_value()))
     {
         return {};
     }
     return GetElement(position,
-                      type_erased_element_info_.result_type_info.value(),
-                      result_queue_start_address_,
+                      type_erased_element_info_.return_type_info.value(),
+                      return_queue_start_address_,
                       type_erased_element_info_.queue_size);
 }
 
@@ -97,16 +97,16 @@ TypeErasedCallQueue::AllocateQueue() const
         in_args_queue_start_address_bytes = static_cast<std::byte*>(in_args_queue_start_address);
     }
 
-    std::byte* result_queue_start_address_bytes{nullptr};
-    if (type_erased_element_info_.result_type_info.has_value())
+    std::byte* return_queue_start_address_bytes{nullptr};
+    if (type_erased_element_info_.return_type_info.has_value())
     {
-        const auto& result_type_info = type_erased_element_info_.result_type_info.value();
-        const auto required_size = result_type_info.Size() * type_erased_element_info_.queue_size;
-        void* const result_queue_start_address = resource_proxy_.allocate(required_size, result_type_info.Alignment());
-        result_queue_start_address_bytes = static_cast<std::byte*>(result_queue_start_address);
+        const auto& return_type_info = type_erased_element_info_.return_type_info.value();
+        const auto required_size = return_type_info.Size() * type_erased_element_info_.queue_size;
+        void* const return_queue_start_address = resource_proxy_.allocate(required_size, return_type_info.Alignment());
+        return_queue_start_address_bytes = static_cast<std::byte*>(return_queue_start_address);
     }
 
-    return {in_args_queue_start_address_bytes, result_queue_start_address_bytes};
+    return {in_args_queue_start_address_bytes, return_queue_start_address_bytes};
 }
 
 score::cpp::span<std::byte> TypeErasedCallQueue::GetElement(const std::size_t position,
