@@ -26,7 +26,7 @@ namespace score::mw::com::impl::lola
 ///
 /// We provide an interface so that mocks can be used to test higher layers such as ProxyMethod / SkeletonMethod.
 /// In production, the TypeErasedCallQueues are stored within MethodData in shared memory. Since absolute
-/// pointers cannot be used in shared memory, we cannot use V-tables and therefore MethodData must store pointers to
+/// pointers cannot be used in shared memory, we cannot use V-tables and therefore MethodData must NOT store pointers to
 /// this interface and rely on runtime polymorphism, but should own TypeErasedCallQueues directly. A ProxyMethod /
 /// SkeletonMethod does not reside in shared memory and therefore it's safe to inject ITypeErasedCallQueue into those
 /// and rely on runtime polymorphism.
