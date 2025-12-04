@@ -69,7 +69,7 @@ std::optional<score::cpp::span<std::byte>> TypeErasedCallQueue::GetInArgValuesSt
     }
     return GetElement(position,
                       type_erased_element_info_.in_arg_type_info.value(),
-                      in_args_queue_start_address_,
+                      in_args_queue_start_address_.get(),
                       type_erased_element_info_.queue_size);
 }
 
@@ -81,7 +81,7 @@ std::optional<score::cpp::span<std::byte>> TypeErasedCallQueue::GetReturnValueSt
     }
     return GetElement(position,
                       type_erased_element_info_.return_type_info.value(),
-                      return_queue_start_address_,
+                      return_queue_start_address_.get(),
                       type_erased_element_info_.queue_size);
 }
 
@@ -111,13 +111,13 @@ TypeErasedCallQueue::AllocateQueue() const
 
 score::cpp::span<std::byte> TypeErasedCallQueue::GetElement(const std::size_t position,
                                                      const memory::DataTypeSizeInfo& type_info,
-                                                     memory::shared::OffsetPtr<std::byte> queue_storage,
+                                                     std::byte* queue_storage,
                                                      const std::size_t queue_size)
 {
     SCORE_LANGUAGE_FUTURECPP_PRECONDITION_PRD(position < queue_size);
 
     const auto element_offset = type_info.Size() * position;
-    auto* const element_address = memory::shared::AddOffsetToPointer(queue_storage.get(), element_offset);
+    auto* const element_address = memory::shared::AddOffsetToPointer(queue_storage, element_offset);
 
     return score::cpp::span{element_address, type_info.Size()};
 }

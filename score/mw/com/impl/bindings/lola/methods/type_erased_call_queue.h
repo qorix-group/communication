@@ -60,7 +60,7 @@ class TypeErasedCallQueue final : public ITypeErasedCallQueue
 
     static score::cpp::span<std::byte> GetElement(const std::size_t position,
                                            const memory::DataTypeSizeInfo& type_info,
-                                           memory::shared::OffsetPtr<std::byte> queue_storage,
+                                           std::byte* queue_storage,
                                            const std::size_t queue_size);
 
     const memory::shared::MemoryResourceProxy& resource_proxy_;
