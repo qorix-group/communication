@@ -661,6 +661,7 @@ TEST_F(ClientConnectionTest, SendWaitReplyFailsWhenQueuedMessageCancels)
 
     // close connection without replying to SendWaitReply
     StopCurrentConnection(connection);
+    background_thread_.join();
 }
 
 TEST_F(ClientConnectionTest, SendWaitReplyFailsWhenReceiveTooLong)
@@ -809,6 +810,7 @@ TEST_F(ClientConnectionTest, QueuedSendsCancelIfConnectionClosed)
     EXPECT_TRUE(send_with_callback_result);
 
     StopCurrentConnection(connection);
+    background_thread_.join();
 }
 
 TEST_F(ClientConnectionTest, ConnectedStopsIfReceivesIoError)
