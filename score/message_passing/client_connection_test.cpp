@@ -488,9 +488,10 @@ TEST_F(ClientConnectionTest, SendIsDirectWithFullyOrderedAndEmptyQueue)
     StopCurrentConnection(connection);
 }
 
-TEST_F(ClientConnectionTest, SendIsQueuedIfTrulyAsync)
+TEST_F(ClientConnectionTest, GivenTrulyAsyncWhenSendIsCalledItIsQueued)
 {
     client_config_.max_queued_sends = 2;
+    // Given Truly Async
     client_config_.truly_async = true;
     detail::ClientConnection connection(engine_, protocol_config_, client_config_);
     MakeSuccessfulConnection(connection);
@@ -513,6 +514,10 @@ TEST_F(ClientConnectionTest, SendIsQueuedIfTrulyAsync)
     EXPECT_CALL(*engine_, SendProtocolMessage).Times(2);
     InvokeSendQueueCommand();
 
+    // SendProtocolMessage will not be called for this one.
+    CatchSendQueueCommand();
+    // When Send() IsCalled then it is queued
+    send_result = connection.Send(send_buffer);
     StopCurrentConnection(connection);
 }
 
