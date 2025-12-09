@@ -20,6 +20,7 @@ ScoreReq.AoU MonotonicSemiDynamicMemoryAllocation {
     safety = ScoreReq.Asil.B
     note = "LoLa implements a Monotonic Memory Resource. Once memory is claimed, there is no possibility to release it. LoLa pre-allocates a memory pool, only within this memory pool the monotonic allocations will happen."
     version = 1
+    mitigates = "TooMuchMemoryAllocated"
 }
 
 /* broken_link_c/issue/5835013 */
@@ -28,6 +29,7 @@ ScoreReq.AoU CorrectlyConfiguredMaximumNumberOfSubscriber {
     safety = ScoreReq.Asil.B
     note = "The maximum number of subscriber is used to calculate necessary memory from LoLa side, ensure wait-freedom and ensure data consistency. Without the correct number, none of these guarantees can be given."
     version = 1
+    mitigates = "InMemoryConfigurationWrong, TooFewMemoryAllocated, TooMuchMemoryAllocated, SendingEventSendsToWrongConsumer"
 }
 
 /* broken_link_c/issue/5835045 */
@@ -36,6 +38,7 @@ ScoreReq.AoU CorrectlyConfiguredMaximumNumberOfMaximumElementsPerSubscriber {
     safety = ScoreReq.Asil.B
     note = "The maximum number of elements per subscriber is used to calculate necessary memory from LoLa side, ensure wait-freedom and ensure data consistency. Without the correct number, none of these guarantees can be given."
     version = 1
+    mitigates = "InMemoryConfigurationWrong, TooFewMemoryAllocated, TooMuchMemoryAllocated, SendingEventSendsToWrongConsumer"
 }
 
 /* broken_link_c/issue/5835084 */
@@ -44,6 +47,7 @@ ScoreReq.AoU CorrectlyConfiguredAsilLevel {
     safety = ScoreReq.Asil.B
     note = "The ASIL-Level is used to ensure Freedom from Interference (e.g. by configuring access rights). Without a proper configured level, this cannot be ensured."
     version = 1
+    mitigates = "InMemoryConfigurationWrong"
 }
 
 /* broken_link_c/issue/5835098 */
@@ -52,6 +56,7 @@ ScoreReq.AoU OnlyLoLaSupportedTypes {
     safety = ScoreReq.Asil.B
     note = "Every type T transmitted via LoLa needs to fulfill all the following properties: DefaultConstructible (std::is_default_constructible(T) returns true), CopyAssignable (std::is_copy_assignable(T) == true), are not polymorphic (std::is_polymorphic(T) == false), T doesn't allocate dynamic memory."
     version = 1
+    mitigates = "MemoryAllocatedInWrongSection"
 }
 
 /* broken_link_c/issue/5835119 */
@@ -60,6 +65,7 @@ ScoreReq.AoU NoApisFromImplementationNamespace {
     safety = ScoreReq.Asil.B
     note = "Certain measurements and maybe implemented around the implementation namespace, while it is theoretically possible to directly use these functions, this could lead to unknown and untested side-effects."
     version = 1
+    mitigates = "MisusedApis"
 }
 
 /* broken_link_c/issue/5835135 */
@@ -68,6 +74,7 @@ ScoreReq.AoU NoGuaranteesForNotifications {
     safety = ScoreReq.Asil.B
     note = "It is not guaranteed that notifications will arrive, neither in which latency this will happen, or if they happen too often or on a wrong event. This is caused by underlying OS/HW safety claims."
     version = 1
+    mitigates = "SendingEventOnlyPartiallyNotifiesConsumer"
 }
 
 /* broken_link_c/issue/5835150 */
@@ -76,6 +83,7 @@ ScoreReq.AoU CheckingForPossibleMessageOverflow {
     safety = ScoreReq.Asil.B
     note = "A message overflow will take place if the event receiver checks/receives samples on a lower rate, than the event sender produces them. A message overflow/loss can be detected by checking if all reserved slots are full. If that is the case a message loss is possible and thus it needs to be handled as if a message loss has happened."
     version = 1
+    mitigates = "CallbackInvokedWithWrongData"
 }
 
 /* broken_link_c/issue/5835175 */
@@ -84,6 +92,7 @@ ScoreReq.AoU DifferentUserForAsilAndQmProcesses {
     safety = ScoreReq.Asil.B
     note = "LoLa utilizes operating system ACL mechanisms to ensure Freedom From Interference. If a lower ASIL process is executed with the rights of a higher level one, the Freedom from Interference can no longer be guaranteed."
     version = 1
+    mitigates = "CallbackNotInvokedDespiteSamplesAvailable"
 }
 
 /* broken_link_c/issue/5835192 */
@@ -92,6 +101,7 @@ ScoreReq.AoU ConfigOnASafeFilesystem {
     safety = ScoreReq.Asil.B
     note = "The configuration needs to be ensured to be valid and it needs to be ensured that no issue in the filesystem causes configuration issues."
     version = 1
+    mitigates = "InMemoryConfigurationWrong"
 }
 
 /* broken_link_c/issue/5835198 */
@@ -100,6 +110,7 @@ ScoreReq.AoU NoStaticContextSupport {
     safety = ScoreReq.Asil.B
     note = "LoLa uses itself static context within C++. A usage within static context could possibly cause the static (De-)Initialization-Fiasco."
     version = 1
+    mitigates = "MisusedApis"
 }
 
 /* broken_link_c/issue/5835213 */
@@ -108,6 +119,7 @@ ScoreReq.AoU NoGuaranteeInAvailabilityOfServices {
     safety = ScoreReq.Asil.B
     note = "LoLa is a Service-Discovery based middleware. In such cases it is possible that a service is not offered. Thus, LoLa cannot give any guarantee that a service will be found."
     version = 1
+    mitigates = "CreationOfSkeletonNotPossible, WrongStartfindserviceIsStopped"
 }
 
 /* broken_link_c/issue/5835249 */
@@ -116,6 +128,7 @@ ScoreReq.AoU NoNotificationOnTerminationOfProducer {
     safety = ScoreReq.Asil.B
     note = "LoLa provides no mechanism to communicate the termination of an event data producer. It is also possible that a producer suddenly crashes and no events are any longer produced. A supervision can be implemented on application side, if events are polled in a certain interval. If no new events are present within a certain set of intervals, it can be assumed that the producer is malfunctioning."
     version = 1
+    mitigates = "ServiceOfferingNotStopped, WrongStartfindserviceIsStopped"
 }
 
 /* broken_link_c/issue/5835257 */
@@ -124,6 +137,7 @@ ScoreReq.AoU SystemRestartOnLoLaProcessCrash {
     safety = ScoreReq.Asil.B
     note = "It cannot be distinguished on LoLa side if a user crashed and restarted or if a faulty process tries to re-offer another service. In order to avoid masquerading we thus only allow one process to open a shared memory region as read-write. If a producer crashed, he will not close the Shared-Memory region and thus, he will not be able to re-open it. A system restart will clear all Shared Memory regions and thus resolve the situation. Note_1: On the JC ADAPTIVE platform this requirement is already satisfied by design as in case of an app that crashed the [ITEM:5906108] will always first trigger the [system safe state|ISSUE:8455468] before any crash dumping operation is started. In consequence, the external safety controller then needs to perform a hard power-on-reset on the performance SoC."
     version = 1
+    mitigates = ""
 }
 
 /* broken_link_c/issue/5835311 */
@@ -132,6 +146,7 @@ ScoreReq.AoU CheckForNullptrOnAllocate {
     safety = ScoreReq.Asil.B
     note = "A nullptr indicates in this case a non-recoverable error and indicates further an issue in the memory control."
     version = 1
+    mitigates = "TooFewMemoryAllocated"
 }
 
 /* broken_link_c/issue/5835317 */
@@ -140,6 +155,7 @@ ScoreReq.AoU OneProducerOnlyOneAllocateePtr {
     safety = ScoreReq.Asil.B
     note = "LoLa does not support multi-producer pattern."
     version = 1
+    mitigates = "TooFewMemoryAllocated, TooMuchMemoryAllocated, SendingEventSendsToWrongConsumer"
 }
 
 /* broken_link_c/issue/5835324 */
@@ -148,6 +164,7 @@ ScoreReq.AoU NoCopySendWhileHoldingAllocateePtr {
     safety = ScoreReq.Asil.B
     note = "Send(const& value) creates an AllocateePtr in its implementation. Thus we would harm the previously stated AoU that only one AllocateePtr is held at any point in time."
     version = 1
+    mitigates = ""
 }
 
 /* broken_link_c/issue/5835328 */
@@ -156,6 +173,7 @@ ScoreReq.AoU NoneReentrantMethodsPerEventInstance {
     safety = ScoreReq.Asil.B
     note = "Thread-Safety is ensured for static methods and over instances."
     version = 1
+    mitigates = "FunctionCalledFromMultipleThreads"
 }
 
 /* broken_link_c/issue/5835337 */
@@ -164,6 +182,7 @@ ScoreReq.AoU SkeletonAliveWhileItsAllocateePtrBeingUsed {
     safety = ScoreReq.Asil.B
     note = "A destruction of a Skeleton will invalidate the memory that the AllocateePtr is pointing to."
     version = 1
+    mitigates = "ReturnsWrongData"
 }
 
 /* broken_link_c/issue/5835346 */
@@ -172,6 +191,7 @@ ScoreReq.AoU EventSubscriptionActiveWhileHoldingSamplePtr {
     safety = ScoreReq.Asil.B
     note = "Unsubscription of the proxy event will invalidate the memory that the SamplePtr is pointing to."
     version = 1
+    mitigates = "ReturnsWrongData, CallbackInvokedWithWrongData"
 }
 
 /* broken_link_c/issue/5835351 */
@@ -180,6 +200,7 @@ ScoreReq.AoU NoneTerminatingCallbacks {
     safety = ScoreReq.Asil.B
     note = "The behavior is undefined if a callback is throwing."
     version = 1
+    mitigates = "MisusedApis"
 }
 
 /* broken_link_c/issue/5835363 */
@@ -188,6 +209,7 @@ ScoreReq.AoU ValidCallbacksWhileProxyAlive {
     safety = ScoreReq.Asil.B
     note = "While a proxy is alive, it is possible that mentioned callbacks are invoked. If a callback contains for example a dangling reference or pointer, the correct execution cannot be ensured."
     version = 1
+    mitigates = "CallbackInvokedWithWrongData"
 }
 
 /* broken_link_c/issue/5835369 */
@@ -196,6 +218,7 @@ ScoreReq.AoU UnorderedElementsOnFullQueue {
     safety = ScoreReq.Asil.B
     note = "Order of elements cannot be guaranteed once the queue is full."
     version = 1
+    mitigates = ""
 }
 
 /* broken_link_c/issue/5835376 */
@@ -204,6 +227,7 @@ ScoreReq.AoU QualityOfDataIsDependentOnProducer {
     safety = ScoreReq.Asil.B
     note = "LoLa doesn't do ANY checks on the transmitted data. LoLa provides any data ASIL transparent. Meaning, it neither degrades the ASIL-Level nor does it perform any additional checks to enhance it."
     version = 1
+    mitigates = "CallbackInvokedWithWrongData"
 }
 
 /* broken_link_c/issue/5835388 */
@@ -212,6 +236,7 @@ ScoreReq.AoU ValidityOfPointerOnLoLaPointer {
     safety = ScoreReq.Asil.B
     note = "Issue: Once the smart-pointers are invalid their respective memory is unmanaged and any access leads to undefined behavior."
     version = 1
+    mitigates = "ReturnsWrongData"
 }
 
 /* broken_link_c/issue/5835398 */
@@ -220,6 +245,7 @@ ScoreReq.AoU LoLaMemoryOnlyAccessedThroughLoLa {
     safety = ScoreReq.Asil.B
     note = "A static mapping of memory or a wild access of heap memory causes undefined behavior."
     version = 1
+    mitigates = "MemoryAllocatedInWrongSection"
 }
 
 /* broken_link_c/issue/5835403 */
@@ -228,6 +254,7 @@ ScoreReq.AoU NoSharedMemoryAllocationInNamespaceLola {
     safety = ScoreReq.Asil.B
     note = "Certain contracts are based on the shared memory segment naming, these might get influenced by other code segments using this prefix."
     version = 1
+    mitigates = "MemoryAllocatedInWrongSection"
 }
 
 /* broken_link_c/issue/5835421 */
@@ -236,6 +263,7 @@ ScoreReq.AoU OnlyQnx71Supported {
     safety = ScoreReq.Asil.B
     note = "All safety guarantees only hold as long executed on a safe operating system."
     version = 1
+    mitigates = "MemoryAllocatedInWrongSection"
 }
 
 /* broken_link_c/issue/5835427 */
@@ -244,14 +272,16 @@ ScoreReq.AoU LoLaSpecificQnxMessagingEndPointsOnlyAccessedThroughLoLa {
     safety = ScoreReq.Asil.B
     note = "Any influence from other parts of the code might destroy expected contracts. The LoLa specific QNX Message Passing endpoints are located under: /mw_com/message_passing/LoLa_*"
     version = 1
+    mitigates = "SendingEventOnlyPartiallyNotifiesConsumer"
 }
 
 /* broken_link_c/issue/5835432 */
 ScoreReq.AoU AragenNotSafe {
-    description = "If aragen is being used to generate LoLa interfaces, any output produced by aragen shall be manually reviewed for its correctness."
+    description = "Input artifacts shall be manually reviewed for correctness"
     safety = ScoreReq.Asil.B
     note = "aragen is not safety qualified, thus its outputs are not safe also. Usage of aragen is not mandatory as the LoLa specific interfaces can be written manually in C++ using LoLa provided support templates."
     version = 1
+    mitigates = "GeneratedCodeDoesNotMatchGenerationInputs"
 }
 
 /* broken_link_c/issue/5835457 */
@@ -260,6 +290,7 @@ ScoreReq.AoU UnsupportedDataTypes {
     safety = ScoreReq.Asil.B
     note = "LoLa theoretically supports these data-types, but they were not subject to audit and extensive testing."
     version = 1
+    mitigates = "MemoryAllocatedInWrongSection"
 }
 
 /* broken_link_c/issue/6346567 */
@@ -268,6 +299,7 @@ ScoreReq.AoU NoGuaranteeOnExecutionTime {
     safety = ScoreReq.Asil.B
     note = "This implies that safety-relevant code, where the safety goal is dependent on timing, needs to be supervised."
     version = 1
+    mitigates = "AnyFunctionBlocksLongerThanExpected"
 }
 
 /* broken_link_c/issue/7091801 */
@@ -276,6 +308,7 @@ ScoreReq.AoU UsageOfConfigurationOversubscription {
     safety = ScoreReq.Asil.B
     note = "However, we can give the guarantee that if only QM consumers misbehave, ASIL consumers are not affected by these actions. The latter statement enables that a QM application where the scheduling/event-data access is not ensured, will not interfere the ASIL communication. The only thing that could happen is that the QM application might access wrong data or receive no data at all, in an error case (e.g. if it holds more samples then expected)."
     version = 1
+    mitigates = ""
 }
 
 /* broken_link_c/issue/21206172 */
@@ -283,6 +316,7 @@ ScoreReq.AoU SameCompilerSettingsForProviderAndConsumerSide {
     description = "All compiler settings having influence on the binary representation of data exchanged via {{mw::com}}/{{LoLa}} (event, field, service-method payloads) have to be identical for compilation of code containing {{mw::com}} proxies and skeletons, which communicate."
     safety = ScoreReq.Asil.B
     version = 1
+    mitigates = ""
 }
 
 /* broken_link_c/issue/21209491 */
@@ -290,6 +324,7 @@ ScoreReq.AoU EventOrFieldReceptionViaGenericProxyNeedsSpecificCare {
     description = "When receiving event or field data via untyped {{GenericProxyEvent}} or {{GenericProxyField}}, care has to be taken when accessing the corresponding {{SamplePtr<void>}} delivered by calls to {{GetNewSamples()}}: When casting it to the expected type, it needs to be checked that no access behind the size returned by {{GetSampleSize()}} will happen."
     safety = ScoreReq.Asil.B
     version = 1
+    mitigates = ""
 }
 
 /* broken_link_c/issue/32388804 */
@@ -297,6 +332,7 @@ ScoreReq.AoU CorrectlyConfiguredEventsFieldsPerServiceType {
     description = "It shall be ensured that all safety relevant events/fields in the service type are the same in all configurations."
     safety = ScoreReq.Asil.B
     version = 1
+    mitigates = "MapContainingNonexistentEvents, IncompleteMapOfEvents"
 }
 
 /* broken_link_c/issue/25556819 */
@@ -305,6 +341,7 @@ ScoreReq.AoU LoLaIpcCommunicationLostOrDelayedIpcCommunication {
     safety = ScoreReq.Asil.B
     note = "Platform cannot provide timing integrity by design, it only provides deadline monitoring which can be used by the [ISSUE:4542883] safe usage to detect [ISSUE:4542883] timing anomalies."
     version = 1
+    mitigates = ""
 }
 
 /* broken_link_c/issue/23012160 */
@@ -312,4 +349,5 @@ ScoreReq.AoU EnsureTheIntegrityAndReliabilityOfCommunication {
     description = "The Safety-Related Application Software and Safety-Related Platform Software shall ensure the integrity and reliability of communication by managing the following potential failure modes in the delivery of information: • Loss or delay of periodic or aperiodic events. • Loss or delayed delivery of a method call. • Loss or delayed delivery of a method response. • Loss or delay of field updates."
     safety = ScoreReq.Asil.B
     version = 1
+    mitigates = ""
 }
