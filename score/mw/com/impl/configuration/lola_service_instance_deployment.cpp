@@ -173,6 +173,10 @@ LolaServiceInstanceDeployment::LolaServiceInstanceDeployment(const score::json::
     }
 }
 
+// Suppress "AUTOSAR C++14 A12-1-5" rule finding.
+// This rule states: Common class initialization for non-constant members shall be done by a delegating constructor.
+// Justification: This constructor is used by other constructors for delegation.
+// coverity[autosar_cpp14_a12_1_5_violation]
 LolaServiceInstanceDeployment::LolaServiceInstanceDeployment(
     const score::cpp::optional<LolaServiceInstanceId> instance_id,
     EventInstanceMapping events,
