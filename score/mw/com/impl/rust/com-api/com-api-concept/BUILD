@@ -22,7 +22,21 @@ rust_library(
     visibility = [
         "//visibility:public",  # platform_only
     ],
-    deps = [],
+)
+
+rust_library(
+    name = "com-api-concept-iceoryx",
+    srcs = [
+        "com_api_concept.rs",
+        "reloc.rs",
+    ],
+    crate_features = ["iceoryx"],
+    crate_name = "com_api_concept",
+    crate_root = "com_api_concept.rs",
+    visibility = [
+        "//visibility:public",  # platform_only
+    ],
+    deps = ["@crate_index//:iceoryx2_qnx8"],
 )
 
 rust_test(
