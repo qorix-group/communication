@@ -15,16 +15,16 @@
 
 !include ../../fta_metamodel.puml
 
-$TopEvent("Stop Offer on wrong IDS", "TopEvent")
+$TopEvent("Stop Offer on wrong IDS", "Communication.ServiceStopOfferingWrongIds")
 
 $OrGate("Gate2", "TopEvent")
 $IntermediateEvent("Wrong service discovery file system elements are removed", "Event1", "Gate2")
 $OrGate("Gate3", "Event1")
-$BasicEvent("On destruction wrong service instance is selected", "Event6", "Gate3")
-$BasicEvent("Wrong instance marker file unlinked", "Event5", "Gate3")
+$BasicEvent("On destruction wrong service instance is selected", "Communication.OnDestructionWrongServiceInstanceIsSelected", "Gate3")
+$BasicEvent("Wrong instance marker file unlinked", "Communication.WrongInstanceMarkerFileUnlinked", "Gate3")
 $IntermediateEvent("Wrong shared memory segment is unlinked", "Event2", "Gate2")
 $OrGate("Gate1", "Event2")
-$BasicEvent("On destruction wrong shared memory segment is selected", "Event4", "Gate1")
-$BasicEvent("Wrong path to unlink", "Event3", "Gate1")
+$BasicEvent("On destruction wrong shared memory segment is selected", "Communication.OnDestructionWrongSharedMemorySegmentIsSelected", "Gate1")
+$BasicEvent("Wrong path to unlink", "Communication.WrongPathToUnlink", "Gate1")
 
 @enduml

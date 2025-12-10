@@ -15,13 +15,13 @@
 
 !include ../../fta_metamodel.puml
 
-$TopEvent("Creation of Skeleton not possible", "TopEvent")
+$TopEvent("Creation of Skeleton not possible", "Communication.CreationOfSkeletonNotPossible")
 
 $OrGate("Gate1", "TopEvent")
-$BasicEvent("Static create function returns an error", "Event2", "Gate1")
+$BasicEvent("Static create function returns an error", "Communication.StaticCreateFunctionReturnsAnError", "Gate1")
 $IntermediateEvent("InstanceSpecifier cannot be resolved", "Event1", "Gate1")
 $OrGate("Gate2", "Event1")
-$BasicEvent("Instance Specifier resolution logic broken", "Event4", "Gate2")
+$BasicEvent("Instance Specifier resolution logic broken", "Communication.InstanceSpecifierResolutionLogicBroken", "Gate2")
 $IntermediateEvent("Configuration broken", "Event3", "Gate2")
 $TransferIn("Transfer1", "Event3")
 

@@ -15,11 +15,11 @@
 
 !include ../../fta_metamodel.puml
 
-$TopEvent("Offers already offered service", "TopEvent")
+$TopEvent("Offers already offered service", "Communication.OffersAlreadyOfferedService")
 
 $OrGate("Gate1", "TopEvent")
-$BasicEvent("Service was offered by another process", "Event3", "Gate1")
-$BasicEvent("Service was already offered by our process", "Event2", "Gate1")
-$BasicEvent("Service was already offered by previous died process", "Event1", "Gate1")
+$BasicEvent("Service was offered by another process", "Communication.ServiceWasOfferedByAnotherProcess", "Gate1")
+$BasicEvent("Service was already offered by our process", "Communication.ServiceWasAlreadyOfferedByOurProcess", "Gate1")
+$BasicEvent("Service was already offered by previous died process", "Communication.ServiceWasAlreadyOfferedByPreviousDiedProcess", "Gate1")
 
 @enduml

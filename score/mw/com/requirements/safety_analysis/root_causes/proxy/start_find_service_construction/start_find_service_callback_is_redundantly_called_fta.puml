@@ -15,14 +15,14 @@
 
 !include ../../fta_metamodel.puml
 
-$TopEvent("StartFindService callback is called unexpectedly", "TopEvent")
+$TopEvent("StartFindService callback is called unexpectedly", "Communication.StartFindServiceCallbackCalledUnexpectedly")
 
 $OrGate("Gate1", "TopEvent")
-$BasicEvent("Called reduandently", "Event2", "Gate1")
-$BasicEvent("Called eventhough StopFindService has been called", "Event3", "Gate1")
+$BasicEvent("Called reduandently", "Communication.CalledReduandently", "Gate1")
+$BasicEvent("Called eventhough StopFindService has been called", "Communication.CalledEventhoughStopfindserviceHasBeenCalled", "Gate1")
 $IntermediateEvent("Called wrongly", "Event1", "Gate1")
 $OrGate("Gate2", "Event1")
-$BasicEvent("Watches are set wrongly", "Event5", "Gate2")
-$BasicEvent("Inotify returns wrong information", "Event4", "Gate2")
+$BasicEvent("Watches are set wrongly", "Communication.WatchesAreSetWrongly", "Gate2")
+$BasicEvent("Inotify returns wrong information", "Communication.InotifyReturnsWrongInformation", "Gate2")
 
 @enduml

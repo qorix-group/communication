@@ -15,14 +15,14 @@
 
 !include ../../fta_metamodel.puml
 
-$TopEvent("Only partially offered", "TopEvent")
+$TopEvent("Only partially offered", "Communication.ServiceOnlyPartiallyOffered")
 
 $OrGate("Gate1", "TopEvent")
 $IntermediateEvent("Not all quality levels are served", "Event1", "Gate1")
 $TransferIn("Transfer1", "Event1")
 $IntermediateEvent("Not all events are offered", "Event2", "Gate1")
 $OrGate("Gate2", "Event2")
-$BasicEvent("Not all events are populated", "Event4", "Gate2")
+$BasicEvent("Not all events are populated", "Communication.NotAllEventsArePopulated", "Gate2")
 $IntermediateEvent("Config is wrong", "Event3", "Gate2")
 $TransferIn("Transfer2", "Event3")
 

@@ -11,10 +11,8 @@
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
 
-load("@//third_party/traceability/bazel:safety_analysis.bzl", "safety_analysis")
 load("@lobster//:lobster.bzl", "lobster_trlc")
 load("@trlc//:trlc.bzl", "trlc_requirements", "trlc_requirements_test")
-load("//third_party/traceability/tools/source_code_linker:collect_source_files.bzl", "parse_source_files_for_links")
 
 # Failures Modes
 trlc_requirements(
@@ -57,11 +55,6 @@ filegroup(
     visibility = ["//visibility:public"],
 )
 
-parse_source_files_for_links(
-    name = "root_causes_tags",
-    srcs_and_deps = [":root_causes"],
-)
-
 # Control Measures
 # AoUs
 trlc_requirements(
@@ -90,12 +83,4 @@ lobster_trlc(
         ":control_measures",
     ],
     visibility = ["//visibility:public"],
-)
-
-safety_analysis(
-    name = "mw_com_safety_analysis",
-    controlmeasures = [":control_measures"],
-    failuremodes = [":failure_modes"],
-    fta = [":root_causes_tags"],
-    public_api = ["@//third_party/traceability/doc/sample_library/design:public_api"],
 )

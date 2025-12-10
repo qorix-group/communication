@@ -15,12 +15,12 @@
 
 !include ../../fta_metamodel.puml
 
-$TopEvent("Does not free Resources after usage", "TopEvent")
+$TopEvent("Does not free Resources after usage", "Communication.SendingEventDoesNotFreeResources")
 
 $IntermediateEvent("Slot state remains in Writing state after send", "Event1", "TopEvent")
 $OrGate("Gate1", "Event1")
-$BasicEvent("Writing State change is not working", "Event4", "Gate1")
-$BasicEvent("Copy on send does not destroy SampleAllocateePtr", "Event2", "Gate1")
-$BasicEvent("Destruction of SampleAllocateePtr does not trigger state change", "Event3", "Gate1")
+$BasicEvent("Writing State change is not working", "Communication.WritingStateChangeIsNotWorking", "Gate1")
+$BasicEvent("Copy on send does not destroy SampleAllocateePtr", "Communication.CopyOnSendDoesNotDestroySampleallocateeptr", "Gate1")
+$BasicEvent("Destruction of SampleAllocateePtr does not trigger state change", "Communication.DestructionOfSampleallocateeptrDoesNotTriggerStateChange", "Gate1")
 
 @enduml

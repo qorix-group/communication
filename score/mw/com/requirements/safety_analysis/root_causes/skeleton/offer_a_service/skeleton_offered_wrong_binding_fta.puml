@@ -15,14 +15,14 @@
 
 !include ../../fta_metamodel.puml
 
-$TopEvent("Skeleton offered on wrong binding", "TopEvent")
+$TopEvent("Skeleton offered on wrong binding", "Communication.ServiceOfferedOnWrongBinding")
 
 $OrGate("Gate1", "TopEvent")
 $IntermediateEvent("Instance Identifier refers to wrong binding", "Event1", "Gate1")
 $OrGate("Gate2", "Event1")
-$BasicEvent("Instance Specifier resolution broken", "Event4", "Gate2")
+$BasicEvent("Instance Specifier resolution broken", "Communication.InstanceSpecifierResolutionBroken", "Gate2")
 $IntermediateEvent("Configuration broken", "Event3", "Gate2")
 $TransferIn("Transfer1", "Event3")
-$BasicEvent("Binding selection faulty", "Event2", "Gate1")
+$BasicEvent("Binding selection faulty", "Communication.BindingSelectionFaulty", "Gate1")
 
 @enduml

@@ -14,10 +14,10 @@
 
 !include ../../fta_metamodel.puml
 
-$TopEvent("Subscribe with wrong max. sample count", "TopEvent")
+$TopEvent("Subscribe with wrong max. sample count", "Communication.SubscribeWithWrongMaxSampleCount")
 
 $OrGate("Gate1", "TopEvent")
-$BasicEvent("Message passing corrupts the max. sample value", "Event2", "Gate1")
-$BasicEvent("Wrong value is passed to message passing library", "Event1", "Gate1")
+$BasicEvent("Message passing corrupts the max. sample value", "Communication.MessagePassingCorruptsTheMaxSampleValue", "Gate1")
+$BasicEvent("Wrong value is passed to message passing library", "Communication.WrongValueIsPassedToMessagePassingLibrary", "Gate1")
 
 @enduml

@@ -15,11 +15,11 @@
 
 !include ../../fta_metamodel.puml
 
-$TopEvent("No resources freed", "TopEvent")
+$TopEvent("No resources freed", "Communication.NoResourcesFreed")
 
 $IntermediateEvent("No Unlink / unmap shm-region", "Event1", "TopEvent")
 $OrGate("Gate1", "Event1")
-$BasicEvent("No unmap on destruction", "Event3", "Gate1")
-$BasicEvent("Shared Memory segment is not unlinked", "Event2", "Gate1")
+$BasicEvent("No unmap on destruction", "Communication.NoUnmapOnDestruction", "Gate1")
+$BasicEvent("Shared Memory segment is not unlinked", "Communication.SharedMemorySegmentIsNotUnlinked", "Gate1")
 
 @enduml

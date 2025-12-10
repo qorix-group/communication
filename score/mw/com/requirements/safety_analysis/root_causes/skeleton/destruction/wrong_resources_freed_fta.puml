@@ -15,13 +15,13 @@
 
 !include ../../fta_metamodel.puml
 
-$TopEvent("Wrong resources freed", "TopEvent")
+$TopEvent("Wrong resources freed", "Communication.WrongResourcesFreed")
 
 $IntermediateEvent("Unlink / unmap shm-region of different instance", "Event1", "TopEvent")
 $OrGate("Gate1", "Event1")
 $IntermediateEvent("Shared Memory Ressource associates wrong shared memory segment", "Event2", "Gate1")
-$BasicEvent("Wrong name of shared memory segment", "Event4", "Event2")
+$BasicEvent("Wrong name of shared memory segment", "Communication.WrongNameOfSharedMemorySegment", "Event2")
 $IntermediateEvent("Shared Memory Resource holds wrong base pointer", "Event3", "Gate1")
-$BasicEvent("Wrong memory resource proxy", "Event5", "Event3")
+$BasicEvent("Wrong memory resource proxy", "Communication.WrongMemoryResourceProxy", "Event3")
 
 @enduml
