@@ -114,11 +114,11 @@ QnxDispatchEngine::QnxDispatchEngine(score::cpp::pmr::memory_resource* memory_re
 
     // it's actually the default settings for resmgr buffers; we are just making them explicit here
     // Ourselves, we are not limited by these values, as we use resmgr_msgget() and we don't use ctp.iov
-    resmgr_attr_t resmgr_attr_;
-    resmgr_attr_.nparts_max = 1U;
-    resmgr_attr_.msg_max_size = 2088U;
+    resmgr_attr_t resmgr_attr{};
+    resmgr_attr.nparts_max = 1U;
+    resmgr_attr.msg_max_size = 2088U;
     IfUnexpectedTerminate(os_resources_.dispatch->resmgr_attach(
-                              dispatch_pointer_, &resmgr_attr_, nullptr, _FTYPE_ANY, 0U, nullptr, nullptr, nullptr),
+                              dispatch_pointer_, &resmgr_attr, nullptr, _FTYPE_ANY, 0U, nullptr, nullptr, nullptr),
                           "Unable to set up resource manager operations");
 
     // NOLINTNEXTLINE(score-banned-function) implementing FFI wrapper
