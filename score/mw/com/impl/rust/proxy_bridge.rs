@@ -35,7 +35,7 @@ use std::task::{Context, Poll};
 use futures::prelude::*;
 use futures::task::AtomicWaker;
 
-mod ffi {
+pub mod ffi {
     use std::marker::PhantomData;
     use std::mem::transmute;
 

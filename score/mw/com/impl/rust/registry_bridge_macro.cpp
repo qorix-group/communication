@@ -12,7 +12,7 @@
  ********************************************************************************/
 
 /**
- * @file generic_bridge_ffi.cpp
+ * @file registry_bridge_macro.cpp
  * @brief C FFI wrapper implementations for generic event bridge APIs
  *
  * This file provides extern "C" functions that wrap the C++ generic APIs.
@@ -25,8 +25,6 @@
  */
 
 #include "score/mw/com/impl/rust/registry_bridge_macro.h"
-#include <cstring>
-#include <vector>
 
 namespace score::mw::com::impl::rust
 {
@@ -41,7 +39,9 @@ extern "C" {
  * event type.
  *
  * @param proxy_ptr Opaque proxy pointer (actually ProxyType*)
- * @param event_name UTF-8 C string of event name
+ * @param interface_id UTF-8 C string of interface id
+ * @param event_id UTF-8 C string of event name
+ * @return Proxy event instance
  */
 ProxyEventBase* mw_com_get_event_from_proxy(ProxyBase* proxy_ptr, const char* interface_id, const char* event_id)
 {
@@ -54,7 +54,7 @@ ProxyEventBase* mw_com_get_event_from_proxy(ProxyBase* proxy_ptr, const char* in
 
     auto registry = GlobalRegistryMapping::FindMemberOperation(id, event);
 
-    if (registry == nullptr || proxy_ptr == nullptr)
+    if (registry == nullptr)
     {
         return nullptr;
     }
@@ -67,22 +67,24 @@ ProxyEventBase* mw_com_get_event_from_proxy(ProxyBase* proxy_ptr, const char* in
  * Similar to mw_com_get_event_from_proxy but for skeleton instances.
  *
  * @param skeleton_ptr Opaque skeleton pointer (actually SkeletonType*)
- * @param event_name UTF-8 C string of event name
+ * @param event_id UTF-8 C string of event name
+ * @param interface_id UTF-8 C string of interface id
+ * @return Skeleton event instance
  */
 SkeletonEventBase* mw_com_get_event_from_skeleton(SkeletonBase* skeleton_ptr,
                                                   const char* interface_id,
-                                                  const char* event_name)
+                                                  const char* event_id)
 {
-    if (skeleton_ptr == nullptr || interface_id == nullptr || event_name == nullptr)
+    if (skeleton_ptr == nullptr || interface_id == nullptr || event_id == nullptr)
     {
         return nullptr;
     }
-    std::string_view event(event_name);
+    std::string_view event(event_id);
     std::string_view id(interface_id);
 
     auto registry = GlobalRegistryMapping::FindMemberOperation(id, event);
 
-    if (registry == nullptr || skeleton_ptr == nullptr)
+    if (registry == nullptr)
     {
         return nullptr;
     }
@@ -95,7 +97,7 @@ SkeletonEventBase* mw_com_get_event_from_skeleton(SkeletonBase* skeleton_ptr,
  * Sends event data to all subscribed proxy instances.
  *
  * @param event_ptr Opaque skeleton event pointer (SkeletonEvent<T>*)
- * @param event_name UTF-8 C string of event name
+ * @param event_type UTF-8 C string of event type name
  * @param data_ptr Pointer to event data (T*)
  */
 void mw_com_skeleton_send_event(SkeletonEventBase* event_ptr, const char* event_type, void* data_ptr)
@@ -109,7 +111,7 @@ void mw_com_skeleton_send_event(SkeletonEventBase* event_ptr, const char* event_
 
     auto registry = GlobalRegistryMapping::FindTypeInformation(name);
 
-    if (registry == nullptr || event_ptr == nullptr)
+    if (registry == nullptr)
     {
         return;
     }
@@ -149,6 +151,7 @@ bool mw_com_proxy_event_subscribe(ProxyEventBase* event_ptr, uint32_t max_sample
  *
  * @param interface_id UTF-8 C string of interface UID (e.g., "mw_com_IpcBridge")
  * @param handle_ptr Opaque handle pointer
+ * @return proxy instance
  */
 ProxyBase* mw_com_create_proxy(const char* interface_id, const HandleType& handle_ptr)
 {
@@ -174,6 +177,7 @@ ProxyBase* mw_com_create_proxy(const char* interface_id, const HandleType& handl
  *
  * @param interface_id UTF-8 C string of interface UID
  * @param instance_spec Opaque instance specifier pointer
+ * @return Skeleton instance
  */
 SkeletonBase* mw_com_create_skeleton(const char* interface_id, ::score::mw::com::InstanceSpecifier* instance_spec)
 {
@@ -186,7 +190,7 @@ SkeletonBase* mw_com_create_skeleton(const char* interface_id, ::score::mw::com:
 
     auto registry = GlobalRegistryMapping::FindInterfaceRegistry(id);
 
-    if (registry == nullptr || instance_spec == nullptr)
+    if (registry == nullptr)
     {
         return nullptr;
     }
@@ -200,6 +204,7 @@ SkeletonBase* mw_com_create_skeleton(const char* interface_id, ::score::mw::com:
  *
  * @param interface_id UTF-8 C string of interface UID
  * @param skeleton_ptr Opaque skeleton pointer
+ * @return true if service is offered successfully, false otherwise
  */
 bool mw_com_skeleton_offer_service(const char* interface_id, SkeletonBase* skeleton_ptr)
 {
@@ -212,7 +217,7 @@ bool mw_com_skeleton_offer_service(const char* interface_id, SkeletonBase* skele
 
     auto registry = GlobalRegistryMapping::FindInterfaceRegistry(id);
 
-    if (registry == nullptr || skeleton_ptr == nullptr)
+    if (registry == nullptr)
     {
         return false;
     }
@@ -237,7 +242,7 @@ void mw_com_skeleton_stop_offer_service(const char* interface_id, SkeletonBase* 
 
     auto registry = GlobalRegistryMapping::FindInterfaceRegistry(id);
 
-    if (registry == nullptr || skeleton_ptr == nullptr)
+    if (registry == nullptr)
     {
         return;
     }
@@ -260,7 +265,16 @@ void mw_com_destroy_proxy(const char* interface_id, ProxyBase* proxy_ptr)
         return;
     }
 
-    // TODO: implement destroy proxy logic
+    std::string_view id(interface_id);
+
+    auto registry = GlobalRegistryMapping::FindInterfaceRegistry(id);
+
+    if (registry == nullptr)
+    {
+        return;
+    }
+
+    registry->DestroyProxy(proxy_ptr);
 }
 
 /**
@@ -277,8 +291,15 @@ void mw_com_destroy_skeleton(const char* interface_id, SkeletonBase* skeleton_pt
     {
         return;
     }
+    std::string_view id(interface_id);
 
-    // TODO: implement destroy skeleton logic
+    auto registry = GlobalRegistryMapping::FindInterfaceRegistry(id);
+
+    if (registry == nullptr)
+    {
+        return;
+    }
+    registry->DestroySkeleton(skeleton_ptr);
 }
 
 /**
@@ -305,7 +326,7 @@ uint32_t mw_com_type_registry_get_samples_from_event(ProxyEventBase* event_ptr,
     std::string_view id(event_type);
 
     auto registry = GlobalRegistryMapping::FindTypeInformation(id);
-    if (registry == nullptr || event_ptr == nullptr)
+    if (registry == nullptr)
     {
         return 0;
     }

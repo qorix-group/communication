@@ -124,10 +124,10 @@ class TypeOperationImpl : public ITypeOperations
  * Interface for member operations for services with events,methods and fields
  * It provides type-erased access to ProxyEvent and SkeletonEvent members
  */
-class IMemberOpration
+class IMemberOperation
 {
   public:
-    virtual ~IMemberOpration() = default;
+    virtual ~IMemberOperation() = default;
 
     /**
      * Get ProxyEvent member from ProxyBase pointer
@@ -145,7 +145,7 @@ class IMemberOpration
 };
 
 /*
- * Template implementation of IMemberOpration for specific ProxyType and SkeletonType
+ * Template implementation of IMemberOperation for specific ProxyType and SkeletonType
  * takes event member as template parameters
  * It provides implementation for GetProxyEvent and GetSkeletonEvent
  * This call is used to register member operations for each operation from macros
@@ -155,7 +155,7 @@ template <typename ProxyType,
           typename EventType,
           auto proxy_event_member,
           auto skeleton_event_member>
-class MemberOprationImpl : public IMemberOpration
+class MemberOprationImpl : public IMemberOperation
 {
   public:
     ProxyEventBase* GetProxyEvent(ProxyBase* proxy_ptr) override
@@ -195,7 +195,7 @@ class MemberOprationImpl : public IMemberOpration
 class IInterfaceOperations
 {
   public:
-    using MemberOperationMap = std::unordered_map<std::string_view, std::shared_ptr<IMemberOpration>>;
+    using MemberOperationMap = std::unordered_map<std::string_view, std::shared_ptr<IMemberOperation>>;
 
     virtual ~IInterfaceOperations() = default;
 
@@ -227,12 +227,24 @@ class IInterfaceOperations
     virtual void StopOfferService(SkeletonBase* handle_ptr) = 0;
 
     /**
+     * Delete the proxy instance
+     * @param proxy_ptr pointer to proxy instance
+     */
+    virtual void DestroyProxy(ProxyBase* proxy_ptr) = 0;
+
+    /**
+     * Delete the skeleton instance
+     * @param skeleton_ptr pointer to skeleton instance
+     */
+    virtual void DestroySkeleton(SkeletonBase* skeleton_ptr) = 0;
+
+    /**
      * Register member operation for event,method or field
      * As of now it is only used for events
      * @param member_name name of the event used as key in member operation map
-     * @param ops pointer to IMemberOpration implementation
+     * @param ops pointer to IMemberOperation implementation
      */
-    void RegisterMemberOperation(const std::string_view& member_name, std::shared_ptr<IMemberOpration> ops)
+    void RegisterMemberOperation(const std::string_view& member_name, std::shared_ptr<IMemberOperation> ops)
     {
         GetMemberOperationMap()[member_name] = ops;
     }
@@ -242,7 +254,7 @@ class IInterfaceOperations
      * As of now it is only used for events
      * @param member_name name of the event used as key in member operation map
      */
-    IMemberOpration* GetMemberOperation(const std::string_view& member_name)
+    IMemberOperation* GetMemberOperation(const std::string_view& member_name)
     {
         auto it = GetMemberOperationMap().find(member_name);
         if (it != GetMemberOperationMap().end())
@@ -259,11 +271,9 @@ class IInterfaceOperations
         return s_member_operation_map;
     }
 
-    // TODO:Add othr methods as needed
-    // virtual void DestroyProxy(void* proxy_ptr) = 0;
-    // virtual void DestroySkeleton(void* skeleton_ptr) = 0;
-    // virtual bool IsProxyRegistered() = 0;
-    // virtual bool IsSkeletonRegistered() = 0;
+    // TODO: Add if needed
+    //  virtual bool IsProxyRegistered() = 0;
+    //  virtual bool IsSkeletonRegistered() = 0;
 };
 
 /*
@@ -334,6 +344,16 @@ class InterfaceOperationImpl : public IInterfaceOperations
     {
         handle_ptr->StopOfferService();
     }
+
+    void DestroyProxy(ProxyBase* proxy_ptr) override
+    {
+        delete proxy_ptr;
+    }
+
+    void DestroySkeleton(SkeletonBase* skeleton_ptr) override
+    {
+        delete skeleton_ptr;
+    }
 };
 
 /**
@@ -390,11 +410,11 @@ class GlobalRegistryMapping
      * Called by EXPORT_MW_COM_EVENT macro
      * @param interface_id id of the interface used to find the interface operation
      * @param member_name name of the event used as key in member operation map
-     * @param ops pointer to IMemberOpration implementation
+     * @param ops pointer to IMemberOperation implementation
      */
     static void RegisterMemberOperation(const std::string_view& interface_id,
                                         const std::string_view& member_name,
-                                        std::shared_ptr<IMemberOpration> ops)
+                                        std::shared_ptr<IMemberOperation> ops)
     {
         const auto& registries = GetInterfaceOperation(interface_id);
         if (registries)
@@ -450,10 +470,10 @@ class GlobalRegistryMapping
      * Get member operation for specific interface id and member name
      * @param interface_id id of the interface used to find the interface operation
      * @param member_name name of the member used as key in member operation map
-     * @return It returns pointer to IMemberOpration implementation if found, nullptr otherwise
+     * @return It returns pointer to IMemberOperation implementation if found, nullptr otherwise
      */
-    static IMemberOpration* FindMemberOperation(const std::string_view& interface_id,
-                                                const std::string_view& member_name)
+    static IMemberOperation* FindMemberOperation(const std::string_view& interface_id,
+                                                 const std::string_view& member_name)
     {
         auto* factory = GetInterfaceOperation(interface_id);
         if (factory)
@@ -543,7 +563,7 @@ class GlobalRegistryMapping
                                                                                 &SkeletonType::event_member>>(); \
                                                                                                                  \
             /* Register this event in the LOCAL interface registry (not global) */                               \
-            ::score::mw::com::impl::rust::GlobalRegistryMapping::RegisterEventOperation(                           \
+            ::score::mw::com::impl::rust::GlobalRegistryMapping::RegisterMemberOperation(                          \
                 std::string_view(#id), std::string_view(#event_member), event_info);                             \
         }                                                                                                        \
     };                                                                                                           \
@@ -566,8 +586,7 @@ class GlobalRegistryMapping
     extern "C" {                                                                                                    \
     /* Declare the generic Rust FFI function (same for all types) */                                                \
     void mw_com_impl_call_dyn_ref_fnmut_sample(const ::score::mw::com::impl::rust::FatPtr* boxed_fnmut,               \
-                                               void* sample_ptr,                                                    \
-                                               const char* event_type);                                             \
+                                               void* sample_ptr);                                                   \
     }                                                                                                               \
     template <>                                                                                                     \
     class score::mw::com::impl::rust::RustRefMutCallable<void, ::score::mw::com::impl::SamplePtr<type>>                 \
@@ -580,7 +599,7 @@ class GlobalRegistryMapping
             alignas(                                                                                                \
                 ::score::mw::com::impl::SamplePtr<type>) char storage[sizeof(::score::mw::com::impl::SamplePtr<type>)]; \
             auto* placement_sample = new (storage)::score::mw::com::impl::SamplePtr<type>(std::move(sample));         \
-            mw_com_impl_call_dyn_ref_fnmut_sample(&ptr_, placement_sample, #type_tag);                              \
+            mw_com_impl_call_dyn_ref_fnmut_sample(&ptr_, placement_sample);                                         \
         }                                                                                                           \
         static void dispose(::score::mw::com::impl::rust::FatPtr) noexcept {}                                         \
     };                                                                                                              \
