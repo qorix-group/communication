@@ -11,10 +11,19 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
-pub use com_api_runtime_lola::LolaRuntimeImpl;
-pub use com_api_runtime_lola::RuntimeBuilderImpl as LolaRuntimeBuilderImpl;
-pub use com_api_runtime_mock::MockRuntimeImpl;
-pub use com_api_runtime_mock::RuntimeBuilderImpl as MockRuntimeBuilderImpl;
+#[cfg(feature = "iceoryx")]
+pub use {
+    com_api_runtime_iceoryx::IceoryxRuntimeImpl,
+    com_api_runtime_iceoryx::RuntimeBuilderImpl as IceoryxRuntimeBuilderImpl,
+};
+
+#[cfg(not(feature = "iceoryx"))]
+pub use {
+    com_api_runtime_lola::LolaRuntimeImpl,
+    com_api_runtime_lola::RuntimeBuilderImpl as LolaRuntimeBuilderImpl,
+    com_api_runtime_mock::MockRuntimeImpl,
+    com_api_runtime_mock::RuntimeBuilderImpl as MockRuntimeBuilderImpl,
+};
 
 pub use com_api_concept::{
     Builder, Consumer, ConsumerBuilder, ConsumerDescriptor, Error, FindServiceSpecifier,
