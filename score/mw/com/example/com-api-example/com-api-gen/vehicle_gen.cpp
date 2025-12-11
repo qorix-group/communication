@@ -11,17 +11,15 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
-#include "vehicle_datatype.h"
+#include "vehicle_gen.h"
 #include "score/mw/com/impl/rust/registry_bridge_macro.h"
 
 // Export the Vehicle interface with FFI bindings
-EXPORT_MW_COM_INTERFACE(
-    VehicleInterface,
-    ::score::mw::com::VehicleProxy,
-    ::score::mw::com::VehicleSkeleton
-)
+BEGIN_EXPORT_MW_COM_INTERFACE(VehicleInterface, ::score::mw::com::VehicleProxy, ::score::mw::com::VehicleSkeleton)
 EXPORT_MW_COM_EVENT(VehicleInterface, ::score::mw::com::Tire, left_tire)
 EXPORT_MW_COM_EVENT(VehicleInterface, ::score::mw::com::Exhaust, exhaust)
+
+END_EXPORT_MW_COM_INTERFACE()
 
 // Export data types - commented out due to type issue with macro
 EXPORT_MW_COM_TYPE(Tire, ::score::mw::com::Tire)

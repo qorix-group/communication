@@ -43,14 +43,14 @@ extern "C" {
  * @param event_id UTF-8 C string of event name
  * @return Proxy event instance
  */
-ProxyEventBase* mw_com_get_event_from_proxy(ProxyBase* proxy_ptr, const char* interface_id, const char* event_id)
+ProxyEventBase* mw_com_get_event_from_proxy(ProxyBase* proxy_ptr, StringView interface_id, StringView event_id)
 {
-    if (proxy_ptr == nullptr || interface_id == nullptr || event_id == nullptr)
+    if (proxy_ptr == nullptr || interface_id.data == nullptr || event_id.data == nullptr)
     {
         return nullptr;
     }
-    std::string_view event(event_id);
-    std::string_view id(interface_id);
+    auto event = static_cast<std::string_view>(event_id);
+    auto id = static_cast<std::string_view>(interface_id);
 
     auto registry = GlobalRegistryMapping::FindMemberOperation(id, event);
 
@@ -72,15 +72,15 @@ ProxyEventBase* mw_com_get_event_from_proxy(ProxyBase* proxy_ptr, const char* in
  * @return Skeleton event instance
  */
 SkeletonEventBase* mw_com_get_event_from_skeleton(SkeletonBase* skeleton_ptr,
-                                                  const char* interface_id,
-                                                  const char* event_id)
+                                                  StringView interface_id,
+                                                  StringView event_id)
 {
-    if (skeleton_ptr == nullptr || interface_id == nullptr || event_id == nullptr)
+    if (skeleton_ptr == nullptr || interface_id.data == nullptr || event_id.data == nullptr)
     {
         return nullptr;
     }
-    std::string_view event(event_id);
-    std::string_view id(interface_id);
+    auto event = static_cast<std::string_view>(event_id);
+    auto id = static_cast<std::string_view>(interface_id);
 
     auto registry = GlobalRegistryMapping::FindMemberOperation(id, event);
 
@@ -100,14 +100,14 @@ SkeletonEventBase* mw_com_get_event_from_skeleton(SkeletonBase* skeleton_ptr,
  * @param event_type UTF-8 C string of event type name
  * @param data_ptr Pointer to event data (T*)
  */
-void mw_com_skeleton_send_event(SkeletonEventBase* event_ptr, const char* event_type, void* data_ptr)
+void mw_com_skeleton_send_event(SkeletonEventBase* event_ptr, StringView event_type, void* data_ptr)
 {
-    if (event_ptr == nullptr || event_type == nullptr || data_ptr == nullptr)
+    if (event_ptr == nullptr || event_type.data == nullptr || data_ptr == nullptr)
     {
         return;
     }
 
-    std::string_view name(event_type);
+    auto name = static_cast<std::string_view>(event_type);
 
     auto registry = GlobalRegistryMapping::FindTypeInformation(name);
 
@@ -153,14 +153,13 @@ bool mw_com_proxy_event_subscribe(ProxyEventBase* event_ptr, uint32_t max_sample
  * @param handle_ptr Opaque handle pointer
  * @return proxy instance
  */
-ProxyBase* mw_com_create_proxy(const char* interface_id, const HandleType& handle_ptr)
+ProxyBase* mw_com_create_proxy(StringView interface_id, const HandleType& handle_ptr)
 {
-    if (interface_id == nullptr)
+    if (interface_id.data == nullptr)
     {
         return nullptr;
     }
-    std::string_view id(interface_id);
-
+    auto id = static_cast<std::string_view>(interface_id);
     auto registry = GlobalRegistryMapping::FindInterfaceRegistry(id);
 
     if (registry == nullptr)
@@ -179,15 +178,14 @@ ProxyBase* mw_com_create_proxy(const char* interface_id, const HandleType& handl
  * @param instance_spec Opaque instance specifier pointer
  * @return Skeleton instance
  */
-SkeletonBase* mw_com_create_skeleton(const char* interface_id, ::score::mw::com::InstanceSpecifier* instance_spec)
+SkeletonBase* mw_com_create_skeleton(StringView interface_id, ::score::mw::com::InstanceSpecifier* instance_spec)
 {
-    if (interface_id == nullptr || instance_spec == nullptr)
+    if (interface_id.data == nullptr || instance_spec == nullptr)
     {
         return nullptr;
     }
 
-    std::string_view id(interface_id);
-
+    auto id = static_cast<std::string_view>(interface_id);
     auto registry = GlobalRegistryMapping::FindInterfaceRegistry(id);
 
     if (registry == nullptr)
@@ -202,52 +200,32 @@ SkeletonBase* mw_com_create_skeleton(const char* interface_id, ::score::mw::com:
  * Offer service for skeleton instance
  * It returns true if service is offered successfully, false otherwise
  *
- * @param interface_id UTF-8 C string of interface UID
  * @param skeleton_ptr Opaque skeleton pointer
  * @return true if service is offered successfully, false otherwise
  */
-bool mw_com_skeleton_offer_service(const char* interface_id, SkeletonBase* skeleton_ptr)
+bool mw_com_skeleton_offer_service(SkeletonBase* skeleton_ptr)
 {
-    if (interface_id == nullptr || skeleton_ptr == nullptr)
+    if (skeleton_ptr == nullptr)
     {
         return false;
     }
 
-    std::string_view id(interface_id);
-
-    auto registry = GlobalRegistryMapping::FindInterfaceRegistry(id);
-
-    if (registry == nullptr)
-    {
-        return false;
-    }
-
-    return registry->OfferService(skeleton_ptr);
+    bool result = skeleton_ptr->OfferService().has_value();
+    return result;
 }
 
 /**
  * Stop offering service for skeleton instance
  *
- * @param interface_id UTF-8 C string of interface UID
  * @param skeleton_ptr Opaque skeleton pointer
  */
-void mw_com_skeleton_stop_offer_service(const char* interface_id, SkeletonBase* skeleton_ptr)
+void mw_com_skeleton_stop_offer_service(SkeletonBase* skeleton_ptr)
 {
-    if (interface_id == nullptr || skeleton_ptr == nullptr)
+    if (skeleton_ptr == nullptr)
     {
         return;
     }
-
-    std::string_view id(interface_id);
-
-    auto registry = GlobalRegistryMapping::FindInterfaceRegistry(id);
-
-    if (registry == nullptr)
-    {
-        return;
-    }
-
-    registry->StopOfferService(skeleton_ptr);
+    skeleton_ptr->StopOfferService();
 }
 
 /**
@@ -255,26 +233,17 @@ void mw_com_skeleton_stop_offer_service(const char* interface_id, SkeletonBase* 
  *
  * Deallocates a proxy created with mw_com_create_proxy.
  *
- * @param interface_id UTF-8 C string of interface UID
  * @param proxy_ptr Opaque proxy pointer to destroy
  */
-void mw_com_destroy_proxy(const char* interface_id, ProxyBase* proxy_ptr)
+void mw_com_destroy_proxy(ProxyBase* proxy_ptr)
 {
-    if (interface_id == nullptr || proxy_ptr == nullptr)
+    if (proxy_ptr == nullptr)
     {
         return;
     }
 
-    std::string_view id(interface_id);
-
-    auto registry = GlobalRegistryMapping::FindInterfaceRegistry(id);
-
-    if (registry == nullptr)
-    {
-        return;
-    }
-
-    registry->DestroyProxy(proxy_ptr);
+    delete proxy_ptr;
+    ;
 }
 
 /**
@@ -282,24 +251,15 @@ void mw_com_destroy_proxy(const char* interface_id, ProxyBase* proxy_ptr)
  *
  * Deallocates a skeleton created with mw_com_create_skeleton.
  *
- * @param interface_id UTF-8 C string of interface UID
  * @param skeleton_ptr Opaque skeleton pointer to destroy
  */
-void mw_com_destroy_skeleton(const char* interface_id, SkeletonBase* skeleton_ptr)
+void mw_com_destroy_skeleton(SkeletonBase* skeleton_ptr)
 {
-    if (interface_id == nullptr || skeleton_ptr == nullptr)
+    if (skeleton_ptr == nullptr)
     {
         return;
     }
-    std::string_view id(interface_id);
-
-    auto registry = GlobalRegistryMapping::FindInterfaceRegistry(id);
-
-    if (registry == nullptr)
-    {
-        return;
-    }
-    registry->DestroySkeleton(skeleton_ptr);
+    delete skeleton_ptr;
 }
 
 /**
@@ -313,29 +273,28 @@ void mw_com_destroy_skeleton(const char* interface_id, SkeletonBase* skeleton_pt
  * @param max_samples Maximum number of samples to retrieve
  * @return Number of samples retrieved, or 0 on error
  */
-uint32_t mw_com_type_registry_get_samples_from_event(ProxyEventBase* event_ptr,
-                                                     const char* event_type,
-                                                     const FatPtr* callback,
-                                                     uint32_t max_samples)
+std::uint32_t mw_com_type_registry_get_samples_from_event(ProxyEventBase* event_ptr,
+                                                          StringView event_type,
+                                                          const FatPtr* callback,
+                                                          uint32_t max_samples)
 {
-    if (event_ptr == nullptr || event_type == nullptr || callback == nullptr)
+    if (event_ptr == nullptr || event_type.data == nullptr || callback == nullptr)
     {
-        return 0;
+        return std::numeric_limits<std::uint32_t>::max();
     }
 
-    std::string_view id(event_type);
-
+    auto id = static_cast<std::string_view>(event_type);
     auto registry = GlobalRegistryMapping::FindTypeInformation(id);
     if (registry == nullptr)
     {
-        return 0;
+        return std::numeric_limits<std::uint32_t>::max();
     }
 
     auto result = registry->GetSamplesFromEvent(event_ptr, max_samples, *callback);
 
     if (result.has_value() == false)
     {
-        return 0;
+        return std::numeric_limits<std::uint32_t>::max();
     }
 
     return result.value();

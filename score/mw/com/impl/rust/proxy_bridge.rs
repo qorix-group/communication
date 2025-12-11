@@ -35,7 +35,7 @@ use std::task::{Context, Poll};
 use futures::prelude::*;
 use futures::task::AtomicWaker;
 
-pub mod ffi {
+mod ffi {
     use std::marker::PhantomData;
     use std::mem::transmute;
 
@@ -185,6 +185,7 @@ pub use ffi::FatPtr;
 pub use ffi::HandleType;
 pub use ffi::ProxyEvent as NativeProxyEvent;
 pub use ffi::ProxyWrapperClass;
+pub use ffi::ProxyEventBase;
 
 /// This trait is used to create and delete proxies.
 ///

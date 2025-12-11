@@ -28,7 +28,6 @@ struct Tire
 // Simple data structure for Exhaust
 struct Exhaust
 {
-
 };
 
 // Vehicle interface template

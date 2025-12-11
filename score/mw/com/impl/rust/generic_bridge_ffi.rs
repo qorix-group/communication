@@ -17,7 +17,11 @@ use std::ffi::c_char;
 pub type CVoidPtr = *const std::ffi::c_void;
 pub type CMutVoidPtr = *mut std::ffi::c_void;
 
-pub use proxy_bridge_rs::ffi::{FatPtr, HandleType, ProxyEventBase, ProxyWrapperClass};
+pub use proxy_bridge_rs::FatPtr;
+pub use proxy_bridge_rs::HandleType;
+pub use proxy_bridge_rs::ProxyEventBase;
+pub use proxy_bridge_rs::ProxyWrapperClass;
+
 pub use proxy_bridge_rs::NativeInstanceSpecifier;
 
 /// Opaque proxy base struct
@@ -38,6 +42,28 @@ pub struct SkeletonEventBase {
     dummy: [u8; 0],
 }
 
+/// String view similar to C++'s std::string_view
+/// Holds a pointer to a string and its length without requiring null termination
+#[repr(C)]
+pub struct StringView {
+    data: *const c_char,
+    len: u32,
+}
+
+impl StringView {
+    /// Create a StringView from a Rust &str
+    pub fn from_str(s: &str) -> Self {
+        if s.is_empty() {
+            panic!("StringView: empty string is not allowed");
+        }
+        StringView {
+            data: s.as_ptr() as *const c_char,
+            len: s.len() as u32,
+        }
+    }
+}
+
+
 /// Generic Rust closure invocation for all types
 ///
 /// This function is called by C++ to invoke a Rust closure with a sample pointer.
@@ -57,6 +83,10 @@ pub extern "C" fn mw_com_impl_call_dyn_ref_fnmut_sample(
     }
 
     // Reconstruct the closure from FatPtr
+    // SAFETY: ptr is guaranteed to point to a valid FatPtr that was created by the C++ side
+    // and represents a valid dynamic trait object (dyn FnMut). The transmute is safe because
+    // FatPtr is a binary representation of a trait object's fat pointer (data + vtable).
+    // The caller must ensure the lifetime of the closure outlives this call.
     let callable: &mut dyn FnMut(*mut std::ffi::c_void) = unsafe { std::mem::transmute(*ptr) };
 
     // Invoke the closure with the void* sample pointer
@@ -64,7 +94,6 @@ pub extern "C" fn mw_com_impl_call_dyn_ref_fnmut_sample(
 }
 
 // FFI declarations for C++ generic event bridge functions
-#[allow(unsafe_code)]
 extern "C" {
 
     /// Subscribe to event to start receiving samples
@@ -90,8 +119,8 @@ extern "C" {
     /// Opaque event pointer, or nullptr if event not found
     pub fn mw_com_get_event_from_proxy(
         proxy_ptr: *mut ProxyBase,
-        interface_id: *const c_char,
-        event_id: *const c_char,
+        interface_id: StringView,
+        event_id: StringView,
     ) -> *mut ProxyEventBase;
 
     /// Get event pointer from skeleton by event name
@@ -105,8 +134,8 @@ extern "C" {
     /// Opaque event pointer, or nullptr if event not found
     pub fn mw_com_get_event_from_skeleton(
         skeleton_ptr: *mut SkeletonBase,
-        interface_id: *const c_char,
-        event_id: *const c_char,
+        interface_id: StringView,
+        event_id: StringView,
     ) -> *mut SkeletonEventBase;
 
     /// Get new samples from an event
@@ -121,7 +150,7 @@ extern "C" {
     /// Number of samples retrieved
     pub fn mw_com_type_registry_get_samples_from_event(
         event_ptr: *mut ProxyEventBase,
-        event_type: *const c_char,
+        event_type: StringView,
         callback: *const FatPtr,
         max_samples: u32,
     ) -> u32;
@@ -137,7 +166,7 @@ extern "C" {
     /// true if send successful, false otherwise
     pub fn mw_com_skeleton_send_event(
         event_ptr: *mut SkeletonEventBase,
-        event_type: *const c_char,
+        event_type: StringView,
         data_ptr: CVoidPtr,
     );
 
@@ -150,7 +179,7 @@ extern "C" {
     /// # Returns
     /// Opaque proxy pointer, or nullptr if creation failed
     pub fn mw_com_create_proxy(
-        interface_id: *const c_char,
+        interface_id: StringView,
         handle_ptr: &HandleType,
     ) -> *mut ProxyBase;
 
@@ -163,44 +192,38 @@ extern "C" {
     /// # Returns
     /// Opaque skeleton pointer, or nullptr if creation failed
     pub fn mw_com_create_skeleton(
-        interface_id: *const c_char,
+        interface_id: StringView,
         instance_spec: NativeInstanceSpecifier,
     ) -> *mut SkeletonBase;
 
     /// Destroy proxy
     ///
     /// # Arguments
-    /// * `interface_id` - UTF-8 C string of interface UID
     /// * `proxy_ptr` - Opaque proxy pointer
-    pub fn mw_com_destroy_proxy(interface_id: *const c_char, proxy_ptr: *mut ProxyBase);
+    pub fn mw_com_destroy_proxy(proxy_ptr: *mut ProxyBase);
 
     /// Destroy skeleton
     ///
     /// # Arguments
-    /// * `interface_id` - UTF-8 C string of interface UID
     /// * `skeleton_ptr` - Opaque skeleton pointer
-    pub fn mw_com_destroy_skeleton(interface_id: *const c_char, skeleton_ptr: *mut SkeletonBase);
+    pub fn mw_com_destroy_skeleton(skeleton_ptr: *mut SkeletonBase);
 
     /// Offer service via skeleton
     ///
     /// # Arguments
-    /// * `interface_id` - UTF-8 C string of interface UID
     /// * `skeleton_ptr` - Opaque skeleton pointer
     ///
     /// # Returns
     /// true if offer successful, false otherwise
     pub fn mw_com_skeleton_offer_service(
-        interface_id: *const c_char,
         skeleton_ptr: *mut SkeletonBase,
     ) -> bool;
 
     /// Stop offering service via skeleton
     ///
     /// # Arguments
-    /// * `interface_id` - UTF-8 C string of interface UID
     /// * `skeleton_ptr` - Opaque skeleton pointer
     pub fn mw_com_skeleton_stop_offer_service(
-        interface_id: *const c_char,
         skeleton_ptr: *mut SkeletonBase,
     );
 }
@@ -208,37 +231,33 @@ extern "C" {
 /// Safe wrapper around mw_com_skeleton_offer_service
 ///
 /// # Arguments
-/// * `interface_id` - Interface UID string
 /// * `skeleton_ptr` - Opaque skeleton pointer
 ///
 /// # Returns
 /// true if offer was successful
-#[allow(unsafe_code)]
 pub fn skeleton_offer_service(
-    interface_id: &str,
     skeleton_ptr: *mut SkeletonBase,
-) -> Result<bool, std::ffi::NulError> {
-    let c_uid = std::ffi::CString::new(interface_id)?;
-    let status = unsafe { mw_com_skeleton_offer_service(c_uid.as_ptr(), skeleton_ptr) };
-    Ok(status)
+) -> bool {
+    // SAFETY: skeleton_ptr is guaranteed to be a valid pointer to a SkeletonBase that was
+    // previously created via mw_com_create_skeleton. The C++ side guarantees the pointer
+    // remains valid for the lifetime of the skeleton object.
+    unsafe { mw_com_skeleton_offer_service(skeleton_ptr) }
 }
 
 /// Safe wrapper around mw_com_skeleton_stop_offer_service
 ///
 /// # Arguments
-/// * `interface_id` - Interface UID string
 /// * `skeleton_ptr` - Opaque skeleton pointer
 ///
 /// # Returns
-/// Result enum
-#[allow(unsafe_code)]
+/// Result enum indicating success or error
 pub fn skeleton_stop_offer_service(
-    interface_id: &str,
     skeleton_ptr: *mut SkeletonBase,
-) -> Result<(), std::ffi::NulError> {
-    let c_uid = std::ffi::CString::new(interface_id)?;
-    unsafe { mw_com_skeleton_stop_offer_service(c_uid.as_ptr(), skeleton_ptr) };
-    Ok(())
+) {
+    // SAFETY: skeleton_ptr is guaranteed to be a valid pointer to a SkeletonBase that was
+    // previously created via mw_com_create_skeleton and is still alive. The caller must ensure
+    // the skeleton_ptr has not already been destroyed.
+    unsafe { mw_com_skeleton_stop_offer_service(skeleton_ptr) };
 }
 
 /// Safe wrapper around mw_com_create_proxy
@@ -249,13 +268,15 @@ pub fn skeleton_stop_offer_service(
 ///
 /// # Returns
 /// Opaque proxy pointer, or error if creation failed
-#[allow(unsafe_code)]
 pub fn create_proxy(
     interface_id: &str,
     handle_ptr: &HandleType,
-) -> Result<*mut ProxyBase, std::ffi::NulError> {
-    let c_uid = std::ffi::CString::new(interface_id)?;
-    Ok(unsafe { mw_com_create_proxy(c_uid.as_ptr(), &handle_ptr) })
+) -> *mut ProxyBase {
+    let c_uid = StringView::from_str(interface_id);
+    // SAFETY: handle_ptr is a valid reference to a HandleType, so the pointer is valid.
+    // The C++ implementation creates and returns a valid ProxyBase pointer that the caller
+    // is responsible for managing and eventually destroying with destroy_proxy().
+    unsafe { mw_com_create_proxy(c_uid, &handle_ptr) }
 }
 
 /// Safe wrapper around mw_com_create_skeleton
@@ -266,13 +287,15 @@ pub fn create_proxy(
 ///
 /// # Returns
 /// Opaque skeleton pointer, or error if creation failed
-#[allow(unsafe_code)]
 pub fn create_skeleton(
     interface_id: &str,
     instance_spec: NativeInstanceSpecifier,
-) -> Result<*mut SkeletonBase, std::ffi::NulError> {
-    let c_uid = std::ffi::CString::new(interface_id)?;
-    Ok(unsafe { mw_com_create_skeleton(c_uid.as_ptr(), instance_spec) })
+) -> *mut SkeletonBase {
+    let c_uid = StringView::from_str(interface_id);
+    // SAFETY: instance_spec is a valid NativeInstanceSpecifier provided by the caller.
+    // The C++ implementation creates and returns a valid SkeletonBase pointer that the caller
+    // is responsible for managing and eventually destroying with destroy_skeleton().
+    unsafe { mw_com_create_skeleton(c_uid, instance_spec) }
 }
 
 /// Safe wrapper around mw_com_destroy_proxy
@@ -283,14 +306,13 @@ pub fn create_skeleton(
 ///
 /// # Returns
 /// Error if interface_id contains null bytes
-#[allow(unsafe_code)]
 pub fn destroy_proxy(
-    interface_id: &str,
     proxy_ptr: *mut ProxyBase,
-) -> Result<(), std::ffi::NulError> {
-    let c_uid = std::ffi::CString::new(interface_id)?;
-    unsafe { mw_com_destroy_proxy(c_uid.as_ptr(), proxy_ptr) };
-    Ok(())
+) {
+    // SAFETY: proxy_ptr must be a valid pointer returned from create_proxy() that has not been
+    // destroyed yet. The caller must ensure no other references to this proxy exist after
+    // calling this function.
+    unsafe { mw_com_destroy_proxy(proxy_ptr) };
 }
 
 /// Safe wrapper around mw_com_destroy_skeleton
@@ -301,14 +323,13 @@ pub fn destroy_proxy(
 ///
 /// # Returns
 /// Error if interface_id contains null bytes
-#[allow(unsafe_code)]
 pub fn destroy_skeleton(
-    interface_id: &str,
     skeleton_ptr: *mut SkeletonBase,
-) -> Result<(), std::ffi::NulError> {
-    let c_uid = std::ffi::CString::new(interface_id)?;
-    unsafe { mw_com_destroy_skeleton(c_uid.as_ptr(), skeleton_ptr) };
-    Ok(())
+) {
+    // SAFETY: skeleton_ptr must be a valid pointer returned from create_skeleton() that has not
+    // been destroyed yet. The caller must ensure no other references to this skeleton exist
+    // after calling this function.
+    unsafe { mw_com_destroy_skeleton(skeleton_ptr) };
 }
 
 /// Safe wrapper around mw_com_get_event_from_proxy
@@ -320,15 +341,17 @@ pub fn destroy_skeleton(
 ///
 /// # Returns
 /// Opaque event pointer, or error if not found
-#[allow(unsafe_code)]
 pub fn get_event_from_proxy(
     proxy_ptr: *mut ProxyBase,
     interface_id: &str,
     event_id: &str,
-) -> Result<*mut ProxyEventBase, std::ffi::NulError> {
-    let c_id = std::ffi::CString::new(interface_id)?;
-    let c_name = std::ffi::CString::new(event_id)?;
-    Ok(unsafe { mw_com_get_event_from_proxy(proxy_ptr, c_id.as_ptr(), c_name.as_ptr()) })
+) -> *mut ProxyEventBase {
+    let c_id = StringView::from_str(interface_id);
+    let c_name = StringView::from_str(event_id);
+    // SAFETY: proxy_ptr is a valid pointer to a ProxyBase previously created with create_proxy().
+    // The C++ implementation returns a valid ProxyEventBase pointer or nullptr if event not found.
+    // The returned pointer remains valid as long as the proxy remains alive.
+    unsafe { mw_com_get_event_from_proxy(proxy_ptr, c_id, c_name) }
 }
 
 /// Safe wrapper around mw_com_get_event_from_skeleton
@@ -340,15 +363,18 @@ pub fn get_event_from_proxy(
 ///
 /// # Returns
 /// Opaque event pointer, or error if not found
-#[allow(unsafe_code)]
 pub fn get_event_from_skeleton(
     skeleton_ptr: *mut SkeletonBase,
     interface_id: &str,
     event_id: &str,
-) -> Result<*mut SkeletonEventBase, std::ffi::NulError> {
-    let c_id = std::ffi::CString::new(interface_id)?;
-    let c_name = std::ffi::CString::new(event_id)?;
-    Ok(unsafe { mw_com_get_event_from_skeleton(skeleton_ptr, c_id.as_ptr(), c_name.as_ptr()) })
+) -> *mut SkeletonEventBase{
+    let c_id = StringView::from_str(interface_id);
+    let c_name = StringView::from_str(event_id);
+    // SAFETY: skeleton_ptr is a valid pointer to a SkeletonBase previously created with
+    // create_skeleton(). The C++ implementation returns a valid SkeletonEventBase pointer or
+    // nullptr if event not found. The returned pointer remains valid as long as the skeleton
+    // remains alive.
+    unsafe { mw_com_get_event_from_skeleton(skeleton_ptr, c_id, c_name) }
 }
 
 /// Safe wrapper around mw_com_get_samples_from_event
@@ -361,22 +387,24 @@ pub fn get_event_from_skeleton(
 ///
 /// # Returns
 /// Number of samples retrieved
-#[allow(unsafe_code)]
 pub fn get_samples_from_event(
     event_ptr: *mut ProxyEventBase,
     event_type: &str,
     callback: &FatPtr,
     max_samples: u32,
-) -> Result<u32, std::ffi::NulError> {
-    let c_name = std::ffi::CString::new(event_type)?;
-    Ok(unsafe {
+) -> u32 {
+    let c_name = StringView::from_str(event_type);
+    // SAFETY: event_ptr is a valid pointer to a ProxyEventBase previously obtained from
+    // get_event_from_proxy(). callback is a valid FatPtr to a callable that was created by
+    // the C++ side. The C++ implementation handles the callback invocation safely.
+    unsafe {
         mw_com_type_registry_get_samples_from_event(
             event_ptr,
-            c_name.as_ptr(),
+            c_name,
             callback,
             max_samples,
         )
-    })
+    }
 }
 
 /// Safe wrapper around mw_com_skeleton_send_event
@@ -385,14 +413,17 @@ pub fn get_samples_from_event(
 /// * `event_ptr` - Opaque skeleton event pointer
 /// * `event_id` - Event name string
 /// * `data_ptr` - Pointer to event data
-#[allow(unsafe_code)]
 pub fn skeleton_send_event(
     event_ptr: *mut SkeletonEventBase,
     event_type: &str,
     data_ptr: *const std::ffi::c_void,
 ) {
-    let c_name = std::ffi::CString::new(event_type).expect("CString::new failed");
-    unsafe { mw_com_skeleton_send_event(event_ptr, c_name.as_ptr(), data_ptr) };
+    let c_name = StringView::from_str(event_type);
+    // SAFETY: event_ptr is a valid pointer to a SkeletonEventBase previously obtained from
+    // get_event_from_skeleton(). data_ptr is a pointer to the event data provided by the caller,
+    // which must point to valid data matching the event type. The C++ implementation handles
+    // the data sending safely.
+    unsafe { mw_com_skeleton_send_event(event_ptr, c_name, data_ptr) };
 }
 
 /// Safe wrapper around mw_com_proxy_event_subscribe
@@ -403,7 +434,9 @@ pub fn skeleton_send_event(
 ///
 /// # Returns
 /// true if subscription was successful
-#[allow(unsafe_code)]
 pub fn subscribe_to_event(event_ptr: *mut ProxyEventBase, max_sample_count: u32) -> bool {
+    // SAFETY: event_ptr is a valid pointer to a ProxyEventBase previously obtained from
+    // get_event_from_proxy(). The C++ implementation handles subscription safely and
+    // returns a boolean indicating success or failure.
     unsafe { mw_com_proxy_event_subscribe(event_ptr, max_sample_count) }
 }
