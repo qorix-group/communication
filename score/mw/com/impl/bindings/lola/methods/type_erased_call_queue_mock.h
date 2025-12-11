@@ -25,8 +25,9 @@ class TypeErasedCallQueueMock : public ITypeErasedCallQueue
   public:
     ~TypeErasedCallQueueMock() override = default;
 
-    MOCK_METHOD(std::optional<score::cpp::span<std::byte>>, GetInArgValuesStorage, (size_t position), (const, override));
-    MOCK_METHOD(std::optional<score::cpp::span<std::byte>>, GetReturnValueStorage, (size_t position), (const, override));
+    MOCK_METHOD(std::optional<score::cpp::span<std::byte>>, GetInArgValuesQueueStorage, (), (const, override));
+    MOCK_METHOD(std::optional<score::cpp::span<std::byte>>, GetReturnValueQueueStorage, (), (const, override));
+    MOCK_METHOD(const ITypeErasedCallQueue::TypeErasedElementInfo&, GetTypeErasedElementInfo, (), (const override));
 };
 
 }  // namespace score::mw::com::impl::lola

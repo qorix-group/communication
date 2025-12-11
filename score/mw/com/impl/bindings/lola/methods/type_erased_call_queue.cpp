@@ -27,6 +27,47 @@
 
 namespace score::mw::com::impl::lola
 {
+namespace
+{
+
+score::cpp::span<std::byte> GetElement(const std::size_t position,
+                                const memory::DataTypeSizeInfo& type_info,
+                                score::cpp::span<std::byte> queue_storage,
+                                const std::size_t queue_size)
+{
+    SCORE_LANGUAGE_FUTURECPP_PRECONDITION_PRD(position < queue_size);
+
+    const auto element_offset = type_info.Size() * position;
+    auto* const element_address = memory::shared::AddOffsetToPointer(queue_storage.data(), element_offset);
+
+    return score::cpp::span{element_address, type_info.Size()};
+}
+
+}  // namespace
+
+score::cpp::span<std::byte> GetInArgValuesElementStorage(
+    const size_t position,
+    score::cpp::span<std::byte> in_arg_values_storage,
+    const TypeErasedCallQueue::TypeErasedElementInfo& in_args_type_erased_info)
+{
+    SCORE_LANGUAGE_FUTURECPP_PRECONDITION_PRD(in_args_type_erased_info.in_arg_type_info.has_value());
+    return GetElement(position,
+                      in_args_type_erased_info.in_arg_type_info.value(),
+                      in_arg_values_storage,
+                      in_args_type_erased_info.queue_size);
+}
+
+score::cpp::span<std::byte> GetReturnValueElementStorage(
+    const size_t position,
+    score::cpp::span<std::byte> return_value_storage,
+    const TypeErasedCallQueue::TypeErasedElementInfo& return_type_erased_info)
+{
+    SCORE_LANGUAGE_FUTURECPP_PRECONDITION_PRD(return_type_erased_info.return_type_info.has_value());
+    return GetElement(position,
+                      return_type_erased_info.return_type_info.value(),
+                      return_value_storage,
+                      return_type_erased_info.queue_size);
+}
 
 TypeErasedCallQueue::TypeErasedCallQueue(const memory::shared::MemoryResourceProxy& resource_proxy,
                                          const TypeErasedElementInfo& type_erased_element_info)
@@ -61,28 +102,27 @@ TypeErasedCallQueue::~TypeErasedCallQueue()
     }
 }
 
-std::optional<score::cpp::span<std::byte>> TypeErasedCallQueue::GetInArgValuesStorage(const size_t position) const
+std::optional<score::cpp::span<std::byte>> TypeErasedCallQueue::GetInArgValuesQueueStorage() const
 {
     if (!(type_erased_element_info_.in_arg_type_info.has_value()))
     {
         return {};
     }
-    return GetElement(position,
-                      type_erased_element_info_.in_arg_type_info.value(),
-                      in_args_queue_start_address_.get(),
-                      type_erased_element_info_.queue_size);
+    return {{in_args_queue_start_address_.get(), type_erased_element_info_.in_arg_type_info->Size()}};
 }
 
-std::optional<score::cpp::span<std::byte>> TypeErasedCallQueue::GetReturnValueStorage(const size_t position) const
+std::optional<score::cpp::span<std::byte>> TypeErasedCallQueue::GetReturnValueQueueStorage() const
 {
     if (!(type_erased_element_info_.return_type_info.has_value()))
     {
         return {};
     }
-    return GetElement(position,
-                      type_erased_element_info_.return_type_info.value(),
-                      return_queue_start_address_.get(),
-                      type_erased_element_info_.queue_size);
+    return {{return_queue_start_address_.get(), type_erased_element_info_.return_type_info->Size()}};
+}
+
+const ITypeErasedCallQueue::TypeErasedElementInfo& TypeErasedCallQueue::GetTypeErasedElementInfo() const
+{
+    return type_erased_element_info_;
 }
 
 std::pair<memory::shared::OffsetPtr<std::byte>, memory::shared::OffsetPtr<std::byte>>
@@ -107,19 +147,6 @@ TypeErasedCallQueue::AllocateQueue() const
     }
 
     return {in_args_queue_start_address_bytes, return_queue_start_address_bytes};
-}
-
-score::cpp::span<std::byte> TypeErasedCallQueue::GetElement(const std::size_t position,
-                                                     const memory::DataTypeSizeInfo& type_info,
-                                                     std::byte* queue_storage,
-                                                     const std::size_t queue_size)
-{
-    SCORE_LANGUAGE_FUTURECPP_PRECONDITION_PRD(position < queue_size);
-
-    const auto element_offset = type_info.Size() * position;
-    auto* const element_address = memory::shared::AddOffsetToPointer(queue_storage, element_offset);
-
-    return score::cpp::span{element_address, type_info.Size()};
 }
 
 }  // namespace score::mw::com::impl::lola

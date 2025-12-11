@@ -13,6 +13,8 @@
 #ifndef SCORE_MW_COM_IMPL_BINDINGS_LOLA_METHODS_I_TYPE_ERASED_CALL_QUEUE_H
 #define SCORE_MW_COM_IMPL_BINDINGS_LOLA_METHODS_I_TYPE_ERASED_CALL_QUEUE_H
 
+#include "score/memory/data_type_size_info.h"
+
 #include <score/span.hpp>
 
 #include <cstddef>
@@ -33,6 +35,13 @@ namespace score::mw::com::impl::lola
 class ITypeErasedCallQueue
 {
   public:
+    struct TypeErasedElementInfo
+    {
+        std::optional<memory::DataTypeSizeInfo> in_arg_type_info;
+        std::optional<memory::DataTypeSizeInfo> return_type_info;
+        std::size_t queue_size;
+    };
+
     ITypeErasedCallQueue() = default;
     virtual ~ITypeErasedCallQueue() = default;
 
@@ -41,9 +50,11 @@ class ITypeErasedCallQueue
     ITypeErasedCallQueue(ITypeErasedCallQueue&&) noexcept = delete;
     ITypeErasedCallQueue& operator=(ITypeErasedCallQueue&&) noexcept = delete;
 
-    virtual std::optional<score::cpp::span<std::byte>> GetInArgValuesStorage(size_t position) const = 0;
+    virtual std::optional<score::cpp::span<std::byte>> GetInArgValuesQueueStorage() const = 0;
 
-    virtual std::optional<score::cpp::span<std::byte>> GetReturnValueStorage(size_t position) const = 0;
+    virtual std::optional<score::cpp::span<std::byte>> GetReturnValueQueueStorage() const = 0;
+
+    virtual const TypeErasedElementInfo& GetTypeErasedElementInfo() const = 0;
 };
 
 }  // namespace score::mw::com::impl::lola

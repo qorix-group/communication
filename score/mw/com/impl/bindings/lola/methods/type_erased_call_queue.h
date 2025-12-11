@@ -23,7 +23,6 @@
 
 #include <cstddef>
 #include <optional>
-#include <tuple>
 
 namespace score::mw::com::impl::lola
 {
@@ -34,13 +33,6 @@ namespace score::mw::com::impl::lola
 class TypeErasedCallQueue final : public ITypeErasedCallQueue
 {
   public:
-    struct TypeErasedElementInfo
-    {
-        std::optional<memory::DataTypeSizeInfo> in_arg_type_info;
-        std::optional<memory::DataTypeSizeInfo> return_type_info;
-        std::size_t queue_size;
-    };
-
     TypeErasedCallQueue(const memory::shared::MemoryResourceProxy& resource_proxy,
                         const TypeErasedElementInfo& type_erased_element_info);
 
@@ -51,17 +43,14 @@ class TypeErasedCallQueue final : public ITypeErasedCallQueue
     TypeErasedCallQueue(TypeErasedCallQueue&&) noexcept = delete;
     TypeErasedCallQueue& operator=(TypeErasedCallQueue&&) noexcept = delete;
 
-    std::optional<score::cpp::span<std::byte>> GetInArgValuesStorage(size_t position) const override;
+    std::optional<score::cpp::span<std::byte>> GetInArgValuesQueueStorage() const override;
 
-    std::optional<score::cpp::span<std::byte>> GetReturnValueStorage(size_t position) const override;
+    std::optional<score::cpp::span<std::byte>> GetReturnValueQueueStorage() const override;
+
+    const ITypeErasedCallQueue::TypeErasedElementInfo& GetTypeErasedElementInfo() const override;
 
   private:
     std::pair<memory::shared::OffsetPtr<std::byte>, memory::shared::OffsetPtr<std::byte>> AllocateQueue() const;
-
-    static score::cpp::span<std::byte> GetElement(const std::size_t position,
-                                           const memory::DataTypeSizeInfo& type_info,
-                                           std::byte* queue_storage,
-                                           const std::size_t queue_size);
 
     const memory::shared::MemoryResourceProxy& resource_proxy_;
 
@@ -70,6 +59,17 @@ class TypeErasedCallQueue final : public ITypeErasedCallQueue
     memory::shared::OffsetPtr<std::byte> in_args_queue_start_address_;
     memory::shared::OffsetPtr<std::byte> return_queue_start_address_;
 };
+
+// Helper functions to get the storage pointer to a position in the queue of InArgValues / ReturnValues
+score::cpp::span<std::byte> GetInArgValuesElementStorage(
+    const size_t position,
+    score::cpp::span<std::byte> in_arg_values_storage,
+    const TypeErasedCallQueue::TypeErasedElementInfo& in_args_type_erased_info);
+
+score::cpp::span<std::byte> GetReturnValueElementStorage(
+    const size_t position,
+    score::cpp::span<std::byte> return_value_storage,
+    const TypeErasedCallQueue::TypeErasedElementInfo& return_type_erased_info);
 
 }  // namespace score::mw::com::impl::lola
 
