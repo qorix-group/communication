@@ -18,7 +18,6 @@
 #include "score/memory/shared/offset_ptr.h"
 #include "score/memory/shared/pointer_arithmetic_util.h"
 
-#include "score/mw/com/impl/bindings/lola/methods/i_type_erased_call_queue.h"
 #include <score/assert.hpp>
 
 #include <cstddef>
@@ -71,8 +70,7 @@ score::cpp::span<std::byte> GetReturnValueElementStorage(
 
 TypeErasedCallQueue::TypeErasedCallQueue(const memory::shared::MemoryResourceProxy& resource_proxy,
                                          const TypeErasedElementInfo& type_erased_element_info)
-    : ITypeErasedCallQueue(),
-      resource_proxy_{resource_proxy},
+    : resource_proxy_{resource_proxy},
       type_erased_element_info_{type_erased_element_info},
       in_args_queue_start_address_{nullptr},
       return_queue_start_address_{nullptr}
@@ -120,7 +118,7 @@ std::optional<score::cpp::span<std::byte>> TypeErasedCallQueue::GetReturnValueQu
     return {{return_queue_start_address_.get(), type_erased_element_info_.return_type_info->Size()}};
 }
 
-const ITypeErasedCallQueue::TypeErasedElementInfo& TypeErasedCallQueue::GetTypeErasedElementInfo() const
+auto TypeErasedCallQueue::GetTypeErasedElementInfo() const -> const TypeErasedElementInfo&
 {
     return type_erased_element_info_;
 }

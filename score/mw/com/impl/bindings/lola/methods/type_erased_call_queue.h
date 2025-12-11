@@ -14,7 +14,6 @@
 #define SCORE_MW_COM_IMPL_BINDINGS_LOLA_METHODS_TYPE_ERASED_CALL_QUEUE_H
 
 #include "score/memory/data_type_size_info.h"
-#include "score/mw/com/impl/bindings/lola/methods/i_type_erased_call_queue.h"
 
 #include "score/memory/shared/memory_resource_proxy.h"
 #include "score/memory/shared/offset_ptr.h"
@@ -30,24 +29,31 @@ namespace score::mw::com::impl::lola
 /// \brief Class which manages the memory required for the InTypes and ReturnType for a specific service Method
 ///
 /// This class allocates the memory region for the call queue on construction and deallocates it on destruction.
-class TypeErasedCallQueue final : public ITypeErasedCallQueue
+class TypeErasedCallQueue final
 {
   public:
+    struct TypeErasedElementInfo
+    {
+        std::optional<memory::DataTypeSizeInfo> in_arg_type_info;
+        std::optional<memory::DataTypeSizeInfo> return_type_info;
+        std::size_t queue_size;
+    };
+
     TypeErasedCallQueue(const memory::shared::MemoryResourceProxy& resource_proxy,
                         const TypeErasedElementInfo& type_erased_element_info);
 
-    ~TypeErasedCallQueue() final;
+    ~TypeErasedCallQueue();
 
     TypeErasedCallQueue(const TypeErasedCallQueue&) = delete;
     TypeErasedCallQueue& operator=(const TypeErasedCallQueue&) = delete;
     TypeErasedCallQueue(TypeErasedCallQueue&&) noexcept = delete;
     TypeErasedCallQueue& operator=(TypeErasedCallQueue&&) noexcept = delete;
 
-    std::optional<score::cpp::span<std::byte>> GetInArgValuesQueueStorage() const override;
+    std::optional<score::cpp::span<std::byte>> GetInArgValuesQueueStorage() const;
 
-    std::optional<score::cpp::span<std::byte>> GetReturnValueQueueStorage() const override;
+    std::optional<score::cpp::span<std::byte>> GetReturnValueQueueStorage() const;
 
-    const ITypeErasedCallQueue::TypeErasedElementInfo& GetTypeErasedElementInfo() const override;
+    auto GetTypeErasedElementInfo() const -> const TypeErasedElementInfo&;
 
   private:
     std::pair<memory::shared::OffsetPtr<std::byte>, memory::shared::OffsetPtr<std::byte>> AllocateQueue() const;
