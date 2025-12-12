@@ -10,17 +10,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-///! This module provides boilerplate for a generated bridge between the Rust and C++ code for the
-///! proxy side of a service.
-///!
-///! It contains any code that does not depend on a user-defined type or can be made generic over
-///! the user-defined type, e.g. when the type isn't relevant for the enclosing type's layout and
-///! no type safety is needed on API level. For any actions that are type-dependent, the action
-///! needs to be implemented by external code. This happens by implementing `EventOps` and
-///! `ProxyOps` for the user-defined type. The implementation typically will call the respective
-///! generated FFI functions to operate on the typed objects like the event itself or the sample
-///! pointer. See the documentation of the respective traits for more details.
-
+/// This module provides boilerplate for a generated bridge between the Rust and C++ code for the
+/// proxy side of a service.
+///
+/// It contains any code that does not depend on a user-defined type or can be made generic over
+/// the user-defined type, e.g. when the type isn't relevant for the enclosing type's layout and
+/// no type safety is needed on API level. For any actions that are type-dependent, the action
+/// needs to be implemented by external code. This happens by implementing `EventOps` and
+/// `ProxyOps` for the user-defined type. The implementation typically will call the respective
+/// generated FFI functions to operate on the typed objects like the event itself or the sample
+/// pointer. See the documentation of the respective traits for more details.
 use std::collections::VecDeque;
 use std::ffi::CString;
 use std::fmt::{self, Debug, Formatter};
@@ -93,6 +92,7 @@ mod ffi {
         data: *mut (),
     }
 
+    #[allow(clippy::from_over_into)]
     impl Into<*mut (dyn FnMut() + Send + 'static)> for FatPtr {
         fn into(self) -> *mut (dyn FnMut() + Send + 'static) {
             // SAFETY: Since we're transmuting into a pointer and using that pointer is unsafe
@@ -103,6 +103,7 @@ mod ffi {
     }
 
     impl From<*mut (dyn FnMut() + Send + 'static)> for FatPtr {
+        #[allow(clippy::not_unsafe_ptr_arg_deref)]
         fn from(ptr: *mut (dyn FnMut() + Send + 'static)) -> Self {
             // SAFETY: Since we're transmuting into a pair of pointers and using those pointers is
             // anyway an unsafe operation, the `transmute` is not unsafe since it's a pure
@@ -272,6 +273,7 @@ impl<T: ProxyOps> ProxyManager<T> {
     ///
     /// # Errors
     /// If the creation of the proxy fails, this function will return `Err(())`.
+    #[allow(clippy::result_unit_err)]
     pub fn new(handle: &HandleType) -> Result<Self, ()> {
         ProxyWrapperGuard::new(handle).map(|proxy| Self(Arc::new(proxy)))
     }
@@ -314,7 +316,7 @@ pub trait EventOps: Sized {
 ///
 /// This function must be called with a pointer to a valid event of the type `T`. The event behind
 /// the pointer must not have been deleted already.
-unsafe fn native_get_new_samples<'a, T: EventOps>(
+unsafe fn native_get_new_samples<T: EventOps>(
     native: *mut ffi::ProxyEvent<T>,
     callback: impl FnMut(*mut sample_ptr_rs::SamplePtr<T>),
 ) -> usize {
@@ -453,7 +455,7 @@ impl<'a, const N: usize, T: EventOps> IntoIterator for SampleContainer<'a, N, T>
     type Item = SamplePtr<'a, T>;
     type IntoIter = std::iter::Rev<arrayvec::IntoIter<Self::Item, N>>;
 
-    fn into_iter(mut self) -> Self::IntoIter {
+    fn into_iter(self) -> Self::IntoIter {
         self.samples.into_iter().rev()
     }
 }
@@ -677,6 +679,7 @@ pub struct HandleContainer {
 
 impl HandleContainer {
     /// Provides the number of handles in the container.
+    #[allow(clippy::len_without_is_empty)]
     pub fn len(&self) -> usize {
         // SAFETY: Since we only pass the pointer received by the create FFI function, the call is
         // safe.
@@ -726,6 +729,7 @@ impl Drop for HandleContainer {
 ///
 /// Returns a list of found instances, which can be empty in case there aren't any. If an error
 /// occurred during the search or no container is returned, this function will return `Err(())`.
+#[allow(clippy::result_unit_err)]
 pub fn find_service(instance_specifier: InstanceSpecifier) -> Result<HandleContainer, ()> {
     // SAFETY: Since we only pass the pointer received by the create FFI function, the call is
     // safe.

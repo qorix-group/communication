@@ -191,15 +191,16 @@ impl InstanceSpecifier {
         let service_name = service_name.strip_prefix('/').unwrap();
 
         // Check each character
-        let is_legal_char = |c| {
-            (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_'
+        // Allowed: digits, lowercase, uppercase, underscore, and hyphen
+        let is_legal_char = |c: char| {
+            c.is_ascii_digit() || c.is_ascii_lowercase() || c.is_ascii_uppercase() || c == '_' || c == '-'
         };
 
         //validation of each path segment
         !service_name.is_empty()
             && service_name.split('/').all(|parts| {
                 // No empty segments (reject trailing "/" and "//" in the middle)
-                !parts.is_empty() && parts.chars().all(|c| is_legal_char(c))
+                !parts.is_empty() && parts.chars().all(&is_legal_char)
             })
     }
 
@@ -245,26 +246,11 @@ pub enum FindServiceSpecifier {
 }
 
 /// Convert an InstanceSpecifier into a FindServiceSpecifier
-impl Into<FindServiceSpecifier> for InstanceSpecifier {
-    fn into(self) -> FindServiceSpecifier {
-        FindServiceSpecifier::Specific(self)
+impl From<InstanceSpecifier> for FindServiceSpecifier {
+    fn from(specifier: InstanceSpecifier) -> FindServiceSpecifier {
+        FindServiceSpecifier::Specific(specifier)
     }
 }
-
-/// This trait shall ensure that we can safely use an instance of the implementing type across
-/// address boundaries. This property may be violated by the following circumstances:
-/// - usage of pointers to other members of the struct itself (akin to !Unpin structs)
-/// - usage of Rust pointers or references to other data
-///
-/// This can be trivially achieved by not using any sort of reference. In case a reference (either
-/// to self or to other data) is required, the following options exist:
-/// - Use indices into other data members of the same structure
-/// - Use offset pointers _to the same memory chunk_ that point to different (external) data
-///
-/// # Safety
-///
-/// Since it is yet to be proven whether this trait can be implemented safely (assumption is: no) it
-/// is unsafe for now. The expectation is that very few users ever need to implement this manually.
 
 /// A `Sample` provides a reference to a memory buffer of an event with immutable value.
 ///

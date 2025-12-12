@@ -42,6 +42,7 @@ impl OfferState for UnOffered {}
 impl OfferState for Offered {}
 
 pub trait SkeletonOps: Sized {
+    #[allow(clippy::result_unit_err)]
     fn send(&self, event: *mut ffi::SkeletonEvent<Self>) -> common::Result<()>;
 }
 
@@ -72,6 +73,7 @@ impl<T: SkeletonOps, L> SkeletonEvent<T, UnOffered, L> {
 }
 
 impl<T: SkeletonOps, L> SkeletonEvent<T, Offered, L> {
+    #[allow(clippy::result_unit_err)]
     pub fn send(&self, stamped_data: T) -> common::Result<()> {
         stamped_data.send(self.event)
     }

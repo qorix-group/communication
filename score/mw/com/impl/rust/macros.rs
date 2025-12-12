@@ -51,7 +51,7 @@ macro_rules! import_type {
                 #[link_name=concat!("mw_com_gen_SamplePtr_", stringify!($uid), "_delete")]
                 pub unsafe fn delete(sample_ptr: *mut $crate::proxy_bridge::SamplePtr<$ctype>);
                 #[link_name=concat!("mw_com_gen_", stringify!($uid), "_get_size")]
-                pub safe fn get_size() -> u32;
+                pub unsafe fn get_size() -> u32;
                 #[link_name=concat!("mw_com_gen_SkeletonEvent_", stringify!($uid), "_send")]
                 pub unsafe fn send(
                     skeleton_event: *mut $crate::skeleton_bridge::NativeSkeletonEvent<$ctype>,
@@ -87,7 +87,7 @@ macro_rules! import_type {
 
         impl $crate::TypeInfo for $ctype {
             fn get_size() -> u32 {
-                $uid::get_size()
+                unsafe { $uid::get_size() }
             }
         }
 
@@ -153,7 +153,7 @@ macro_rules! import_interface {
             mod ffi {
                 unsafe extern "C" {
                     #[link_name=concat!("mw_com_gen_ProxyWrapperClass_", stringify!($uid), "_create")]
-                    pub safe fn create(handle: &$crate::proxy_bridge::HandleType) -> *mut $crate::proxy_bridge::ProxyWrapperClass;
+                    pub unsafe fn create(handle: &$crate::proxy_bridge::HandleType) -> *mut $crate::proxy_bridge::ProxyWrapperClass;
                     #[link_name=concat!("mw_com_gen_ProxyWrapperClass_", stringify!($uid), "_delete")]
                     pub unsafe fn delete(proxy: *mut $crate::proxy_bridge::ProxyWrapperClass);
                     #[link_name=concat!("mw_com_gen_SkeletonWrapperClass_", stringify!($uid), "_delete")]
@@ -161,9 +161,9 @@ macro_rules! import_interface {
                     #[link_name=concat!("mw_com_gen_SkeletonWrapperClass_", stringify!($uid), "_create")]
                     pub unsafe fn create_skeleton(instance_specifier: *const $crate::proxy_bridge::NativeInstanceSpecifier) -> *mut $crate::skeleton_bridge::SkeletonWrapperClass;
                     #[link_name=concat!("mw_com_gen_SkeletonWrapperClass_", stringify!($uid), "_offer")]
-                    pub fn offer(skeleton: *mut $crate::skeleton_bridge::SkeletonWrapperClass) -> bool;
+                    pub unsafe fn offer(skeleton: *mut $crate::skeleton_bridge::SkeletonWrapperClass) -> bool;
                     #[link_name=concat!("mw_com_gen_SkeletonWrapperClass_", stringify!($uid), "_stop_offer")]
-                    pub fn stop_offer(skeleton: *mut $crate::skeleton_bridge::SkeletonWrapperClass);
+                    pub unsafe fn stop_offer(skeleton: *mut $crate::skeleton_bridge::SkeletonWrapperClass);
                 }
                 $crate::per_event_module!($uid, $(($ev_name: $ev_ty)),*);
             }
