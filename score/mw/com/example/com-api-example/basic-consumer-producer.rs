@@ -70,7 +70,7 @@ fn use_consumer<R: Runtime>(runtime: &R) -> VehicleConsumer<R> {
 }
 
 fn use_producer<R: Runtime>(runtime: &R) -> VehicleOfferedProducer<R> {
-    let producer_builder = runtime.producer_builder::<VehicleInterface, VehicleProducer<R>>(
+    let producer_builder = runtime.producer_builder::<VehicleInterface>(
         InstanceSpecifier::new("/My/Funk/ServiceName").unwrap(),
     );
     let producer = producer_builder.build().unwrap();

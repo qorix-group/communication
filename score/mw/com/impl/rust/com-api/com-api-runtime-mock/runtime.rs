@@ -48,7 +48,7 @@ pub struct MockConsumerInfo {
 impl Runtime for MockRuntimeImpl {
     type ServiceDiscovery<I: Interface> = SampleConsumerDiscovery<I>;
     type Subscriber<T: Reloc + Send + Debug> = SubscribableImpl<T>;
-    type ProducerBuilder<I: Interface, P: Producer<Self, Interface = I>> = SampleProducerBuilder<I>;
+    type ProducerBuilder<I: Interface> = SampleProducerBuilder<I>;
     type Publisher<T: Reloc + Send + Debug> = Publisher<T>;
     type ProviderInfo = MockProviderInfo;
     type ConsumerInfo = MockConsumerInfo;
@@ -62,10 +62,10 @@ impl Runtime for MockRuntimeImpl {
         }
     }
 
-    fn producer_builder<I: Interface, P: Producer<Self, Interface = I>>(
+    fn producer_builder<I: Interface>(
         &self,
         instance_specifier: InstanceSpecifier,
-    ) -> Self::ProducerBuilder<I, P> {
+    ) -> Self::ProducerBuilder<I> {
         SampleProducerBuilder::new(self, instance_specifier)
     }
 }
@@ -418,11 +418,14 @@ impl<I: Interface> SampleProducerBuilder<I> {
     }
 }
 
-impl<I: Interface, P: Producer<MockRuntimeImpl, Interface = I>> ProducerBuilder<I, P, MockRuntimeImpl> for SampleProducerBuilder<I> {}
+impl<I: Interface> ProducerBuilder<I, MockRuntimeImpl> for SampleProducerBuilder<I> {}
 
-impl<I: Interface, P: Producer<MockRuntimeImpl, Interface = I>> Builder<P> for SampleProducerBuilder<I> {
-    fn build(self) -> Result<P> {
-        todo!()
+impl<I: Interface> Builder<I::Producer<MockRuntimeImpl>> for SampleProducerBuilder<I> {
+    fn build(self) -> Result<I::Producer<MockRuntimeImpl>> {
+        let instance_info = MockProviderInfo {
+            instance_specifier: self.instance_specifier.clone(),
+        };
+        I::Producer::new(instance_info)
     }
 }
 

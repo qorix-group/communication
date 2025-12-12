@@ -95,12 +95,8 @@ pub trait Runtime {
     /// Subscriber<T> types for Manages subscriptions to event notifications
     type Subscriber<T: Reloc + Send + Debug>: Subscriber<T, Self>;
 
-    /// ProducerBuilder<I, P> types for Constructs producer instances for offering services
-    type ProducerBuilder<I: Interface, P: Producer<Self, Interface = I>>: ProducerBuilder<
-        I,
-        P,
-        Self,
-    >;
+    /// ProducerBuilder<I> types for Constructs producer instances for offering services
+    type ProducerBuilder<I: Interface>: ProducerBuilder<I, Self>;
 
     /// Publisher<T> types for Publishes event data to subscribers
     type Publisher<T: Reloc + Send + Debug>: Publisher<T, Self>;
@@ -138,10 +134,10 @@ pub trait Runtime {
     /// # Returns
     ///
     /// A configured builder ready for finalization via `build()`
-    fn producer_builder<I: Interface, P: Producer<Self, Interface = I>>(
+    fn producer_builder<I: Interface>(
         &self,
         instance_specifier: InstanceSpecifier,
-    ) -> Self::ProducerBuilder<I, P>;
+    ) -> Self::ProducerBuilder<I>;
 }
 
 /// Builder for Runtime instances with configuration support.
@@ -488,10 +484,9 @@ pub trait Consumer<R: Runtime + ?Sized> {
 ///
 /// # Type Parameters
 /// * `I` - The service interface being offered
-/// * `P` - The producer type being constructed
 /// * `R` - The runtime managing the producer
-pub trait ProducerBuilder<I: Interface, P: Producer<R, Interface = I>, R: Runtime + ?Sized>:
-    Builder<P>
+pub trait ProducerBuilder<I: Interface, R: Runtime + ?Sized>:
+    Builder<I::Producer<R>>
 {
 }
 

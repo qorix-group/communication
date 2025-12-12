@@ -46,7 +46,7 @@ pub struct LolaConsumerInfo {
 impl Runtime for LolaRuntimeImpl {
     type ServiceDiscovery<I: Interface> = SampleConsumerDiscovery<I>;
     type Subscriber<T: Reloc + Send + Debug> = SubscribableImpl<T>;
-    type ProducerBuilder<I: Interface, P: Producer<Self, Interface = I>> = SampleProducerBuilder<I>;
+    type ProducerBuilder<I: Interface> = SampleProducerBuilder<I>;
     type Publisher<T: Reloc + Send + Debug> = Publisher<T>;
     type ProviderInfo = LolaProviderInfo;
     type ConsumerInfo = LolaConsumerInfo;
@@ -60,10 +60,10 @@ impl Runtime for LolaRuntimeImpl {
         }
     }
 
-    fn producer_builder<I: Interface, P: Producer<Self, Interface = I>>(
+    fn producer_builder<I: Interface>(
         &self,
         instance_specifier: InstanceSpecifier,
-    ) -> Self::ProducerBuilder<I, P> {
+    ) -> Self::ProducerBuilder<I> {
         SampleProducerBuilder::new(self, instance_specifier)
     }
 }
@@ -428,11 +428,14 @@ impl<I: Interface> SampleProducerBuilder<I> {
     }
 }
 
-impl<I: Interface, P: Producer<LolaRuntimeImpl, Interface = I>> ProducerBuilder<I, P, LolaRuntimeImpl> for SampleProducerBuilder<I> {}
+impl<I: Interface> ProducerBuilder<I, LolaRuntimeImpl> for SampleProducerBuilder<I> {}
 
-impl<I: Interface, P: Producer<LolaRuntimeImpl, Interface = I>> Builder<P> for SampleProducerBuilder<I> {
-    fn build(self) -> Result<P> {
-        todo!()
+impl<I: Interface> Builder<I::Producer<LolaRuntimeImpl>> for SampleProducerBuilder<I> {
+    fn build(self) -> Result<I::Producer<LolaRuntimeImpl>> {
+        let instance_info = LolaProviderInfo {
+            instance_specifier: self.instance_specifier.clone(),
+        };
+        I::Producer::new(instance_info)
     }
 }
 
