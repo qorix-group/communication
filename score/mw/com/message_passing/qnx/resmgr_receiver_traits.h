@@ -70,6 +70,7 @@ class ResmgrReceiverTraits
 
     using FileDescriptorResourcesType = OsResources;
 
+    // coverity[autosar_cpp14_m7_3_1_violation] false-positive: function implementation inside a namespace (Ticket-234468)
     static score::cpp::expected<file_descriptor_type, score::os::Error> open_receiver(
         const std::string_view identifier,
         const score::cpp::pmr::vector<uid_t>& allowed_uids,
@@ -91,6 +92,7 @@ class ResmgrReceiverTraits
     // Receiver<ChannelTraits>::StartListening(), hence no exception will be thrown.
     // coverity[autosar_cpp14_a8_4_10_violation]
     // coverity[autosar_cpp14_a15_5_3_violation]
+    // coverity[autosar_cpp14_m7_3_1_violation] false-positive: function implementation inside a namespace (Ticket-234468)
     static score::cpp::expected<bool, score::os::Error> receive_next(const file_descriptor_type file_descriptor,
                                                             const std::size_t thread,
                                                             ShortMessageProcessor fShort,
@@ -355,11 +357,13 @@ class ResmgrReceiverTraits
         return *static_cast<ResmgrContextData*>(ctp->extra->data);
     }
 
+    // coverity[autosar_cpp14_m7_3_1_violation] false-positive: function implementation inside a namespace (Ticket-234468)
     static score::cpp::expected<dispatch_t*, score::os::Error> CreateAndAttachChannel(
         const std::string_view identifier,
         ResmgrSetup& setup,
         const FileDescriptorResourcesType& os_resources) noexcept;
 
+    // coverity[autosar_cpp14_m7_3_1_violation] false-positive: function implementation inside a namespace (Ticket-234468)
     static score::cpp::expected<std::int32_t, score::os::Error> CreateTerminationMessageSideChannel(
         dispatch_t* const dispatch_pointer,
         const FileDescriptorResourcesType& os_resources) noexcept;
