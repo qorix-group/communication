@@ -193,7 +193,7 @@ impl InstanceSpecifier {
         // Check each character
         // Allowed: digits, lowercase, uppercase, underscore, and hyphen
         let is_legal_char = |c: char| {
-            c.is_ascii_digit() || c.is_ascii_lowercase() || c.is_ascii_uppercase() || c == '_' || c == '-'
+            c.is_ascii_digit() || c.is_ascii_lowercase() || c.is_ascii_uppercase() || c == '_'
         };
 
         //validation of each path segment
