@@ -33,6 +33,7 @@ QnxDispatchServerFactory::QnxDispatchServerFactory(const std::shared_ptr<QnxDisp
 
 QnxDispatchServerFactory::~QnxDispatchServerFactory() noexcept = default;
 
+// coverity[autosar_cpp14_a2_10_4_violation] false-positive: name is not reused; system-specific implementation
 score::cpp::pmr::unique_ptr<IServer> QnxDispatchServerFactory::Create(const ServiceProtocolConfig& protocol_config,
                                                                const ServerConfig& server_config) noexcept
 {

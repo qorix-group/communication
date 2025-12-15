@@ -22,6 +22,7 @@ namespace message_passing
 
 class QnxDispatchEngine;
 
+// coverity[autosar_cpp14_a2_10_4_violation] false-positive: neither static function nor static non-member object
 class QnxDispatchServerFactory final : public IServerFactory
 {
   public:
