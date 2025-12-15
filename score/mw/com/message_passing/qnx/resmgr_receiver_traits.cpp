@@ -23,8 +23,9 @@ namespace score::mw::com::message_passing
 
 namespace
 {
-
+// coverity[autosar_cpp14_a0_1_1_violation] false-positive: used in MsgSend and MsgReply
 constexpr void* kNoReply{nullptr};
+// coverity[autosar_cpp14_a0_1_1_violation] false-positive: used in MsgSend and MsgReply
 constexpr std::size_t kNoSize{0U};
 
 }  // namespace

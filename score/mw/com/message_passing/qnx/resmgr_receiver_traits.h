@@ -44,6 +44,7 @@ class ResmgrReceiverTraits
     // coverity[autosar_cpp14_a0_1_1_violation : FALSE]
     static constexpr std::size_t kConcurrency{2U};
     using file_descriptor_type = ResmgrReceiverState*;
+    // coverity[autosar_cpp14_a0_1_1_violation] false-positive: used in ResmgrReceiverTraits::close_receiver
     static constexpr file_descriptor_type INVALID_FILE_DESCRIPTOR{nullptr};
 
     struct OsResources
