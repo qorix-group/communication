@@ -23,7 +23,10 @@ namespace score::message_passing
 namespace
 {
 
+// false-positive: vars are being used in pulse _attach _detach calls
+// coverity[autosar_cpp14_a0_1_1_violation]
 constexpr std::int32_t kTimerPulseCode = _PULSE_CODE_MINAVAIL;
+// coverity[autosar_cpp14_a0_1_1_violation]
 constexpr std::int32_t kEventPulseCode = _PULSE_CODE_MINAVAIL + 1;
 
 template <typename T>
