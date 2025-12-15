@@ -165,6 +165,7 @@ int QnxDispatchEngine::EndpointFdSelectCallback(select_context_t* /*ctp*/,
 }
 
 // coverity[autosar_cpp14_m7_3_1_violation] false-positive: class method (Ticket-234468)
+// coverity[autosar_cpp14_a0_1_3_violation] false-positive: used as a pulse callback
 int QnxDispatchEngine::TimerPulseCallback(message_context_t* /*ctp*/,
                                           int /*code*/,
                                           unsigned /*flags*/,
@@ -181,6 +182,7 @@ int QnxDispatchEngine::TimerPulseCallback(message_context_t* /*ctp*/,
 
 // coverity[autosar_cpp14_a8_4_10_violation]: see "Note 'C++14 A8-4-10'"
 // coverity[autosar_cpp14_m7_3_1_violation] false-positive: class method (Ticket-234468)
+// coverity[autosar_cpp14_a0_1_3_violation] false-positive: used as a pulse callback
 int QnxDispatchEngine::EventPulseCallback(message_context_t* ctp,
                                           int /*code*/,
                                           unsigned /*flags*/,

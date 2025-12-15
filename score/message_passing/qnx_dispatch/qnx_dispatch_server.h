@@ -64,6 +64,7 @@ class QnxDispatchServer final : public IServer, private QnxDispatchEngine::Resou
         ServerConnection& operator=(ServerConnection&&) noexcept = delete;
 
       private:
+        // coverity[autosar_cpp14_a0_1_3_violation] false-positive: used in multiple class methods
         QnxDispatchServer& GetQnxDispatchServer() noexcept
         {
             // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast) by API design

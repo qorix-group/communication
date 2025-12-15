@@ -282,12 +282,14 @@ class QnxDispatchEngine final : public ISharedResourceEngine
                                                     const QnxResourcePath& path) noexcept;
     void StopServer(ResourceManagerServer& server) noexcept;
 
+    // coverity[autosar_cpp14_a0_1_3_violation] false-positive: used in multiple class methods
     static ResourceManagerConnection& OcbToConnection(RESMGR_OCB_T* const ocb)
     {
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast) by API design
         return static_cast<ResourceManagerConnection&>(*ocb);
     }
 
+    // coverity[autosar_cpp14_a0_1_3_violation] false-positive: used in multiple class methods
     static ResourceManagerServer& ResmgrHandleToServer(RESMGR_HANDLE_T* const handle)
     {
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast) by API design
