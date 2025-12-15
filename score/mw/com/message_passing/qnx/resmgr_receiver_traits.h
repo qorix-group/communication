@@ -355,6 +355,7 @@ class ResmgrReceiverTraits
         ResmgrReceiverState& receiver_state;
     };
 
+    // coverity[autosar_cpp14_a0_1_3_violation] false-positive: used in multiple methods of this class
     // coverity[autosar_cpp14_a8_4_10_violation]
     static ResmgrContextData& GetContextData(const resmgr_context_t* const ctp)
     {
