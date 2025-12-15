@@ -135,7 +135,7 @@ git_override(
 doxygen_extension = use_extension("@rules_doxygen//:extensions.bzl", "doxygen_extension")
 use_repo(doxygen_extension, "doxygen")
 
-# Python 3.12 toolchain for Bazel (required for LOBSTER/TRLC dependencies)
+# Python 3.12 toolchain for Bazel
 bazel_dep(name = "rules_python", version = "0.32.0")
 
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
@@ -143,14 +143,14 @@ python.toolchain(
     python_version = "3.12",
 )
 
-# Python pip dependencies for traceability tools
+# Python pip dependencies
 pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
 pip.parse(
-    hub_name = "communication_pip",
+    hub_name = "score_communication_pip",
     python_version = "3.12",
-    requirements_lock = "//third_party/python:requirements.txt",
+    requirements_lock = "//:requirements_lock.txt",
 )
-use_repo(pip, "communication_pip")
+use_repo(pip, "score_communication_pip")
 
 # TRLC dependency for requirements traceability
 bazel_dep(name = "trlc", version = "0.0.0")
@@ -206,12 +206,5 @@ oci.pull(
 use_repo(oci, "ubuntu_24_04")
 
 bazel_dep(name = "rules_pkg", version = "1.0.1")
-
-pip.parse(
-    hub_name = "score_communication_pip",
-    python_version = "3.12",
-    requirements_lock = "//:requirements_lock.txt",
-)
-use_repo(pip, "score_communication_pip")
 
 bazel_dep(name = "score_tooling", version = "1.0.2")

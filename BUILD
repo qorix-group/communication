@@ -18,9 +18,12 @@ load("@score_tooling//:defs.bzl", "copyright_checker")
 compile_pip_requirements(
     name = "pip_requirements",
     src = "requirements.in",
-    data = ["//quality/integration_testing:pip_requirements"],
+    data = [
+        "//quality/integration_testing:pip_requirements",
+        "//third_party/traceability:pip_requirements",
+    ],
     requirements_txt = "requirements_lock.txt",
-) 
+)
 
 copyright_checker(
     name = "copyright",
