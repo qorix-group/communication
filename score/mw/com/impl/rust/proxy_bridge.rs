@@ -10,16 +10,21 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-/// This module provides boilerplate for a generated bridge between the Rust and C++ code for the
-/// proxy side of a service.
-///
-/// It contains any code that does not depend on a user-defined type or can be made generic over
-/// the user-defined type, e.g. when the type isn't relevant for the enclosing type's layout and
-/// no type safety is needed on API level. For any actions that are type-dependent, the action
-/// needs to be implemented by external code. This happens by implementing `EventOps` and
-/// `ProxyOps` for the user-defined type. The implementation typically will call the respective
-/// generated FFI functions to operate on the typed objects like the event itself or the sample
-/// pointer. See the documentation of the respective traits for more details.
+//! This module provides boilerplate for a generated bridge between the Rust and C++ code for the
+//! proxy side of a service.
+//! It contains any code that does not depend on a user-defined type or can be made generic over
+//! the user-defined type, e.g. when the type isn't relevant for the enclosing type's layout and
+//! no type safety is needed on API level. For any actions that are type-dependent, the action
+//! needs to be implemented by external code. This happens by implementing `EventOps` and
+//! `ProxyOps` for the user-defined type. The implementation typically will call the respective
+//! generated FFI functions to operate on the typed objects like the event itself or the sample
+//! pointer. See the documentation of the respective traits for more details.
+
+//lifetime warning SamplePtr struct impl block . it is required for the SamplePtr struct event lifetime parameter
+// As of supressing clippy::elidable_lifetime_names
+//TODO: revist this once com-api is stable
+#![allow(clippy::needless_lifetimes)]
+
 use std::collections::VecDeque;
 use std::ffi::CString;
 use std::fmt::{self, Debug, Formatter};
@@ -38,7 +43,7 @@ mod ffi {
     use std::marker::PhantomData;
     use std::mem::transmute;
 
-    /// This type represents score::mw::com::InstanceSpecifier as an opaque struct.
+    /// This type represents `score::mw::com::InstanceSpecifier` as an opaque struct.
     /// Note that this struct is empty as we only use references to it on Rust side.
     #[repr(C)]
     pub struct NativeInstanceSpecifier {
@@ -46,14 +51,14 @@ mod ffi {
     }
 
     /// This type represents a
-    /// ::score::mw::com::ServiceHandleContainer<::score::mw::com::impl::HandleType> as an opaque
+    /// `::score::mw::com::ServiceHandleContainer`<`::score::mw::com::impl::HandleType`> as an opaque
     /// struct. Note that this struct is empty as we only use references to it on Rust side.
     #[repr(C)]
     pub(super) struct NativeHandleContainer {
         _dummy: [u8; 0],
     }
 
-    /// This type represents score::mw::com::impl::ProxyWrapperClass as an opaque struct for any
+    /// This type represents `score::mw::com::impl::ProxyWrapperClass` as an opaque struct for any
     /// template argument, as the type isn't relevant when dealing with it as an opaque type.
     /// Note that this struct is empty as we only use references to it on Rust side.
     #[repr(C)]
@@ -61,14 +66,14 @@ mod ffi {
         _dummy: [u8; 0],
     }
 
-    /// This type represents score::mw::com::impl::ProxyEventBase as an opaque struct.
+    /// This type represents `score::mw::com::impl::ProxyEventBase` as an opaque struct.
     /// Note that this struct is empty as we only use references to it on Rust side.
     #[repr(C)]
     pub struct ProxyEventBase {
         _dummy: [u8; 0],
     }
 
-    /// This type represents score::mw::com::impl::ProxyEvent as an opaque struct.
+    /// This type represents `score::mw::com::impl::ProxyEvent` as an opaque struct.
     /// Note that this struct is empty as we only use references to it on Rust side.
     #[repr(C)]
     pub struct ProxyEvent<T> {
@@ -76,7 +81,7 @@ mod ffi {
         _data: PhantomData<T>,
     }
 
-    /// This type represents score::mw::com::impl::HandleType as an opaque struct.
+    /// This type represents `score::mw::com::impl::HandleType` as an opaque struct.
     /// Note that this struct is empty as we only use references to it on Rust side.
     #[repr(C)]
     pub struct HandleType {
@@ -157,7 +162,7 @@ mod ffi {
 /// # Safety
 ///
 /// The provided pointer is assumed to point to a callback set from the Rust side. This callback
-/// will be an FnMut dynamic fat pointer. If this isn't true (or if the pointer is invalid), this
+/// will be an `FnMut` dynamic fat pointer. If this isn't true (or if the pointer is invalid), this
 /// will invoke undefined behavior.
 #[no_mangle]
 unsafe extern "C" fn mw_com_impl_call_dyn_fnmut(ptr: *const ffi::FatPtr) {
@@ -170,7 +175,7 @@ unsafe extern "C" fn mw_com_impl_call_dyn_fnmut(ptr: *const ffi::FatPtr) {
 /// # Safety
 ///
 /// The provided pointer is assumed to point to a callback set from the Rust side. This callback
-/// will be an FnMut dynamic fat pointer. If this isn't true (or if the pointer is invalid), this
+/// will be an `FnMut` dynamic fat pointer. If this isn't true (or if the pointer is invalid), this
 /// will invoke undefined behavior.
 #[no_mangle]
 unsafe extern "C" fn mw_com_impl_delete_boxed_fnmut(ptr: *mut ffi::FatPtr) {
@@ -223,13 +228,13 @@ impl<T: ProxyOps> ProxyWrapperGuard<T> {
     /// If the creation of the proxy fails, this function will return `Err(())`.
     pub fn new(handle: &HandleType) -> Result<Self, ()> {
         let proxy = <T as ProxyOps>::create(handle);
-        if !proxy.is_null() {
+        if proxy.is_null() {
+            Err(())
+        } else {
             Ok(Self {
                 proxy,
                 _type: std::marker::PhantomData,
             })
-        } else {
-            Err(())
         }
     }
 }
@@ -284,6 +289,7 @@ impl<T: ProxyOps> ProxyManager<T> {
     /// Please note that this method returns a `*mut ProxyWrapperClass`. The caller must make sure
     /// that no aliasing happens despite that. The method itself is not marked unsafe as
     /// dereferencing the pointer is by itself an unsafe operation.
+    #[must_use = "getting the native proxy without using it is likely a mistake; the pointer must be used in some way"]
     pub fn get_native_proxy(&self) -> *mut ProxyWrapperClass {
         self.0.proxy
     }
@@ -367,6 +373,7 @@ pub struct ProxyEvent<T, P> {
 // Therefore, it is safe to send this struct to another thread.
 unsafe impl<T, P> Send for ProxyEvent<T, P> {}
 
+#[allow(clippy::missing_fields_in_debug)]
 impl<T, P> Debug for ProxyEvent<T, P> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("ProxyEvent")
@@ -419,7 +426,6 @@ impl<T: EventOps, P> ProxyEvent<T, P> {
     }
 }
 
-#[must_use]
 pub struct SubscribedProxyEvent<T, P> {
     native: *mut ffi::ProxyEvent<T>,
     proxy: P,
@@ -431,6 +437,7 @@ pub struct SubscribedProxyEvent<T, P> {
 // Therefore, it is safe to send this struct to another thread.
 unsafe impl<T, P> Send for SubscribedProxyEvent<T, P> {}
 
+#[allow(clippy::missing_fields_in_debug)]
 impl<T, P> Debug for SubscribedProxyEvent<T, P> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("SubscribedProxyEvent")
@@ -445,7 +452,7 @@ pub struct SampleContainer<'a, const N: usize, T: EventOps> {
 
 impl<'a, const N: usize, T: EventOps> Deref for SampleContainer<'a, N, T> {
     type Target = [SamplePtr<'a, T>];
-
+    #[allow(clippy::explicit_deref_methods)]
     fn deref(&self) -> &Self::Target {
         self.samples.deref()
     }
@@ -481,6 +488,15 @@ impl<T: EventOps, P: Clone> SubscribedProxyEvent<T, P> {
         self.get_new_samples::<1>().into_iter().next()
     }
 
+    /// Retrieve up to N new samples from the event.
+    /// If there are less than N new samples available, only the available samples are returned.
+    ///
+    /// # Returns
+    /// A container holding up to N new samples.
+    ///
+    /// # Panics
+    /// This function will panic if the number of samples retrieved from C++ side does not match
+    /// the number of samples stored in the container.
     pub fn get_new_samples<const N: usize>(&self) -> SampleContainer<'_, N, T> {
         let mut samples = arrayvec::ArrayVec::<crate::SamplePtr<T>, N>::new();
         let callback = |raw_sample: *mut sample_ptr_rs::SamplePtr<T>| {
@@ -561,7 +577,6 @@ impl<T, P> Drop for SubscribedProxyEvent<T, P> {
     }
 }
 
-#[must_use]
 pub struct ProxyEventStream<'a, T: EventOps, P> {
     event: &'a mut SubscribedProxyEvent<T, P>,
     waker_storage: Arc<AtomicWaker>,

@@ -64,7 +64,7 @@ pub enum Error {
     SubscribeFailed,
 }
 
-/// Result type alias with std::result::Result using com_api::Error as error type
+/// Result type alias with `std::result::Result` using `com_api::Error` as error type
 pub type Result<T> = core::result::Result<T, Error>;
 
 /// A factory-like trait for constructing complex objects through a builder pattern.
@@ -82,6 +82,10 @@ pub trait Builder<Output> {
     /// # Returns
     ///
     ///  A 'Result' containing the constructed object on success and an 'Error' on failure.
+    ///
+    ///  # Errors
+    ///
+    ///  Errors that may occur during the build process captured in the 'Result'.
     /// TODO: Should this be &mut self so that this can be turned into a trait object?
     fn build(self) -> Result<Output>;
 }
@@ -89,22 +93,22 @@ pub trait Builder<Output> {
 /// This represents the com implementation and acts as a root for all types and objects provided by
 /// the implementation.
 pub trait Runtime {
-    /// ServiceDiscovery<I> types for Discovers available service instances of a specific interface
+    /// types for Discovers available service instances of a specific interface
     type ServiceDiscovery<I: Interface>: ServiceDiscovery<I, Self>;
 
-    /// Subscriber<T> types for Manages subscriptions to event notifications
+    /// types for Manages subscriptions to event notifications
     type Subscriber<T: Reloc + Send + Debug>: Subscriber<T, Self>;
 
-    /// ProducerBuilder<I> types for Constructs producer instances for offering services
+    /// types for Constructs producer instances for offering services
     type ProducerBuilder<I: Interface>: ProducerBuilder<I, Self>;
 
-    /// Publisher<T> types for Publishes event data to subscribers
+    /// types for Publishes event data to subscribers
     type Publisher<T: Reloc + Send + Debug>: Publisher<T, Self>;
 
-    /// ProviderInfo types for Configuration data for service producers instances
+    /// `ProviderInfo` types for Configuration data for service producers instances
     type ProviderInfo: Send + Clone;
 
-    /// ConsumerInfo types for Configuration data for service consumers instances
+    /// `ConsumerInfo` types for Configuration data for service consumers instances
     type ConsumerInfo: Send + Clone;
 
     /// Find a service instance for the given interface and instance specifier.
@@ -169,8 +173,8 @@ where
 ///
 /// The string shall describe where to find a certain instance of a service. Each level shall look
 /// like this
-///  /my/path/to/service_name
-/// validation for service name- /my/path/to/service_name
+///  `/my/path/to/service_name`
+/// validation for service name- `/my/path/to/service_name`
 /// allowed characters: a-z A-Z 0-9 and '/'
 /// Must start with leading/trailing check
 /// Not allowed consecutive '/' characters
@@ -213,7 +217,10 @@ impl InstanceSpecifier {
     /// * `service_name` - The string representing the instance path
     ///
     /// # Returns
-    /// A 'Result' containing the constructed InstanceSpecifier on success and an 'Error' on failure.
+    /// A `Result` containing the constructed `InstanceSpecifier` on success and an `Error` on failure.
+    ///
+    /// # Errors
+    /// Returns `Error::Fail` if the provided string does not conform to the required format.
     pub fn new(service_name: impl AsRef<str>) -> Result<InstanceSpecifier> {
         let service_name = service_name.as_ref();
         if Self::check_str(service_name) {
@@ -245,7 +252,7 @@ pub enum FindServiceSpecifier {
     Any,
 }
 
-/// Convert an InstanceSpecifier into a FindServiceSpecifier
+/// Convert an `InstanceSpecifier` into a `FindServiceSpecifier`
 impl From<InstanceSpecifier> for FindServiceSpecifier {
     fn from(specifier: InstanceSpecifier) -> FindServiceSpecifier {
         FindServiceSpecifier::Specific(specifier)
@@ -257,7 +264,7 @@ impl From<InstanceSpecifier> for FindServiceSpecifier {
 /// By implementing the `Deref` trait implementations of the trait support the `.` operator for dereferencing.
 /// The buffers with its data lives as long as there are references to it existing in the framework.
 ///
-/// The ordering of SamplePtrs is total over the reception order
+/// The ordering of `SamplePtrs` is total over the reception order
 /// # Type Parameters
 /// * `T` - The relocatable event data type
 // TODO: C++ doesn't yet support this. Expose API to compare SamplePtr ages.
@@ -293,6 +300,9 @@ where
     /// # Returns
     ///
     /// A `Result` indicating success or failure of the send operation.
+    ///
+    /// # Errors
+    /// Returns 'Error' if the send operation fails.
     fn send(self) -> Result<()>;
 }
 
@@ -304,8 +314,8 @@ where
 /// # Type Parameters
 /// * `T` - The relocatable event data type
 ///
-/// TODO: Shall we also require DerefMut<Target=MaybeUninit<T>> from implementing types? How to deal
-/// TODO: with the ambiguous assume_init() then?
+/// TODO: Shall we also require `DerefMut`<Target=MaybeUninit<T>> from implementing types? How to deal
+/// TODO: with the ambiguous `assume_init()` then?
 pub trait SampleMaybeUninit<T>: Debug + AsMut<core::mem::MaybeUninit<T>>
 where
     T: Send + Reloc + Debug,
@@ -316,7 +326,7 @@ where
     ///
     /// This corresponds to `MaybeUninit::assume_init`.
     ///
-    /// TODO: Collision with MaybeUninit::assume_init() needs to be resolved.
+    /// TODO: Collision with `MaybeUninit::assume_init()` needs to be resolved.
     ///
     /// # Safety
     ///
@@ -402,6 +412,9 @@ pub trait Producer<R: Runtime + ?Sized> {
     /// # Returns
     ///
     /// A 'Result' containing the offered producer on success and an 'Error' on failure.
+    ///
+    /// # Errors
+    /// Returns 'Error' if the offer operation fails.
     fn offer(self) -> Result<Self::OfferedProducer>;
 
     /// Create a new producer instance from the provided instance information.
@@ -410,6 +423,8 @@ pub trait Producer<R: Runtime + ?Sized> {
     /// * `instance_info` - Runtime-specific configuration for this producer instance
     /// # Returns
     /// A 'Result' containing the constructed producer on success and an 'Error' on failure.
+    /// # Errors
+    /// Returns 'Error' if the producer cannot be created with the provider information.
     fn new(instance_info: R::ProviderInfo) -> Result<Self>
     where
         Self: Sized;
@@ -432,7 +447,11 @@ where
     /// # Returns
     ///
     /// A 'Result' containing the allocated sample buffer on success and an 'Error' on failure.
-    fn allocate<'a>(&'a self) -> Result<Self::SampleMaybeUninit<'a>>;
+    ///
+    /// # Errors
+    ///
+    /// Returns 'Error' if the allocation fails.
+    fn allocate(&self) -> Result<Self::SampleMaybeUninit<'_>>;
 
     /// Allocate, initialize, and send an event sample in one step.
     ///
@@ -442,6 +461,10 @@ where
     /// # Returns
     ///
     /// A 'Result' indicating success or failure of the send operation.
+    ///
+    /// # Errors
+    ///
+    /// Returns 'Error' if the send operation fails.
     fn send(&self, value: T) -> Result<()> {
         let sample = self.allocate()?;
         let init_sample = sample.write(value);
@@ -455,6 +478,8 @@ where
     /// * `instance_info` - Runtime-specific configuration for the event source
     /// # Returns
     /// A 'Result' containing the constructed publisher on success and an 'Error' on failure.
+    /// # Errors
+    /// Returns 'Error' if the publisher cannot be created with the provider information.
     fn new(identifier: &str, instance_info: R::ProviderInfo) -> Result<Self>
     where
         Self: Sized;
@@ -499,7 +524,7 @@ pub trait ProducerBuilder<I: Interface, R: Runtime + ?Sized>:
 pub trait ServiceDiscovery<I: Interface, R: Runtime + ?Sized> {
     /// Builder type for constructing consumers from discovered services
     type ConsumerBuilder: ConsumerBuilder<I, R>;
-    /// ServiceEnumerator type for iterating over available service instances
+    /// `ServiceEnumerator` type for iterating over available service instances
     type ServiceEnumerator: IntoIterator<Item = Self::ConsumerBuilder>;
 
     /// Query available instances of this service interface.
@@ -508,12 +533,19 @@ pub trait ServiceDiscovery<I: Interface, R: Runtime + ?Sized> {
     ///
     /// An iterator over builders for each discovered instance. Returns empty
     /// results if no instances are currently available.
+    ///
+    /// # Errors
+    /// Returns 'Error' if the query operation fails.
     fn get_available_instances(&self) -> Result<Self::ServiceEnumerator>;
 
     /// Asynchronous version of querying available instances of this service interface.
     ///
     /// # Returns
+    /// Future that resolves to an iterator over builders for each discovered instance.
+    /// Returns empty results if no instances are currently available.
     ///
+    /// # Errors
+    /// Returns 'Error' if the query operation fails.
     #[allow(clippy::manual_async_fn)]
     fn get_available_instances_async(
         &self,
@@ -562,6 +594,11 @@ pub trait Subscriber<T: Reloc + Send + Debug, R: Runtime + ?Sized> {
     /// # Parameters
     /// * `identifier` - Logical name of the event topic
     /// * `instance_info` - Runtime-specific configuration for the event source
+    ///   Creates a new `Consumer` instance.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the consumer cannot be created with the given identifier and instance info.
     fn new(identifier: &str, instance_info: R::ConsumerInfo) -> Result<Self>
     where
         Self: Sized;
@@ -575,6 +612,9 @@ pub trait Subscriber<T: Reloc + Send + Debug, R: Runtime + ?Sized> {
     /// A subscription handle for receiving event samples.
     /// Fails if the subscription cannot be established due to resource constraints
     /// or if the event source is not available.
+    ///
+    /// # Errors
+    /// Returns 'Error' if the subscription cannot be established.
     fn subscribe(&self, max_num_samples: usize) -> Result<Self::Subscription>;
 }
 /// A container for samples received from a subscription.
@@ -630,6 +670,9 @@ impl<S> SampleContainer<S> {
     ///
     /// # Returns
     /// A `Result` indicating success or failure.
+    ///
+    /// # Errors
+    /// Returns 'Error' if the operation fails.
     pub fn push_back(&mut self, new: S) -> Result<()> {
         self.inner.push_back(new);
         Ok(())
@@ -679,9 +722,9 @@ pub trait Subscription<T: Reloc + Send + Debug, R: Runtime + ?Sized> {
     /// The subscriber used to create this subscription.
     fn unsubscribe(self) -> Self::Subscriber;
 
-    /// Returns up to max_samples samples.
+    /// Returns up to `max_samples` samples.
     ///
-    /// This call polls for up to max_new samples from the IPC input buffers without blocking the
+    /// This call polls for up to `max_new` samples from the IPC input buffers without blocking the
     /// calling thread.
     ///
     /// The method expects a (possibly empty) buffer that may contain samples from a previous call
@@ -691,16 +734,16 @@ pub trait Subscription<T: Reloc + Send + Debug, R: Runtime + ?Sized> {
     /// TODO: How to make sure that the provided container contains samples from the same
     /// TODO: `Subscription` instance?
     ///
-    /// - If there are less than max_samples in the communication buffer, the method will reuse
+    /// - If there are less than `max_samples` in the communication buffer, the method will reuse
     ///   samples contained in the provided sample container, beginning from the last, going
     ///   backwards.
     /// - If the input container is empty on call, it will exclusively be filled with new samples.
-    /// - If the input container contains more samples than max_samples before the call,
-    ///   it will contain max_samples samples, potentially removing samples from
+    /// - If the input container contains more samples than `max_samples` before the call,
+    ///   it will contain `max_samples` samples, potentially removing samples from
     ///   the container, even if no new samples were added.
     ///
     /// Returns the updated buffer and the number of newly added samples. All new samples are added
-    /// to the back of the buffer, with the last sample being the newest. If less than max_samples
+    /// to the back of the buffer, with the last sample being the newest. If less than `max_samples`
     /// could be added to the buffer, the samples that had been inside the buffer are retained, with
     /// the first samples getting removed as new samples are added to the back of the buffer.
     ///
@@ -714,6 +757,9 @@ pub trait Subscription<T: Reloc + Send + Debug, R: Runtime + ?Sized> {
     /// # Returns
     ///
     /// Number of newly added events to the container
+    ///
+    /// # Errors
+    /// Returns 'Error' if the receive operation fails.
     fn try_receive<'a>(
         &'a self,
         scratch: &'_ mut SampleContainer<Self::Sample<'a>>,

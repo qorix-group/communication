@@ -10,8 +10,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-/// This is the "generated" part for the ipc_bridge proxy. Its main purpose is to provide the imports
-/// of the type- and name-dependent part of the FFI and create the respective user-facing objects.
+//! This is the "generated" part for the `ipc_bridge` proxy. Its main purpose is to provide the imports
+//! of the type- and name-dependent part of the FFI and create the respective user-facing objects.
 use std::default::Default;
 use std::ffi::c_char;
 

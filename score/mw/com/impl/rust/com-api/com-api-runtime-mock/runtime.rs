@@ -18,6 +18,12 @@
 
 #![allow(dead_code)]
 
+//lifetime warning for all the Sample struct impl block . it is required for the Sample struct event lifetime parameter
+// and mentaining lifetime of instances and data reference 
+// As of supressing clippy::elidable_lifetime_names
+//TODO: revist this once com-api is stable
+#![allow(clippy::needless_lifetimes)]
+
 use core::cmp::Ordering;
 use core::fmt::Debug;
 use core::future::Future;
@@ -289,9 +295,10 @@ impl<T> SubscriberImpl<T>
 where
     T: Reloc + Send + Debug,
 {
+    #[must_use = "creating a SubscriberImpl without using it is likely a mistake; the subscriber must be assigned or used in some way"]
     pub fn new() -> Self {
         Self {
-            data: Default::default(),
+            data: VecDeque::default(),
         }
     }
 
@@ -311,7 +318,7 @@ where
         T: 'a;
 
     fn unsubscribe(self) -> Self::Subscriber {
-        Default::default()
+        SubscribableImpl::default()
     }
 
     fn try_receive<'a>(
@@ -350,6 +357,7 @@ impl<T> Publisher<T>
 where
     T: Reloc + Send + Debug,
 {
+    #[must_use = "creating a Publisher without using it is likely a mistake; the publisher must be assigned or used in some way"]
     pub fn new() -> Self {
         Self { _data: PhantomData }
     }
@@ -361,7 +369,7 @@ where
 {
     type SampleMaybeUninit<'a> = SampleMaybeUninit<'a, T> where Self: 'a;
 
-    fn allocate<'a>(&'a self) -> com_api_concept::Result<SampleMaybeUninit<'a, T>> {
+    fn allocate(&self) -> com_api_concept::Result<SampleMaybeUninit<'_, T>> {
         Ok(SampleMaybeUninit {
             data: MaybeUninit::uninit(),
             lifetime: PhantomData,
