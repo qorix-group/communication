@@ -30,7 +30,9 @@ namespace score::message_passing::detail
 class QnxDispatchServer final : public IServer, private QnxDispatchEngine::ResourceManagerServer
 {
   public:
+    // class uses IServerConnection as iface and ResourceManagerConnection as a base class
     // NOLINTNEXTLINE(score-struct-usage-compliance): see QnxDispatchEngine::ResourceManagerConnection
+    // coverity[autosar_cpp14_a10_1_1_violation] see above
     class ServerConnection final : public IServerConnection, public QnxDispatchEngine::ResourceManagerConnection
     {
       public:
