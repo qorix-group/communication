@@ -37,7 +37,9 @@ class QnxDispatchServer final : public IServer, private QnxDispatchEngine::Resou
         ServerConnection(ClientIdentity client_identity, const QnxDispatchServer& server) noexcept;
 
         // User methods
+        // coverity[autosar_cpp14_m7_3_1_violation] false-positive: class method (Ticket-234468)
         const ClientIdentity& GetClientIdentity() const noexcept override;
+        // coverity[autosar_cpp14_m7_3_1_violation] false-positive: class method (Ticket-234468)
         UserData& GetUserData() noexcept override;
 
         score::cpp::expected_blank<score::os::Error> Reply(score::cpp::span<const std::uint8_t> message) noexcept override;
@@ -51,6 +53,7 @@ class QnxDispatchServer final : public IServer, private QnxDispatchEngine::Resou
         void ProcessDisconnect() noexcept override;
 
         // Server methods
+        // coverity[autosar_cpp14_m7_3_1_violation] false-positive: class method (Ticket-234468)
         void AcceptConnection(UserData&& data, score::cpp::pmr::unique_ptr<ServerConnection>&& self) noexcept;
 
         ~ServerConnection() noexcept;
@@ -100,6 +103,7 @@ class QnxDispatchServer final : public IServer, private QnxDispatchEngine::Resou
     QnxDispatchServer& operator=(const QnxDispatchServer&) = delete;
     QnxDispatchServer& operator=(QnxDispatchServer&&) = delete;
 
+    // coverity[autosar_cpp14_m7_3_1_violation] false-positive: class method (Ticket-234468)
     score::cpp::expected_blank<score::os::Error> StartListening(ConnectCallback connect_callback,
                                                        DisconnectCallback disconnect_callback,
                                                        MessageCallback sent_callback,
