@@ -89,7 +89,9 @@ class QnxDispatchServer final : public IServer, private QnxDispatchEngine::Resou
         };
         SendMessage reply_message_;
         score::cpp::pmr::vector<SendMessage> notify_storage_;
+        // coverity[autosar_cpp14_a2_10_6_violation] false-positive: there is nothing with the same name
         score::containers::intrusive_list<SendMessage> notify_pool_;
+        // coverity[autosar_cpp14_a2_10_6_violation] false-positive: there is nothing with the same name
         score::containers::intrusive_list<SendMessage> send_queue_;
     };
 
