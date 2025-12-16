@@ -93,16 +93,16 @@ pub trait Builder<Output> {
 /// This represents the com implementation and acts as a root for all types and objects provided by
 /// the implementation.
 pub trait Runtime {
-    /// types for Discovers available service instances of a specific interface
+    /// `ServiceDiscovery<I>` types for Discovers available service instances of a specific interface
     type ServiceDiscovery<I: Interface>: ServiceDiscovery<I, Self>;
 
-    /// types for Manages subscriptions to event notifications
+    /// `Subscriber<T>` types for Manages subscriptions to event notifications
     type Subscriber<T: Reloc + Send + Debug>: Subscriber<T, Self>;
 
-    /// types for Constructs producer instances for offering services
+    /// `ProducerBuilder<I>` types for Constructs producer instances for offering services
     type ProducerBuilder<I: Interface>: ProducerBuilder<I, Self>;
 
-    /// types for Publishes event data to subscribers
+    /// `Publisher<T>` types for Publishes event data to subscribers
     type Publisher<T: Reloc + Send + Debug>: Publisher<T, Self>;
 
     /// `ProviderInfo` types for Configuration data for service producers instances
@@ -195,7 +195,7 @@ impl InstanceSpecifier {
         let service_name = service_name.strip_prefix('/').unwrap();
 
         // Check each character
-        // Allowed: digits, lowercase, uppercase, underscore, and hyphen
+        // Allowed: digits, lowercase, uppercase, underscore
         let is_legal_char = |c: char| {
             c.is_ascii_digit() || c.is_ascii_lowercase() || c.is_ascii_uppercase() || c == '_'
         };
@@ -252,7 +252,7 @@ pub enum FindServiceSpecifier {
     Any,
 }
 
-/// Convert an `InstanceSpecifier` into a `FindServiceSpecifier`
+/// Convert an `InstanceSpecifier` From a `FindServiceSpecifier`
 impl From<InstanceSpecifier> for FindServiceSpecifier {
     fn from(specifier: InstanceSpecifier) -> FindServiceSpecifier {
         FindServiceSpecifier::Specific(specifier)

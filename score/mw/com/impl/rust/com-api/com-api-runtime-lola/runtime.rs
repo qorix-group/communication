@@ -17,8 +17,8 @@
 #![allow(dead_code)]
 
 //lifetime warning for all the Sample struct impl block . it is required for the Sample struct event lifetime parameter
-// and mentaining lifetime of instances and data reference 
-// As of supressing clippy::elidable_lifetime_names
+// and mentaining lifetime of instances and data reference
+// As of supressing clippy::needless_lifetimes
 //TODO: revist this once com-api is stable
 #![allow(clippy::needless_lifetimes)]
 

@@ -21,7 +21,7 @@
 //! pointer. See the documentation of the respective traits for more details.
 
 //lifetime warning SamplePtr struct impl block . it is required for the SamplePtr struct event lifetime parameter
-// As of supressing clippy::elidable_lifetime_names
+// As of supressing clippy::needless_lifetimes
 //TODO: revist this once com-api is stable
 #![allow(clippy::needless_lifetimes)]
 
@@ -98,6 +98,8 @@ mod ffi {
     }
 
     #[allow(clippy::from_over_into)]
+    // Supressing clippy::from_over_into as this is a very specific conversion that is for callback
+    // conversion only.
     impl Into<*mut (dyn FnMut() + Send + 'static)> for FatPtr {
         fn into(self) -> *mut (dyn FnMut() + Send + 'static) {
             // SAFETY: Since we're transmuting into a pointer and using that pointer is unsafe
@@ -279,6 +281,7 @@ impl<T: ProxyOps> ProxyManager<T> {
     /// # Errors
     /// If the creation of the proxy fails, this function will return `Err(())`.
     #[allow(clippy::result_unit_err)]
+    // Suppressing clippy::result_unit_err as the common error type is used in upper layer when error occurs.
     pub fn new(handle: &HandleType) -> Result<Self, ()> {
         ProxyWrapperGuard::new(handle).map(|proxy| Self(Arc::new(proxy)))
     }
@@ -374,6 +377,7 @@ pub struct ProxyEvent<T, P> {
 unsafe impl<T, P> Send for ProxyEvent<T, P> {}
 
 #[allow(clippy::missing_fields_in_debug)]
+//Supressing clippy::missing_fields_in_debug as we only want to show the event name here
 impl<T, P> Debug for ProxyEvent<T, P> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("ProxyEvent")
@@ -438,6 +442,7 @@ pub struct SubscribedProxyEvent<T, P> {
 unsafe impl<T, P> Send for SubscribedProxyEvent<T, P> {}
 
 #[allow(clippy::missing_fields_in_debug)]
+//Supressing clippy::missing_fields_in_debug as we only want to show the event name here
 impl<T, P> Debug for SubscribedProxyEvent<T, P> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("SubscribedProxyEvent")
@@ -452,7 +457,6 @@ pub struct SampleContainer<'a, const N: usize, T: EventOps> {
 
 impl<'a, const N: usize, T: EventOps> Deref for SampleContainer<'a, N, T> {
     type Target = [SamplePtr<'a, T>];
-    #[allow(clippy::explicit_deref_methods)]
     fn deref(&self) -> &Self::Target {
         self.samples.deref()
     }
@@ -695,6 +699,7 @@ pub struct HandleContainer {
 impl HandleContainer {
     /// Provides the number of handles in the container.
     #[allow(clippy::len_without_is_empty)]
+    // Suppressing clippy::len_without_is_empty because length is returning from FFI
     pub fn len(&self) -> usize {
         // SAFETY: Since we only pass the pointer received by the create FFI function, the call is
         // safe.
@@ -745,6 +750,7 @@ impl Drop for HandleContainer {
 /// Returns a list of found instances, which can be empty in case there aren't any. If an error
 /// occurred during the search or no container is returned, this function will return `Err(())`.
 #[allow(clippy::result_unit_err)]
+// Suppressing clippy::result_unit_err as the common error type is used in upper layer when error occurs.
 pub fn find_service(instance_specifier: InstanceSpecifier) -> Result<HandleContainer, ()> {
     // SAFETY: Since we only pass the pointer received by the create FFI function, the call is
     // safe.

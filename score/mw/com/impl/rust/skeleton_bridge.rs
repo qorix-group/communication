@@ -48,6 +48,7 @@ pub trait SkeletonOps: Sized {
     ///
     /// Returns an error if the event cannot be sent.
     #[allow(clippy::result_unit_err)]
+    // Suppressing clippy::result_unit_err as the common error type is used in upper layer when error occurs.
     fn send(&self, event: *mut ffi::SkeletonEvent<Self>) -> common::Result<()>;
 }
 
@@ -81,6 +82,7 @@ impl<T: SkeletonOps, L> SkeletonEvent<T, UnOffered, L> {
 
 impl<T: SkeletonOps, L> SkeletonEvent<T, Offered, L> {
     #[allow(clippy::result_unit_err)]
+    // Suppressing clippy::result_unit_err as the common error type is used in upper layer when error occurs.
     /// Sends the skeleton event.
     ///
     /// # Errors
