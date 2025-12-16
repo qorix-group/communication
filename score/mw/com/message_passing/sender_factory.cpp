@@ -27,6 +27,7 @@ class SenderMockWrapper : public score::mw::com::message_passing::ISender
   public:
     // coverity[autosar_cpp14_m0_1_9_violation] false-positive: constructor; not dead code
     // coverity[autosar_cpp14_m0_1_3_violation] false-positive: constructor; not a variable
+    // coverity[autosar_cpp14_a0_1_3_violation] false-positive: used in tests
     explicit SenderMockWrapper(score::mw::com::message_passing::ISender* const mock) : ISender{}, wrapped_mock_{mock} {}
 
     score::cpp::expected_blank<score::os::Error> Send(
