@@ -27,6 +27,7 @@ namespace
 class ReceiverMockWrapper final : public score::mw::com::message_passing::IReceiver
 {
   public:
+    // coverity[autosar_cpp14_m0_1_9_violation] false-positive: constructor; not dead code
     explicit ReceiverMockWrapper(score::mw::com::message_passing::IReceiver* const mock)
         : IReceiver{}, wrapped_mock_{mock}
     {
