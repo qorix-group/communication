@@ -59,7 +59,7 @@ class NonBlockingSender final : public ISender
                       const std::size_t max_queue_size,
                       concurrency::Executor& executor);
 
-    ~NonBlockingSender() override;
+    ~NonBlockingSender() noexcept override;
 
     // Since queue_ is based on score::memory::PmrRingBuffer, cannot be moved or copied
     NonBlockingSender(const NonBlockingSender&) = delete;
