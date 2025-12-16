@@ -54,6 +54,7 @@ class NonBlockingSender final : public ISender
     /// \param max_queue_size queue size to be used.
     /// \param executor execution policy to be used to call wrapped sender Send() calls from queue. As only one task at
     ///                 a time will be submitted anyhow, maxConcurrencyLevel of the executor needs only to be 1!
+    // coverity[autosar_cpp14_a7_1_7_violation] false-positive: formatted this way by clang-format
     NonBlockingSender(score::cpp::pmr::unique_ptr<ISender> wrapped_sender,
                       const std::size_t max_queue_size,
                       concurrency::Executor& executor);
