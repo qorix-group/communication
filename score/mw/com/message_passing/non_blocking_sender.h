@@ -81,6 +81,7 @@ class NonBlockingSender final : public ISender
     bool HasNonBlockingGuarantee() const noexcept override;
 
   private:
+    // coverity[autosar_cpp14_a0_1_1_violation] false-positive: is used in constructor
     static constexpr std::size_t QUEUE_SIZE_UPPER_LIMIT = 100U;
 
     /// \brief Function called by callable posted to executor. Takes message from queue front and calls Send() on the

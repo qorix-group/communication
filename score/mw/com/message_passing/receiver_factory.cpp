@@ -59,7 +59,7 @@ class ReceiverMockWrapper final : public score::mw::com::message_passing::IRecei
 
 namespace score::mw::com::message_passing
 {
-
+// coverity[autosar_cpp14_a0_1_1_violation] false-positive: is used in tests
 IReceiver* ReceiverFactory::receiver_mock_{nullptr};
 
 score::cpp::pmr::unique_ptr<IReceiver> ReceiverFactory::Create(const std::string_view identifier,

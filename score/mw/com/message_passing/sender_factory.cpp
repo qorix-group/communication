@@ -62,7 +62,7 @@ score::cpp::callback<void(const score::cpp::stop_token&)> callback_{};
 
 namespace score::mw::com::message_passing
 {
-
+// coverity[autosar_cpp14_a0_1_1_violation] false-positive: is used in tests
 ISender* SenderFactory::sender_mock_{nullptr};
 
 score::cpp::pmr::unique_ptr<ISender> SenderFactory::Create(const std::string_view identifier,
