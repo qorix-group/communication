@@ -63,6 +63,7 @@ namespace score::mw::com::message_passing
 // coverity[autosar_cpp14_a0_1_1_violation] false-positive: is used in tests
 IReceiver* ReceiverFactory::receiver_mock_{nullptr};
 
+// coverity[autosar_cpp14_a2_10_4_violation] false-positive: name is not reused; system-specific implementation
 score::cpp::pmr::unique_ptr<IReceiver> ReceiverFactory::Create(const std::string_view identifier,
                                                         concurrency::Executor& executor,
                                                         const score::cpp::span<const uid_t> allowed_user_ids,
