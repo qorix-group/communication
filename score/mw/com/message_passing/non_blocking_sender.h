@@ -90,6 +90,7 @@ class NonBlockingSender final : public ISender
     ///          queue element is removed and if there is still a queue element left a new callable calling this very
     ///          same function is posted to the executor.
     /// \param token stop_token provided by executor.
+    // coverity[autosar_cpp14_m7_3_1_violation] false-positive: class method (Ticket-234468)
     void SendQueueElements(const score::cpp::stop_token token) noexcept;
 
     /// \brief internal Send function taking either a short or medium message to be sent.
