@@ -26,6 +26,7 @@ class SenderMockWrapper : public score::mw::com::message_passing::ISender
 {
   public:
     // coverity[autosar_cpp14_m0_1_9_violation] false-positive: constructor; not dead code
+    // coverity[autosar_cpp14_m0_1_3_violation] false-positive: constructor; not a variable
     explicit SenderMockWrapper(score::mw::com::message_passing::ISender* const mock) : ISender{}, wrapped_mock_{mock} {}
 
     score::cpp::expected_blank<score::os::Error> Send(
@@ -54,6 +55,7 @@ class SenderMockWrapper : public score::mw::com::message_passing::ISender
 // Not safety related code; only accessible during testing when `sender_mock_` is set up.
 // coverity[autosar_cpp14_a3_3_2_violation]
 // coverity[autosar_cpp14_m0_1_9_violation] false-positive: used in SenderFactory::Create(); not dead code
+// coverity[autosar_cpp14_m0_1_3_violation] false-positive: see above
 score::cpp::callback<void(const score::cpp::stop_token&)> callback_{};
 
 }  // namespace
