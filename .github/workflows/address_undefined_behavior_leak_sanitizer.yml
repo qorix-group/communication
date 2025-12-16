@@ -15,7 +15,7 @@
 # This workflow runs Bazel test with enabled address, UB and leak sanitizer when triggered by specific pull request
 # events.
 
-name: Test communication module with address, UB and leak sanitizer
+name: Test communication module with address and UB and leak sanitizer
 on:
   pull_request:
     types: [opened, reopened, synchronize]
@@ -36,6 +36,6 @@ jobs:
             repository-cache: true
         - name: Checkout repository
           uses: actions/checkout@v4.2.2
-        - name: Bazel test communication targets with address, UB and leak sanitizer
+        - name: Bazel test communication targets with address and UB and leak sanitizer
           run: |
             bazel test --config=asan_ubsan_lsan //... --build_tests_only
