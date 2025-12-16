@@ -16,32 +16,32 @@
 #define SCORE_MW_COM_IMPL_RUST_GENERIC_BRIDGE_MACROS_H
 
 #include "score/mw/com/impl/plumbing/sample_ptr.h"
+#include "score/mw/com/impl/proxy_base.h"
 #include "score/mw/com/impl/proxy_event.h"
 #include "score/mw/com/impl/rust/proxy_bridge.h"
+#include "score/mw/com/impl/skeleton_base.h"
 #include "score/mw/com/impl/skeleton_event.h"
 #include "score/mw/com/types.h"
 #include <cstdint>
 #include <memory>
-#include <stdexcept>
 #include <string_view>
 #include <unordered_map>
 #include <utility>
 
-#include <score/assert.hpp>
-
 namespace score::mw::com::impl::rust
 {
 
-/// String view similar to C++'s std::string_view
-/// Holds a pointer to a string and its length without requiring null termination
-/// This struct is used at the FFI boundary to pass strings from Rust to C++
+/// \brief String view for FFI boundary passing strings from Rust to C++
+/// \details Holds a pointer to a string and its length without requiring null termination.
+/// Similar to C++'s std::string_view but optimized for FFI use.
 struct StringView
 {
-    const char* data = nullptr;
-    uint32_t len = 0;
+    const char* data = nullptr;  ///< Pointer to string data
+    uint32_t len = 0;            ///< Length of the string
 
-    /// Conversion operator to std::string_view
-    /// Allows implicit conversion: std::string_view sv = static_cast<std::string_view>(string_view_instance);
+    /// \brief Conversion operator to std::string_view
+    /// \details Allows implicit conversion: std::string_view sv = static_cast<std::string_view>(string_view_instance);
+    /// \return std::string_view object constructed from this StringView
     explicit operator std::string_view() const noexcept
     {
         return std::string_view(data, len);
@@ -50,15 +50,12 @@ struct StringView
 
 namespace details
 {
-/**
- * Get samples from ProxyEvent with type erasure
- * This takes callback as FatPtr and invokes the callback for each sample
- * of type T
- * @param proxy_event reference to ProxyEvent of type T
- * @param callback FatPtr of Rust FnMut callable that takes SamplePtr<T>
- * @param max_num_samples maximum number of samples to process
- * @return the number of samples processed in a Result<uint32_t>
- */
+/// \brief Get samples from ProxyEvent with type erasure
+/// \details Invokes the provided callback for each sample of type T retrieved from the event.
+/// \param proxy_event Reference to ProxyEvent of type T
+/// \param callback FatPtr of Rust FnMut callable that takes SamplePtr<T>
+/// \param max_num_samples Maximum number of samples to process
+/// \return Result containing the number of samples processed on success, or error code on failure
 template <typename T>
 inline score::Result<std::uint32_t> GetSamplesFromEvent(::score::mw::com::impl::ProxyEvent<T>& proxy_event,
                                                       const FatPtr& callback,
@@ -80,45 +77,36 @@ inline score::Result<std::uint32_t> GetSamplesFromEvent(::score::mw::com::impl::
 
 }  // namespace details
 
-/**
- * This is interface for type operations
- * It provides type-erased operations for types used in ProxyEvent and SkeletonEvent
- */
-class ITypeOperations
+/// \brief Interface for type-erased operations on types used in ProxyEvent and SkeletonEvent
+/// \details Provides virtual methods to handle samples and send events for types with type erasure.
+class TypeOperations
 {
 
   public:
-    virtual ~ITypeOperations() = default;
+    virtual ~TypeOperations() = default;
 
-    /**
-     * Get samples from ProxyEvent of specific type
-     * It takes ProxyEventBase pointer, max sample count and callback as FatPtr
-     * @param event_ptr pointer to ProxyEventBase
-     * @param max_sample maximum number of samples to process
-     * @param callBack FatPtr of Rust FnMut callable that takes SamplePtr<T>
-     * @return the number of samples processed in a Result<uint32_t>
-     */
+    /// \brief Get samples from ProxyEvent of specific type
+    /// \details Retrieves samples from a ProxyEvent and invokes the callback for each sample.
+    /// \param event_ptr Pointer to ProxyEventBase instance
+    /// \param max_sample Maximum number of samples to process
+    /// \param callBack FatPtr of Rust FnMut callable that takes SamplePtr<T>
+    /// \return Result containing the number of samples processed on success, or error code on failure
     virtual Result<uint32_t> GetSamplesFromEvent(ProxyEventBase* event_ptr, uint32_t max_sample, FatPtr callBack) = 0;
 
-    /**
-     * Send event data through SkeletonEvent of specific type
-     * It takes SkeletonEventBase pointer and data pointer
-     * @param data_ptr is a pointer to type T but erased as void* and in implementation it is casted back to T*
-     * @param event_ptr pointer to SkeletonEventBase
-     */
+    /// \brief Send event data through SkeletonEvent of specific type
+    /// \details Casts the type-erased data pointer back to the actual type and sends it via SkeletonEvent.
+    /// \param event_ptr Pointer to SkeletonEventBase instance
+    /// \param data_ptr Pointer to type T (erased as void*, casted back to T* in implementation)
     virtual void SkeletonSendEvent(SkeletonEventBase* event_ptr, void* data_ptr) = 0;
 
-    // TODO: Allocate API need to add
+    // TODO: Allocate API need to add - Ticket-234824
 };
 
-/**
- * Template implementation of ITypeOperations for type T
- * It provides implementation for GetSamplesFromEvent and SkeletonSendEvent
- * for type T
- * This class is used to register type operations for each type T from macros
- */
+/// \brief Template implementation of TypeOperations for a specific type T
+/// \details Provides concrete implementations of GetSamplesFromEvent and SkeletonSendEvent methods.
+/// This class is instantiated and registered for each type T via macros.
 template <typename T>
-class TypeOperationImpl : public ITypeOperations
+class TypeOperationImpl : public TypeOperations
 {
   public:
     Result<uint32_t> GetSamplesFromEvent(ProxyEventBase* event_ptr, uint32_t max_sample, FatPtr callBack) override
@@ -149,42 +137,33 @@ class TypeOperationImpl : public ITypeOperations
     }
 };
 
-/**
- * Interface for member operations for services with events,methods and fields
- * It provides type-erased access to ProxyEvent and SkeletonEvent members
- */
-class IMemberOperation
+/// \brief Interface for type-erased access to event, method, and field members
+/// \details Provides virtual methods to retrieve ProxyEvent and SkeletonEvent members from their base pointers.
+class MemberOperation
 {
   public:
-    virtual ~IMemberOperation() = default;
+    virtual ~MemberOperation() = default;
 
-    /**
-     * Get ProxyEvent member from ProxyBase pointer
-     * @param proxy_ptr pointer to ProxyBase
-     * @return pointer to ProxyEventBase if found, nullptr otherwise
-     */
+    /// \brief Get ProxyEvent member from ProxyBase pointer
+    /// \param proxy_ptr Pointer to ProxyBase instance
+    /// \return Pointer to ProxyEventBase if found, nullptr otherwise
     virtual ProxyEventBase* GetProxyEvent(ProxyBase* proxy_ptr) = 0;
 
-    /**
-     * Get SkeletonEvent member from SkeletonBase pointer
-     * @param skeleton_ptr pointer to SkeletonBase
-     * @return pointer to SkeletonEventBase if found, nullptr otherwise
-     */
+    /// \brief Get SkeletonEvent member from SkeletonBase pointer
+    /// \param skeleton_ptr Pointer to SkeletonBase instance
+    /// \return Pointer to SkeletonEventBase if found, nullptr otherwise
     virtual SkeletonEventBase* GetSkeletonEvent(SkeletonBase* skeleton_ptr) = 0;
 };
 
-/**
- * Template implementation of IMemberOperation for specific ProxyType and SkeletonType
- * takes event member as template parameters
- * It provides implementation for GetProxyEvent and GetSkeletonEvent
- * This call is used to register member operations for each operation from macros
- */
+/// \brief Template implementation of MemberOperation for specific ProxyType and SkeletonType
+/// \details Provides concrete implementations to retrieve and cast ProxyEvent and SkeletonEvent members.
+/// Template parameters specify the proxy type, skeleton type, event data type, and member pointers.
 template <typename ProxyType,
           typename SkeletonType,
           typename EventType,
           auto proxy_event_member,
           auto skeleton_event_member>
-class MemberOperationImpl : public IMemberOperation
+class MemberOperationImpl : public MemberOperation
 {
   public:
     ProxyEventBase* GetProxyEvent(ProxyBase* proxy_ptr) override
@@ -215,49 +194,38 @@ class MemberOperationImpl : public IMemberOperation
     }
 };
 
-/**
- * Interface for interface operations
- * It provides type-erased operations for creating Proxy and Skeleton
- * and offering/stopping service
- * It include the MemberOperation registry for events,methods and fields
- */
+/// \brief Interface for type-erased proxy and skeleton creation operations
+/// \details Provides methods to create proxy/skeleton instances and register/retrieve member operations.
+/// Maintains a registry of member operations for events, methods, and fields.
 class InterfaceOperations
 {
   public:
     virtual ~InterfaceOperations() = default;
 
-    /**
-     * Create Proxy instance from HandleType
-     * @param handle_ptr Opaque handle pointer
-     * @return ProxyBase pointer
-     */
+    /// \brief Create a Proxy instance from a HandleType
+    /// \param handle_ptr Opaque handle identifying the service instance
+    /// \return Pointer to ProxyBase instance, or nullptr on failure
     virtual ProxyBase* CreateProxy(const HandleType& handle_ptr) = 0;
 
-    /**
-     * Create Skeleton instance from InstanceSpecifier
-     * @param instance_specifier InstanceSpecifier object
-     * @return SkeletonBase pointer
-     */
+    /// \brief Create a Skeleton instance from an InstanceSpecifier
+    /// \param instance_specifier InstanceSpecifier identifying the service to offer
+    /// \return Pointer to SkeletonBase instance, or nullptr on failure
     virtual SkeletonBase* CreateSkeleton(const ::score::mw::com::InstanceSpecifier& instance_specifier) = 0;
 
-    /**
-     * Register member operation for event,method or field
-     * As of now it is only used for events
-     * @param member_name name of the event used as key in member operation map
-     * @param ops pointer to IMemberOperation implementation
-     */
-    void RegisterMemberOperation(const std::string_view member_name, std::shared_ptr<IMemberOperation> ops)
+    /// \brief Register member operation for event, method, or field
+    /// \details Currently used for events. Stores operation in member operation map by name.
+    /// \param member_name Name of the member (event/method/field) used as registry key
+    /// \param ops Shared pointer to MemberOperation implementation
+    void RegisterMemberOperation(const std::string_view member_name, std::shared_ptr<MemberOperation> ops)
     {
         member_operation_map_[member_name] = ops;
     }
 
-    /**
-     * Get member operation for event,method or field
-     * As of now it is only used for events
-     * @param member_name name of the event used as key in member operation map
-     * @return It returns pointer to IMemberOperation implementation if found, nullptr otherwise
-     */
-    IMemberOperation* GetMemberOperation(const std::string_view member_name)
+    /// \brief Get member operation for event, method, or field
+    /// \details Currently used for events. Retrieves operation from member operation map by name.
+    /// \param member_name Name of the member (event/method/field) used as registry key
+    /// \return Pointer to MemberOperation implementation if found, nullptr otherwise
+    MemberOperation* GetMemberOperation(const std::string_view member_name)
     {
         auto it = member_operation_map_.find(member_name);
         if (it != member_operation_map_.end())
@@ -268,15 +236,13 @@ class InterfaceOperations
     }
 
   private:
-    using MemberOperationMap = std::unordered_map<std::string_view, std::shared_ptr<IMemberOperation>>;
+    using MemberOperationMap = std::unordered_map<std::string_view, std::shared_ptr<MemberOperation>>;
     MemberOperationMap member_operation_map_;
 };
 
-/**
- * Template implementation of InterfaceOperations for specific Proxy and Skeleton types
- * It provides implementation for CreateProxy, CreateSkeleton, OfferService and StopOfferService
- * This class is used to register interface operations for each interface from macros
- */
+/// \brief Template implementation of InterfaceOperations for specific Proxy and Skeleton types
+/// \details Provides concrete implementations of CreateProxy and CreateSkeleton methods.
+/// Instantiated and registered for each interface via macros.
 template <typename AsProxy, typename AsSkeleton>
 class InterfaceOperationImpl : public InterfaceOperations
 {
@@ -295,7 +261,7 @@ class InterfaceOperationImpl : public InterfaceOperations
         {
             return nullptr;
         }
-        // TODO: Need to think about exception handling here
+        // TODO: Need to think about exception handling here - Ticket-219876
     }
 
     SkeletonBase* CreateSkeleton(const ::score::mw::com::InstanceSpecifier& instance_specifier) override
@@ -311,65 +277,51 @@ class InterfaceOperationImpl : public InterfaceOperations
     }
 };
 
-/**
- * Global event registry mapping
- * It provides global registry for interface operations and type operations
- * It is used to register and find interface operations and type operations
- * Called by macros to register interface and type operations
- * Also used by FFI layer to find interface and type operations
- * For interface operations, it provides methods to register and find interface operations by interface id as key
- * For type operations, it provides methods to register and find type operations by type name as key
- */
+/// \brief Global registry for interface operations and type operations
+/// \details Maintains static registries for interface operations (keyed by interface ID) and type operations
+/// (keyed by type name). Used by macros to register and by FFI layer to find operations.
 class GlobalRegistryMapping
 {
   public:
     using InterfaceOprationMap = std::unordered_map<std::string_view, std::shared_ptr<InterfaceOperations>>;
 
-    using TypeOperationMap = std::unordered_map<std::string_view, std::shared_ptr<ITypeOperations>>;
+    using TypeOperationMap = std::unordered_map<std::string_view, std::shared_ptr<TypeOperations>>;
 
-    /**
-     * Get type operation map
-     * it create static map on first call and returns reference to it
-     * @return reference to type operation map
-     */
+    /// \brief Get the type operation map
+    /// \details Creates static map on first call and returns reference to it for subsequent calls.
+    /// \return Reference to the static type operation map
     static TypeOperationMap& GetTypeOperationMap()
     {
         static TypeOperationMap s_type_operation_map;
         return s_type_operation_map;
     }
 
-    /**
-     * Register type operation for specific type name
-     * Called by EXPORT_MW_COM_TYPE macro
-     * @param type_name name of the type used as key in type operation map
-     * @param impl pointer to ITypeOperations implementation
-     */
-    static void RegisterTypeOperation(const std::string_view type_name, std::shared_ptr<ITypeOperations> impl)
+    /// \brief Register type operation for a specific type name
+    /// \details Called by EXPORT_MW_COM_TYPE macro to register type operations.
+    /// \param type_name Name of the type used as key in registry
+    /// \param impl Shared pointer to TypeOperations implementation
+    static void RegisterTypeOperation(const std::string_view type_name, std::shared_ptr<TypeOperations> impl)
     {
         GetTypeOperationMap()[type_name] = std::move(impl);
     }
 
-    /**
-     * Get interface operation map
-     * it create static map on first call and returns reference to it
-     * @return reference to interface operation map
-     */
+    /// \brief Get the interface operation map
+    /// \details Creates static map on first call and returns reference to it for subsequent calls.
+    /// \return Reference to the static interface operation map
     static InterfaceOprationMap& GetInterfaceOprationMap()
     {
         static InterfaceOprationMap s_factories;
         return s_factories;
     }
 
-    /**
-     * Register event operation for specific interface id and event name
-     * Called by EXPORT_MW_COM_EVENT macro
-     * @param interface_id id of the interface used to find the interface operation
-     * @param member_name name of the event used as key in member operation map
-     * @param ops pointer to IMemberOperation implementation
-     */
+    /// \brief Register member operation for a specific interface and member name
+    /// \details Called by EXPORT_MW_COM_EVENT macro to register member operations.
+    /// \param interface_id ID of the interface used to locate the interface operation
+    /// \param member_name Name of the member (event/method/field) used as registry key
+    /// \param ops Shared pointer to MemberOperation implementation
     static void RegisterMemberOperation(const std::string_view interface_id,
                                         const std::string_view member_name,
-                                        std::shared_ptr<IMemberOperation> ops)
+                                        std::shared_ptr<MemberOperation> ops)
     {
         const auto& registries = GetInterfaceOperation(interface_id);
         if (registries)
@@ -378,23 +330,19 @@ class GlobalRegistryMapping
         }
     }
 
-    /**
-     * Register interface operation for specific interface id
-     * Called by EXPORT_MW_COM_INTERFACE macro
-     * @param interface_id id of the interface used as key in interface operation map
-     * @param ops pointer to InterfaceOperations implementation
-     */
+    /// \brief Register interface operation for a specific interface ID
+    /// \details Called by EXPORT_MW_COM_INTERFACE macro to register interface operations.
+    /// \param interface_id ID of the interface used as registry key
+    /// \param ops Shared pointer to InterfaceOperations implementation
     static void RegisterInterfaceOperation(const std::string_view interface_id,
                                            std::shared_ptr<InterfaceOperations> ops)
     {
         GetInterfaceOprationMap()[interface_id] = std::move(ops);
     }
 
-    /**
-     * Get interface operation for specific interface id
-     * @param interface_id id of the interface used as key in interface operation map
-     * @return It returns pointer to InterfaceOperations implementation if found, nullptr otherwise
-     */
+    /// \brief Get interface operation for a specific interface ID
+    /// \param interface_id ID of the interface used as registry key
+    /// \return Pointer to InterfaceOperations implementation if found, nullptr otherwise
     static InterfaceOperations* GetInterfaceOperation(const std::string_view interface_id)
     {
         auto it = GetInterfaceOprationMap().find(interface_id);
@@ -405,12 +353,10 @@ class GlobalRegistryMapping
         return nullptr;
     }
 
-    /**
-     * Get type operation for specific type name
-     * @param type_name name of the type used as key in type operation map
-     * @return It returns pointer to ITypeOperations implementation if found, nullptr otherwise
-     */
-    static ITypeOperations* FindTypeInformation(const std::string_view type_name)
+    /// \brief Get type operation for a specific type name
+    /// \param type_name Name of the type used as registry key
+    /// \return Pointer to TypeOperations implementation if found, nullptr otherwise
+    static TypeOperations* FindTypeInformation(const std::string_view type_name)
     {
         auto& type_ops_map = GetTypeOperationMap();
         auto it = type_ops_map.find(type_name);
@@ -421,14 +367,11 @@ class GlobalRegistryMapping
         return nullptr;
     }
 
-    /**
-     * Get member operation for specific interface id and member name
-     * @param interface_id id of the interface used to find the interface operation
-     * @param member_name name of the member used as key in member operation map
-     * @return It returns pointer to IMemberOperation implementation if found, nullptr otherwise
-     */
-    static IMemberOperation* FindMemberOperation(const std::string_view interface_id,
-                                                 const std::string_view member_name)
+    /// \brief Get member operation for a specific interface and member name
+    /// \param interface_id ID of the interface used to locate the interface operation
+    /// \param member_name Name of the member used as registry key
+    /// \return Pointer to MemberOperation implementation if found, nullptr otherwise
+    static MemberOperation* FindMemberOperation(const std::string_view interface_id, const std::string_view member_name)
     {
         auto* ops = GetInterfaceOperation(interface_id);
         if (ops)
@@ -437,84 +380,64 @@ class GlobalRegistryMapping
         }
         return nullptr;
     }
-    /**
-     * Find interface operation for specific interface id
-     * @param interface_id id of the interface used as key in interface operation map
-     * @return It returns pointer to InterfaceOperations implementation if found, nullptr otherwise
-     */
+    /// \brief Find interface operation registry for a specific interface ID
+    /// \param interface_id ID of the interface used as registry key
+    /// \return Pointer to InterfaceOperations implementation if found, nullptr otherwise
     static InterfaceOperations* FindInterfaceRegistry(const std::string_view interface_id)
     {
         return GetInterfaceOperation(interface_id);
     }
 };
 
-/**
- * BEGIN_EXPORT_MW_COM_INTERFACE macro
- * Create registry for interface operations
- * It registers interface operations for specific interface id
- * It also creates type aliases for ProxyType and SkeletonType
- * Using Static struct to register interface operations at startup or before main()
- * It uses constructor of static struct to register interface operations
- * id means Interface TYPE ID which rust side uses to identify the interface
- * proxy_type means Proxy class type
- * skeleton_type means Skeleton class type
- * Example usage:
- * EXPORT_MW_COM_INTERFACE(VehicleInterface, VehicleProxy, VehicleSkeleton)
- */
-#define BEGIN_EXPORT_MW_COM_INTERFACE(id, proxy_type, skeleton_type)                                                 \
-    extern "C" {                                                                                                     \
-    /* Declare the generic Rust FFI function (same for all types) */                                                 \
-    void mw_com_impl_call_dyn_ref_fnmut_sample(const ::score::mw::com::impl::rust::FatPtr* boxed_fnmut,                \
-                                               void* sample_ptr);                                                    \
-    }                                                                                                                \
-    /* Local tag for this specific id */                                                                             \
-    struct id##_idTag                                                                                                \
-    {                                                                                                                \
-    };                                                                                                               \
-    /* Type aliases for event macros to use */                                                                       \
-    using id##_ProxyType = proxy_type;                                                                               \
-    using id##_SkeletonType = skeleton_type;                                                                         \
-                                                                                                                     \
-    /* Registration helper struct - constructor runs at startup */                                                   \
-    struct id##_InterfaceRegistrationHelper                                                                          \
-    {                                                                                                                \
-        id##_InterfaceRegistrationHelper()                                                                           \
-        {                                                                                                            \
-            using ProxyType = proxy_type;                                                                            \
-            using SkeletonType = skeleton_type;                                                                      \
-            /*TODO: We will validate if we can use unique_ptr here*/                                                 \
-            auto interface_event_ops =                                                                               \
-                std::make_shared<::score::mw::com::impl::rust::InterfaceOperationImpl<ProxyType, SkeletonType>>();     \
-                                                                                                                     \
-            /* Register interface factory for FFI layer */                                                           \
-            ::score::mw::com::impl::rust::GlobalRegistryMapping::RegisterInterfaceOperation(#id, interface_event_ops); \
-        }                                                                                                            \
-    };                                                                                                               \
-                                                                                                                     \
-    /* Force instantiation at startup */                                                                             \
+/// \brief Macro to begin registration of interface operations
+/// \details Creates registry and type aliases for a specific interface. Uses a static struct to register
+/// interface operations at startup/before main(). Declares the generic Rust FFI function.
+/// \param id Interface TYPE ID that the Rust side uses to identify the interface
+/// \param proxy_type Proxy class type for the interface
+/// \param skeleton_type Skeleton class type for the interface
+/// \note Example usage: BEGIN_EXPORT_MW_COM_INTERFACE(VehicleInterface, VehicleProxy, VehicleSkeleton)
+#define BEGIN_EXPORT_MW_COM_INTERFACE(id, proxy_type, skeleton_type)                                             \
+    extern "C" {                                                                                                 \
+    /* Declare the generic Rust FFI function (same for all types) */                                             \
+    void mw_com_impl_call_dyn_ref_fnmut_sample(const ::score::mw::com::impl::rust::FatPtr* boxed_fnmut,            \
+                                               void* sample_ptr);                                                \
+    }                                                                                                            \
+    constexpr std::string_view id_interface = #id;                                                               \
+    /* Type aliases for event macros to use */                                                                   \
+    using ProxyType = proxy_type;                                                                                \
+    using SkeletonType = skeleton_type;                                                                          \
+                                                                                                                 \
+    /* Registration helper struct - constructor runs at startup */                                               \
+    struct id##_InterfaceRegistrationHelper                                                                      \
+    {                                                                                                            \
+        id##_InterfaceRegistrationHelper()                                                                       \
+        {                                                                                                        \
+            /*TODO: We will validate if we can use unique_ptr here - Ticket-219875 */                               \
+            auto interface_event_ops =                                                                           \
+                std::make_shared<::score::mw::com::impl::rust::InterfaceOperationImpl<ProxyType, SkeletonType>>(); \
+                                                                                                                 \
+            /* Register interface factory for FFI layer */                                                       \
+            ::score::mw::com::impl::rust::GlobalRegistryMapping::RegisterInterfaceOperation(id_interface,          \
+                                                                                          interface_event_ops);  \
+        }                                                                                                        \
+    };                                                                                                           \
+                                                                                                                 \
+    /* Force instantiation at startup */                                                                         \
     static id##_InterfaceRegistrationHelper id##_interface_reg_instance;
 
-/**
- * EXPORT_MW_COM_EVENT macro
- * Create registry for event member operations
- * It registers member operations for specific interface id and event name
- * It uses Static struct to register member operations at startup or before main()
- * It uses constructor of static struct to register member operations
- * id means Interface TYPE ID which rust side uses to identify the interface
- * event_type means event data type
- * event_member means event member name in Proxy and Skeleton classes
- * Example usage:
- * EXPORT_MW_COM_EVENT(VehicleInterface, Tire, left_tire)
- */
-#define EXPORT_MW_COM_EVENT(id, event_type, event_member)                                                         \
-    struct id##_##event_member##_EventRegistrationHelper                                                          \
+/// \brief Macro to register event member operations
+/// \details Creates registry for event member operations for a specific interface and event name.
+/// Uses a static struct to register member operations at startup/before main().
+/// \param event_type Data type of the event
+/// \param event_member Event member name in Proxy and Skeleton classes
+/// \note Example usage: EXPORT_MW_COM_EVENT(Tire, left_tire)
+#define EXPORT_MW_COM_EVENT(event_type, event_member)                                                             \
+    struct event_member##_EventRegistrationHelper                                                                 \
     {                                                                                                             \
-        id##_##event_member##_EventRegistrationHelper()                                                           \
+        event_member##_EventRegistrationHelper()                                                                  \
         {                                                                                                         \
-            using ProxyType = id##_ProxyType;                                                                     \
-            using SkeletonType = id##_SkeletonType;                                                               \
                                                                                                                   \
-            /* TODO: We will validate if we can use unique_ptr here*/                                             \
+            /* TODO: We will validate if we can use unique_ptr here - Ticket-219875 */                               \
             auto event_info =                                                                                     \
                 std::make_shared<::score::mw::com::impl::rust::MemberOperationImpl<ProxyType,                       \
                                                                                  SkeletonType,                    \
@@ -524,26 +447,21 @@ class GlobalRegistryMapping
                                                                                                                   \
             /* Register this event in the LOCAL interface registry (not global) */                                \
             ::score::mw::com::impl::rust::GlobalRegistryMapping::RegisterMemberOperation(                           \
-                std::string_view(#id), std::string_view(#event_member), event_info);                              \
+                std::string_view(id_interface), std::string_view(#event_member), event_info);                     \
         }                                                                                                         \
     };                                                                                                            \
                                                                                                                   \
     /* Force instantiation at startup */                                                                          \
-    static id##_##event_member##_EventRegistrationHelper id##_##event_member##_event_reg_instance;
+    static event_member##_EventRegistrationHelper event_member##_event_reg_instance;
 
 #define END_EXPORT_MW_COM_INTERFACE() /* Optional: marks end of interface block */
 
-/**
- * EXPORT_MW_COM_TYPE macro
- * Create registry for type operations
- * It registers type operations for specific type name
- * It uses Static struct to register type operations at startup or before main()
- * It uses constructor of static struct to register type operations
- * type_tag means type name tag used in macros
- * type means actual C++ type
- * Example usage:
- * EXPORT_MW_COM_TYPE(TireType, Tire)
- */
+/// \brief Macro to register type operations
+/// \details Creates registry for type operations for a specific type name. Specializes the
+/// RustRefMutCallable template and uses a static struct to register type operations at startup/before main().
+/// \param type_tag Type name tag used in macros as the registry key
+/// \param type Actual C++ type for which operations are registered
+/// \note Example usage: EXPORT_MW_COM_TYPE(TireType, Tire)
 #define EXPORT_MW_COM_TYPE(type_tag, type)                                                                          \
     template <>                                                                                                     \
     class score::mw::com::impl::rust::RustRefMutCallable<void, ::score::mw::com::impl::SamplePtr<type>>                 \
@@ -564,7 +482,7 @@ class GlobalRegistryMapping
     struct type_tag##_TypeRegistrationHelper                                                                        \
     {                                                                                                               \
         type_tag##_TypeRegistrationHelper()                                                                         \
-        { /* TODO: We will validate if we can use unique_ptr here*/                                                 \
+        { /* TODO: We will validate if we can use unique_ptr here - Ticket-219875 */                                   \
             auto type_ops = std::make_shared<::score::mw::com::impl::rust::TypeOperationImpl<type>>();                \
             ::score::mw::com::impl::rust::GlobalRegistryMapping::RegisterTypeOperation(#type_tag, type_ops);          \
         }                                                                                                           \

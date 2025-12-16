@@ -54,7 +54,10 @@ impl StringView {
     /// Create a StringView from a Rust &str
     pub fn from_str(s: &str) -> Self {
         if s.is_empty() {
-            panic!("StringView: empty string is not allowed");
+            return StringView {
+                data: std::ptr::null(),
+                len: 0,
+            };
         }
         StringView {
             data: s.as_ptr() as *const c_char,
