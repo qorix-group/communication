@@ -103,7 +103,7 @@ extern "C" {
     /// * `max_sample_count` - Maximum number of samples to buffer
     /// # Returns
     /// true if subscription successful, false otherwise
-    pub fn mw_com_proxy_event_subscribe(
+    fn mw_com_proxy_event_subscribe(
         event_ptr: *mut ProxyEventBase,
         max_sample_count: u32,
     ) -> bool;
@@ -117,7 +117,7 @@ extern "C" {
     ///
     /// # Returns
     /// Opaque event pointer, or nullptr if event not found
-    pub fn mw_com_get_event_from_proxy(
+    fn mw_com_get_event_from_proxy(
         proxy_ptr: *mut ProxyBase,
         interface_id: StringView,
         event_id: StringView,
@@ -132,7 +132,7 @@ extern "C" {
     ///
     /// # Returns
     /// Opaque event pointer, or nullptr if event not found
-    pub fn mw_com_get_event_from_skeleton(
+    fn mw_com_get_event_from_skeleton(
         skeleton_ptr: *mut SkeletonBase,
         interface_id: StringView,
         event_id: StringView,
@@ -148,7 +148,7 @@ extern "C" {
     ///
     /// # Returns
     /// Number of samples retrieved
-    pub fn mw_com_type_registry_get_samples_from_event(
+    fn mw_com_type_registry_get_samples_from_event(
         event_ptr: *mut ProxyEventBase,
         event_type: StringView,
         callback: *const FatPtr,
@@ -164,7 +164,7 @@ extern "C" {
     ///
     /// # Returns
     /// true if send successful, false otherwise
-    pub fn mw_com_skeleton_send_event(
+    fn mw_com_skeleton_send_event(
         event_ptr: *mut SkeletonEventBase,
         event_type: StringView,
         data_ptr: CVoidPtr,
@@ -178,7 +178,7 @@ extern "C" {
     ///
     /// # Returns
     /// Opaque proxy pointer, or nullptr if creation failed
-    pub fn mw_com_create_proxy(
+    fn mw_com_create_proxy(
         interface_id: StringView,
         handle_ptr: &HandleType,
     ) -> *mut ProxyBase;
@@ -191,7 +191,7 @@ extern "C" {
     ///
     /// # Returns
     /// Opaque skeleton pointer, or nullptr if creation failed
-    pub fn mw_com_create_skeleton(
+    fn mw_com_create_skeleton(
         interface_id: StringView,
         instance_spec: NativeInstanceSpecifier,
     ) -> *mut SkeletonBase;
@@ -200,13 +200,13 @@ extern "C" {
     ///
     /// # Arguments
     /// * `proxy_ptr` - Opaque proxy pointer
-    pub fn mw_com_destroy_proxy(proxy_ptr: *mut ProxyBase);
+    fn mw_com_destroy_proxy(proxy_ptr: *mut ProxyBase);
 
     /// Destroy skeleton
     ///
     /// # Arguments
     /// * `skeleton_ptr` - Opaque skeleton pointer
-    pub fn mw_com_destroy_skeleton(skeleton_ptr: *mut SkeletonBase);
+    fn mw_com_destroy_skeleton(skeleton_ptr: *mut SkeletonBase);
 
     /// Offer service via skeleton
     ///
@@ -215,7 +215,7 @@ extern "C" {
     ///
     /// # Returns
     /// true if offer successful, false otherwise
-    pub fn mw_com_skeleton_offer_service(
+    fn mw_com_skeleton_offer_service(
         skeleton_ptr: *mut SkeletonBase,
     ) -> bool;
 
@@ -223,7 +223,7 @@ extern "C" {
     ///
     /// # Arguments
     /// * `skeleton_ptr` - Opaque skeleton pointer
-    pub fn mw_com_skeleton_stop_offer_service(
+    fn mw_com_skeleton_stop_offer_service(
         skeleton_ptr: *mut SkeletonBase,
     );
 }

@@ -136,8 +136,6 @@ cc_library(
 rust_library(
     name = "generic_bridge_ffi_rs",
     srcs = ["generic_bridge_ffi.rs"],
-    features = ["link_std_cpp_lib"],
-    rustc_flags = ["-Clink-arg=-lstdc++"],
     visibility = [
         "//score/mw/com:__subpackages__",
     ],

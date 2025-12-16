@@ -42,7 +42,7 @@ struct StringView
 
     /// Conversion operator to std::string_view
     /// Allows implicit conversion: std::string_view sv = static_cast<std::string_view>(string_view_instance);
-    operator std::string_view() const noexcept
+    explicit operator std::string_view() const noexcept
     {
         return std::string_view(data, len);
     }
@@ -221,12 +221,10 @@ class MemberOperationImpl : public IMemberOperation
  * and offering/stopping service
  * It include the MemberOperation registry for events,methods and fields
  */
-class IInterfaceOperations
+class InterfaceOperations
 {
   public:
-    using MemberOperationMap = std::unordered_map<std::string_view, std::shared_ptr<IMemberOperation>>;
-
-    virtual ~IInterfaceOperations() = default;
+    virtual ~InterfaceOperations() = default;
 
     /**
      * Create Proxy instance from HandleType
@@ -250,7 +248,7 @@ class IInterfaceOperations
      */
     void RegisterMemberOperation(const std::string_view member_name, std::shared_ptr<IMemberOperation> ops)
     {
-        s_member_operation_map[member_name] = ops;
+        member_operation_map_[member_name] = ops;
     }
 
     /**
@@ -261,8 +259,8 @@ class IInterfaceOperations
      */
     IMemberOperation* GetMemberOperation(const std::string_view member_name)
     {
-        auto it = s_member_operation_map.find(member_name);
-        if (it != s_member_operation_map.end())
+        auto it = member_operation_map_.find(member_name);
+        if (it != member_operation_map_.end())
         {
             return it->second.get();
         }
@@ -270,42 +268,34 @@ class IInterfaceOperations
     }
 
   private:
-    MemberOperationMap s_member_operation_map;
+    using MemberOperationMap = std::unordered_map<std::string_view, std::shared_ptr<IMemberOperation>>;
+    MemberOperationMap member_operation_map_;
 };
 
 /**
- * Template implementation of IInterfaceOperations for specific Proxy and Skeleton types
+ * Template implementation of InterfaceOperations for specific Proxy and Skeleton types
  * It provides implementation for CreateProxy, CreateSkeleton, OfferService and StopOfferService
  * This class is used to register interface operations for each interface from macros
  */
 template <typename AsProxy, typename AsSkeleton>
-class InterfaceOperationImpl : public IInterfaceOperations
+class InterfaceOperationImpl : public InterfaceOperations
 {
   public:
     ProxyBase* CreateProxy(const HandleType& handle_ptr) override
     {
+        // Pass the dereferenced reference directly
+        auto result = AsProxy::Create(handle_ptr);
 
-        try
+        if (result.has_value())
         {
-            // Pass the dereferenced reference directly
-            auto result = AsProxy::Create(handle_ptr);
-
-            if (result.has_value())
-            {
-                AsProxy* proxy = new AsProxy{std::move(result).value()};
-                return proxy;
-            }
-            else
-            {
-                return nullptr;
-            }
+            AsProxy* proxy = new AsProxy{std::move(result).value()};
+            return proxy;
         }
-        catch (const std::exception& e)
+        else
         {
-            // TODO: Log the exception
-            // std::cerr<<"CPP Macro # Caught exception in CreateProxy: " << e.what() << std::endl;
             return nullptr;
         }
+        // TODO: Need to think about exception handling here
     }
 
     SkeletonBase* CreateSkeleton(const ::score::mw::com::InstanceSpecifier& instance_specifier) override
@@ -333,7 +323,7 @@ class InterfaceOperationImpl : public IInterfaceOperations
 class GlobalRegistryMapping
 {
   public:
-    using InterfaceOprationMap = std::unordered_map<std::string_view, std::shared_ptr<IInterfaceOperations>>;
+    using InterfaceOprationMap = std::unordered_map<std::string_view, std::shared_ptr<InterfaceOperations>>;
 
     using TypeOperationMap = std::unordered_map<std::string_view, std::shared_ptr<ITypeOperations>>;
 
@@ -356,7 +346,7 @@ class GlobalRegistryMapping
      */
     static void RegisterTypeOperation(const std::string_view type_name, std::shared_ptr<ITypeOperations> impl)
     {
-        GetTypeOperationMap()[type_name] = impl;
+        GetTypeOperationMap()[type_name] = std::move(impl);
     }
 
     /**
@@ -384,7 +374,7 @@ class GlobalRegistryMapping
         const auto& registries = GetInterfaceOperation(interface_id);
         if (registries)
         {
-            registries->RegisterMemberOperation(member_name, ops);
+            registries->RegisterMemberOperation(member_name, std::move(ops));
         }
     }
 
@@ -392,20 +382,20 @@ class GlobalRegistryMapping
      * Register interface operation for specific interface id
      * Called by EXPORT_MW_COM_INTERFACE macro
      * @param interface_id id of the interface used as key in interface operation map
-     * @param ops pointer to IInterfaceOperations implementation
+     * @param ops pointer to InterfaceOperations implementation
      */
     static void RegisterInterfaceOperation(const std::string_view interface_id,
-                                           std::shared_ptr<IInterfaceOperations> ops)
+                                           std::shared_ptr<InterfaceOperations> ops)
     {
-        GetInterfaceOprationMap()[interface_id] = ops;
+        GetInterfaceOprationMap()[interface_id] = std::move(ops);
     }
 
     /**
      * Get interface operation for specific interface id
      * @param interface_id id of the interface used as key in interface operation map
-     * @return It returns pointer to IInterfaceOperations implementation if found, nullptr otherwise
+     * @return It returns pointer to InterfaceOperations implementation if found, nullptr otherwise
      */
-    static IInterfaceOperations* GetInterfaceOperation(const std::string_view interface_id)
+    static InterfaceOperations* GetInterfaceOperation(const std::string_view interface_id)
     {
         auto it = GetInterfaceOprationMap().find(interface_id);
         if (it != GetInterfaceOprationMap().end())
@@ -450,9 +440,9 @@ class GlobalRegistryMapping
     /**
      * Find interface operation for specific interface id
      * @param interface_id id of the interface used as key in interface operation map
-     * @return It returns pointer to IInterfaceOperations implementation if found, nullptr otherwise
+     * @return It returns pointer to InterfaceOperations implementation if found, nullptr otherwise
      */
-    static IInterfaceOperations* FindInterfaceRegistry(const std::string_view interface_id)
+    static InterfaceOperations* FindInterfaceRegistry(const std::string_view interface_id)
     {
         return GetInterfaceOperation(interface_id);
     }
@@ -492,7 +482,7 @@ class GlobalRegistryMapping
         {                                                                                                            \
             using ProxyType = proxy_type;                                                                            \
             using SkeletonType = skeleton_type;                                                                      \
-                                                                                                                     \
+            /*TODO: We will validate if we can use unique_ptr here*/                                                 \
             auto interface_event_ops =                                                                               \
                 std::make_shared<::score::mw::com::impl::rust::InterfaceOperationImpl<ProxyType, SkeletonType>>();     \
                                                                                                                      \
@@ -524,7 +514,7 @@ class GlobalRegistryMapping
             using ProxyType = id##_ProxyType;                                                                     \
             using SkeletonType = id##_SkeletonType;                                                               \
                                                                                                                   \
-            /* Build the operations struct */                                                                     \
+            /* TODO: We will validate if we can use unique_ptr here*/                                             \
             auto event_info =                                                                                     \
                 std::make_shared<::score::mw::com::impl::rust::MemberOperationImpl<ProxyType,                       \
                                                                                  SkeletonType,                    \
@@ -574,7 +564,7 @@ class GlobalRegistryMapping
     struct type_tag##_TypeRegistrationHelper                                                                        \
     {                                                                                                               \
         type_tag##_TypeRegistrationHelper()                                                                         \
-        {                                                                                                           \
+        { /* TODO: We will validate if we can use unique_ptr here*/                                                 \
             auto type_ops = std::make_shared<::score::mw::com::impl::rust::TypeOperationImpl<type>>();                \
             ::score::mw::com::impl::rust::GlobalRegistryMapping::RegisterTypeOperation(#type_tag, type_ops);          \
         }                                                                                                           \
