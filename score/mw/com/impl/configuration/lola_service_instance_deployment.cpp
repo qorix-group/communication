@@ -62,7 +62,7 @@ std::unordered_map<QualityType, std::vector<uid_t>> ConvertJsonToUidMap(const js
         {
             score::mw::log::LogFatal("lola") << "Failed to parse JSON UID list for quality type '" << quality_string
                                            << "'. Configuration parsing failed. Terminating.";
-            std::terminate();
+            SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD(false);
         }
         const auto& uids_json = uids_json_result.value().get();
 
@@ -75,7 +75,7 @@ std::unordered_map<QualityType, std::vector<uid_t>> ConvertJsonToUidMap(const js
             {
                 score::mw::log::LogFatal("lola") << "Failed to parse JSON UID value in quality type '" << quality_string
                                                << "'. Configuration parsing failed. Terminating.";
-                std::terminate();
+                SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD(false);
             }
             uids.push_back(uid_result.value());
         }
