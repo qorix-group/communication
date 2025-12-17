@@ -18,10 +18,13 @@
 #include "score/mw/com/impl/plumbing/sample_ptr.h"
 #include "score/mw/com/impl/proxy_base.h"
 #include "score/mw/com/impl/proxy_event.h"
+#include "score/mw/com/impl/proxy_event_base.h"
 #include "score/mw/com/impl/rust/proxy_bridge.h"
 #include "score/mw/com/impl/skeleton_base.h"
 #include "score/mw/com/impl/skeleton_event.h"
+#include "score/mw/com/impl/skeleton_event_base.h"
 #include "score/mw/com/types.h"
+
 #include <cstdint>
 #include <memory>
 #include <string_view>

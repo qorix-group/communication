@@ -23,8 +23,10 @@
 #include "score/mw/com/impl/rust/registry_bridge_macro.h"
 #include "score/mw/com/impl/proxy_base.h"
 #include "score/mw/com/impl/proxy_event.h"
+#include "score/mw/com/impl/proxy_event_base.h"
 #include "score/mw/com/impl/skeleton_base.h"
 #include "score/mw/com/impl/skeleton_event.h"
+#include "score/mw/com/impl/skeleton_event_base.h"
 #include "score/mw/com/types.h"
 #include <limits>
 #include <string_view>
