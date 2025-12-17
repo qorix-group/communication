@@ -420,30 +420,23 @@ TEST_F(LolaServiceInstanceDeploymentJsonParsingDeathTest,
 
     auto json_object = valid_unit.Serialize();
 
-    // When we corrupt the allowedConsumer quality map to have non-integer UIDs
+    // When we corrupt the allowedConsumer to have a UID list with a non-integer element
+    // We need to create a completely new quality map with the corrupted data
     auto consumer_it = json_object.find("allowedConsumer");
-    if (consumer_it != json_object.end())
-    {
-        auto quality_map = consumer_it->second.As<score::json::Object>();
-        if (quality_map.has_value())
-        {
-            auto& quality_obj = quality_map.value().get();
-            for (auto& [quality_key, quality_val] : quality_obj)
-            {
-                auto uid_list = quality_val.As<score::json::List>();
-                if (uid_list.has_value())
-                {
-                    // Replace first UID with an invalid string
-                    auto& list = uid_list.value().get();
-                    if (!list.empty())
-                    {
-                        list[0] = json::Any{"invalid_uid_string"};
-                    }
-                    break;
-                }
-            }
-        }
-    }
+    ASSERT_NE(consumer_it, json_object.end());
+
+    // Create a new corrupted quality map object from scratch
+    json::Object corrupted_quality_map;
+
+    // Add one quality type entry with a corrupted UID list containing a string
+    json::List corrupted_uid_list;
+    corrupted_uid_list.push_back(json::Any{"invalid_string_not_a_uid"});
+
+    // Insert this into the quality map under "QM" key
+    corrupted_quality_map.insert(std::make_pair("QM", json::Any{std::move(corrupted_uid_list)}));
+
+    // Replace the entire allowedConsumer with our corrupted map
+    json_object["allowedConsumer"] = json::Any{std::move(corrupted_quality_map)};
 
     // Then constructing from the corrupted JSON logs and terminates
     EXPECT_DEATH(LolaServiceInstanceDeployment invalid_deployment{json_object}, ".*");
