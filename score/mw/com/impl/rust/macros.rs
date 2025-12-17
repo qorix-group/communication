@@ -51,7 +51,7 @@ macro_rules! import_type {
                 #[link_name=concat!("mw_com_gen_SamplePtr_", stringify!($uid), "_delete")]
                 pub unsafe fn delete(sample_ptr: *mut $crate::proxy_bridge::SamplePtr<$ctype>);
                 #[link_name=concat!("mw_com_gen_", stringify!($uid), "_get_size")]
-                pub unsafe fn get_size() -> u32;
+                pub safe fn get_size() -> u32;
                 #[link_name=concat!("mw_com_gen_SkeletonEvent_", stringify!($uid), "_send")]
                 pub unsafe fn send(
                     skeleton_event: *mut $crate::skeleton_bridge::NativeSkeletonEvent<$ctype>,
@@ -87,11 +87,14 @@ macro_rules! import_type {
 
         impl $crate::TypeInfo for $ctype {
             fn get_size() -> u32 {
-                unsafe { $uid::get_size() }
+                $uid::get_size()
             }
         }
 
         impl $crate::skeleton_bridge::SkeletonOps for $ctype {
+            // SAFETY: This function must take a raw pointer parameter to satisfy the FFI interface contract.
+            // The `#[allow(clippy::not_unsafe_ptr_arg_deref)]` suppresses the lint because we intentionally
+            // defer dereferencing to the FFI function which performs proper validation and lifetime management.
             #[allow(clippy::not_unsafe_ptr_arg_deref)]
             fn send(
                 &self,

@@ -451,6 +451,11 @@ where
     /// # Errors
     ///
     /// Returns 'Error' if the allocation fails.
+    //Since &self is the only parameter with a lifetime,
+    // Rust's Lifetime Elision Rules automatically bind the return type's lifetime to the implicit lifetime of &self,
+    // This is Elision Rule: When there's exactly one input lifetime,
+    // it's automatically used for all elided output lifetimes The compiler implicitly expands this to:
+    // fn allocate(&'a self) -> Result<Self::SampleMaybeUninit<'a>>
     fn allocate(&self) -> Result<Self::SampleMaybeUninit<'_>>;
 
     /// Allocate, initialize, and send an event sample in one step.
@@ -509,10 +514,7 @@ pub trait Consumer<R: Runtime + ?Sized> {
 /// # Type Parameters
 /// * `I` - The service interface being offered
 /// * `R` - The runtime managing the producer
-pub trait ProducerBuilder<I: Interface, R: Runtime + ?Sized>:
-    Builder<I::Producer<R>>
-{
-}
+pub trait ProducerBuilder<I: Interface, R: Runtime + ?Sized>: Builder<I::Producer<R>> {}
 
 /// Service registry and discovery interface.
 ///
@@ -672,7 +674,7 @@ impl<S> SampleContainer<S> {
     /// A `Result` indicating success or failure.
     ///
     /// # Errors
-    /// Returns 'Error' if the operation fails.
+    /// Returns 'Error' if container is already full.
     pub fn push_back(&mut self, new: S) -> Result<()> {
         self.inner.push_back(new);
         Ok(())

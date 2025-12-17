@@ -22,7 +22,7 @@
 
 //lifetime warning SamplePtr struct impl block . it is required for the SamplePtr struct event lifetime parameter
 // As of supressing clippy::needless_lifetimes
-//TODO: revist this once com-api is stable
+//TODO: revist this once com-api is stable - Ticket-234827
 #![allow(clippy::needless_lifetimes)]
 
 use std::collections::VecDeque;
@@ -110,6 +110,8 @@ mod ffi {
     }
 
     impl From<*mut (dyn FnMut() + Send + 'static)> for FatPtr {
+         // Suppressing clippy::not_unsafe_ptr_arg_deref as this function performs pointer-to-FatPtr
+        // conversion via transmute without dereferencing,actual dereference occurs in caller context.
         #[allow(clippy::not_unsafe_ptr_arg_deref)]
         fn from(ptr: *mut (dyn FnMut() + Send + 'static)) -> Self {
             // SAFETY: Since we're transmuting into a pair of pointers and using those pointers is
@@ -430,6 +432,7 @@ impl<T: EventOps, P> ProxyEvent<T, P> {
     }
 }
 
+#[must_use]
 pub struct SubscribedProxyEvent<T, P> {
     native: *mut ffi::ProxyEvent<T>,
     proxy: P,
@@ -581,6 +584,7 @@ impl<T, P> Drop for SubscribedProxyEvent<T, P> {
     }
 }
 
+#[must_use]
 pub struct ProxyEventStream<'a, T: EventOps, P> {
     event: &'a mut SubscribedProxyEvent<T, P>,
     waker_storage: Arc<AtomicWaker>,
