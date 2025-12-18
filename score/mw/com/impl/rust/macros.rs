@@ -120,10 +120,8 @@ macro_rules! import_type {
                 ptr: *const $crate::proxy_bridge::FatPtr,
                 sample_ptr: *mut $crate::proxy_bridge::SamplePtr<$ctype>) {
                 // SAFETY: The pointer is dereferenced and transmuted within an unsafe block
-                unsafe {
-                    let callable: &mut dyn FnMut(_) = std::mem::transmute(*ptr);
+                    let callable: &mut dyn FnMut(_) = unsafe {std::mem::transmute(*ptr)};
                     callable(sample_ptr);
-                }
             }
         }
     };
@@ -165,7 +163,7 @@ macro_rules! import_interface {
             mod ffi {
                 unsafe extern "C" {
                     #[link_name=concat!("mw_com_gen_ProxyWrapperClass_", stringify!($uid), "_create")]
-                    pub unsafe fn create(handle: &$crate::proxy_bridge::HandleType) -> *mut $crate::proxy_bridge::ProxyWrapperClass;
+                    pub safe fn create(handle: &$crate::proxy_bridge::HandleType) -> *mut $crate::proxy_bridge::ProxyWrapperClass;
                     #[link_name=concat!("mw_com_gen_ProxyWrapperClass_", stringify!($uid), "_delete")]
                     pub unsafe fn delete(proxy: *mut $crate::proxy_bridge::ProxyWrapperClass);
                     #[link_name=concat!("mw_com_gen_SkeletonWrapperClass_", stringify!($uid), "_delete")]
