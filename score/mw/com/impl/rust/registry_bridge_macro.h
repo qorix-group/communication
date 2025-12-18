@@ -392,6 +392,15 @@ class GlobalRegistryMapping
     }
 };
 
+// Declare the generic Rust FFI function
+extern "C" {
+/// \brief Generic Rust closure invocation for all types
+/// \details This function is called by C++ to invoke a Rust closure with a sample pointer.
+/// \param boxed_fnmut Pointer to FatPtr representing the Rust FnMut closure
+/// \param sample_ptr Pointer to SamplePtr<T> representing the sample data
+void mw_com_impl_call_dyn_ref_fnmut_sample(const ::score::mw::com::impl::rust::FatPtr* boxed_fnmut, void* sample_ptr);
+}
+
 /// \brief Macro to begin registration of interface operations
 /// \details Creates registry and type aliases for a specific interface. Uses a static struct to register
 /// interface operations at startup/before main(). Declares the generic Rust FFI function.
@@ -399,34 +408,31 @@ class GlobalRegistryMapping
 /// \param proxy_type Proxy class type for the interface
 /// \param skeleton_type Skeleton class type for the interface
 /// \note Example usage: BEGIN_EXPORT_MW_COM_INTERFACE(VehicleInterface, VehicleProxy, VehicleSkeleton)
-#define BEGIN_EXPORT_MW_COM_INTERFACE(id, proxy_type, skeleton_type)                                             \
-    extern "C" {                                                                                                 \
-    /* Declare the generic Rust FFI function (same for all types) */                                             \
-    void mw_com_impl_call_dyn_ref_fnmut_sample(const ::score::mw::com::impl::rust::FatPtr* boxed_fnmut,            \
-                                               void* sample_ptr);                                                \
-    }                                                                                                            \
-    constexpr std::string_view id_interface = #id;                                                               \
-    /* Type aliases for event macros to use */                                                                   \
-    using ProxyType = proxy_type;                                                                                \
-    using SkeletonType = skeleton_type;                                                                          \
-                                                                                                                 \
-    /* Registration helper struct - constructor runs at startup */                                               \
-    struct id##_InterfaceRegistrationHelper                                                                      \
-    {                                                                                                            \
-        id##_InterfaceRegistrationHelper()                                                                       \
-        {                                                                                                        \
-            /*TODO: We will validate if we can use unique_ptr here - Ticket-219875 */                               \
-            auto interface_event_ops =                                                                           \
-                std::make_shared<::score::mw::com::impl::rust::InterfaceOperationImpl<ProxyType, SkeletonType>>(); \
-                                                                                                                 \
-            /* Register interface factory for FFI layer */                                                       \
-            ::score::mw::com::impl::rust::GlobalRegistryMapping::RegisterInterfaceOperation(id_interface,          \
-                                                                                          interface_event_ops);  \
-        }                                                                                                        \
-    };                                                                                                           \
-                                                                                                                 \
-    /* Force instantiation at startup */                                                                         \
-    static id##_InterfaceRegistrationHelper id##_interface_reg_instance;
+#define BEGIN_EXPORT_MW_COM_INTERFACE(id, proxy_type, skeleton_type)                                                 \
+    namespace id##_detail                                                                                            \
+    {                                                                                                                \
+        constexpr std::string_view id_interface = #id;                                                               \
+        /* Type aliases for event macros to use */                                                                   \
+        using ProxyType = proxy_type;                                                                                \
+        using SkeletonType = skeleton_type;                                                                          \
+                                                                                                                     \
+        /* Registration helper struct - constructor runs at startup */                                               \
+        struct id##_InterfaceRegistrationHelper                                                                      \
+        {                                                                                                            \
+            id##_InterfaceRegistrationHelper()                                                                       \
+            {                                                                                                        \
+                /*TODO: We will validate if we can use unique_ptr here - Ticket-219875 */                               \
+                auto interface_event_ops =                                                                           \
+                    std::make_shared<::score::mw::com::impl::rust::InterfaceOperationImpl<ProxyType, SkeletonType>>(); \
+                                                                                                                     \
+                /* Register interface factory for FFI layer */                                                       \
+                ::score::mw::com::impl::rust::GlobalRegistryMapping::RegisterInterfaceOperation(id_interface,          \
+                                                                                              interface_event_ops);  \
+            }                                                                                                        \
+        };                                                                                                           \
+                                                                                                                     \
+        /* Force instantiation at startup */                                                                         \
+        static id##_InterfaceRegistrationHelper id##_interface_reg_instance;
 
 /// \brief Macro to register event member operations
 /// \details Creates registry for event member operations for a specific interface and event name.
@@ -457,7 +463,7 @@ class GlobalRegistryMapping
     /* Force instantiation at startup */                                                                          \
     static event_member##_EventRegistrationHelper event_member##_event_reg_instance;
 
-#define END_EXPORT_MW_COM_INTERFACE() /* Optional: marks end of interface block */
+#define END_EXPORT_MW_COM_INTERFACE() }  // namespace id##_detail
 
 /// \brief Macro to register type operations
 /// \details Creates registry for type operations for a specific type name. Specializes the
@@ -477,7 +483,7 @@ class GlobalRegistryMapping
             alignas(                                                                                                \
                 ::score::mw::com::impl::SamplePtr<type>) char storage[sizeof(::score::mw::com::impl::SamplePtr<type>)]; \
             auto* placement_sample = new (storage)::score::mw::com::impl::SamplePtr<type>(std::move(sample));         \
-            mw_com_impl_call_dyn_ref_fnmut_sample(&ptr_, placement_sample);                                         \
+            ::score::mw::com::impl::rust::mw_com_impl_call_dyn_ref_fnmut_sample(&ptr_, placement_sample);             \
         }                                                                                                           \
         static void dispose(::score::mw::com::impl::rust::FatPtr) noexcept {}                                         \
     };                                                                                                              \

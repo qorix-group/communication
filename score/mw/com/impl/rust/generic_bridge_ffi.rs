@@ -50,18 +50,18 @@ pub struct StringView {
     len: u32,
 }
 
-impl StringView {
-    /// Create a StringView from a Rust &str
-    pub fn from_str_to_string_view(s: &str) -> Self {
+impl From<&'_ str> for StringView {
+    fn from(s: &str) -> Self {
         if s.is_empty() {
-            return StringView {
+            StringView {
                 data: std::ptr::null(),
                 len: 0,
-            };
-        }
-        StringView {
-            data: s.as_ptr() as *const c_char,
-            len: s.len() as u32,
+            }
+        } else {
+            StringView {
+                data: s.as_ptr() as *const c_char,
+                len: s.len() as u32,
+            }
         }
     }
 }
@@ -189,7 +189,7 @@ extern "C" {
     /// Opaque skeleton pointer, or nullptr if creation failed
     fn mw_com_create_skeleton(
         interface_id: StringView,
-        instance_spec: NativeInstanceSpecifier,
+        instance_spec: *const NativeInstanceSpecifier,
     ) -> *mut SkeletonBase;
 
     /// Destroy proxy
@@ -275,7 +275,7 @@ pub unsafe fn skeleton_stop_offer_service(skeleton_ptr: *mut SkeletonBase) {
 pub unsafe fn create_proxy(interface_id: &str, handle_ptr: &HandleType) -> *mut ProxyBase {
     // SAFETY: interface_id is a valid string reference and handle_ptr is guaranteed to be valid per the caller's contract.
     // The C++ implementation creates and returns a valid proxy pointer or nullptr on failure.
-    let c_uid = StringView::from_str_to_string_view(interface_id);
+    let c_uid = StringView::from(interface_id);
     mw_com_create_proxy(c_uid, handle_ptr)
 }
 
@@ -293,11 +293,11 @@ pub unsafe fn create_proxy(interface_id: &str, handle_ptr: &HandleType) -> *mut 
 /// The returned pointer must eventually be destroyed via destroy_skeleton().
 pub unsafe fn create_skeleton(
     interface_id: &str,
-    instance_spec: NativeInstanceSpecifier,
+    instance_spec: *const NativeInstanceSpecifier,
 ) -> *mut SkeletonBase {
     // SAFETY: interface_id is a valid string reference and instance_spec is guaranteed to be valid per the caller's contract.
     // The C++ implementation creates and returns a valid skeleton pointer or nullptr on failure.
-    let c_uid = StringView::from_str_to_string_view(interface_id);
+    let c_uid = StringView::from(interface_id);
     mw_com_create_skeleton(c_uid, instance_spec)
 }
 
@@ -349,8 +349,8 @@ pub unsafe fn get_event_from_proxy(
 ) -> *mut ProxyEventBase {
     // SAFETY: proxy_ptr is guaranteed to be valid per the caller's contract.
     // The C++ implementation returns a valid pointer or nullptr if the event is not found.
-    let c_id = StringView::from_str_to_string_view(interface_id);
-    let c_name = StringView::from_str_to_string_view(event_id);
+    let c_id = StringView::from(interface_id);
+    let c_name = StringView::from(event_id);
     mw_com_get_event_from_proxy(proxy_ptr, c_id, c_name)
 }
 
@@ -374,8 +374,8 @@ pub unsafe fn get_event_from_skeleton(
 ) -> *mut SkeletonEventBase {
     // SAFETY: skeleton_ptr is guaranteed to be valid per the caller's contract.
     // The C++ implementation returns a valid pointer or nullptr if the event is not found.
-    let c_id = StringView::from_str_to_string_view(interface_id);
-    let c_name = StringView::from_str_to_string_view(event_id);
+    let c_id = StringView::from(interface_id);
+    let c_name = StringView::from(event_id);
     mw_com_get_event_from_skeleton(skeleton_ptr, c_id, c_name)
 }
 
@@ -402,7 +402,7 @@ pub unsafe fn get_samples_from_event(
 ) -> u32 {
     // SAFETY: event_ptr, callback, and event_type are guaranteed to be valid per the caller's contract.
     // The C++ implementation handles sample retrieval and callback invocation safely.
-    let c_name = StringView::from_str_to_string_view(event_type);
+    let c_name = StringView::from(event_type);
     mw_com_type_registry_get_samples_from_event(event_ptr, c_name, callback, max_samples)
 }
 
@@ -424,7 +424,7 @@ pub unsafe fn skeleton_send_event(
 ) {
     // SAFETY: event_ptr and data_ptr are guaranteed to be valid per the caller's contract.
     // The C++ implementation handles type matching and data sending safely.
-    let c_name = StringView::from_str_to_string_view(event_type);
+    let c_name = StringView::from(event_type);
     mw_com_skeleton_send_event(event_ptr, c_name, data_ptr);
 }
 
