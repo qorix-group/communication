@@ -23,6 +23,8 @@
 #include <utility>
 #include <variant>
 
+#include "iox2/iceoryx2.hpp"
+
 namespace score::mw::com::impl
 {
 
@@ -105,7 +107,7 @@ class SampleAllocateePtr
     // coverity[autosar_cpp14_a15_5_3_violation : FALSE]
     pointer operator->() const noexcept;
 
-  private:
+  
     template <typename T>
     // Suppress "AUTOSAR C++14 A0-1-3" rule finding. This rule states: "Every function defined in an anonymous
     // namespace, or static function with internal linkage, or private member function shall be used.".
@@ -114,7 +116,17 @@ class SampleAllocateePtr
     explicit SampleAllocateePtr(T ptr) : internal_{std::move(ptr)}
     {
     }
+    template <typename T>
+    explicit SampleAllocateePtr(T ptr, std::shared_ptr<iox2::SampleMut<iox2::ServiceType::Ipc, SampleType, void>> iox2_sample) : 
+    internal_{std::move(ptr)}, iox2_sample_{std::move(iox2_sample)}
+    {
+    }
 
+    std::shared_ptr<iox2::SampleMut<iox2::ServiceType::Ipc, SampleType, void>> GetIox2Sample() const noexcept
+    {
+        return iox2_sample_;
+    }
+  private:
     // Suppress "AUTOSAR C++14 A11-3-1", The rule states: "Friend declarations shall not be used".
     // Friend class required to access private constructor as we do not have everything we need public.
     // This is because we want to shield the end user from implementation details and avoid wrong usage.
@@ -133,7 +145,8 @@ class SampleAllocateePtr
     friend class SampleAllocateePtrMutableView;
 
     // We don't use the pimpl idiom because it would require dynamic memory allocation (that we want to avoid)
-    std::variant<score::cpp::blank, lola::SampleAllocateePtr<SampleType>, std::unique_ptr<SampleType>> internal_;
+    std::variant<score::cpp::blank, lola::SampleAllocateePtr<SampleType>, std::unique_ptr<SampleType>, SampleType*> internal_;
+    std::shared_ptr<iox2::SampleMut<iox2::ServiceType::Ipc, SampleType, void>> iox2_sample_;
 };
 
 template <typename SampleType>
@@ -175,8 +188,13 @@ void SampleAllocateePtr<SampleType>::reset() noexcept
             internal_ptr.reset(nullptr);
         },
         // coverity[autosar_cpp14_a7_1_7_violation]
-        [](const score::cpp::blank&) noexcept -> void {});
+        [](const score::cpp::blank&) noexcept -> void {},
+        [](SampleType* internal_ptr) noexcept -> void {
+            internal_ptr = nullptr;
+        }
+    );
     std::visit(visitor, internal_);
+    //iox2_sample_.reset();
 }
 
 template <typename SampleType>
@@ -185,6 +203,7 @@ void SampleAllocateePtr<SampleType>::Swap(SampleAllocateePtr<SampleType>& other)
     // Search for custom swap functions via ADL, and use std::swap if none are found.
     using std::swap;
     swap(internal_, other.internal_);
+    swap(iox2_sample_, other.iox2_sample_);
 }
 
 template <typename SampleType>
@@ -213,7 +232,12 @@ auto SampleAllocateePtr<SampleType>::Get() const noexcept -> pointer
         // coverity[autosar_cpp14_a7_1_7_violation]
         [](const score::cpp::blank&) noexcept -> ReturnType {
             return nullptr;
-        });
+        },
+        [](SampleType* internal_ptr) noexcept -> ReturnType {
+            return internal_ptr;
+        }
+    
+    );
 
     return std::visit(visitor, internal_);
 }
@@ -241,7 +265,11 @@ SampleAllocateePtr<SampleType>::operator bool() const noexcept
         // coverity[autosar_cpp14_a7_1_7_violation]
         [](const score::cpp::blank&) noexcept -> bool {
             return false;
-        });
+        },
+        [](SampleType* internal_ptr) noexcept -> bool {
+            return internal_ptr != nullptr;
+        }
+    );
 
     return std::visit(visitor, internal_);
 }
@@ -273,7 +301,11 @@ typename std::add_lvalue_reference<SampleType>::type SampleAllocateePtr<SampleTy
         // coverity[autosar_cpp14_a7_1_7_violation]
         [](const score::cpp::blank&) noexcept -> ReturnType {
             std::terminate();
-        });
+        },
+        [](SampleType* internal_ptr) noexcept -> ReturnType {
+            return *internal_ptr;
+        }
+    );
 
     return std::visit(visitor, internal_);
 }
@@ -304,7 +336,11 @@ auto SampleAllocateePtr<SampleType>::operator->() const noexcept -> pointer
         // coverity[autosar_cpp14_a7_1_7_violation]
         [](const score::cpp::blank&) noexcept -> ReturnType {
             std::terminate();
-        });
+        },
+        [](SampleType* internal_ptr) noexcept -> ReturnType {
+            return internal_ptr;
+        }
+    );
 
     return std::visit(visitor, internal_);
 }
@@ -353,7 +389,7 @@ class SampleAllocateePtrView
         return std::get_if<T>(&ptr_.internal_);
     }
 
-    const std::variant<score::cpp::blank, lola::SampleAllocateePtr<SampleType>, std::unique_ptr<SampleType>>&
+    const std::variant<score::cpp::blank, lola::SampleAllocateePtr<SampleType>, std::unique_ptr<SampleType>, SampleType*>&
     GetUnderlyingVariant() const noexcept
     {
         return ptr_.internal_;
@@ -370,7 +406,7 @@ class SampleAllocateePtrMutableView
   public:
     explicit SampleAllocateePtrMutableView(SampleAllocateePtr<SampleType>& ptr) : ptr_{ptr} {}
 
-    std::variant<score::cpp::blank, lola::SampleAllocateePtr<SampleType>, std::unique_ptr<SampleType>>&
+    std::variant<score::cpp::blank, lola::SampleAllocateePtr<SampleType>, std::unique_ptr<SampleType>, SampleType*>&
     GetUnderlyingVariant() noexcept
     {
         // Suppress "AUTOSAR C++14 A9-3-1", The rule states: "Member functions shall not return non-const “raw” pointers

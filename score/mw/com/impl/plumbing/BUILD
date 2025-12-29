@@ -523,7 +523,10 @@ cc_library(
     features = COMPILER_WARNING_FEATURES,
     tags = ["FFI"],
     visibility = ["//score/mw/com/impl:__subpackages__"],
-    deps = ["//score/mw/com/impl/bindings/lola:event"],
+    deps = [
+        "//score/mw/com/impl/bindings/lola:event",
+        "@iceoryx2//:iceoryx2-cxx-static",
+    ],
 )
 
 cc_library(
