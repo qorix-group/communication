@@ -93,6 +93,9 @@ SkeletonBase::SkeletonBase(std::unique_ptr<SkeletonBinding> skeleton_binding,
       skeleton_mock_{nullptr},
       service_offered_flag_{}
 {
+    iox2_node_ = std::make_unique<iox2::Node<iox2::ServiceType::Ipc>>(
+        iox2::NodeBuilder().create<iox2::ServiceType::Ipc>().expect("successful node creation")
+    );
 }
 
 SkeletonBase::~SkeletonBase()

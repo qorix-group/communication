@@ -173,6 +173,7 @@ cc_library(
         ":skeleton_field",
         "//score/mw/com/impl/methods:skeleton_method",
         "//score/mw/com/impl/plumbing:event",
+        "@iceoryx2//:iceoryx2-cxx-static",
     ],
 )
 
@@ -272,6 +273,7 @@ cc_library(
         "//score/mw/com/impl/plumbing",
         "//score/mw/com/impl/tracing:skeleton_tracing",
         "@score_baselibs//score/language/futurecpp",
+        "@iceoryx2//:iceoryx2-cxx-static",
     ],
 )
 
@@ -323,6 +325,7 @@ cc_library(
         "//score/mw/com/impl/plumbing",
         "@score_baselibs//score/language/futurecpp",
         "@score_baselibs//score/result",
+        "@iceoryx2//:iceoryx2-cxx-static",
     ],
 )
 
@@ -348,6 +351,7 @@ cc_library(
         "//score/mw/com/impl/tracing:proxy_event_tracing_data",
         "@score_baselibs//score/language/futurecpp",
         "@score_baselibs//score/language/safecpp/scoped_function:scope",
+        "@iceoryx2//:iceoryx2-cxx-static",
     ],
 )
 

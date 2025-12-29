@@ -30,6 +30,9 @@
 #include <memory>
 #include <string_view>
 #include <utility>
+#include <thread>
+
+#include "iox2/iceoryx2.hpp"
 
 namespace score::mw::com::impl
 {
@@ -110,6 +113,8 @@ class SkeletonEvent : public SkeletonEventBase
     }
 
   private:
+    std::unique_ptr<iox2::PortFactoryPublishSubscribe<iox2::ServiceType::Ipc, EventType, void>> iox2_service_;
+    std::unique_ptr<iox2::Publisher<iox2::ServiceType::Ipc, EventType, void>> iox2_publisher_;
     SkeletonEventBinding<EventType>* GetTypedEventBinding() const noexcept;
     ISkeletonEvent<EventType>* skeleton_event_mock_;
 };
@@ -126,6 +131,23 @@ SkeletonEvent<SampleDataType>::SkeletonEvent(SkeletonBase& skeleton_base, const 
 {
     SkeletonBaseView base_skeleton_view{skeleton_base};
     base_skeleton_view.RegisterEvent(event_name, *this);
+
+    const auto& instance_identifier = base_skeleton_view.GetAssociatedInstanceIdentifier();
+    const auto& service_instance_deployment = InstanceIdentifierView{instance_identifier}.GetServiceInstanceDeployment();
+    auto instance_specifier = service_instance_deployment.instance_specifier_.ToString();
+    std::string service_name = (std::string(instance_specifier) + "/" + std::string(event_name));
+    std::cout << "Creating iox2 service with name: " << service_name << std::endl;
+    iox2_service_ = std::make_unique<iox2::PortFactoryPublishSubscribe<iox2::ServiceType::Ipc, SampleDataType, void>>(
+            skeleton_base.iox2_node_->service_builder(
+                    iox2::ServiceName::create(service_name.c_str()).expect("valid service name")
+                )
+                .publish_subscribe<SampleDataType>()
+                .open_or_create()
+                .expect("successful service creation/opening")
+    );
+    iox2_publisher_ = std::make_unique<iox2::Publisher<iox2::ServiceType::Ipc, SampleDataType, void>>(
+        iox2_service_->publisher_builder().create().expect("successful publisher creation")
+    );
 
     if (binding_ != nullptr)
     {
@@ -166,8 +188,11 @@ SkeletonEvent<SampleDataType>::SkeletonEvent(SkeletonBase& skeleton_base,
 
 template <typename SampleDataType>
 SkeletonEvent<SampleDataType>::SkeletonEvent(SkeletonEvent&& other) noexcept
-    : SkeletonEventBase(std::move(other)), skeleton_event_mock_{std::move(other.skeleton_event_mock_)}
+    : SkeletonEventBase(std::move(other)), 
+      iox2_service_{std::move(other.iox2_service_)}, iox2_publisher_{std::move(other.iox2_publisher_)},
+      skeleton_event_mock_{std::move(other.skeleton_event_mock_)}
 {
+    std::cout << "Moving SkeletonEvent" << std::endl;
     // Since the address of this event has changed, we need update the address stored in the parent skeleton.
     SkeletonBaseView base_skeleton_view{skeleton_base_.get()};
     base_skeleton_view.UpdateEvent(event_name_, *this);
@@ -226,6 +251,9 @@ ResultBlank SkeletonEvent<SampleDataType>::Send(const EventType& sample_value) n
 template <typename SampleDataType>
 ResultBlank SkeletonEvent<SampleDataType>::Send(SampleAllocateePtr<EventType> sample) noexcept
 {
+    iox2::send(std::move(*sample.GetIox2Sample())).expect("send successful");
+    return Blank{};
+
     if (skeleton_event_mock_ != nullptr)
     {
         return skeleton_event_mock_->Send(std::move(sample));
@@ -254,6 +282,10 @@ ResultBlank SkeletonEvent<SampleDataType>::Send(SampleAllocateePtr<EventType> sa
 template <typename SampleDataType>
 Result<SampleAllocateePtr<SampleDataType>> SkeletonEvent<SampleDataType>::Allocate() noexcept
 {
+    auto sample = std::make_shared<iox2::SampleMut<iox2::ServiceType::Ipc, EventType, void>>(iox2_publisher_->loan().expect("acquire sample"));
+    SampleDataType* ptr = &(sample->payload_mut());
+    return SampleAllocateePtr<SampleDataType>(std::move(ptr), sample);
+
     if (skeleton_event_mock_ != nullptr)
     {
         return skeleton_event_mock_->Allocate();

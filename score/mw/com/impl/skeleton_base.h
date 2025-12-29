@@ -35,6 +35,8 @@
 #include <memory>
 #include <string_view>
 
+#include "iox2/iceoryx2.hpp"
+
 namespace score::mw::com::impl
 {
 
@@ -98,6 +100,8 @@ class SkeletonBase
     {
         skeleton_mock_ = &skeleton_mock;
     }
+
+    std::unique_ptr<iox2::Node<iox2::ServiceType::Ipc>> iox2_node_;
 
   protected:
     bool AreBindingsValid() const noexcept;

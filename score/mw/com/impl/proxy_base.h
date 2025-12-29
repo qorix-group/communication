@@ -26,6 +26,8 @@
 
 #include <memory>
 
+#include "iox2/iceoryx2.hpp"
+
 namespace score::mw::com::impl
 {
 
@@ -81,6 +83,8 @@ class ProxyBase
     ///
     /// \return Handle identifying the service that this proxy is connected to.
     const HandleType& GetHandle() const noexcept;
+
+    std::unique_ptr<iox2::Node<iox2::ServiceType::Ipc>> iox2_node_;
 
   protected:
     using ProxyEvents = std::map<std::string_view, std::reference_wrapper<ProxyEventBase>>;

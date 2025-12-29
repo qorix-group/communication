@@ -102,6 +102,12 @@ git_override(
     remote = "https://github.com/eclipse-score/score-crates.git",
 )
 
+bazel_dep(name = "iceoryx2", version = "0.7.0")
+local_path_override(
+    module_name = "iceoryx2",
+    path = "/home/piotr/score/iceoryx2",
+)
+
 bazel_dep(name = "boost.program_options", version = "1.87.0")
 bazel_dep(name = "download_utils", version = "1.0.1")
 
