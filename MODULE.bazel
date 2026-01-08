@@ -1,5 +1,5 @@
 # *******************************************************************************
-# Copyright (c) 2024-2025 Contributors to the Eclipse Foundation
+# Copyright (c) 2024-2026 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
 # information regarding copyright ownership.
@@ -75,7 +75,7 @@ llvm.toolchain(
     link_libs = {"": [
         "-lrt",
     ]},
-    llvm_version = "19.1.0",
+    llvm_version = "19.1.6",
     stdlib = {"": "dynamic-stdc++"},
 )
 use_repo(llvm, "llvm_toolchain")
@@ -91,7 +91,7 @@ download_file(
     urls = ["https://github.com/muttleyxd/clang-tools-static-binaries/releases/download/master-2da3e7b/clang-format-19_linux-amd64"],
 )
 
-bazel_dep(name = "aspect_rules_lint", version = "1.10.2")
+bazel_dep(name = "aspect_rules_lint", version = "1.13.0")
 bazel_dep(name = "googletest", version = "1.17.0.bcr.2")
 bazel_dep(name = "google_benchmark", version = "1.9.4")
 bazel_dep(name = "rules_rust", version = "0.61.0")
