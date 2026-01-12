@@ -74,8 +74,10 @@ llvm.toolchain(
     cxx_standard = {"": "c++17"},
     link_libs = {"": [
         "-lrt",
+        # This is the agreed way to ensure linking for targets using std::atomic operations.
+        "-latomic",
     ]},
-    llvm_version = "19.1.6",
+    llvm_version = "19.1.7",
     stdlib = {"": "dynamic-stdc++"},
 )
 use_repo(llvm, "llvm_toolchain")
