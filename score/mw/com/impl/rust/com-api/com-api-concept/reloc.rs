@@ -25,12 +25,8 @@
 ///
 /// Since it is yet to be proven whether this trait can be implemented safely (assumption is: no) it
 /// is unsafe for now. The expectation is that very few users ever need to implement this manually.
-
 #[cfg(feature = "iceoryx")]
-use iceoryx2_qnx8::prelude::ZeroCopySend;
-
-#[cfg(feature = "iceoryx")]
-pub unsafe trait Reloc: ZeroCopySend {}
+pub unsafe trait Reloc: iceoryx2_qnx8::prelude::ZeroCopySend {}
 #[cfg(not(feature = "iceoryx"))]
 pub unsafe trait Reloc {}
 

@@ -1,3 +1,16 @@
+/********************************************************************************
+ * Copyright (c) 2025 Contributors to the Eclipse Foundation
+ *
+ * See the NOTICE file(s) distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Apache License Version 2.0 which is available at
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ ********************************************************************************/
+
 use com_api_concept::Reloc;
 use core::cmp::Ordering;
 use core::fmt::Debug;
@@ -95,7 +108,7 @@ where
     type Sample = Iox2Sample<'a, T>;
 
     fn into_sample(self) -> Self::Sample {
-        todo!() // If this is really required we need to store in Sample enum (Sample, SampleMut) and implement correct accessors...
+        unimplemented!("Clarification ongoing if API required") // If this is really required we need to store in Sample enum (Sample, SampleMut) and implement correct accessors...
     }
 
     fn send(self) -> com_api_concept::Result<()> {

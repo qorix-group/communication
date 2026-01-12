@@ -25,17 +25,14 @@ use std::collections::VecDeque;
 use std::path::Path;
 use std::sync::Arc;
 
-use com_api_concept::{
-    Builder, Consumer, ConsumerBuilder, ConsumerDescriptor, FindServiceSpecifier,
-    InstanceSpecifier, Interface, Producer, ProducerBuilder, Result, Runtime, SampleContainer,
-    ServiceDiscovery, Subscriber, Subscription,
-};
+use com_api_concept::*;
 
 mod samples;
 use samples::*;
 
 // TODO: Consider node as static one since we need to keep it everywhere...
 
+#[derive(Debug)]
 pub struct Iox2Runtime {
     node: Arc<Node<ipc_threadsafe::Service>>,
 }
@@ -209,8 +206,7 @@ where
         scratch: &'_ mut SampleContainer<Self::Sample<'a>>,
         _max_samples: usize,
     ) -> com_api_concept::Result<usize> {
-        let _result = self.subscriber.receive();
-        match _result {
+        match self.subscriber.receive() {
             Ok(option) => match option {
                 Some(sample) => {
                     let _res = scratch.push_back(Iox2Sample::new(sample));
@@ -218,7 +214,10 @@ where
                 }
                 None => return Ok(0),
             },
-            Err(_e) => Err(com_api_concept::Error::Fail),
+            Err(e) => {
+                println!("Failed to receive sample: {e}");
+                Err(com_api_concept::Error::Fail)
+            },
         }
     }
 
@@ -229,7 +228,7 @@ where
         _new_samples: usize,
         _max_samples: usize,
     ) -> impl Future<Output = com_api_concept::Result<usize>> + Send {
-        async { todo!() }
+        async { unimplemented!("Async not yet supported") }
     }
 }
 
@@ -356,7 +355,7 @@ where
     fn get_available_instances_async(
         &self,
     ) -> impl Future<Output = com_api_concept::Result<Self::ServiceEnumerator>> {
-        async { todo!() }
+        async { unimplemented!("Async not yet supported") }
     }
 }
 
@@ -446,6 +445,6 @@ impl Builder<Iox2Runtime> for Iox2RuntimeBuilder {
 
 impl com_api_concept::RuntimeBuilder<Iox2Runtime> for Iox2RuntimeBuilder {
     fn load_config(&mut self, _config: &Path) -> &mut Self {
-        todo!("Loading configuration from file is not yet implemented")
+        unimplemented!("Loading configuration from file is not yet implemented")
     }
 }
