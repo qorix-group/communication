@@ -12,6 +12,7 @@
 # *******************************************************************************
 load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
 
+# IOX2-MODIFICATION-POINT
 rust_library(
     name = "com-api-concept",
     srcs = [
@@ -19,10 +20,18 @@ rust_library(
         "reloc.rs",
     ],
     crate_root = "com_api_concept.rs",
+    crate_features = select({
+        "//score/mw/com/flags:use_iceoryx_flag": ["iceoryx"],
+        "//conditions:default": [],
+    }),
     visibility = [
         "//visibility:public",  # platform_only
     ],
-    deps = [],
+    deps = select({
+        "//score/mw/com/flags:use_iceoryx_flag":   ["@crate_index//:iceoryx2_qnx8"],
+        "//conditions:default": [],
+    }),
+  
 )
 
 rust_test(

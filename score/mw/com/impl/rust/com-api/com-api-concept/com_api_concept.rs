@@ -97,12 +97,18 @@ pub trait Runtime {
     type ServiceDiscovery<I: Interface>: ServiceDiscovery<I, Self>;
 
     /// `Subscriber<T>` types for Manages subscriptions to event notifications
+    #[cfg(feature = "iceoryx")]
+    type Subscriber<T: Reloc + Send + Debug + 'static>: Subscriber<T, Self>;
+    #[cfg(not(feature = "iceoryx"))]
     type Subscriber<T: Reloc + Send + Debug>: Subscriber<T, Self>;
 
     /// `ProducerBuilder<I>` types for Constructs producer instances for offering services
     type ProducerBuilder<I: Interface>: ProducerBuilder<I, Self>;
 
     /// `Publisher<T>` types for Publishes event data to subscribers
+    #[cfg(feature = "iceoryx")]
+    type Publisher<T: Reloc + Send + Debug + 'static>: Publisher<T, Self>;
+    #[cfg(not(feature = "iceoryx"))]
     type Publisher<T: Reloc + Send + Debug>: Publisher<T, Self>;
 
     /// `ProviderInfo` types for Configuration data for service producers instances

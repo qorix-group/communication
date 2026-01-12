@@ -11,11 +11,8 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
-use com_api::{Runtime, Subscriber, Result, SampleContainer, Producer, Publisher, Subscription, Error,
-    SampleMaybeUninit, SampleMut, FindServiceSpecifier, ServiceDiscovery, ConsumerDescriptor, Builder,
-    InstanceSpecifier, MockRuntimeBuilderImpl, MockRuntimeImpl, LolaRuntimeBuilderImpl, LolaRuntimeImpl};
-
-use com_api_gen::{VehicleConsumer, VehicleOfferedProducer, Tire, VehicleInterface};
+use com_api::*;
+use com_api_gen::*;
 
 // Example struct demonstrating composition with VehicleConsumer
 pub struct VehicleMonitor<R: Runtime> {
@@ -124,6 +121,14 @@ fn run_with_runtime<R: Runtime>(name: &str, runtime: &R) {
     println!("=== {name} runtime completed ===\n");
 }
 
+#[cfg(feature = "iceoryx")]
+fn main() {
+    let iceoryx_runtime_builder = Iox2RuntimeBuilder::new();
+    let iceoryx_runtime = Builder::<Iox2Runtime>::build(iceoryx_runtime_builder).unwrap();
+    run_with_runtime("Iceoryx", &iceoryx_runtime);
+}
+ 
+#[cfg(not(feature = "iceoryx"))]
 fn main() {
     let mock_runtime_builder = MockRuntimeBuilderImpl::new();
     let mock_runtime = Builder::<MockRuntimeImpl>::build(mock_runtime_builder).unwrap();

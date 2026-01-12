@@ -12,17 +12,29 @@
 # *******************************************************************************
 load("@rules_rust//rust:defs.bzl", "rust_library")
 
+# IOX2-MODIFICATION-POINT
+
 # Default target with lola runtime
 rust_library(
     name = "com-api",
     srcs = ["com_api.rs"],
+    crate_features = select({
+        "//score/mw/com/flags:use_iceoryx_flag": ["iceoryx"],
+        "//conditions:default": [],
+    }),
     crate_name = "com_api",
     visibility = [
         "//visibility:public",  # platform_only
     ],
-    deps = [
-        "//score/mw/com/impl/rust/com-api/com-api-concept",
-        "//score/mw/com/impl/rust/com-api/com-api-runtime-lola",
-        "//score/mw/com/impl/rust/com-api/com-api-runtime-mock",
-    ],
+    deps = select({
+        "//score/mw/com/flags:use_iceoryx_flag": [
+            "//score/mw/com/impl/rust/com-api/com-api-concept",
+            "//score/mw/com/impl/rust/com-api/com-api-runtime-iceoryx",
+        ],
+        "//conditions:default": [
+            "//score/mw/com/impl/rust/com-api/com-api-concept",
+            "//score/mw/com/impl/rust/com-api/com-api-runtime-lola",
+            "//score/mw/com/impl/rust/com-api/com-api-runtime-mock",
+        ],
+    }),
 )
