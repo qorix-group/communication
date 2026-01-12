@@ -22,7 +22,15 @@ rust_library(
     ],
     deps = [
         "//score/mw/com/impl/rust/com-api/com-api",
-    ],
+    ] + select({
+        "//score/mw/com/flags:use_iceoryx_flag": ["@crate_index//:iceoryx2_qnx8"],
+        "//conditions:default": [],
+    })
+    ,
+    crate_features = select({
+        "//score/mw/com/flags:use_iceoryx_flag": ["iceoryx"],
+        "//conditions:default": [],
+    }),
 )
 
 cc_library(
