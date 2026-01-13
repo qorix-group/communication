@@ -34,6 +34,8 @@
 #include <string_view>
 #include <utility>
 
+#include "iox2/iceoryx2.hpp"
+
 namespace score::mw::com::impl
 {
 
@@ -123,6 +125,8 @@ class ProxyEvent final : public ProxyEventBase
     template <typename F>
     Result<std::size_t> GetNewSamples(F&& receiver, std::size_t max_num_samples) noexcept;
 
+    Result<std::size_t> GetNumNewSamplesAvailable() const noexcept;
+
     void InjectMock(IProxyEvent<SampleType>& proxy_event_mock)
     {
         proxy_event_mock_ = &proxy_event_mock;
@@ -131,7 +135,8 @@ class ProxyEvent final : public ProxyEventBase
 
   private:
     ProxyEventBinding<SampleType>* GetTypedEventBinding() const noexcept;
-
+    std::unique_ptr<iox2::PortFactoryPublishSubscribe<iox2::ServiceType::Ipc, SampleDataType, void>> iox2_service_;
+    std::unique_ptr<iox2::Subscriber<iox2::ServiceType::Ipc, SampleDataType, void>> iox2_subscriber_;
     IProxyEvent<SampleType>* proxy_event_mock_;
 
     /// \brief Indicates whether this event is a field event (i.e. owned by a ProxyField, which is a composite of
@@ -154,6 +159,28 @@ ProxyEvent<SampleType>::ProxyEvent(ProxyBase& base,
     {
         proxy_base_view.MarkServiceElementBindingInvalid();
         return;
+    }
+
+    const auto& instance_identifier = proxy_base_view.GetAssociatedHandleType().GetInstanceIdentifier();
+    const auto& service_instance_deployment = InstanceIdentifierView{instance_identifier}.GetServiceInstanceDeployment();
+    auto instance_specifier = service_instance_deployment.instance_specifier_.ToString();
+    std::cout << "Creating ProxyEvent for instance specifier: " << instance_specifier << std::endl;
+    std::string service_name = (std::string(instance_specifier) + "/" + std::string(event_name));
+    std::cout << "Creating iox2 service with name: " << service_name << std::endl;
+    iox2_service_ = std::make_unique<iox2::PortFactoryPublishSubscribe<iox2::ServiceType::Ipc, SampleType, void>>(
+            base.iox2_node_->service_builder(
+                    iox2::ServiceName::create(service_name.c_str()).expect("valid service name")
+                )
+                .publish_subscribe<SampleType>()
+                .open_or_create()
+                .expect("successful service creation/opening")
+    );
+    iox2_subscriber_ = std::make_unique<iox2::Subscriber<iox2::ServiceType::Ipc, SampleType, void>>(
+        iox2_service_->subscriber_builder().create().expect("successful subscriber creation")
+    );
+    if(iox2_subscriber_ != nullptr)
+    {
+        std::cout << "iox2 subscriber created successfully for event: " << event_name << std::endl;
     }
 }
 
@@ -194,6 +221,8 @@ ProxyEvent<SampleType>::ProxyEvent(ProxyEvent&& other) noexcept
       proxy_event_mock_{std::move(other.proxy_event_mock_)},
       is_field_event_{std::move(other.is_field_event_)}
 {
+    iox2_service_ = std::move(other.iox2_service_);
+    iox2_subscriber_ = std::move(other.iox2_subscriber_);
     if (!is_field_event_)
     {
         // Since the address of this event has changed, we need update the address stored in the parent proxy.
@@ -227,9 +256,26 @@ auto ProxyEvent<SampleType>::operator=(ProxyEvent&& other) & noexcept -> ProxyEv
 }
 
 template <typename SampleType>
+Result<std::size_t> ProxyEvent<SampleType>::GetNumNewSamplesAvailable() const noexcept
+{
+    bool has_samples = iox2_subscriber_->has_samples().expect("has_samples succeeds");
+    return has_samples ? 1 : 0;
+}
+
+template <typename SampleType>
 template <typename F>
 Result<std::size_t> ProxyEvent<SampleType>::GetNewSamples(F&& receiver, std::size_t max_num_samples) noexcept
 {
+    size_t samples_num = 0;
+    auto sample = iox2_subscriber_->receive().expect("receive succeeds");
+    while (sample.has_value()) {
+        samples_num++;
+        SampleReferenceGuard reference_guard{};
+        receiver(SamplePtr<SampleType>(std::make_unique<SampleType>(sample->payload()), std::move(reference_guard)));
+        sample = iox2_subscriber_->receive().expect("receive succeeds");
+    }
+    return samples_num;
+
     if (proxy_event_mock_ != nullptr)
     {
         typename IProxyEvent<SampleType>::Callback mock_callback =

@@ -90,6 +90,9 @@ TracingData ExtractBindingTracingData(const impl::SampleAllocateePtr<SampleType>
         },
         [](const score::cpp::blank&) noexcept -> TracingData {
             std::terminate();
+        },
+        [](SampleType* internal_ptr) noexcept -> TracingData {
+            return {0U, {internal_ptr, sizeof(SampleType)}};
         });
     return std::visit(visitor, binding_ptr_variant);
 }
@@ -135,6 +138,10 @@ TypeErasedSamplePtr CreateTypeErasedSamplePtr(impl::SampleAllocateePtr<SampleTyp
         // will terminate. Therefore, we will never reach this branch.
         [](score::cpp::blank&) noexcept -> TypeErasedSamplePtr {
             std::terminate();
+        },
+        [](SampleType* internal_ptr) noexcept -> TypeErasedSamplePtr {
+            impl::tracing::TypeErasedSamplePtr type_erased_sample_ptr{std::make_unique<SampleType>(*internal_ptr)};
+            return type_erased_sample_ptr;
         });
     // LCOV_EXCL_STOP
 

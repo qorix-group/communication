@@ -35,6 +35,9 @@ ProxyBase::ProxyBase(std::unique_ptr<ProxyBinding> proxy_binding, HandleType han
       fields_{},
       methods_{}
 {
+    iox2_node_ = std::make_unique<iox2::Node<iox2::ServiceType::Ipc>>(
+        iox2::NodeBuilder().create<iox2::ServiceType::Ipc>().expect("successful node creation")
+    );
 }
 
 ProxyBase::ProxyBase(ProxyBase&& other) noexcept

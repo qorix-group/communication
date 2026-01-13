@@ -100,6 +100,12 @@ bazel_dep(name = "rules_rust", version = "0.61.0")
 bazel_dep(name = "buildifier_prebuilt", version = "8.2.0.2")
 bazel_dep(name = "score_crates", version = "0.0.5", repo_name = "crate_index")
 
+bazel_dep(name = "iceoryx2", version = "0.7.0")
+local_path_override(
+    module_name = "iceoryx2",
+    path = "/home/piotr/score/iceoryx2",
+)
+
 bazel_dep(name = "boost.program_options", version = "1.87.0")
 bazel_dep(name = "download_utils", version = "1.0.1")
 
