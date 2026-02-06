@@ -44,7 +44,7 @@
 
 namespace score::mw::com::impl::lola
 {
-
+///Abhishek
 /// \brief Represents a binding specific instance (LoLa) of an event within a skeleton. It can be used to send events
 /// via Shared Memory. It will be created via a Factory Method, that will instantiate this class based on deployment
 /// values.
