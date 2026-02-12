@@ -847,11 +847,11 @@ cc_test(
     timeout = "moderate",
     srcs = ["runtime_single_exec_test.cpp"],
     data = [
-        "//score/mw/com/impl/configuration:ara_com_config.json",
-        "//score/mw/com/impl/configuration:ara_com_config_disabled_trace_config.json",
-        "//score/mw/com/impl/configuration:ara_com_config_invalid_trace_config_path.json",
-        "//score/mw/com/impl/configuration:ara_com_config_other.json",
-        "//score/mw/com/impl/configuration:ara_com_config_valid_trace_config.json",
+        "//score/mw/com/impl/configuration:mw_com_config.json",
+        "//score/mw/com/impl/configuration:mw_com_config_disabled_trace_config.json",
+        "//score/mw/com/impl/configuration:mw_com_config_invalid_trace_config_path.json",
+        "//score/mw/com/impl/configuration:mw_com_config_other.json",
+        "//score/mw/com/impl/configuration:mw_com_config_valid_trace_config.json",
         "//score/mw/com/impl/tracing/configuration:comtrace_filter_config_small.json",
     ],
     features = [
