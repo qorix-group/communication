@@ -241,9 +241,9 @@ int run_receiver(SharedState& shared_state,
         std::promise<std::vector<DataProxy::HandleType>> service_discovery_promise{};
         auto service_discovery_future = service_discovery_promise.get_future();
         auto handles_result = DataProxy::StartFindService(
-            [moved_service_discovery_promise = std::move(service_discovery_promise)](auto handles,
+            [moved_service_discovery_promise = std::move(service_discovery_promise)](auto found_handles,
                                                                                      auto handle) mutable {
-                moved_service_discovery_promise.set_value(handles);
+                moved_service_discovery_promise.set_value(found_handles);
                 DataProxy::StopFindService(handle);
             },
             std::move(instance_specifier_result).value());
