@@ -252,7 +252,7 @@ int run_receiver(SharedState& shared_state,
             std::cerr << "FindService returned an error, terminating!\n";
             return -4;
         }
-        handles = std::move(service_discovery_future.get());
+        handles = service_discovery_future.get();
         if (handles.empty())
         {
             // If we didn't find a service yet (because the sender is still busy spawning clients), we back off
