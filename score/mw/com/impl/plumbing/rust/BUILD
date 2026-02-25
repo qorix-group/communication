@@ -46,25 +46,25 @@ rust_test(
     name = "sample_allocatee_ptr_test_rs",
     srcs = ["sample_allocatee_ptr.rs"],
     features = ["link_std_cpp_lib"],
+    # Disabled for thread sanitizer because of detected race (Ticket-246891)
+    target_compatible_with = ["//quality/sanitizer/constraints:no_tsan"],
     deps = [
         ":common_rs",
         "//score/mw/com/impl/plumbing/rust/test_support:test_helper_size_ffi_rs",
         "//score/mw/com/impl/plumbing/rust/test_support:test_utils_rs",
     ],
-    # Disabled for thread sanitizer because of detected race (Ticket-246891)
-    target_compatible_with = ["//quality/sanitizer/constraints:no_tsan"],
 )
 
 rust_test(
     name = "sample_ptr_test_rs",
     srcs = ["sample_ptr.rs"],
     features = ["link_std_cpp_lib"],
+    # Disabled for thread sanitizer because of detected race (Ticket-246891)
+    target_compatible_with = ["//quality/sanitizer/constraints:no_tsan"],
     deps = [
         ":common_rs",
         "//score/mw/com/impl/plumbing/rust/test_support:test_helper_size_ffi_rs",
         "//score/mw/com/impl/plumbing/rust/test_support:test_utils_rs",
         "@crate_index//:libc",
     ],
-    # Disabled for thread sanitizer because of detected race (Ticket-246891)
-    target_compatible_with = ["//quality/sanitizer/constraints:no_tsan"],
 )
