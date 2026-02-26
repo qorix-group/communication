@@ -41,14 +41,10 @@ jobs:
               incompatible_targets:
                 - "-//score/mw/com/requirements/..." # Uninvestigated problem
                 - "-//score/mw/com/performance_benchmarks/..." # Uninvestigated problem
-                - "-//score/mw/com/doc/..." # Uninvestigated problem
-                - "-//score/mw/com/design/..." # Uninvestigated problem
             - bazel-config: "qnx_arm64"
               incompatible_targets:
                 - "-//score/mw/com/requirements/..." # Uninvestigated problem
                 - "-//score/mw/com/performance_benchmarks/..." # Uninvestigated problem
-                - "-//score/mw/com/doc/..." # Uninvestigated problem
-                - "-//score/mw/com/design/..." # Uninvestigated problem
       runs-on: ubuntu-24.04
       permissions:
         contents: read
