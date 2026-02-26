@@ -214,7 +214,7 @@ single_version_override(
 
 # Apply patch to fix visibility issue with interprocess_notification target
 bazel_dep(name = "score_baselibs", version = "0.2.4")
-bazel_dep(name = "score_logging", version = "0.0.5")
+bazel_dep(name = "score_logging", version = "0.1.0")
 bazel_dep(name = "score_baselibs_rust", version = "0.1.0")
 
 # Doxygen extension for documentation generation
