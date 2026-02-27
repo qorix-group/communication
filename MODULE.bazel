@@ -171,7 +171,7 @@ bazel_dep(name = "rules_rust", version = "0.68.1-score")
 
 bazel_dep(name = "buildifier_prebuilt", version = "8.2.1.2", dev_dependency = True)
 
-bazel_dep(name = "score_crates", version = "0.0.7", repo_name = "crate_index")
+bazel_dep(name = "score_crates", version = "0.0.7", repo_name = "score_communication_crate_index")
 bazel_dep(name = "boost.program_options", version = "1.87.0")
 bazel_dep(name = "boost.interprocess", version = "1.87.0")
 
@@ -218,19 +218,19 @@ bazel_dep(name = "score_logging", version = "0.1.0")
 bazel_dep(name = "score_baselibs_rust", version = "0.1.0")
 
 # Doxygen extension for documentation generation
-doxygen_extension = use_extension("@rules_doxygen//:extensions.bzl", "doxygen_extension")
+doxygen_extension = use_extension("@rules_doxygen//:extensions.bzl", "doxygen_extension", dev_dependency=True)
 use_repo(doxygen_extension, "doxygen")
 
 # Python 3.12 toolchain for Bazel
-bazel_dep(name = "rules_python", version = "1.5.1", dev_dependency = True)
+bazel_dep(name = "rules_python", version = "1.5.1")
 
-python = use_extension("@rules_python//python/extensions:python.bzl", "python")
+python = use_extension("@rules_python//python/extensions:python.bzl", "python", dev_dependency=True)
 python.toolchain(
     python_version = "3.12",
 )
 
 # Python pip dependencies
-pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
+pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip", dev_dependency=True)
 pip.parse(
     hub_name = "score_communication_pip",
     python_version = "3.12",
@@ -267,7 +267,7 @@ bazel_dep(name = "score_bazel_platforms", version = "0.1.1")
 
 bazel_dep(name = "rules_oci", version = "1.8.0", dev_dependency = True)
 
-oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
+oci = use_extension("@rules_oci//oci:extensions.bzl", "oci", dev_dependency = True)
 oci.pull(
     name = "ubuntu_24_04",
     digest = "sha256:2e863c44b718727c860746568e1d54afd13b2fa71b160f5cd9058fc436217b30",
