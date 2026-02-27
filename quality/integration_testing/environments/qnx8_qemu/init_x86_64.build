@@ -32,10 +32,20 @@
     SYSNAME=nto
     TERM=qansi
 
-    # Open serial console for stdout/stderr/stdin
-    devc-ser8250 &
+    # Open serial console for stdout/stderr/stdin.
+    # Explicitly list all four COM ports so the driver creates
+    # /dev/ser1 – /dev/ser4.  COM1 is the interactive console;
+    # COM2-COM4 are dedicated process output channels backed by
+    # QEMU -serial unix: sockets on the host.
+    devc-ser8250 -e 3f8,4 2f8,3 3e8,4 2e8,3 &
     waitfor /dev/ser1
     reopen /dev/ser1
+
+    # Wait for extra serial ports used as dedicated process
+    # output channels by the test harness.
+    waitfor /dev/ser2
+    waitfor /dev/ser3
+    waitfor /dev/ser4
 
     # Enable logging via slogger2
     slogger2 -m -s 253952 -G 7 -V -g 486
