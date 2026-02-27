@@ -121,12 +121,6 @@ def integration_test(name, srcs, filesystem, **kwargs):
         [pytest_toml],
     )
 
-    _extend_list_in_kwargs(
-        kwargs,
-        "target_compatible_with",
-        LINUX_TARGET_COMPATIBLE_WITH,
-    )
-
     py_test(
         name = "_test_internal_docker_{}".format(name),
         srcs = [
