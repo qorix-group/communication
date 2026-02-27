@@ -76,7 +76,10 @@ def integration_test(name, srcs, filesystem, **kwargs):
         name = qemu_image,
         out = "init_ifs_{}".format(name),
         build_file = "//quality/integration_testing/environments/qnx8_qemu:init_build",
-        tars = {"FOLDER": filesystem},
+        tars = {
+            "FOLDER": filesystem,
+            "QEMU_CONFIG": "//quality/integration_testing/environments/qnx8_qemu:qnx_config",
+        },
         target_compatible_with = QNX_TARGET_COMPATIBLE_WITH,
     )
 
