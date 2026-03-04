@@ -73,7 +73,7 @@ rust_library(
     deps = [
         ":ipc_bridge_gen_cpp",
         "//score/mw/com/impl/rust:mw_com",
-        "@crate_index//:libc",
+        "@score_communication_crate_index//:libc",
     ],
 )
 
@@ -85,8 +85,8 @@ rust_binary(
     deps = [
         ":ipc_bridge_gen_rs",
         "//score/mw/com/impl/rust:mw_com",
-        "@crate_index//:clap",
-        "@crate_index//:futures",
+        "@score_communication_crate_index//:clap",
+        "@score_communication_crate_index//:futures",
     ],
 )
 

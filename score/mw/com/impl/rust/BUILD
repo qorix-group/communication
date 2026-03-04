@@ -75,8 +75,8 @@ rust_library(
     deps = [
         ":proxy_bridge_cpp",
         "//score/mw/com/impl/plumbing/rust:sample_ptr_rs",
-        "@crate_index//:arrayvec",
-        "@crate_index//:futures",
+        "@score_communication_crate_index//:arrayvec",
+        "@score_communication_crate_index//:futures",
     ],
 )
 
@@ -95,7 +95,7 @@ rust_library(
     name = "macros",
     srcs = ["macros.rs"],
     proc_macro_deps = [
-        "@crate_index//:paste",
+        "@score_communication_crate_index//:paste",
     ],
     deps = [
         ":common",

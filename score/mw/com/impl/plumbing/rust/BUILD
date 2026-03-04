@@ -38,7 +38,7 @@ rust_library(
     ],
     deps = [
         ":common_rs",
-        "@crate_index//:libc",
+        "@score_communication_crate_index//:libc",
     ],
 )
 
@@ -65,6 +65,6 @@ rust_test(
         ":common_rs",
         "//score/mw/com/impl/plumbing/rust/test_support:test_helper_size_ffi_rs",
         "//score/mw/com/impl/plumbing/rust/test_support:test_utils_rs",
-        "@crate_index//:libc",
+        "@score_communication_crate_index//:libc",
     ],
 )

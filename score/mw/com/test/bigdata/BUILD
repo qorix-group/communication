@@ -50,7 +50,7 @@ rust_library(
     deps = [
         ":bigdata_gen_cpp",
         "//score/mw/com/impl/rust:mw_com",
-        "@crate_index//:libc",
+        "@score_communication_crate_index//:libc",
     ],
 )
 
@@ -62,7 +62,7 @@ rust_binary(
     deps = [
         ":bigdata_gen_rs",
         "//score/mw/com/impl/rust:mw_com",
-        "@crate_index//:futures",
+        "@score_communication_crate_index//:futures",
     ],
 )
 
