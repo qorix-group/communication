@@ -55,7 +55,7 @@ std::string_view GetEventName(const InstanceIdentifier& identifier, std::string_
 
 Result<GenericSkeleton> GenericSkeleton::Create(
     const InstanceSpecifier& specifier,
-    const GenericSkeletonCreateParams& in) noexcept
+    const GenericSkeletonServiceElementInfo& in) noexcept
 {
     const auto instance_identifier_result = GetInstanceIdentifier(specifier);
 
@@ -70,7 +70,7 @@ Result<GenericSkeleton> GenericSkeleton::Create(
 
 Result<GenericSkeleton> GenericSkeleton::Create(
     const InstanceIdentifier& identifier,
-    const GenericSkeletonCreateParams& in) noexcept
+    const GenericSkeletonServiceElementInfo& in) noexcept
 {
     auto binding = SkeletonBindingFactory::Create(identifier);
     if (!binding)
