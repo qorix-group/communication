@@ -451,7 +451,7 @@ auto Skeleton::CreateEventDataFromOpenedSharedMemory(const ElementFqId element_f
 {
     auto* typed_event_data_storage_ptr = storage_resource_->construct<EventDataStorage<SampleType>>(
         element_properties.number_of_slots,
-        memory::shared::PolymorphicOffsetPtrAllocator<SampleType>(storage_resource_->getMemoryResourceProxy()));
+        memory::shared::PolymorphicOffsetPtrAllocator<SampleType>(*storage_resource_));
 
     auto inserted_data_slots = storage_->events_.emplace(std::piecewise_construct,
                                                          std::forward_as_tuple(element_fq_id),

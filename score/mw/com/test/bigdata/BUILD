@@ -50,7 +50,7 @@ rust_library(
     deps = [
         ":bigdata_gen_cpp",
         "//score/mw/com/impl/rust:mw_com",
-        "@crate_index//:libc",
+        "@score_communication_crate_index//:libc",
     ],
 )
 
@@ -62,7 +62,7 @@ rust_binary(
     deps = [
         ":bigdata_gen_rs",
         "//score/mw/com/impl/rust:mw_com",
-        "@crate_index//:futures",
+        "@score_communication_crate_index//:futures",
     ],
 )
 
@@ -87,7 +87,7 @@ pkg_application(
     ],
     visibility = [
         "//platform/aas/test/mw/com:__pkg__",
-        "//pqr/abc/abc-lmn/config/iproject/coreos/hardware/hypervisor:__subpackages__",
+        "//pqr/abc/abc-lmn/config/project/cpu/os/hardware/hypervisor:__subpackages__",
         "//score/mw/com/test/bigdata:__subpackages__",
     ],
 )
