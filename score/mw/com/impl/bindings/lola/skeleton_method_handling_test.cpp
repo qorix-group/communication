@@ -98,7 +98,7 @@ class FakeMethodData
             score::cpp::ignore = method_data_.method_call_queues_.emplace_back(
                 std::piecewise_construct,
                 std::forward_as_tuple(method_id),
-                std::forward_as_tuple(*memory_resource_.getMemoryResourceProxy(), type_erased_element_info));
+                std::forward_as_tuple(memory_resource_, type_erased_element_info));
         }
     }
 
@@ -119,11 +119,11 @@ class SkeletonMethodHandlingFixture : public SkeletonMockedMemoryFixture
         foo_method_ = std::make_unique<SkeletonMethod>(*skeleton_, foo_element_fq_id);
         dumb_method_ = std::make_unique<SkeletonMethod>(*skeleton_, dumb_element_fq_id);
 
-        foo_method_->RegisterHandler(
+        std::ignore = foo_method_->RegisterHandler(
             [this](std::optional<score::cpp::span<std::byte>> in_args, std::optional<score::cpp::span<std::byte>> return_arg) {
                 std::invoke(foo_mock_type_erased_callback_.AsStdFunction(), in_args, return_arg);
             });
-        dumb_method_->RegisterHandler(
+        std::ignore = dumb_method_->RegisterHandler(
             [this](std::optional<score::cpp::span<std::byte>> in_args, std::optional<score::cpp::span<std::byte>> return_arg) {
                 std::invoke(dumb_mock_type_erased_callback_.AsStdFunction(), in_args, return_arg);
             });

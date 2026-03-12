@@ -21,6 +21,14 @@ def _extend_list_in_kwargs(kwargs, key, values):
     kwargs[key] = kwargs.get(key, []) + values
     return kwargs
 
+def _extend_list_in_kwargs_without_duplicates(kwargs, key, values):
+    kwargs_values = kwargs.get(key, [])
+    for value in values:
+        if value not in kwargs_values:
+            kwargs_values.append(value)
+    kwargs[key] = kwargs_values
+    return kwargs
+
 def integration_test(name, srcs, filesystem, **kwargs):
     pytest_bootstrap = Label("//quality/integration_testing:main.py")
     pytest_toml = Label("//quality/integration_testing:pytest.toml")
@@ -76,7 +84,10 @@ def integration_test(name, srcs, filesystem, **kwargs):
         name = qemu_image,
         out = "init_ifs_{}".format(name),
         build_file = "//quality/integration_testing/environments/qnx8_qemu:init_build",
-        tars = {"FOLDER": filesystem},
+        tars = {
+            "FOLDER": filesystem,
+            "QEMU_CONFIG": "//quality/integration_testing/environments/qnx8_qemu:qnx_config",
+        },
         target_compatible_with = QNX_TARGET_COMPATIBLE_WITH,
     )
 
@@ -121,12 +132,6 @@ def integration_test(name, srcs, filesystem, **kwargs):
         [pytest_toml],
     )
 
-    _extend_list_in_kwargs(
-        kwargs,
-        "target_compatible_with",
-        LINUX_TARGET_COMPATIBLE_WITH,
-    )
-
     py_test(
         name = "_test_internal_docker_{}".format(name),
         srcs = [
@@ -155,6 +160,13 @@ def integration_test(name, srcs, filesystem, **kwargs):
         ],
         tags = ["manual"],
         **kwargs
+    )
+
+    # FIXME: Integration tests are highly flaky with TSAN. (Ticket-249859)
+    _extend_list_in_kwargs_without_duplicates(
+        kwargs,
+        "target_compatible_with",
+        ["//quality/sanitizer/constraints:no_tsan"],
     )
 
     test_as_exec(

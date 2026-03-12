@@ -31,8 +31,8 @@ namespace
 // This allows Thread A to complete its dereference transaction before proceeding.
 void WaitForTransactionEndToBecomeFalse(TransactionLogSlot& slot) noexcept
 {
-    constexpr std::uint8_t kRetryCount = 10;
-    constexpr std::chrono::milliseconds kRetryInterval(10U);
+    constexpr std::uint8_t kRetryCount = 10U;
+    constexpr std::chrono::milliseconds kRetryInterval(10);
     for (std::uint8_t retry = 0U; retry < kRetryCount; ++retry)
     {
         if (!slot.GetTransactionEnd())
@@ -67,8 +67,8 @@ bool DoesLogContainIncrementOrDecrementTransactions(
 
 }  // namespace
 
-TransactionLog::TransactionLog(std::size_t number_of_slots, const memory::shared::MemoryResourceProxy* proxy) noexcept
-    : reference_count_slots_{number_of_slots, proxy}, subscribe_transactions_{}, subscription_max_sample_count_{}
+TransactionLog::TransactionLog(std::size_t number_of_slots, memory::shared::ManagedMemoryResource& resource) noexcept
+    : reference_count_slots_{number_of_slots, resource}, subscribe_transactions_{}, subscription_max_sample_count_{}
 {
 }
 

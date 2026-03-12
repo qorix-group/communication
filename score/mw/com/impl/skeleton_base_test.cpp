@@ -208,7 +208,7 @@ TEST_F(SkeletonBaseOfferFixture, OfferService)
     EXPECT_CALL(*field_binding_mock_, Send(kInitialFieldValue, _));
 
     // and the initial field value is set
-    skeleton_->dummy_field.Update(kInitialFieldValue);
+    std::ignore = skeleton_->dummy_field.Update(kInitialFieldValue);
 
     // When offering a Service
     const auto offer_result = skeleton_->OfferService();
@@ -330,7 +330,7 @@ TEST_F(SkeletonBaseOfferFixture, CallingPrepareOfferWhenFieldBindingFailsReturns
         .WillOnce(Return(MakeUnexpected(ComErrc::kInvalidBindingInformation)));
 
     // and the initial field value is set
-    skeleton_->dummy_field.Update(kInitialFieldValue);
+    std::ignore = skeleton_->dummy_field.Update(kInitialFieldValue);
 
     // and when offering a Service
     const auto offer_result = skeleton_->OfferService();
@@ -396,7 +396,7 @@ TEST_F(SkeletonBaseStopOfferFixture, PrepareStopOffer)
     EXPECT_CALL(*field_binding_mock_, Send(kInitialFieldValue, _));
 
     // and the initial field value is set
-    skeleton_->dummy_field.Update(kInitialFieldValue);
+    std::ignore = skeleton_->dummy_field.Update(kInitialFieldValue);
 
     // When offering a Service
     const auto offer_result = skeleton_->OfferService();
@@ -437,7 +437,7 @@ TEST_F(SkeletonBaseOfferFixture, OfferServiceReturnsErrorWhenServiceDiscoveryOff
     EXPECT_CALL(service_discovery_mock_, OfferService(_)).WillOnce(Return(MakeUnexpected(ComErrc::kBindingFailure)));
 
     // and the initial field value is set
-    skeleton_->dummy_field.Update(kInitialFieldValue);
+    std::ignore = skeleton_->dummy_field.Update(kInitialFieldValue);
 
     // When offering a Service
     const auto offer_result = skeleton_->OfferService();
@@ -456,7 +456,7 @@ TEST_F(SkeletonBaseMoveFixture, SelfMovingAssignmentDoesNotCauseIssues)
     ExpectOfferService();
 
     // and the initial field value is set
-    skeleton_->dummy_field.Update(kInitialFieldValue);
+    std::ignore = skeleton_->dummy_field.Update(kInitialFieldValue);
 
     // and given that the service was offered
     score::cpp::ignore = skeleton_->OfferService();
@@ -505,7 +505,7 @@ TEST_F(SkeletonBaseOfferFixture, ServiceCanBeReOfferedAfterMoveConstructingServi
     EXPECT_CALL(*field_binding_mock_, Send(kInitialFieldValue, _));
 
     // and the initial field value is set
-    skeleton.dummy_field.Update(kInitialFieldValue);
+    std::ignore = skeleton.dummy_field.Update(kInitialFieldValue);
 
     // When offering the Service
     const auto offer_result = skeleton.OfferService();
@@ -580,7 +580,7 @@ TEST_F(SkeletonBaseOfferFixture, ServiceCanBeReOfferedAfterCallingStopOfferServi
         EXPECT_CALL(*field_binding_mock_, Send(kInitialFieldValue, _));
 
         // and the initial field value is set
-        skeleton.dummy_field.Update(kInitialFieldValue);
+        std::ignore = skeleton.dummy_field.Update(kInitialFieldValue);
 
         // When offering the Service
         const auto offer_result = skeleton.OfferService();
@@ -776,6 +776,13 @@ TEST_F(SkeletonBaseServiceElementReferencesFixture, MoveConstructingUpdatesRefer
 
 TEST_F(SkeletonBaseServiceElementReferencesFixture, MoveAssigningUpdatesReferencesToServiceElements)
 {
+
+    RecordProperty("Verifies", "SCR-17432438");
+    RecordProperty("Description", "Skeleton is move assignable");
+    RecordProperty("TestType", "Requirements-based test");
+    RecordProperty("Priority", "1");
+    RecordProperty("DerivationTechnique", "Analysis of requirements");
+
     constexpr auto other_event_name{"other_event"};
     constexpr auto other_field_name{"other_field"};
     constexpr auto other_method_name{"other_method"};
@@ -823,6 +830,21 @@ TEST_F(SkeletonBaseServiceElementReferencesFixture, MoveAssigningUpdatesReferenc
     EXPECT_EQ(methods.size(), 2U);
     EXPECT_EQ(&methods.at(method_name_0_).get(), &method_0_);
     EXPECT_EQ(&methods.at(method_name_1_).get(), &method_1_);
+}
+
+TEST_F(SkeletonBaseServiceElementReferencesFixture, MoveAssigningToItselfDoesNotDoAnything)
+{
+    mock_binding::Skeleton skeleton_binding_mock{};
+    // Given a valid MySkeleton object
+    MySkeleton skeleton_2{std::make_unique<mock_binding::SkeletonFacade>(skeleton_binding_mock), instance_identifier_};
+    // When move assigning the MySkeleton object to itself
+
+    auto other_name_same_skeleton_p = &skeleton_2;
+    skeleton_2 = std::move(*other_name_same_skeleton_p);
+    // Then nothing happens.
+    // In case of self assignement we would want to know that actually nothing happens and no sideffects occur.
+    // Abscence of sideeffects is not possible to test for. This test only validates that the self assignement branchcan
+    // be taken without crash.
 }
 
 }  // namespace

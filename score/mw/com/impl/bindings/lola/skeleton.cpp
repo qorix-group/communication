@@ -226,7 +226,6 @@ std::unique_ptr<Skeleton> Skeleton::Create(const InstanceIdentifier& identifier,
         score::mw::log::LogError("lola") << "Could not create partial restart directory.";
         return nullptr;
     }
-
     const auto& lola_service_instance_deployment = GetLolaServiceInstanceDeployment(identifier);
     const auto lola_instance_id = lola_service_instance_deployment.instance_id_.value().GetId();
     auto service_instance_existence_marker_file =
@@ -236,8 +235,7 @@ std::unique_ptr<Skeleton> Skeleton::Create(const InstanceIdentifier& identifier,
     {
         score::mw::log::LogError("lola") << "Could not create or open service instance existence marker file.";
         return nullptr;
-    }
-    
+    } 
     auto service_instance_existence_mutex_and_lock =
         std::make_unique<memory::shared::FlockMutexAndLock<memory::shared::ExclusiveFlockMutex>>(
             *service_instance_existence_marker_file);
@@ -247,8 +245,7 @@ std::unique_ptr<Skeleton> Skeleton::Create(const InstanceIdentifier& identifier,
             << "Flock try_lock failed: Another Skeleton could have already flocked the marker file and is "
                "actively offering the same service instance.";
         return nullptr;
-    }
-    
+    } 
     const auto& lola_service_type_deployment = GetLolaServiceTypeDeployment(identifier);
     // Since we were able to flock the existence marker file, it means that either we created it or the skeleton that
     // created it previously crashed. Either way, we take ownership of the LockFile so that it's destroyed when this
@@ -1001,7 +998,7 @@ bool Skeleton::VerifyAllMethodsRegistered() const
 // coverity[autosar_cpp14_a15_5_3_violation : FALSE]
 void Skeleton::InitializeSharedMemoryForData(const std::shared_ptr<score::memory::shared::ManagedMemoryResource>& memory)
 {
-    storage_ = memory->construct<ServiceDataStorage>(memory->getMemoryResourceProxy());
+    storage_ = memory->construct<ServiceDataStorage>(*memory);
     storage_resource_ = memory;
     // Suppress "AUTOSAR C++14 A0-1-1", The rule states: "A project shall not contain instances of non-volatile
     // variables being given values that are not subsequently used"
@@ -1019,7 +1016,7 @@ void Skeleton::InitializeSharedMemoryForControl(
     const std::shared_ptr<score::memory::shared::ManagedMemoryResource>& memory)
 {
     auto& control = (asil_level == QualityType::kASIL_QM) ? control_qm_ : control_asil_b_;
-    control = memory->construct<ServiceDataControl>(memory->getMemoryResourceProxy());
+    control = memory->construct<ServiceDataControl>(*memory);
 }
 
 EventDataControlComposite Skeleton::CreateEventControlComposite(const ElementFqId element_fq_id,
@@ -1030,7 +1027,7 @@ EventDataControlComposite Skeleton::CreateEventControlComposite(const ElementFqI
                                                            std::forward_as_tuple(element_properties.number_of_slots,
                                                                                 element_properties.max_subscribers,
                                                                                 element_properties.enforce_max_samples,
-                                                                                control_qm_resource_->getMemoryResourceProxy()));
+                                                                                *control_qm_resource_));
     SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(control_qm.second, "Couldn't register/emplace event-meta-info in data-section.");
 
     EventDataControl* control_asil_result{nullptr};
@@ -1042,7 +1039,7 @@ EventDataControlComposite Skeleton::CreateEventControlComposite(const ElementFqI
             std::forward_as_tuple(element_properties.number_of_slots,
             element_properties.max_subscribers,
             element_properties.enforce_max_samples,
-            control_asil_resource_->getMemoryResourceProxy()));
+            *control_asil_resource_));
 
         // Suppress "AUTOSAR C++14 M7-5-1" rule. This rule declares:
         // A function shall not return a reference or a pointer to an automatic variable (including parameters), defined
@@ -1092,7 +1089,7 @@ Skeleton::CreateEventDataFromOpenedSharedMemory(
 
     auto* data_storage = storage_resource_->construct<EventDataStorage<std::max_align_t>>(
         num_max_align_elements,
-        memory::shared::PolymorphicOffsetPtrAllocator<std::max_align_t>(storage_resource_->getMemoryResourceProxy()));
+        memory::shared::PolymorphicOffsetPtrAllocator<std::max_align_t>(*storage_resource_));
 
     auto inserted_data_slots = storage_->events_.emplace(std::piecewise_construct,
                                                          std::forward_as_tuple(element_fq_id),
