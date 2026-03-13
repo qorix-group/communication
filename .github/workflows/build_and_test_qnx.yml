@@ -16,7 +16,7 @@
 
 name: Bazel Build & Test communication module (target-platforms)
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, reopened, synchronize]
   merge_group:
     types: [checks_requested]
@@ -28,6 +28,7 @@ on:
         required: true
       SCORE_QNX_PASSWORD:
         required: true
+
 env:
   LICENSE_DIR: "/opt/score_qnx/license"
 jobs:
@@ -52,10 +53,14 @@ jobs:
       runs-on: ubuntu-24.04
       permissions:
         contents: read
+        pull-requests: read
       environment: "workflow-approval"
       steps:
         - name: Checkout repository
           uses: actions/checkout@v4.2.2
+          with:
+            ref: ${{ github.head_ref || github.event.pull_request.head.ref || github.ref }}
+            repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
         - name: Free Disk Space (Ubuntu)
           uses: ./actions/free_disk_space
         - name: Setup Bazel
