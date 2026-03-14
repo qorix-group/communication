@@ -46,8 +46,8 @@ jobs:
                 - "-//score/mw/com/performance_benchmarks/..." # Uninvestigated problem
                 - "-//score/mw/com/doc/..." # Uninvestigated problem
                 - "-//score/mw/com/design/..." # Uninvestigated problem
-            - bazel-config: "_arm64"
-              identifier: "arm64"
+            - bazel-config: "qnx_arm64"
+              identifier: "_arm64"
               incompatible_targets:
                 - "-//score/mw/com/requirements/..." # Uninvestigated problem
                 - "-//score/mw/com/performance_benchmarks/..." # Uninvestigated problem
