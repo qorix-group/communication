@@ -1,5 +1,5 @@
 /********************************************************************************
- * Copyright (c) 2025 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -10,8 +10,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#ifndef SCORE_MW_COM_IMPL_BINDINGS_LOLA_METHODS_PROXY_INSTANCE_IDENTIFIER_H
-#define SCORE_MW_COM_IMPL_BINDINGS_LOLA_METHODS_PROXY_INSTANCE_IDENTIFIER_H
+#ifndef SCORE_MW_COM_IMPL_BINDINGS_LOLA_PROXY_INSTANCE_IDENTIFIER_H
+#define SCORE_MW_COM_IMPL_BINDINGS_LOLA_PROXY_INSTANCE_IDENTIFIER_H
 
 #include "score/mw/com/impl/configuration/global_configuration.h"
 
@@ -39,7 +39,7 @@ struct ProxyInstanceIdentifier
 
     // According to our configuration schema an application id has to be unique during runtime. Thus, there are no two
     // processes running with the same application id -> application id uniquely identifies a process.
-    GlobalConfiguration::ApplicationId process_identifier;
+    GlobalConfiguration::ApplicationId application_id;
     ProxyInstanceCounter proxy_instance_counter;
 };
 
@@ -60,13 +60,13 @@ class hash<score::mw::com::impl::lola::ProxyInstanceIdentifier>
         const score::mw::com::impl::lola::ProxyInstanceIdentifier& proxy_instance_identifier) const noexcept
     {
         using ProxyInstanceIdentifier = score::mw::com::impl::lola::ProxyInstanceIdentifier;
-        static_assert(sizeof(ProxyInstanceIdentifier::process_identifier) +
+        static_assert(sizeof(ProxyInstanceIdentifier::application_id) +
                           sizeof(ProxyInstanceIdentifier::proxy_instance_counter) <
                       sizeof(std::uint64_t));
 
         constexpr auto proxy_instance_counter_bit_width =
             std::numeric_limits<decltype(proxy_instance_identifier.proxy_instance_counter)>::digits;
-        return std::hash<std::uint64_t>{}((static_cast<std::uint64_t>(proxy_instance_identifier.process_identifier)
+        return std::hash<std::uint64_t>{}((static_cast<std::uint64_t>(proxy_instance_identifier.application_id)
                                            << static_cast<std::uint64_t>(proxy_instance_counter_bit_width)) |
                                           static_cast<std::uint64_t>(proxy_instance_identifier.proxy_instance_counter));
     }
@@ -74,4 +74,4 @@ class hash<score::mw::com::impl::lola::ProxyInstanceIdentifier>
 
 }  // namespace std
 
-#endif  // SCORE_MW_COM_IMPL_BINDINGS_LOLA_METHODS_PROXY_INSTANCE_IDENTIFIER_H
+#endif  // SCORE_MW_COM_IMPL_BINDINGS_LOLA_PROXY_INSTANCE_IDENTIFIER_H

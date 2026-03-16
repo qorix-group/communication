@@ -22,13 +22,13 @@
 #include "score/mw/com/impl/bindings/lola/messaging/method_subscription_registration_guard.h"
 #include "score/mw/com/impl/bindings/lola/methods/method_data.h"
 #include "score/mw/com/impl/bindings/lola/methods/method_resource_map.h"
-#include "score/mw/com/impl/bindings/lola/methods/proxy_instance_identifier.h"
-#include "score/mw/com/impl/bindings/lola/methods/skeleton_instance_identifier.h"
 #include "score/mw/com/impl/bindings/lola/methods/type_erased_call_queue.h"
+#include "score/mw/com/impl/bindings/lola/proxy_instance_identifier.h"
 #include "score/mw/com/impl/bindings/lola/runtime.h"
 #include "score/mw/com/impl/bindings/lola/service_data_control.h"
 #include "score/mw/com/impl/bindings/lola/service_data_storage.h"
 #include "score/mw/com/impl/bindings/lola/skeleton_event_properties.h"
+#include "score/mw/com/impl/bindings/lola/skeleton_instance_identifier.h"
 #include "score/mw/com/impl/bindings/lola/skeleton_method.h"
 #include "score/mw/com/impl/configuration/global_configuration.h"
 #include "score/mw/com/impl/configuration/lola_event_id.h"
@@ -254,12 +254,11 @@ class Skeleton final : public SkeletonBinding
                                            const pid_t proxy_pid);
 
     using MethodIdsToUnsubscribe = std::vector<LolaMethodId>;
-    /// TODO: If SubscribeMethods fails, we want to get the error so that it can be propagated. We also want to return
-    /// MethodIdsToUnsubscribe so that these methods can be unsubscribed. Can this be done in a better way?
     std::pair<score::ResultBlank, MethodIdsToUnsubscribe> SubscribeMethods(
         const MethodData& method_data,
         const ProxyInstanceIdentifier proxy_instance_identifier,
         const uid_t proxy_uid,
+        const pid_t proxy_pid,
         const QualityType asil_level);
     void UnsubscribeMethods(const std::vector<LolaMethodId>& method_ids,
                             const ProxyInstanceIdentifier& proxy_instance_identifier);
@@ -421,7 +420,8 @@ auto Skeleton::OpenEventDataFromOpenedSharedMemory(const ElementFqId element_fq_
     // coverity[autosar_cpp14_a5_3_2_violation]
     auto* const typed_event_data_storage_ptr =
         event_data_storage_it->second.template get<EventDataStorage<SampleType>>();
-    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(typed_event_data_storage_ptr != nullptr, "Could not get EventDataStorage*");
+    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(typed_event_data_storage_ptr != nullptr,
+                                                "Could not get EventDataStorage*");
 
     // Suppress "AUTOSAR C++14 A3-8-1" rule findings. This rule declares:
     // "An object shall not be accessed outside of its lifetime"
@@ -456,7 +456,8 @@ auto Skeleton::CreateEventDataFromOpenedSharedMemory(const ElementFqId element_f
     auto inserted_data_slots = storage_->events_.emplace(std::piecewise_construct,
                                                          std::forward_as_tuple(element_fq_id),
                                                          std::forward_as_tuple(typed_event_data_storage_ptr));
-    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(inserted_data_slots.second, "Couldn't register/emplace event-storage in data-section.");
+    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(inserted_data_slots.second,
+                                                "Couldn't register/emplace event-storage in data-section.");
 
     constexpr DataTypeMetaInfo sample_meta_info{sizeof(SampleType), static_cast<std::uint8_t>(alignof(SampleType))};
     auto* event_data_raw_array = typed_event_data_storage_ptr->data();
@@ -464,7 +465,8 @@ auto Skeleton::CreateEventDataFromOpenedSharedMemory(const ElementFqId element_f
         storage_->events_metainfo_.emplace(std::piecewise_construct,
                                            std::forward_as_tuple(element_fq_id),
                                            std::forward_as_tuple(sample_meta_info, event_data_raw_array));
-    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(inserted_meta_info.second, "Couldn't register/emplace event-meta-info in data-section.");
+    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(inserted_meta_info.second,
+                                                "Couldn't register/emplace event-meta-info in data-section.");
 
     return {typed_event_data_storage_ptr, CreateEventControlComposite(element_fq_id, element_properties)};
 }

@@ -62,14 +62,14 @@ pub struct MockConsumerInfo {
 }
 
 impl Runtime for MockRuntimeImpl {
-    type ServiceDiscovery<I: Interface> = SampleConsumerDiscovery<I>;
+    type ServiceDiscovery<I: Interface + Send> = SampleConsumerDiscovery<I>;
     type Subscriber<T: CommData> = SubscribableImpl<T>;
     type ProducerBuilder<I: Interface> = SampleProducerBuilder<I>;
     type Publisher<T: CommData> = Publisher<T>;
     type ProviderInfo = MockProviderInfo;
     type ConsumerInfo = MockConsumerInfo;
 
-    fn find_service<I: Interface>(
+    fn find_service<I: Interface + Send>(
         &self,
         _instance_specifier: FindServiceSpecifier,
     ) -> Self::ServiceDiscovery<I> {
@@ -275,7 +275,7 @@ impl<T: CommData> Subscriber<T, MockRuntimeImpl> for SubscribableImpl<T> {
             data: PhantomData,
         })
     }
-    fn subscribe(&self, _max_num_samples: usize) -> com_api_concept::Result<Self::Subscription> {
+    fn subscribe(self, _max_num_samples: usize) -> com_api_concept::Result<Self::Subscription> {
         Ok(SubscriberImpl {
             identifier: self.identifier,
             instance_info: self.instance_info.clone(),
@@ -329,10 +329,10 @@ where
     #[allow(clippy::manual_async_fn)]
     fn receive<'a>(
         &'a self,
-        _scratch: &'_ mut SampleContainer<Self::Sample<'a>>,
+        _scratch: SampleContainer<Self::Sample<'a>>,
         _new_samples: usize,
         _max_samples: usize,
-    ) -> impl Future<Output = com_api_concept::Result<usize>> + Send {
+    ) -> impl Future<Output = Result<SampleContainer<Self::Sample<'a>>>> + 'a {
         async { todo!() }
     }
 }
@@ -393,7 +393,7 @@ impl<I> SampleConsumerDiscovery<I> {
     }
 }
 
-impl<I: Interface> ServiceDiscovery<I, MockRuntimeImpl> for SampleConsumerDiscovery<I>
+impl<I: Interface + Send> ServiceDiscovery<I, MockRuntimeImpl> for SampleConsumerDiscovery<I>
 where
     SampleConsumerBuilder<I>: ConsumerBuilder<I, MockRuntimeImpl>,
 {

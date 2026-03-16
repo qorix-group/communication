@@ -84,7 +84,8 @@ class SkeletonEvent final : public SkeletonEventBinding<SampleType>
 
     /// \brief Sends a value by _copy_ towards a consumer. It will allocate the necessary space and then copy the value
     /// into Shared Memory.
-    ResultBlank Send(const SampleType& value, score::cpp::optional<SendTraceCallback> send_trace_callback) noexcept override;
+    ResultBlank Send(const SampleType& value,
+                     score::cpp::optional<SendTraceCallback> send_trace_callback) noexcept override;
 
     ResultBlank Send(impl::SampleAllocateePtr<SampleType> sample,
                      score::cpp::optional<SendTraceCallback> send_trace_callback) noexcept override;

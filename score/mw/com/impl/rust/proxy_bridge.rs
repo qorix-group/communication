@@ -54,7 +54,7 @@ mod ffi {
     /// `::score::mw::com::ServiceHandleContainer`<`::score::mw::com::impl::HandleType`> as an opaque
     /// struct. Note that this struct is empty as we only use references to it on Rust side.
     #[repr(C)]
-    pub(super) struct NativeHandleContainer {
+    pub struct NativeHandleContainer {
         _dummy: [u8; 0],
     }
 
@@ -193,6 +193,7 @@ pub use ffi::NativeInstanceSpecifier;
 
 pub use ffi::FatPtr;
 pub use ffi::HandleType;
+pub use ffi::NativeHandleContainer;
 pub use ffi::ProxyEvent as NativeProxyEvent;
 pub use ffi::ProxyEventBase;
 pub use ffi::ProxyWrapperClass;
@@ -708,6 +709,10 @@ unsafe impl Send for HandleContainer {}
 unsafe impl Sync for HandleContainer {}
 
 impl HandleContainer {
+    /// Create a new handle container from a native handle container pointer.
+    pub fn new(inner: *mut ffi::NativeHandleContainer) -> Self {
+        Self { inner }
+    }
     /// Provides the number of handles in the container.
     #[allow(clippy::len_without_is_empty)]
     // Suppressing clippy::len_without_is_empty because length is returning from FFI

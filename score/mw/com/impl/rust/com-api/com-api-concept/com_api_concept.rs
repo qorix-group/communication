@@ -46,12 +46,11 @@
 //! - Structures
 //! - Tuples
 
+use crate::Reloc;
+use containers::fixed_capacity::FixedCapacityQueue;
 use core::fmt::Debug;
 use core::future::Future;
 use core::ops::{Deref, DerefMut};
-pub mod reloc;
-use containers::fixed_capacity::FixedCapacityQueue;
-pub use reloc::Reloc;
 use std::path::Path;
 
 /// Error enumeration for different failure cases in the Consumer/Producer/Runtime APIs.
@@ -94,7 +93,7 @@ pub trait Builder<Output> {
 /// the implementation.
 pub trait Runtime {
     /// `ServiceDiscovery<I>` types for Discovers available service instances of a specific interface
-    type ServiceDiscovery<I: Interface>: ServiceDiscovery<I, Self>;
+    type ServiceDiscovery<I: Interface + Send>: ServiceDiscovery<I, Self>;
 
     /// `Subscriber<T>` types for Manages subscriptions to event notifications
     type Subscriber<T: CommData>: Subscriber<T, Self>;
@@ -123,7 +122,7 @@ pub trait Runtime {
     ///
     /// # Returns
     /// Service discovery handle for querying available instances
-    fn find_service<I: Interface>(
+    fn find_service<I: Interface + Send>(
         &self,
         instance_specifier: FindServiceSpecifier,
     ) -> Self::ServiceDiscovery<I>;
@@ -641,7 +640,7 @@ pub trait Subscriber<T: CommData, R: Runtime + ?Sized> {
     ///
     /// # Errors
     /// Returns 'Error' if the subscription cannot be established.
-    fn subscribe(&self, max_num_samples: usize) -> Result<Self::Subscription>;
+    fn subscribe(self, max_num_samples: usize) -> Result<Self::Subscription>;
 }
 /// A container for samples received from a subscription.
 /// Provides methods to manipulate and access the samples.
@@ -753,9 +752,6 @@ pub trait Subscription<T: CommData, R: Runtime + ?Sized> {
     /// to `try_receive` of the same `Subscription` instance. If there are samples from other
     /// instances, the method fails. These sample pointers can then be reused by the method:
     ///
-    /// TODO: How to make sure that the provided container contains samples from the same
-    /// TODO: `Subscription` instance?
-    ///
     /// - If there are less than `max_samples` in the communication buffer, the method will reuse
     ///   samples contained in the provided sample container, beginning from the last, going
     ///   backwards.
@@ -798,17 +794,28 @@ pub trait Subscription<T: CommData, R: Runtime + ?Sized> {
     /// # Parameters
     /// * `scratch` - Container for events from this subscription
     /// * `new_samples` - Minimum number of new events before resolution
-    /// * `max_samples` - Maximum total capacity of the container
+    /// * `max_samples` - Maximum number of events that shall be received from the communication buffer and transferred to the container
     ///
     /// # Returns
+    /// Future that resolves to the number of newly added events to the container with at least `new_samples` number of new events.
     ///
-    /// Number of newly added events to the container
+    /// # Important Notes
+    /// User can not concurrenly call `receive` on the same subscription instance from multiple threads or tasks.
+    /// The subscription instance must be used from a single thread or task at a time.
+    /// If concurrent calls to `receive` are made on the same subscription instance, it will lead to panic.
+    /// If user want to process samples concurrenly, then user should spwan to sample processing once the samples are received and stored in the container.
+    /// The `receive` method itself should be called sequentially on the same subscription instance.
+
+    //Notes for developers
+    // The `Future` cannot have a `'static` lifetime. If we enforced `'static`, then `self` would
+    // also need to be `'static`, which is not semantically correct for this use case.
+    // Multiple threads cannot concurrently read the same event from a single subscription.
     fn receive<'a>(
         &'a self,
-        scratch: &'_ mut SampleContainer<Self::Sample<'a>>,
+        scratch: SampleContainer<Self::Sample<'a>>,
         new_samples: usize,
         max_samples: usize,
-    ) -> impl Future<Output = Result<usize>> + Send;
+    ) -> impl Future<Output = Result<SampleContainer<Self::Sample<'a>>>> + 'a;
 }
 
 /// A trait for types that can be default-constructed in place, skipping intermediate moves.
