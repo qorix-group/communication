@@ -62,10 +62,11 @@ InstanceIdentifier DummyInstanceIdentifierBuilder::CreateValidLolaInstanceIdenti
     // The GenericSkeleton needs the event names to be present in the Type Deployment
     // to perform the stable string lookup. We sync it here.
     service_type_deployment_.events_.clear();
-    for (const auto& event_pair : events) {
+    for (const auto& event_pair : events)
+    {
         // Add the event name to the type deployment map.
         // We assume default construction of the value (EventId) is sufficient for this mock.
-        service_type_deployment_.events_[event_pair.first] = {}; 
+        service_type_deployment_.events_[event_pair.first] = {};
     }
 
     type_deployment_.binding_info_ = service_type_deployment_;
@@ -103,8 +104,8 @@ InstanceIdentifier DummyInstanceIdentifierBuilder::CreateLolaInstanceIdentifierW
 
 InstanceIdentifier DummyInstanceIdentifierBuilder::CreateBlankBindingInstanceIdentifier()
 {
-    instance_deployment_ =
-        std::make_unique<ServiceInstanceDeployment>(type_, score::cpp::blank{}, QualityType::kASIL_QM, instance_specifier_);
+    instance_deployment_ = std::make_unique<ServiceInstanceDeployment>(
+        type_, score::cpp::blank{}, QualityType::kASIL_QM, instance_specifier_);
     return make_InstanceIdentifier(*instance_deployment_, type_deployment_);
 }
 

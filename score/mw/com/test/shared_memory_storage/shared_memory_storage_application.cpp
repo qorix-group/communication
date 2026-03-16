@@ -37,21 +37,20 @@
 #include <ostream>
 #include <string>
 
-
 namespace score::mw::com::impl::lola
 {
-    // The Attorney uses the friend declaration to access private SkeletonEvent members
-    template <typename SampleType>
-    class SkeletonEventAttorney
+// The Attorney uses the friend declaration to access private SkeletonEvent members
+template <typename SampleType>
+class SkeletonEventAttorney
+{
+  public:
+    static ElementFqId GetElementFQId(const SkeletonEvent<SampleType>& event) noexcept
     {
-    public:
-        static ElementFqId GetElementFQId(const SkeletonEvent<SampleType>& event) noexcept
-        {
-            // Access the private event_shared_impl_ and call its public GetElementFQId()
-            return event.event_shared_impl_.GetElementFQId();
-        }
-    };
-} // namespace score::mw::com::impl::lola
+        // Access the private event_shared_impl_ and call its public GetElementFQId()
+        return event.event_shared_impl_.GetElementFQId();
+    }
+};
+}  // namespace score::mw::com::impl::lola
 
 // Overload for SkeletonEvent (uses Attorney to bypass private access)
 template <typename SampleType>
@@ -66,7 +65,6 @@ score::mw::com::impl::lola::ElementFqId ExtractId(const BindingType* binding)
 {
     return binding->GetElementFQId();
 }
-
 
 namespace
 {
@@ -328,7 +326,8 @@ int main(int argc, const char** argv)
             return proxy_creation_data.handle != nullptr;
         });
 
-        SCORE_LANGUAGE_FUTURECPP_ASSERT_MESSAGE(proxy_creation_data.handle != nullptr, "Service handle shouldn't be nullptr");
+        SCORE_LANGUAGE_FUTURECPP_ASSERT_MESSAGE(proxy_creation_data.handle != nullptr,
+                                                "Service handle shouldn't be nullptr");
         auto handle = *proxy_creation_data.handle;
         proxy_creation_lock.unlock();
         auto proxy_result = score::mw::com::test::BigDataProxy::Create(handle);

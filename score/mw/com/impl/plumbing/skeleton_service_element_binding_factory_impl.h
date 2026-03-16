@@ -20,8 +20,8 @@
 #include "score/mw/com/impl/configuration/lola_service_instance_deployment.h"
 #include "score/mw/com/impl/configuration/service_instance_deployment.h"
 #include "score/mw/com/impl/configuration/someip_service_instance_deployment.h"
+#include "score/mw/com/impl/data_type_meta_info.h"
 #include "score/mw/com/impl/skeleton_base.h"
-#include "score/mw/com/impl/data_type_meta_info.h" 
 
 #include "score/mw/log/logging.h"
 
@@ -95,7 +95,7 @@ auto CreateSkeletonServiceElement(const InstanceIdentifier& identifier,
             if (lola_parent == nullptr)
             {
                 score::mw::log::LogFatal("lola") << "Skeleton service element could not be created because parent "
-                                                 "skeleton binding is a nullptr.";
+                                                    "skeleton binding is a nullptr.";
                 return nullptr;
             }
 
@@ -155,7 +155,7 @@ auto CreateGenericSkeletonServiceElement(const InstanceIdentifier& identifier,
             if (lola_parent == nullptr)
             {
                 score::mw::log::LogFatal("lola") << "Skeleton service element could not be created because parent "
-                                                 "skeleton binding is a nullptr.";
+                                                    "skeleton binding is a nullptr.";
                 return nullptr;
             }
 
@@ -176,7 +176,7 @@ auto CreateGenericSkeletonServiceElement(const InstanceIdentifier& identifier,
                                                   element_type};
 
             return std::make_unique<SkeletonServiceElement>(
-                *lola_parent, skeleton_event_properties, element_fq_id, meta_info, tracing::SkeletonEventTracingData{} );
+                *lola_parent, skeleton_event_properties, element_fq_id, meta_info, tracing::SkeletonEventTracingData{});
         },
         [](const SomeIpServiceInstanceDeployment&) noexcept -> ReturnType {
             return nullptr;

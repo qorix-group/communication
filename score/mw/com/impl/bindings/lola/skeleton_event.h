@@ -20,6 +20,7 @@
 #include "score/mw/com/impl/bindings/lola/i_runtime.h"
 #include "score/mw/com/impl/bindings/lola/sample_allocatee_ptr.h"
 #include "score/mw/com/impl/bindings/lola/skeleton.h"
+#include "score/mw/com/impl/bindings/lola/skeleton_event_common.h"
 #include "score/mw/com/impl/bindings/lola/skeleton_event_properties.h"
 #include "score/mw/com/impl/bindings/lola/transaction_log_registration_guard.h"
 #include "score/mw/com/impl/bindings/lola/type_erased_sample_ptrs_guard.h"
@@ -28,7 +29,6 @@
 #include "score/mw/com/impl/skeleton_event_binding.h"
 #include "score/mw/com/impl/tracing/skeleton_event_tracing.h"
 #include "score/mw/com/impl/tracing/skeleton_event_tracing_data.h"
-#include "score/mw/com/impl/bindings/lola/skeleton_event_common.h" 
 
 #include "score/mw/log/logging.h"
 
@@ -64,12 +64,12 @@ class SkeletonEvent final : public SkeletonEventBinding<SampleType>
     // coverity[autosar_cpp14_a11_3_1_violation]
     friend class SkeletonEventAttorney;
 
-  public: 
+  public:
     using typename SkeletonEventBinding<SampleType>::SendTraceCallback;
     using typename SkeletonEventBindingBase::SubscribeTraceCallback;
     using typename SkeletonEventBindingBase::UnsubscribeTraceCallback;
 
-     SkeletonEvent(Skeleton& parent,
+    SkeletonEvent(Skeleton& parent,
                   const ElementFqId event_fqn,
                   const std::string_view event_name,
                   const SkeletonEventProperties properties,
@@ -84,7 +84,8 @@ class SkeletonEvent final : public SkeletonEventBinding<SampleType>
 
     /// \brief Sends a value by _copy_ towards a consumer. It will allocate the necessary space and then copy the value
     /// into Shared Memory.
-    ResultBlank Send(const SampleType& value, score::cpp::optional<SendTraceCallback> send_trace_callback) noexcept override;
+    ResultBlank Send(const SampleType& value,
+                     score::cpp::optional<SendTraceCallback> send_trace_callback) noexcept override;
 
     ResultBlank Send(impl::SampleAllocateePtr<SampleType> sample,
                      score::cpp::optional<SendTraceCallback> send_trace_callback) noexcept override;
@@ -96,18 +97,17 @@ class SkeletonEvent final : public SkeletonEventBinding<SampleType>
 
     void PrepareStopOffer() noexcept override;
 
-    BindingType GetBindingType() const noexcept override 
-    { 
-        return BindingType::kLoLa; 
+    BindingType GetBindingType() const noexcept override
+    {
+        return BindingType::kLoLa;
     }
 
-    void SetSkeletonEventTracingData(impl::tracing::SkeletonEventTracingData tracing_data) noexcept override 
-    { 
-        event_shared_impl_.GetTracingData() = tracing_data; 
+    void SetSkeletonEventTracingData(impl::tracing::SkeletonEventTracingData tracing_data) noexcept override
+    {
+        event_shared_impl_.GetTracingData() = tracing_data;
     }
 
-  
-  private: 
+  private:
     const std::string_view event_name_;
     const SkeletonEventProperties event_properties_;
     EventDataStorage<SampleType>* event_data_storage_;
@@ -115,8 +115,7 @@ class SkeletonEvent final : public SkeletonEventBinding<SampleType>
     EventSlotStatus::EventTimeStamp current_timestamp_;
     bool qm_disconnect_;
 
-    SkeletonEventCommon event_shared_impl_; 
-
+    SkeletonEventCommon event_shared_impl_;
 };
 
 template <typename SampleType>
@@ -132,7 +131,11 @@ SkeletonEvent<SampleType>::SkeletonEvent(Skeleton& parent,
       event_data_control_composite_{score::cpp::nullopt},
       current_timestamp_{1U},
       qm_disconnect_{false},
-      event_shared_impl_(parent, event_fqn, event_data_control_composite_, current_timestamp_, skeleton_event_tracing_data)
+      event_shared_impl_(parent,
+                         event_fqn,
+                         event_data_control_composite_,
+                         current_timestamp_,
+                         skeleton_event_tracing_data)
 {
 }
 
@@ -189,7 +192,8 @@ ResultBlank SkeletonEvent<SampleType>::Send(impl::SampleAllocateePtr<SampleType>
             .GetLolaMessaging()
             .NotifyEvent(QualityType::kASIL_QM, event_shared_impl_.GetElementFQId());
     }
-    if (event_shared_impl_.IsAsilBNotificationsRegistered() && event_shared_impl_.GetParent().GetInstanceQualityType() == QualityType::kASIL_B)
+    if (event_shared_impl_.IsAsilBNotificationsRegistered() &&
+        event_shared_impl_.GetParent().GetInstanceQualityType() == QualityType::kASIL_B)
     {
         GetBindingRuntime<lola::IRuntime>(BindingType::kLoLa)
             .GetLolaMessaging()
@@ -220,9 +224,10 @@ Result<impl::SampleAllocateePtr<SampleType>> SkeletonEvent<SampleType>::Allocate
     if (!qm_disconnect_ && event_data_control_composite_->GetAsilBEventDataControl().has_value() && !slot.IsValidQM())
     {
         qm_disconnect_ = true;
-        score::mw::log::LogWarn("lola") 
+        score::mw::log::LogWarn("lola")
             << __func__ << __LINE__
-            << "Disconnecting unsafe QM consumers as slot allocation failed on an ASIL-B enabled event: " << event_shared_impl_.GetElementFQId();
+            << "Disconnecting unsafe QM consumers as slot allocation failed on an ASIL-B enabled event: "
+            << event_shared_impl_.GetElementFQId();
         event_shared_impl_.GetParent().DisconnectQmConsumers();
     }
 
@@ -257,10 +262,12 @@ ResultBlank SkeletonEvent<SampleType>::PrepareOffer() noexcept
 {
 
     std::tie(event_data_storage_, event_data_control_composite_) =
-        event_shared_impl_.GetParent().template Register<SampleType>(event_shared_impl_.GetElementFQId(), event_properties_);
+        event_shared_impl_.GetParent().template Register<SampleType>(event_shared_impl_.GetElementFQId(),
+                                                                     event_properties_);
 
-    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(event_data_control_composite_.has_value(),
-                           "Defensive programming as event_data_control_composite_ is set by Register above.");
+    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(
+        event_data_control_composite_.has_value(),
+        "Defensive programming as event_data_control_composite_ is set by Register above.");
 
     event_shared_impl_.PrepareOfferCommon();
 
