@@ -19,6 +19,9 @@ bazel_dep(name = "gcc_toolchain", version = "0.9.0", dev_dependency = True)
 gcc_toolchains = use_extension("@gcc_toolchain//toolchain:module_extensions.bzl", "gcc_toolchains", dev_dependency = True)
 gcc_toolchains.toolchain(
     name = "gcc_toolchain_x86_64",
+    extra_cxxflags = [
+        "-fdiagnostics-color=always",  # Adds copt to always use coloring in build output
+    ],
     extra_ldflags = [
         "-lstdc++",
         "-lrt",
@@ -46,6 +49,14 @@ score_gcc.toolchain(
     version = "12.2.0",
 )
 score_gcc.toolchain(
+    name = "score_gcc_aarch64_toolchain",
+    target_cpu = "aarch64",
+    target_os = "linux",
+    use_base_constraints_only = True,
+    use_default_package = True,
+    version = "12.2.0",
+)
+score_gcc.toolchain(
     name = "score_qcc_x86_64_toolchain",
     sdp_version = "8.0.0",
     target_cpu = "x86_64",
@@ -63,6 +74,7 @@ score_gcc.toolchain(
 )
 use_repo(
     score_gcc,
+    "score_gcc_aarch64_toolchain",
     "score_gcc_x86_64_toolchain",
     "score_qcc_aarch64_toolchain",
     "score_qcc_x86_64_toolchain",
