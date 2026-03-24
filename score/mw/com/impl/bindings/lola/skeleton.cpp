@@ -1070,7 +1070,7 @@ EventDataControlComposite<> Skeleton::CreateEventControlComposite(
     return EventDataControlComposite{&control_qm.first->second.data_control, control_asil_result};
 }
 
-std::pair<score::memory::shared::OffsetPtr<void>, EventDataControlComposite<>> 
+std::pair<score::memory::shared::OffsetPtr<void>, EventDataControlComposite<>>
 Skeleton::CreateEventDataFromOpenedSharedMemory(
     const ElementFqId element_fq_id,
     const SkeletonEventProperties& element_properties,
@@ -1081,11 +1081,11 @@ Skeleton::CreateEventDataFromOpenedSharedMemory(
     // Guard against over-aligned types (Short-term solution protection)
     if (sample_alignment > alignof(std::max_align_t))
     {
-        score::mw::log::LogFatal("Skeleton") 
-            << "Requested sample alignment (" << sample_alignment 
-            << ") exceeds max_align_t (" << alignof(std::max_align_t) 
+        score::mw::log::LogFatal("Skeleton")
+            << "Requested sample alignment (" << sample_alignment
+            << ") exceeds max_align_t (" << alignof(std::max_align_t)
             << "). Safe shared memory layout cannot be guaranteed.";
-            
+
         SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(sample_alignment <= alignof(std::max_align_t),"Requested sample alignment exceeds maximum supported alignment.");
     }
 
@@ -1094,7 +1094,7 @@ Skeleton::CreateEventDataFromOpenedSharedMemory(
     const auto total_data_size_bytes = aligned_sample_size * element_properties.number_of_slots;
 
     // Convert total bytes to the number of std::max_align_t elements needed (round up)
-    const size_t num_max_align_elements = 
+    const size_t num_max_align_elements =
         (total_data_size_bytes + sizeof(std::max_align_t) - 1) / sizeof(std::max_align_t);
 
     auto* data_storage = storage_resource_->construct<EventDataStorage<std::max_align_t>>(
@@ -1110,7 +1110,7 @@ Skeleton::CreateEventDataFromOpenedSharedMemory(
 
     const DataTypeMetaInfo sample_meta_info{sample_size, static_cast<std::uint8_t>(sample_alignment)};
     void* const event_data_raw_array = data_storage->data();
-    
+
     auto inserted_meta_info = storage_->events_metainfo_.emplace(
         std::piecewise_construct,
         std::forward_as_tuple(element_fq_id),
