@@ -1,5 +1,5 @@
 /********************************************************************************
- * Copyright (c) 2025 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -10,16 +10,26 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#ifndef SCORE_MW_COM_IMPL_CONFIGURATION_LOLA_EVENT_ID_H
-#define SCORE_MW_COM_IMPL_CONFIGURATION_LOLA_EVENT_ID_H
-
-#include "score/mw/com/impl/configuration/lola_service_element_id.h"
+#include "score/mw/com/impl/method_type.h"
 
 namespace score::mw::com::impl
 {
 
-using LolaEventId = LolaServiceElementId;
+std::string_view to_string(MethodType method_type) noexcept
+{
+    switch (method_type)
+    {
+        case MethodType::kMethod:
+            return "Method";
+        case MethodType::kGet:
+            return "Get";
+        case MethodType::kSet:
+            return "Set";
+        case MethodType::kUnknown:
+            return "Unknown";
+        default:
+            return "Invalid";
+    }
+}
 
 }  // namespace score::mw::com::impl
-
-#endif  // SCORE_MW_COM_IMPL_CONFIGURATION_LOLA_EVENT_ID_H

@@ -1,5 +1,5 @@
 /********************************************************************************
- * Copyright (c) 2025 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -10,4 +10,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#include "score/mw/com/impl/plumbing/proxy_service_element_binding_factory_impl.h"
+#ifndef SCORE_MW_COM_IMPL_CONFIGURATION_LOLA_SERVICE_ELEMENT_ID_H
+#define SCORE_MW_COM_IMPL_CONFIGURATION_LOLA_SERVICE_ELEMENT_ID_H
+
+#include <cstdint>
+
+namespace score::mw::com::impl
+{
+
+using LolaServiceElementId = std::uint16_t;
+
+}  // namespace score::mw::com::impl
+
+#endif  // SCORE_MW_COM_IMPL_CONFIGURATION_LOLA_SERVICE_ELEMENT_ID_H

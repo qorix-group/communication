@@ -223,6 +223,7 @@ cc_library(
         "//score/mw/com:__subpackages__",
     ],
     deps = [
+        ":method_type",
         ":skeleton_event",
         ":skeleton_field_base",
         "//score/mw/com/impl/methods:method_signature_element_ptr",
@@ -285,9 +286,11 @@ cc_library(
         "//score/mw/com:__subpackages__",
     ],
     deps = [
+        ":method_type",
         ":proxy_event",
         ":proxy_event_binding",
         ":proxy_field_base",
+        "//score/mw/com/impl/methods:proxy_method",
         "//score/mw/com/impl/mocking:i_proxy_event",
         "//score/mw/com/impl/plumbing:field",
         "@score_baselibs//score/language/futurecpp",
@@ -672,6 +675,16 @@ cc_library(
         ":instance_identifier",
         "@score_baselibs//score/result",
     ],
+)
+
+cc_library(
+    name = "method_type",
+    srcs = ["method_type.cpp"],
+    hdrs = ["method_type.h"],
+    features = COMPILER_WARNING_FEATURES,
+    tags = ["FFI"],
+    visibility = ["//score/mw/com:__subpackages__"],
+    deps = ["@score_baselibs//score/language/futurecpp"],
 )
 
 cc_library(

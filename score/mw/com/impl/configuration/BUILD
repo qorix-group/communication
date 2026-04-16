@@ -169,6 +169,7 @@ cc_library(
     hdrs = ["lola_event_id.h"],
     features = COMPILER_WARNING_FEATURES,
     tags = ["FFI"],
+    deps = [":lola_service_element_id"],
 )
 
 cc_library(
@@ -177,7 +178,8 @@ cc_library(
     hdrs = ["lola_field_id.h"],
     features = COMPILER_WARNING_FEATURES,
     tags = ["FFI"],
-    deps = [":lola_event_id"],
+    visibility = ["//score/mw/com/impl/bindings/lola/methods:__pkg__"],
+    deps = [":lola_service_element_id"],
 )
 
 cc_library(
@@ -186,6 +188,17 @@ cc_library(
     hdrs = ["lola_method_id.h"],
     features = COMPILER_WARNING_FEATURES,
     tags = ["FFI"],
+    visibility = ["//score/mw/com/impl/bindings/lola/methods:__pkg__"],
+    deps = [":lola_service_element_id"],
+)
+
+cc_library(
+    name = "lola_service_element_id",
+    srcs = ["lola_service_element_id.cpp"],
+    hdrs = ["lola_service_element_id.h"],
+    features = COMPILER_WARNING_FEATURES,
+    tags = ["FFI"],
+    visibility = ["//score/mw/com/impl/bindings/lola/methods:__pkg__"],
 )
 
 cc_library(
