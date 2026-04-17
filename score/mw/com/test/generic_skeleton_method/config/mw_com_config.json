@@ -10,6 +10,12 @@
         {
           "binding": "SHM",
           "serviceId": 1001,
+          "events": [
+            {
+              "eventName": "counter_value",
+              "eventId": 2
+            }
+          ],
           "methods": [
             {
               "methodName": "with_in_args_and_return",
@@ -33,6 +39,13 @@
           "instanceId": 1,
           "asil-level": "QM",
           "binding": "SHM",
+          "events": [
+            {
+              "eventName": "counter_value",
+              "maxSamples": 1,
+              "maxSubscribers": 1
+            }
+          ],
           "methods": [
             {
               "methodName": "with_in_args_and_return",

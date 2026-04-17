@@ -30,9 +30,26 @@ integration_test(
     filesystem = ":different_processes_filesystem",
 )
 
+pkg_tar(
+    name = "generic_end_to_end_filesystem",
+    deps = [
+        "//score/mw/com/test/generic_skeleton_method:main_generic_consumer-pkg",
+        "//score/mw/com/test/generic_skeleton_method:main_provider-pkg",
+    ],
+)
+
+integration_test(
+    name = "generic_proxy_method_end_to_end_test",
+    srcs = [
+        "generic_proxy_method_end_to_end_test.py",
+    ],
+    filesystem = ":generic_end_to_end_filesystem",
+)
+
 test_suite(
     name = "component_tests",
     tests = [
         ":generic_skeleton_method_different_processes_test",
+        ":generic_proxy_method_end_to_end_test",
     ],
 )

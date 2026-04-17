@@ -29,6 +29,7 @@ cc_library(
     deps = [
         ":generic_proxy",
         ":generic_proxy_event",
+        ":generic_proxy_method",
         ":generic_skeleton",
         ":generic_skeleton_method",
         ":proxy_event",
@@ -42,6 +43,22 @@ cc_library(
 )
 
 cc_library(
+    name = "generic_proxy_method",
+    srcs = ["generic_proxy_method.cpp"],
+    hdrs = ["generic_proxy_method.h"],
+    features = COMPILER_WARNING_FEATURES,
+    tags = ["FFI"],
+    visibility = [
+        "//score/mw/com:__subpackages__",
+    ],
+    deps = [
+        ":proxy_base",
+        "//score/mw/com/impl/methods:proxy_method_base",
+        "@score_baselibs//score/result",
+    ],
+)
+
+cc_library(
     name = "generic_proxy",
     srcs = ["generic_proxy.cpp"],
     hdrs = ["generic_proxy.h"],
@@ -49,6 +66,7 @@ cc_library(
     implementation_deps = [
         ":error",
         "//score/mw/com/impl/plumbing",
+        "//score/mw/com/impl/plumbing:generic_proxy_method_binding_factory",
         "@score_baselibs//score/language/futurecpp",
         "@score_logging//score/mw/log",
     ],
@@ -58,6 +76,7 @@ cc_library(
     ],
     deps = [
         ":generic_proxy_event",
+        ":generic_proxy_method",
         ":handle_type",
         ":proxy_base",
         ":proxy_binding",
@@ -1137,6 +1156,19 @@ cc_gtest_unit_test(
 )
 
 cc_gtest_unit_test(
+    name = "generic_proxy_method_test",
+    srcs = ["generic_proxy_method_test.cpp"],
+    deps = [
+        ":error",
+        ":generic_proxy_method",
+        ":proxy_base",
+        "//score/mw/com/impl/bindings/mock_binding",
+        "//score/mw/com/impl/test:dummy_instance_identifier_builder",
+        "@score_baselibs//score/result",
+    ],
+)
+
+cc_gtest_unit_test(
     name = "generic_skeleton_test",
     srcs = ["generic_skeleton_test.cpp"],
     deps = [
@@ -1305,6 +1337,8 @@ cc_unit_test_suites_for_host_and_qnx(
         ":com_error_test",
         ":flag_owner_test",
         ":find_service_handle_test",
+        ":generic_proxy_method_test",
+        ":generic_skeleton_method_test",
         ":generic_skeleton_test",
         ":generic_skeleton_event_test",
         ":generic_proxy_test",

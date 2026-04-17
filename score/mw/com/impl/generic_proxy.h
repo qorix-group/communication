@@ -19,17 +19,34 @@
 #define SCORE_MW_COM_IMPL_GENERIC_PROXY_H
 
 #include "score/mw/com/impl/generic_proxy_event.h"
+#include "score/mw/com/impl/generic_proxy_method.h"
 #include "score/mw/com/impl/handle_type.h"
 #include "score/mw/com/impl/proxy_base.h"
 #include "score/mw/com/impl/proxy_binding.h"
 #include "score/mw/com/impl/service_element_map.h"
 
+#include "score/memory/data_type_size_info.h"
 #include "score/result/result.h"
 
+#include <score/span.hpp>
+
 #include <memory>
+#include <optional>
+#include <string_view>
 
 namespace score::mw::com::impl
 {
+
+/// @brief Describes a single method to be exposed on a GenericProxy.
+struct GenericProxyMethodInfo
+{
+    std::string_view name;
+    /// Size/alignment of the serialized in-arguments. std::nullopt if the method has no in-args.
+    std::optional<memory::DataTypeSizeInfo> in_args_size_info{std::nullopt};
+    /// Size/alignment of the serialized return value. std::nullopt if the return type is void.
+    std::optional<memory::DataTypeSizeInfo> return_type_size_info{std::nullopt};
+};
+
 namespace test
 {
 class GenericProxyAttorney;
@@ -59,15 +76,26 @@ class GenericProxy : public ProxyBase
     friend class test::GenericProxyAttorney;
 
   public:
-    using EventMap = ServiceElementMap<GenericProxyEvent>;
+    using EventMap  = ServiceElementMap<GenericProxyEvent>;
+    using MethodMap = ServiceElementMap<GenericProxyMethod>;
 
     /**
      * \api
-     * \brief Exception-less GenericProxy constructor
-     * \param instance_handle Handle to the instance
+     * \brief Exception-less GenericProxy constructor (events only).
+     * \param instance_handle Handle to the instance.
      * \return Result containing the created GenericProxy instance or an error code.
      */
     static Result<GenericProxy> Create(HandleType instance_handle) noexcept;
+
+    /**
+     * \api
+     * \brief Exception-less GenericProxy constructor with methods.
+     * \param instance_handle Handle to the instance.
+     * \param methods Span of method descriptors (name + type size info) to expose on this proxy.
+     * \return Result containing the created GenericProxy instance or an error code.
+     */
+    static Result<GenericProxy> Create(HandleType instance_handle,
+                                       score::cpp::span<const GenericProxyMethodInfo> methods) noexcept;
 
     /**
      * \api
@@ -76,12 +104,20 @@ class GenericProxy : public ProxyBase
      */
     EventMap& GetEvents() noexcept;
 
+    /**
+     * \api
+     * \brief Returns a reference to the method map.
+     * \return Reference to the method map.
+     */
+    MethodMap& GetMethods() noexcept;
+
   private:
     GenericProxy(std::unique_ptr<ProxyBinding> proxy_binding, HandleType instance_handle);
 
     void FillEventMap(const std::vector<std::string_view>& event_names) noexcept;
 
-    EventMap events_;
+    EventMap  events_;
+    MethodMap methods_;
 };
 
 }  // namespace score::mw::com::impl

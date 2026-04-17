@@ -103,3 +103,42 @@ pkg_application(
         "//score/mw/com/test/generic_skeleton_method:__subpackages__",
     ],
 )
+
+cc_library(
+    name = "generic_consumer",
+    srcs = ["generic_consumer.cpp"],
+    hdrs = ["generic_consumer.h"],
+    features = COMPILER_WARNING_FEATURES,
+    implementation_deps = [
+        "//score/mw/com/impl:generic_proxy",
+        "//score/mw/com/test/methods/methods_test_resources:process_synchronizer",
+        "@score_baselibs//score/memory:data_type_size_info",
+    ],
+)
+
+cc_binary(
+    name = "main_generic_consumer",
+    srcs = ["main_generic_consumer.cpp"],
+    data = ["config/mw_com_config.json"],
+    features = COMPILER_WARNING_FEATURES + [
+        "aborts_upon_exception",
+    ],
+    deps = [
+        ":generic_consumer",
+        "//score/mw/com",
+        "//score/mw/com/test/common_test_resources:assert_handler",
+    ],
+)
+
+pkg_application(
+    name = "main_generic_consumer-pkg",
+    app_name = "GenericSkeletonMethodGenericConsumerApp",
+    bin = [":main_generic_consumer"],
+    etc = [
+        "config/mw_com_config.json",
+        "config/logging.json",
+    ],
+    visibility = [
+        "//score/mw/com/test/generic_skeleton_method:__subpackages__",
+    ],
+)

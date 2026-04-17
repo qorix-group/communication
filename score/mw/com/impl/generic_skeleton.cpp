@@ -198,6 +198,11 @@ GenericSkeleton::MethodMap& GenericSkeleton::GetMethods() noexcept
     return methods_;
 }
 
+GenericSkeleton::EventMap& GenericSkeleton::GetEvents() noexcept
+{
+    return events_;
+}
+
 const GenericSkeleton::EventMap& GenericSkeleton::GetEvents() const noexcept
 {
     return events_;

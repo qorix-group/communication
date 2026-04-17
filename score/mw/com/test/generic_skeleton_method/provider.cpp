@@ -17,6 +17,7 @@
 #include "score/mw/com/test/methods/methods_test_resources/process_synchronizer.h"
 
 #include <score/stop_token.hpp>
+#include <score/utility.hpp>
 
 #include <cstdint>
 #include <cstdlib>
@@ -35,6 +36,7 @@ const impl::InstanceSpecifier kInstanceSpecifier =
     impl::InstanceSpecifier::Create(std::string{"test/generic_skeleton_method/TestMethods"}).value();
 
 constexpr std::string_view kMethodName{"with_in_args_and_return"};
+constexpr std::string_view kEventName{"counter_value"};
 
 }  // namespace
 
@@ -47,9 +49,12 @@ bool run_provider(const score::cpp::stop_token& stop_token)
         return EXIT_FAILURE;
     }
 
-    // Step 1. Create GenericSkeleton with one method
+    // Step 1. Create GenericSkeleton with one event and one method
+    const impl::EventInfo event_info{kEventName,
+                                     impl::DataTypeMetaInfo{sizeof(std::int32_t), alignof(std::int32_t)}};
     const impl::MethodInfo method_info{kMethodName};
-    auto skeleton_result = impl::GenericSkeleton::Create(kInstanceSpecifier, {.methods = {&method_info, 1}});
+    auto skeleton_result =
+        impl::GenericSkeleton::Create(kInstanceSpecifier, {.events = {&event_info, 1}, .methods = {&method_info, 1}});
     if (!skeleton_result.has_value())
     {
         std::cerr << "Provider: Could not create GenericSkeleton: " << skeleton_result.error() << std::endl;
@@ -57,7 +62,7 @@ bool run_provider(const score::cpp::stop_token& stop_token)
     }
     auto skeleton = std::move(skeleton_result).value();
 
-    // Step 2. Register a TypeErasedHandler that computes a + b and writes the result.
+    // Step 2. Register a TypeErasedHandler that computes a + b, writes the result, and sends an event.
     // For int32_t(int32_t, int32_t), the in-args span has two consecutive int32_t values
     // at byte offsets 0 and 4 (no padding needed since alignof(int32_t) == sizeof(int32_t) == 4).
     auto method_it = skeleton.GetMethods().find(kMethodName);
@@ -67,12 +72,18 @@ bool run_provider(const score::cpp::stop_token& stop_token)
         return EXIT_FAILURE;
     }
 
+    auto event_it = skeleton.GetEvents().find(kEventName);
+    if (event_it == skeleton.GetEvents().cend())
+    {
+        std::cerr << "Provider: Event not found in skeleton map" << std::endl;
+        return EXIT_FAILURE;
+    }
+    auto& event = event_it->second;
+
     impl::SkeletonMethodBinding::TypeErasedHandler handler =
-        [](std::optional<score::cpp::span<std::byte>> in_args,
-           std::optional<score::cpp::span<std::byte>> return_buf) {
+        [&event](std::optional<score::cpp::span<std::byte>> in_args,
+                 std::optional<score::cpp::span<std::byte>> return_buf) {
             std::cout << "Provider: handler invoked" << std::endl;
-            std::cout << "Provider:   in_args span size = " << in_args.value().size() << " bytes" << std::endl;
-            std::cout << "Provider:   return span size  = " << return_buf.value().size() << " bytes" << std::endl;
 
             std::int32_t a{};
             std::int32_t b{};
@@ -86,7 +97,19 @@ bool run_provider(const score::cpp::stop_token& stop_token)
             std::cout << "Provider:   computed result = " << result << std::endl;
             // NOLINTNEXTLINE(score-banned-function)
             std::memcpy(return_buf.value().data(), &result, sizeof(std::int32_t));
-            std::cout << "Provider:   result written to return buffer" << std::endl;
+
+            auto alloc_result = event.Allocate();
+            if (alloc_result.has_value())
+            {
+                // NOLINTNEXTLINE(score-banned-function)
+                std::memcpy(alloc_result.value().Get(), &result, sizeof(std::int32_t));
+                score::cpp::ignore = event.Send(std::move(alloc_result.value()));
+                std::cout << "Provider:   event sent with value = " << result << std::endl;
+            }
+            else
+            {
+                std::cerr << "Provider:   failed to allocate event sample" << std::endl;
+            }
         };
 
     const auto register_result = method_it->second.RegisterHandler(std::move(handler));

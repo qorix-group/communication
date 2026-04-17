@@ -189,6 +189,11 @@ class ProxyBaseView final
 
     bool AreBindingsValid() const;
 
+    const ProxyBase::ProxyMethods& GetMethods() const noexcept
+    {
+        return proxy_base_.methods_;
+    }
+
   private:
     ProxyBase& proxy_base_;
 };

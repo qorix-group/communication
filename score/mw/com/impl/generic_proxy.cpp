@@ -17,6 +17,7 @@
 #include "score/mw/com/impl/generic_proxy.h"
 
 #include "score/mw/com/impl/com_error.h"
+#include "score/mw/com/impl/plumbing/generic_proxy_method_binding_factory.h"
 #include "score/mw/com/impl/plumbing/proxy_binding_factory.h"
 
 #include "score/mw/log/logging.h"
@@ -24,6 +25,7 @@
 #include <score/assert.hpp>
 
 #include <algorithm>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -110,12 +112,80 @@ void GenericProxy::FillEventMap(const std::vector<std::string_view>& event_names
     }
 }
 
+Result<GenericProxy> GenericProxy::Create(HandleType instance_handle,
+                                          const score::cpp::span<const GenericProxyMethodInfo> methods) noexcept
+{
+    auto proxy_binding = ProxyBindingFactory::Create(instance_handle);
+    if (proxy_binding == nullptr)
+    {
+        ::score::mw::log::LogError("lola") << "Could not create GenericProxy as binding could not be created.";
+        return MakeUnexpected(ComErrc::kBindingFailure);
+    }
+
+    GenericProxy generic_proxy{std::move(proxy_binding), std::move(instance_handle)};
+
+    const auto& instance_identifier = generic_proxy.handle_.GetInstanceIdentifier();
+    const auto event_names = GetEventNameList(instance_identifier);
+    generic_proxy.FillEventMap(event_names);
+
+    std::vector<std::string_view> enabled_method_names;
+    enabled_method_names.reserve(methods.size());
+
+    for (const auto& info : methods)
+    {
+        auto method_binding =
+            GenericProxyMethodBindingFactory::Create(generic_proxy.handle_,
+                                                     ProxyBaseView{generic_proxy}.GetBinding(),
+                                                     info.name,
+                                                     {info.in_args_size_info, info.return_type_size_info});
+        if (!method_binding)
+        {
+            ::score::mw::log::LogError("lola")
+                << "GenericProxy: Could not create binding for method: " << info.name;
+            return MakeUnexpected(ComErrc::kBindingFailure);
+        }
+
+        const auto emplace_result = generic_proxy.methods_.emplace(
+            std::piecewise_construct,
+            std::forward_as_tuple(info.name),
+            std::forward_as_tuple(generic_proxy, info.name, std::move(method_binding)));
+
+        if (!emplace_result.second)
+        {
+            ::score::mw::log::LogError("lola")
+                << "GenericProxy: Failed to emplace method in map: " << info.name;
+            return MakeUnexpected(ComErrc::kBindingFailure);
+        }
+
+        enabled_method_names.push_back(info.name);
+    }
+
+    const auto setup_result = generic_proxy.SetupMethods(enabled_method_names);
+    if (!setup_result.has_value())
+    {
+        ::score::mw::log::LogError("lola") << "GenericProxy: SetupMethods failed.";
+        return MakeUnexpected<GenericProxy>(setup_result.error());
+    }
+
+    if (!generic_proxy.AreBindingsValid())
+    {
+        ::score::mw::log::LogError("lola") << "Could not create GenericProxy as binding is invalid.";
+        return MakeUnexpected(ComErrc::kBindingFailure);
+    }
+    return generic_proxy;
+}
+
 GenericProxy::EventMap& GenericProxy::GetEvents() noexcept
 {
     // The signature of this function is part of the public API of the GenericProxy, specified in this requirement:
     // broken_link_c/issue/14006006
     // coverity[autosar_cpp14_a9_3_1_violation]
     return events_;
+}
+
+GenericProxy::MethodMap& GenericProxy::GetMethods() noexcept
+{
+    return methods_;
 }
 
 }  // namespace score::mw::com::impl
