@@ -15,6 +15,7 @@
 
 #include "score/mw/com/impl/data_type_meta_info.h"
 #include "score/mw/com/impl/generic_skeleton_event.h"
+#include "score/mw/com/impl/generic_skeleton_method.h"
 #include "score/mw/com/impl/instance_identifier.h"
 #include "score/mw/com/impl/instance_specifier.h"
 #include "score/mw/com/impl/service_element_map.h"
@@ -36,9 +37,15 @@ struct EventInfo
     DataTypeMetaInfo data_type_meta_info;
 };
 
+struct MethodInfo
+{
+    std::string_view name;
+};
+
 struct GenericSkeletonServiceElementInfo
 {
-    score::cpp::span<const EventInfo> events{};
+    score::cpp::span<const EventInfo>  events{};
+    score::cpp::span<const MethodInfo> methods{};
 };
 
 /// @brief Represents a type-erased, runtime-configurable skeleton for a service instance.
@@ -49,7 +56,8 @@ struct GenericSkeletonServiceElementInfo
 class GenericSkeleton : public SkeletonBase
 {
   public:
-    using EventMap = ServiceElementMap<GenericSkeletonEvent>;
+    using EventMap  = ServiceElementMap<GenericSkeletonEvent>;
+    using MethodMap = ServiceElementMap<GenericSkeletonMethod>;
     /// @brief Creates a GenericSkeleton and all its service elements (events + fields) atomically.
     ///
     /// @contract
@@ -74,6 +82,14 @@ class GenericSkeleton : public SkeletonBase
     /// @note The returned reference is valid as long as the GenericSkeleton lives.
     [[nodiscard]] const EventMap& GetEvents() const noexcept;
 
+    /// @brief Returns a reference to the name-keyed map of methods.
+    /// @note The returned reference is valid as long as the GenericSkeleton lives.
+    [[nodiscard]] MethodMap& GetMethods() noexcept;
+
+    /// @brief Returns a const reference to the name-keyed map of methods.
+    /// @note The returned reference is valid as long as the GenericSkeleton lives.
+    [[nodiscard]] const MethodMap& GetMethods() const noexcept;
+
     /// @brief Offers the service instance.
     /// @return A blank result, or an error if offering fails.
     [[nodiscard]] ResultBlank OfferService() noexcept;
@@ -87,6 +103,8 @@ class GenericSkeleton : public SkeletonBase
 
     /// @brief This map owns all GenericSkeletonEvent instances.
     EventMap events_;
+    /// @brief This map owns all GenericSkeletonMethod instances.
+    MethodMap methods_;
 };
 }  // namespace score::mw::com::impl
 

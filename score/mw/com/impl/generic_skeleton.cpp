@@ -16,6 +16,7 @@
 #include "score/mw/com/impl/configuration/lola_service_type_deployment.h"
 #include "score/mw/com/impl/plumbing/generic_skeleton_event_binding_factory.h"
 #include "score/mw/com/impl/plumbing/skeleton_binding_factory.h"
+#include "score/mw/com/impl/plumbing/skeleton_method_binding_factory.h"
 #include "score/mw/com/impl/runtime.h"
 #include "score/mw/com/impl/skeleton_binding.h"
 
@@ -39,6 +40,27 @@ std::string_view GetEventName(const InstanceIdentifier& identifier, std::string_
         [&](const LolaServiceTypeDeployment& deployment) -> std::string_view {
             const auto it = deployment.events_.find(std::string{search_name});
             if (it != deployment.events_.end())
+            {
+                return it->first;  // Return the stable address of the Key from the Config Map
+            }
+            return {};
+        },
+        [](const score::cpp::blank&) noexcept -> std::string_view {
+            return {};
+        });
+
+    return std::visit(visitor, service_type_deployment.binding_info_);
+}
+
+// Helper to fetch the stable method name from the Configuration
+std::string_view GetMethodName(const InstanceIdentifier& identifier, std::string_view search_name)
+{
+    const auto& service_type_deployment = InstanceIdentifierView{identifier}.GetServiceTypeDeployment();
+
+    auto visitor = score::cpp::overload(
+        [&](const LolaServiceTypeDeployment& deployment) -> std::string_view {
+            const auto it = deployment.methods_.find(std::string{search_name});
+            if (it != deployment.methods_.end())
             {
                 return it->first;  // Return the stable address of the Key from the Config Map
             }
@@ -119,12 +141,71 @@ Result<GenericSkeleton> GenericSkeleton::Create(const InstanceIdentifier& identi
         }
     }
 
+    // 3. Create methods directly in the map
+    for (const auto& info : in.methods)
+    {
+        // Check for same-kind duplicates
+        if (skeleton.methods_.find(info.name) != skeleton.methods_.cend())
+        {
+            score::mw::log::LogError("GenericSkeleton") << "Duplicate method name provided: " << info.name;
+            return MakeUnexpected(ComErrc::kServiceElementAlreadyExists);
+        }
+
+        // Check for cross-kind name collision with events
+        if (skeleton.events_.find(info.name) != skeleton.events_.cend())
+        {
+            score::mw::log::LogError("GenericSkeleton")
+                << "Method name already used by an event: " << info.name;
+            return MakeUnexpected(ComErrc::kServiceElementAlreadyExists);
+        }
+
+        // Fetch the stable name from the Configuration
+        std::string_view stable_name = GetMethodName(identifier, info.name);
+
+        if (stable_name.empty())
+        {
+            score::mw::log::LogError("GenericSkeleton") << "Method name not found in configuration: " << info.name;
+            return MakeUnexpected(ComErrc::kBindingFailure);
+        }
+
+        auto method_binding = SkeletonMethodBindingFactory::Create(
+            identifier, SkeletonBaseView{skeleton}.GetBinding(), stable_name);
+
+        if (!method_binding)
+        {
+            score::mw::log::LogError("GenericSkeleton")
+                << "Failed to create method binding for: " << info.name;
+            return MakeUnexpected(ComErrc::kBindingFailure);
+        }
+
+        const auto emplace_result = skeleton.methods_.emplace(
+            std::piecewise_construct,
+            std::forward_as_tuple(stable_name),
+            std::forward_as_tuple(skeleton, stable_name, std::move(method_binding)));
+
+        if (!emplace_result.second)
+        {
+            score::mw::log::LogError("GenericSkeleton") << "Failed to emplace method in map: " << info.name;
+            return MakeUnexpected(ComErrc::kBindingFailure);
+        }
+    }
+
     return skeleton;
+}
+
+GenericSkeleton::MethodMap& GenericSkeleton::GetMethods() noexcept
+{
+    return methods_;
 }
 
 const GenericSkeleton::EventMap& GenericSkeleton::GetEvents() const noexcept
 {
     return events_;
+}
+
+const GenericSkeleton::MethodMap& GenericSkeleton::GetMethods() const noexcept
+{
+    return methods_;
 }
 
 ResultBlank GenericSkeleton::OfferService() noexcept

@@ -14,6 +14,7 @@
 
 #include "score/mw/com/impl/bindings/mock_binding/generic_skeleton_event.h"
 #include "score/mw/com/impl/bindings/mock_binding/skeleton.h"
+#include "score/mw/com/impl/bindings/mock_binding/skeleton_method.h"
 #include "score/mw/com/impl/com_error.h"
 #include "score/mw/com/impl/i_binding_runtime.h"
 #include "score/mw/com/impl/plumbing/generic_skeleton_event_binding_factory.h"
@@ -322,6 +323,140 @@ TEST_F(GenericSkeletonTest, OfferServiceReturnsErrorIfBindingFails)
     // Then it fails with kBindingFailure
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error(), ComErrc::kBindingFailure);
+}
+
+// ---------------------------------------------------------------------------
+// GenericSkeleton — method-creation tests
+// ---------------------------------------------------------------------------
+
+class GenericSkeletonWithMethodsTest : public GenericSkeletonTest
+{
+  public:
+    SkeletonMethodBindingFactoryMockGuard skeleton_method_binding_factory_mock_guard_{};
+};
+
+TEST_F(GenericSkeletonWithMethodsTest, CreateWithMethodsInitializesMethodBindings)
+{
+    RecordProperty("Description", "Checks that GenericSkeleton creates bindings for configured methods.");
+    RecordProperty("TestType", "Requirements-based test");
+
+    auto identifier = dummy_instance_identifier_builder_.CreateValidLolaInstanceIdentifierWithMethod();
+    const std::string method_name = "test_method";
+
+    std::vector<MethodInfo> method_storage;
+    method_storage.push_back({method_name});
+
+    GenericSkeletonServiceElementInfo params;
+    params.methods = method_storage;
+
+    EXPECT_CALL(skeleton_method_binding_factory_mock_guard_.factory_mock_, Create(_, _, method_name))
+        .WillOnce(Return(ByMove(std::make_unique<NiceMock<mock_binding::SkeletonMethod>>())));
+
+    auto result = GenericSkeleton::Create(identifier, params);
+
+    ASSERT_TRUE(result.has_value());
+    const auto& methods = result.value().GetMethods();
+    ASSERT_EQ(methods.size(), 1U);
+    EXPECT_NE(methods.find(method_name), methods.cend());
+}
+
+TEST_F(GenericSkeletonWithMethodsTest, CreateFailsIfMethodBindingCannotBeCreated)
+{
+    RecordProperty("Description",
+                   "Checks that creation fails with kBindingFailure when the method binding factory returns null.");
+    RecordProperty("TestType", "Requirements-based test");
+
+    auto identifier = dummy_instance_identifier_builder_.CreateValidLolaInstanceIdentifierWithMethod();
+    const std::string method_name = "test_method";
+
+    std::vector<MethodInfo> method_storage;
+    method_storage.push_back({method_name});
+
+    GenericSkeletonServiceElementInfo params;
+    params.methods = method_storage;
+
+    EXPECT_CALL(skeleton_method_binding_factory_mock_guard_.factory_mock_, Create(_, _, method_name))
+        .WillOnce(Return(ByMove(nullptr)));
+
+    auto result = GenericSkeleton::Create(identifier, params);
+
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error(), ComErrc::kBindingFailure);
+}
+
+TEST_F(GenericSkeletonWithMethodsTest, CreateWithDuplicateMethodNamesFails)
+{
+    RecordProperty("Description", "Checks that creating a skeleton with duplicate method names returns an error.");
+    RecordProperty("TestType", "Requirements-based test");
+
+    auto identifier = dummy_instance_identifier_builder_.CreateValidLolaInstanceIdentifierWithMethod();
+    const std::string method_name = "test_method";
+
+    std::vector<MethodInfo> method_storage;
+    method_storage.push_back({method_name});
+    method_storage.push_back({method_name});  // duplicate
+
+    GenericSkeletonServiceElementInfo params;
+    params.methods = method_storage;
+
+    EXPECT_CALL(skeleton_method_binding_factory_mock_guard_.factory_mock_, Create(_, _, method_name))
+        .WillRepeatedly(Return(ByMove(std::make_unique<NiceMock<mock_binding::SkeletonMethod>>())));
+
+    auto result = GenericSkeleton::Create(identifier, params);
+
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error(), ComErrc::kServiceElementAlreadyExists);
+}
+
+TEST_F(GenericSkeletonWithMethodsTest, CreateFailsIfMethodNameNotInDeployment)
+{
+    RecordProperty("Description",
+                   "Checks that creation fails when the method name is not present in the LoLa type deployment.");
+    RecordProperty("TestType", "Requirements-based test");
+
+    auto identifier = dummy_instance_identifier_builder_.CreateValidLolaInstanceIdentifier();  // no methods
+    const std::string method_name = "unknown_method";
+
+    std::vector<MethodInfo> method_storage;
+    method_storage.push_back({method_name});
+
+    GenericSkeletonServiceElementInfo params;
+    params.methods = method_storage;
+
+    auto result = GenericSkeleton::Create(identifier, params);
+
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error(), ComErrc::kBindingFailure);
+}
+
+TEST_F(GenericSkeletonWithMethodsTest, CreateFailsIfMethodNameCollidesWithEventName)
+{
+    RecordProperty("Description",
+                   "Checks that creation fails when a method name is already used by an event in the same skeleton.");
+    RecordProperty("TestType", "Requirements-based test");
+
+    const std::string shared_name = "test_event";
+
+    // Build identifier with both an event and a method sharing the same name
+    auto identifier = dummy_instance_identifier_builder_.CreateValidLolaInstanceIdentifierWithEvent(
+        {{shared_name, LolaEventInstanceDeployment{1, 1, 1, true, 0}}});
+
+    std::vector<EventInfo> event_storage;
+    event_storage.push_back({shared_name, {16, 8}});
+    std::vector<MethodInfo> method_storage;
+    method_storage.push_back({shared_name});
+
+    GenericSkeletonServiceElementInfo params;
+    params.events  = event_storage;
+    params.methods = method_storage;
+
+    EXPECT_CALL(generic_skeleton_event_binding_factory_mock_, Create(_, shared_name, _))
+        .WillOnce(Return(ByMove(std::make_unique<NiceMock<mock_binding::GenericSkeletonEvent>>())));
+
+    auto result = GenericSkeleton::Create(identifier, params);
+
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error(), ComErrc::kServiceElementAlreadyExists);
 }
 
 }  // namespace

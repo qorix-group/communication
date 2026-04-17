@@ -1,5 +1,5 @@
 # *******************************************************************************
-# Copyright (c) 2026 Contributors to the Eclipse Foundation
+# Copyright (c) 2025 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
 # information regarding copyright ownership.
@@ -23,15 +23,16 @@ validate_json_schema_test(
 )
 
 cc_library(
-    name = "test_method_datatype",
-    srcs = ["test_method_datatype.cpp"],
-    hdrs = ["test_method_datatype.h"],
+    name = "provider",
+    srcs = ["provider.cpp"],
+    hdrs = ["provider.h"],
     features = COMPILER_WARNING_FEATURES,
-    visibility = [
-        "//score/mw/com/test:__subpackages__",
+    implementation_deps = [
+        "//score/mw/com/impl:generic_skeleton",
+        "//score/mw/com/test/methods/methods_test_resources:process_synchronizer",
     ],
     deps = [
-        "//score/mw/com",
+        "@score_baselibs//score/language/futurecpp",
     ],
 )
 
@@ -41,26 +42,10 @@ cc_library(
     hdrs = ["consumer.h"],
     features = COMPILER_WARNING_FEATURES,
     implementation_deps = [
-        ":test_method_datatype",
         "//score/mw/com",
+        "//score/mw/com/test/methods/basic_acceptance_test:test_method_datatype",
         "//score/mw/com/test/methods/methods_test_resources:method_consumer",
         "//score/mw/com/test/methods/methods_test_resources:process_synchronizer",
-    ],
-)
-
-cc_library(
-    name = "provider",
-    srcs = ["provider.cpp"],
-    hdrs = ["provider.h"],
-    features = COMPILER_WARNING_FEATURES,
-    implementation_deps = [
-        ":test_method_datatype",
-        "//score/mw/com",
-        "//score/mw/com/test/methods/methods_test_resources:method_provider",
-        "//score/mw/com/test/methods/methods_test_resources:process_synchronizer",
-    ],
-    deps = [
-        "@score_baselibs//score/language/futurecpp",
     ],
 )
 
@@ -93,63 +78,28 @@ cc_binary(
     ],
 )
 
-cc_binary(
-    name = "main_consumer_and_provider",
-    srcs = ["main_consumer_and_provider.cpp"],
-    data = ["config/mw_com_config.json"],
-    features = COMPILER_WARNING_FEATURES + [
-        "aborts_upon_exception",
-    ],
-    deps = [
-        ":consumer",
-        ":provider",
-        "//score/mw/com",
-        "//score/mw/com/test/common_test_resources:assert_handler",
-        "//score/mw/com/test/common_test_resources:stop_token_sig_term_handler",
-    ],
-)
-
 pkg_application(
     name = "main_provider-pkg",
-    app_name = "MainProviderApp",
+    app_name = "GenericSkeletonMethodProviderApp",
     bin = [":main_provider"],
     etc = [
         "config/mw_com_config.json",
         "config/logging.json",
     ],
     visibility = [
-        "//score/mw/com/test/methods/basic_acceptance_test:__subpackages__",
+        "//score/mw/com/test/generic_skeleton_method:__subpackages__",
     ],
 )
 
 pkg_application(
     name = "main_consumer-pkg",
-    app_name = "MainConsumerApp",
+    app_name = "GenericSkeletonMethodConsumerApp",
     bin = [":main_consumer"],
     etc = [
         "config/mw_com_config.json",
         "config/logging.json",
     ],
     visibility = [
-        "//score/mw/com/test/methods/basic_acceptance_test:__subpackages__",
+        "//score/mw/com/test/generic_skeleton_method:__subpackages__",
     ],
-)
-
-pkg_application(
-    name = "main_consumer_and_provider-pkg",
-    app_name = "MainConsumerAndProviderApp",
-    bin = [":main_consumer_and_provider"],
-    etc = [
-        "config/mw_com_config.json",
-        "config/logging.json",
-    ],
-    visibility = [
-        "//score/mw/com/test/methods/basic_acceptance_test:__subpackages__",
-    ],
-)
-
-test_suite(
-    name = "component_tests",
-    tests = [],
-    visibility = ["//score/mw/com/test/methods:__pkg__"],
 )

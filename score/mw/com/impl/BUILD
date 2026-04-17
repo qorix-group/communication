@@ -30,6 +30,7 @@ cc_library(
         ":generic_proxy",
         ":generic_proxy_event",
         ":generic_skeleton",
+        ":generic_skeleton_method",
         ":proxy_event",
         ":proxy_field",
         ":skeleton_event",
@@ -113,6 +114,23 @@ cc_library(
 )
 
 cc_library(
+    name = "generic_skeleton_method",
+    srcs = ["generic_skeleton_method.cpp"],
+    hdrs = ["generic_skeleton_method.h"],
+    features = COMPILER_WARNING_FEATURES,
+    tags = ["FFI"],
+    visibility = [
+        "//score/mw/com:__subpackages__",
+    ],
+    deps = [
+        ":skeleton_base",
+        "//score/mw/com/impl/methods:skeleton_method_base",
+        "//score/mw/com/impl/methods:skeleton_method_binding",
+        "@score_baselibs//score/result",
+    ],
+)
+
+cc_library(
     name = "generic_skeleton",
     srcs = ["generic_skeleton.cpp"],
     hdrs = ["generic_skeleton.h"],
@@ -121,6 +139,7 @@ cc_library(
         ":error",
         "//score/mw/com/impl/plumbing",
         "//score/mw/com/impl/plumbing:generic_skeleton_event_binding_factory",
+        "//score/mw/com/impl/plumbing:skeleton_method_binding_factory",
     ],
     tags = ["FFI"],
     visibility = [
@@ -129,6 +148,7 @@ cc_library(
     deps = [
         ":data_type_meta_info",
         ":generic_skeleton_event",
+        ":generic_skeleton_method",
         ":instance_identifier",
         ":instance_specifier",
         ":runtime",
@@ -1104,6 +1124,19 @@ cc_gtest_unit_test(
 )
 
 cc_gtest_unit_test(
+    name = "generic_skeleton_method_test",
+    srcs = ["generic_skeleton_method_test.cpp"],
+    deps = [
+        ":error",
+        ":generic_skeleton_method",
+        ":skeleton_base",
+        "//score/mw/com/impl/bindings/mock_binding",
+        "//score/mw/com/impl/test:dummy_instance_identifier_builder",
+        "@score_baselibs//score/result",
+    ],
+)
+
+cc_gtest_unit_test(
     name = "generic_skeleton_test",
     srcs = ["generic_skeleton_test.cpp"],
     deps = [
@@ -1112,6 +1145,7 @@ cc_gtest_unit_test(
         ":service_discovery_client_mock",
         ":service_discovery_mock",
         "//score/mw/com/impl/bindings/mock_binding:generic_skeleton_event",
+        "//score/mw/com/impl/bindings/mock_binding",
         "//score/mw/com/impl/plumbing:generic_skeleton_event_binding_factory",
         "//score/mw/com/impl/plumbing:generic_skeleton_event_binding_factory_mock",
         "//score/mw/com/impl/test:binding_factory_resources",

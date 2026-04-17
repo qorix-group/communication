@@ -87,6 +87,33 @@ InstanceIdentifier DummyInstanceIdentifierBuilder::CreateValidLolaInstanceIdenti
     return make_InstanceIdentifier(*instance_deployment_, type_deployment_);
 }
 
+InstanceIdentifier DummyInstanceIdentifierBuilder::CreateValidLolaInstanceIdentifierWithMethod()
+{
+    return CreateValidLolaInstanceIdentifierWithMethod(
+        {{"test_method", LolaMethodInstanceDeployment{std::nullopt}}});
+}
+
+InstanceIdentifier DummyInstanceIdentifierBuilder::CreateValidLolaInstanceIdentifierWithMethod(
+    const LolaServiceInstanceDeployment::MethodInstanceMapping& methods)
+{
+    service_instance_deployment_.instance_id_ = LolaServiceInstanceId{0x42};
+    service_instance_deployment_.allowed_consumer_ = {{QualityType::kASIL_QM, {42}}};
+    service_instance_deployment_.methods_ = methods;
+
+    // The GenericSkeleton needs the method names to be present in the Type Deployment
+    // to perform the stable string lookup. We sync it here.
+    service_type_deployment_.methods_.clear();
+    for (const auto& method_pair : methods)
+    {
+        service_type_deployment_.methods_[method_pair.first] = {};
+    }
+
+    type_deployment_.binding_info_ = service_type_deployment_;
+    instance_deployment_ = std::make_unique<ServiceInstanceDeployment>(
+        type_, service_instance_deployment_, QualityType::kASIL_QM, instance_specifier_);
+    return make_InstanceIdentifier(*instance_deployment_, type_deployment_);
+}
+
 InstanceIdentifier DummyInstanceIdentifierBuilder::CreateLolaInstanceIdentifierWithoutInstanceId()
 {
     type_deployment_.binding_info_ = service_type_deployment_;

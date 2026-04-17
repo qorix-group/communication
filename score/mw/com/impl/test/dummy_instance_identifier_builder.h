@@ -39,6 +39,9 @@ class DummyInstanceIdentifierBuilder
     InstanceIdentifier CreateValidLolaInstanceIdentifierWithField();
     InstanceIdentifier CreateValidLolaInstanceIdentifierWithField(
         const LolaServiceInstanceDeployment::EventInstanceMapping& events);
+    InstanceIdentifier CreateValidLolaInstanceIdentifierWithMethod();
+    InstanceIdentifier CreateValidLolaInstanceIdentifierWithMethod(
+        const LolaServiceInstanceDeployment::MethodInstanceMapping& methods);
     InstanceIdentifier CreateLolaInstanceIdentifierWithoutInstanceId();
     InstanceIdentifier CreateLolaInstanceIdentifierWithoutTypeDeployment();
     InstanceIdentifier CreateBlankBindingInstanceIdentifier();

@@ -49,7 +49,7 @@ cc_library(
     hdrs = ["method_consumer.h"],
     features = COMPILER_WARNING_FEATURES,
     visibility = [
-        "//score/mw/com/test/methods:__subpackages__",
+        "//score/mw/com/test:__subpackages__",
     ],
     deps = [
         "//score/mw/com",
@@ -67,7 +67,7 @@ cc_library(
     hdrs = ["process_synchronizer.h"],
     features = COMPILER_WARNING_FEATURES,
     visibility = [
-        "//score/mw/com/test/methods:__subpackages__",
+        "//score/mw/com/test:__subpackages__",
     ],
     deps = [
         "//score/mw/com/test/common_test_resources:shared_memory_object_creator",
