@@ -47,6 +47,7 @@ GenericProxyMethod& GenericProxyMethod::operator=(GenericProxyMethod&& other) & 
 ResultBlank GenericProxyMethod::Call(const score::cpp::span<const std::byte> in_args,
                                      const score::cpp::span<std::byte> return_buf) noexcept
 {
+    //TODO: Now its copying but will be refactored.
     constexpr std::size_t kQueuePos{0U};
 
     if (is_return_type_ptr_active_[kQueuePos])
