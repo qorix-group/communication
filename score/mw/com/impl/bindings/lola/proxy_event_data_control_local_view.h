@@ -28,16 +28,6 @@
 
 namespace score::mw::com::impl::lola
 {
-// Suppress The rule AUTOSAR C++14 M3-2-3: "A type, object or function that is used in multiple translation units shall
-// be declared in one and only one file."
-// This is a forward declaration that does not vioalate this rule.
-// coverity[autosar_cpp14_m3_2_3_violation]
-class EventDataControlAttorney;
-// Suppress The rule AUTOSAR C++14 M3-2-3: "A type, object or function that is used in multiple translation units shall
-// be declared in one and only one file."
-// This is a forward declaration that does not vioalate this rule.
-// coverity[autosar_cpp14_m3_2_3_violation]
-class EventDataControlCompositeAttorney;
 
 /// \brief View class which provides functionality for interacting with EventDataControl.
 ///
@@ -48,17 +38,6 @@ class EventDataControlCompositeAttorney;
 template <template <class> class AtomicIndirectorType = memory::shared::AtomicIndirectorReal>
 class ProxyEventDataControlLocalView final
 {
-    // Suppress "AUTOSAR C++14 A11-3-1", The rule declares: "Friend declarations shall not be used".
-    // The "EventDataControlAttorney" class is a helper, which sets the internal state of
-    // "EventDataControl" accessing private members and used for testing purposes only.
-    // coverity[autosar_cpp14_a11_3_1_violation]
-    friend class lola::EventDataControlAttorney;
-    // Suppress "AUTOSAR C++14 A11-3-1", The rule declares: "Friend declarations shall not be used".
-    // The "EventDataControlCompositeAttorney" class is a helper, which sets the internal state of
-    // "EventDataControl" accessing private members and used for testing purposes only.
-    // coverity[autosar_cpp14_a11_3_1_violation]
-    friend class lola::EventDataControlCompositeAttorney;
-
   public:
     using LocalEventControlSlots = score::cpp::span<ControlSlotType>;
 
@@ -84,7 +63,7 @@ class ProxyEventDataControlLocalView final
     /// \post DereferenceEvent() is invoked to withdraw read-ownership
     std::optional<SlotIndexType> ReferenceNextEvent(
         const EventSlotStatus::EventTimeStamp last_search_time,
-        const TransactionLogSet::TransactionLogIndex transaction_log_index,
+        const TransactionLogIndex transaction_log_index,
         const EventSlotStatus::EventTimeStamp upper_limit = EventSlotStatus::TIMESTAMP_MAX) noexcept;
 
     /// \brief Increments refcount of given slot by one (given it is in the correct state i.e. being accessible/
@@ -99,8 +78,7 @@ class ProxyEventDataControlLocalView final
     ///          function is called by the SkeletonEvent itself before handing out a SampleAllocateePtr to the user,
     ///          then it is safe.
     /// \param slot_index index of the slot to be referenced.
-    void ReferenceSpecificEvent(const SlotIndexType slot_index,
-                                const TransactionLogSet::TransactionLogIndex transaction_log_index);
+    void ReferenceSpecificEvent(const SlotIndexType slot_index, const TransactionLogIndex transaction_log_index);
 
     /// \brief Returns number/count of events within event slots, which are newer than the given timestamp.
     /// \param reference_time given reference timestamp.
@@ -111,8 +89,7 @@ class ProxyEventDataControlLocalView final
     /// \pre ReferenceNextEvent() was invoked to obtain read-ownership
     ///
     /// \details Will also record the transaction in the TransactionLog corresponding to transaction_log_index
-    void DereferenceEvent(const SlotIndexType slot_index,
-                          const TransactionLogSet::TransactionLogIndex transaction_log_index) noexcept;
+    void DereferenceEvent(const SlotIndexType slot_index, const TransactionLogIndex transaction_log_index) noexcept;
 
     /// \brief Indicates that a consumer is finished reading (thread-safe, wait-free).
     /// \pre ReferenceNextEvent() was invoked to obtain read-ownership

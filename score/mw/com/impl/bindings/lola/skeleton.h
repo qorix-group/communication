@@ -65,6 +65,19 @@ class Skeleton final : public SkeletonBinding
     friend class SkeletonAttorney;
 
   public:
+    template <typename SampleType>
+    struct RegistrationResult
+    {
+        EventDataStorage<SampleType>& event_data_storage;
+        EventDataControlComposite<> event_data_control_composite;
+    };
+
+    struct GenericRegistrationResult
+    {
+        void* type_erased_event_data_storage_ptr;
+        EventDataControlComposite<> event_data_control_composite;
+    };
+
     static std::unique_ptr<Skeleton> Create(const InstanceIdentifier& identifier,
                                             score::filesystem::Filesystem filesystem,
                                             std::unique_ptr<IShmPathBuilder> shm_path_builder,
@@ -109,10 +122,10 @@ class Skeleton final : public SkeletonBinding
     /// \return A pair containing:
     ///         - An type erased pointer to the allocated data storage (void*).
     ///         - The EventDataControlComposite for managing the event's control data.
-    std::pair<void*, EventDataControlComposite<>> RegisterGeneric(const ElementFqId element_fq_id,
-                                                                  const SkeletonEventProperties& element_properties,
-                                                                  const size_t sample_size,
-                                                                  const size_t sample_alignment) noexcept;
+    auto RegisterGeneric(const ElementFqId element_fq_id,
+                         const SkeletonEventProperties& element_properties,
+                         const size_t sample_size,
+                         const size_t sample_alignment) noexcept -> GenericRegistrationResult;
 
     /// \brief Enables dynamic registration of Events at the Skeleton.
     /// \tparam SampleType The type of the event
@@ -124,9 +137,8 @@ class Skeleton final : public SkeletonBinding
     ///         optionally for ASIL B) and an EventDataStorage which will be returned. If PrepareOffer opened the
     ///         shared memory, then the opened event data from the existing shared memory will be returned.
     template <typename SampleType>
-    std::pair<EventDataStorage<SampleType>*, EventDataControlComposite<>> Register(
-        const ElementFqId element_fq_id,
-        SkeletonEventProperties element_properties);
+    auto Register(const ElementFqId element_fq_id, SkeletonEventProperties element_properties)
+        -> RegistrationResult<SampleType>;
 
     QualityType GetInstanceQualityType() const;
 
@@ -205,8 +217,8 @@ class Skeleton final : public SkeletonBinding
     /// Each guard corresponds to the method subscription / method call handler which was registered in
     /// Skeleton::PrepareOffer() (in case any methods were registered). The guard objects will be destroyed in
     /// Skeleton::PrepareStopOffer()
-    MethodSubscriptionRegistrationGuard method_subscription_registration_guard_qm_;
-    MethodSubscriptionRegistrationGuard method_subscription_registration_guard_asil_b_;
+    std::optional<MethodSubscriptionRegistrationGuard> method_subscription_registration_guard_qm_;
+    std::optional<MethodSubscriptionRegistrationGuard> method_subscription_registration_guard_asil_b_;
 
     bool was_old_shm_region_reopened_;
 
@@ -227,32 +239,30 @@ class Skeleton final : public SkeletonBinding
 
 template <typename SampleType>
 auto Skeleton::Register(const ElementFqId element_fq_id, SkeletonEventProperties element_properties)
-    -> std::pair<EventDataStorage<SampleType>*, EventDataControlComposite<>>
+    -> RegistrationResult<SampleType>
 {
     // If the skeleton previously crashed and there are active proxies connected to the old shared memory, then we
     // re-open that shared memory in PrepareOffer(). In that case, we should retrieved the EventDataControl and
     // EventDataStorage from the shared memory and attempt to rollback the Skeleton tracing transaction log.
     if (was_old_shm_region_reopened_)
     {
-        auto [typed_event_data_storage_ptr, event_data_control_composite] =
-            memory_manager_.OpenEventDataFromOpenedSharedMemory<SampleType>(element_fq_id);
+        auto event_data_control_composite =
+            memory_manager_.OpenEventDataControlCompositeFromOpenedSharedMemory(element_fq_id);
 
-        auto& event_data_control_qm_local = event_data_control_composite.GetQmEventDataControlLocal();
-        auto rollback_result = event_data_control_qm_local.GetTransactionLogSet().RollbackSkeletonTracingTransactions(
-            [&event_data_control_qm_local](const TransactionLog::SlotIndexType slot_index) {
-                event_data_control_qm_local.DereferenceEventWithoutTransactionLogging(slot_index);
-            });
-        if (!rollback_result.has_value())
-        {
-            ::score::mw::log::LogWarn("lola")
-                << "SkeletonEvent: PrepareOffer failed: Could not rollback tracing consumer after "
-                   "crash. Disabling tracing.";
-            impl::Runtime::getInstance().GetTracingRuntime()->DisableTracing();
-        }
-        return {typed_event_data_storage_ptr, event_data_control_composite};
+        auto& skeleton_event_data_control_local_qm = event_data_control_composite.GetQmEventDataControlLocal();
+        memory_manager_.RollbackSkeletonTracingTransactions(
+            skeleton_event_data_control_local_qm, skeleton_event_data_control_local_qm.GetTransactionLogSet());
+
+        auto& event_data_storage = memory_manager_.OpenEventDataFromOpenedSharedMemory<SampleType>(element_fq_id);
+        return {event_data_storage, event_data_control_composite};
     }
 
-    return memory_manager_.CreateEventDataFromOpenedSharedMemory<SampleType>(element_fq_id, element_properties);
+    auto& event_data_storage =
+        memory_manager_.CreateEventDataInCreatedSharedMemory<SampleType>(element_fq_id, element_properties);
+    auto event_data_control_composite =
+        memory_manager_.CreateEventDataControlCompositeInCreatedSharedMemory(element_fq_id, element_properties);
+
+    return RegistrationResult<SampleType>{event_data_storage, event_data_control_composite};
 }
 
 }  // namespace score::mw::com::impl::lola

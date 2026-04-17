@@ -468,7 +468,7 @@ cc_library(
     ],
     deps = [
         ":proxy_event_data_control_local_view",
-        ":transaction_log_set",
+        ":transaction_log_index",
     ],
 )
 
@@ -516,7 +516,7 @@ cc_library(
     deps = [
         ":event_slot_status",
         ":proxy_event_data_control_local_view",
-        ":transaction_log_set",
+        ":transaction_log_index",
     ],
 )
 
@@ -791,6 +791,18 @@ cc_library(
 )
 
 cc_library(
+    name = "transaction_log_index",
+    srcs = ["transaction_log_index.cpp"],
+    hdrs = ["transaction_log_index.h"],
+    features = COMPILER_WARNING_FEATURES,
+    tags = ["FFI"],
+    visibility = ["//score/mw/com/impl/bindings/lola:__subpackages__"],
+    deps = [
+        "//score/mw/com/impl/configuration",
+    ],
+)
+
+cc_library(
     name = "transaction_log_set",
     srcs = ["transaction_log_set.cpp"],
     hdrs = ["transaction_log_set.h"],
@@ -804,6 +816,7 @@ cc_library(
     deps = [
         ":transaction_log",
         ":transaction_log_id",
+        ":transaction_log_index",
         "//score/mw/com/impl/configuration",
         "//score/mw/com/impl/util:copyable_atomic",
         "@score_baselibs//score/containers:dynamic_array",
@@ -844,6 +857,7 @@ cc_library(
         ":proxy_event_data_control_local_view",
         ":skeleton_event_data_control_local_view",
         ":transaction_log_id",
+        ":transaction_log_index",
         ":transaction_log_set",
         "@score_baselibs//score/result",
     ],
@@ -902,19 +916,6 @@ cc_library(
     deps = [
         "//score/mw/com/impl/configuration",
         "@score_baselibs//score/mw/log",
-    ],
-)
-
-cc_library(
-    name = "event_data_control_test_resources",
-    testonly = True,
-    srcs = ["event_data_control_test_resources.cpp"],
-    hdrs = ["event_data_control_test_resources.h"],
-    features = COMPILER_WARNING_FEATURES,
-    visibility = ["//score/mw/com/impl:__subpackages__"],
-    deps = [
-        "//score/mw/com/impl/bindings/lola:event",
-        "@score_baselibs//score/language/futurecpp",
     ],
 )
 
@@ -1333,7 +1334,6 @@ cc_gtest_unit_test(
     ],
     features = COMPILER_WARNING_FEATURES,
     deps = [
-        ":event_data_control_test_resources",
         "//score/mw/com/impl/bindings/lola/test:skeleton_event_test_resources",
     ],
 )
@@ -1345,7 +1345,6 @@ cc_gtest_unit_test(
     ],
     features = COMPILER_WARNING_FEATURES,
     deps = [
-        ":event_data_control_test_resources",
         "//score/mw/com/impl/bindings/lola/test:skeleton_event_test_resources",
         "//score/mw/com/impl/bindings/lola/test:transaction_log_test_resources",
         "//score/mw/com/impl/tracing/configuration:tracing_filter_config_mock",
@@ -1373,7 +1372,6 @@ cc_gtest_unit_test(
     ],
     features = COMPILER_WARNING_FEATURES,
     deps = [
-        ":event_data_control_test_resources",
         ":subscription_state_machine",
         "//score/mw/com/impl/bindings/lola/test:proxy_event_test_resources",
         "//score/mw/com/impl/bindings/lola/test:transaction_log_test_resources",
@@ -1419,11 +1417,15 @@ cc_gtest_unit_test(
     srcs = [
         "transaction_log_set_test.cpp",
     ],
-    features = COMPILER_WARNING_FEATURES,
+    features = COMPILER_WARNING_FEATURES + [
+        # These tests catch exceptions instead of using gtest EXPECT_DEATH so we disable aborts_upon_exception.
+        "-aborts_upon_exception",
+    ],
     deps = [
         "//score/mw/com/impl/bindings/lola:runtime_mock",
         "//score/mw/com/impl/bindings/lola/test:transaction_log_test_resources",
         "//score/mw/com/impl/test:runtime_mock_guard",
+        "@score_baselibs//score/language/futurecpp:futurecpp_test_support",
     ],
 )
 
