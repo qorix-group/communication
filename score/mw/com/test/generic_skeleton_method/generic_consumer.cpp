@@ -152,17 +152,32 @@ int run_generic_consumer()
         return EXIT_FAILURE;
     }
 
-    // Pack two int32_t in-args into a byte array and call
-    std::array<std::byte, sizeof(std::int32_t) * 2U> in_args_buf{};
-    std::array<std::byte, sizeof(std::int32_t)> return_buf{};
+    // Step 4a. Allocate in-arg storage directly in the binding's call-queue buffer (zero-copy)
+    constexpr std::size_t kQueuePos{0U};
+    auto in_args_result = method_it->second.AllocateInArgs(kQueuePos);
+    if (!in_args_result.has_value())
+    {
+        std::cerr << "GenericConsumer: AllocateInArgs failed: " << in_args_result.error() << std::endl;
+        process_synchronizer_result->Notify();
+        return EXIT_FAILURE;
+    }
+    // NOLINTNEXTLINE(score-banned-function)
+    std::memcpy(in_args_result.value().data(), &kTestValueA, sizeof(std::int32_t));
+    // NOLINTNEXTLINE(score-banned-function)
+    std::memcpy(in_args_result.value().data() + sizeof(std::int32_t), &kTestValueB, sizeof(std::int32_t));
 
-    // NOLINTNEXTLINE(score-banned-function)
-    std::memcpy(in_args_buf.data(), &kTestValueA, sizeof(std::int32_t));
-    // NOLINTNEXTLINE(score-banned-function)
-    std::memcpy(in_args_buf.data() + sizeof(std::int32_t), &kTestValueB, sizeof(std::int32_t));
+    // Step 4b. Allocate return-type storage at the same queue slot; read from it after Call()
+    auto return_type_result = method_it->second.AllocateReturnType(kQueuePos);
+    if (!return_type_result.has_value())
+    {
+        std::cerr << "GenericConsumer: AllocateReturnType failed: " << return_type_result.error() << std::endl;
+        process_synchronizer_result->Notify();
+        return EXIT_FAILURE;
+    }
+    auto return_buf = return_type_result.value();
 
     std::cout << "GenericConsumer: Calling method with a=" << kTestValueA << ", b=" << kTestValueB << std::endl;
-    const auto call_result = method_it->second.Call(in_args_buf, return_buf);
+    const auto call_result = method_it->second.Call(kQueuePos);
     if (!call_result.has_value())
     {
         std::cerr << "GenericConsumer: Call failed: " << call_result.error() << std::endl;

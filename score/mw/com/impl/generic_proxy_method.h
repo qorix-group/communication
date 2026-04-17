@@ -47,15 +47,9 @@ class GenericProxyMethod final : public ProxyMethodBase
     GenericProxyMethod(GenericProxyMethod&& other) noexcept;
     GenericProxyMethod& operator=(GenericProxyMethod&& other) & noexcept;
 
-    /// @brief Synchronously calls the remote method.
-    ///
-    /// Writes @p in_args into the call-queue in-arg buffer, invokes the method, then copies the
-    /// result into @p return_buf. Pass an empty span for @p in_args if the method has no arguments,
-    /// or an empty span for @p return_buf if the return type is void.
-    ///
-    /// @return ResultBlank on success, or an error code on failure.
-    ResultBlank Call(score::cpp::span<const std::byte> in_args,
-                     score::cpp::span<std::byte> return_buf) noexcept;
+    score::Result<score::cpp::span<std::byte>> AllocateInArgs(std::size_t queue_position) noexcept;
+    score::Result<score::cpp::span<std::byte>> AllocateReturnType(std::size_t queue_position) noexcept;
+    ResultBlank                                Call(std::size_t queue_position) noexcept;
 };
 
 }  // namespace score::mw::com::impl

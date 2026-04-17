@@ -12,14 +12,15 @@
  ********************************************************************************/
 #include "score/mw/com/impl/generic_proxy_method.h"
 
-#include "score/mw/com/impl/com_error.h"
 #include "score/mw/com/impl/proxy_base.h"
 
 #include <score/blank.hpp>
-#include <cstring>
+
+#include <cstddef>
 
 namespace score::mw::com::impl
 {
+
 
 GenericProxyMethod::GenericProxyMethod(ProxyBase& proxy_base,
                                        const std::string_view method_name,
@@ -44,57 +45,21 @@ GenericProxyMethod& GenericProxyMethod::operator=(GenericProxyMethod&& other) & 
     return *this;
 }
 
-ResultBlank GenericProxyMethod::Call(const score::cpp::span<const std::byte> in_args,
-                                     const score::cpp::span<std::byte> return_buf) noexcept
+score::Result<score::cpp::span<std::byte>> GenericProxyMethod::AllocateInArgs(
+    const std::size_t queue_position) noexcept
 {
-    //TODO: Now its copying but will be refactored.
-    constexpr std::size_t kQueuePos{0U};
+    return binding_->AllocateInArgs(queue_position);
+}
 
-    if (is_return_type_ptr_active_[kQueuePos])
-    {
-        return MakeUnexpected(ComErrc::kMaxSamplesReached);
-    }
+score::Result<score::cpp::span<std::byte>> GenericProxyMethod::AllocateReturnType(
+    const std::size_t queue_position) noexcept
+{
+    return binding_->AllocateReturnType(queue_position);
+}
 
-    if (!in_args.empty())
-    {
-        auto alloc_result = binding_->AllocateInArgs(kQueuePos);
-        if (!alloc_result.has_value())
-        {
-            return MakeUnexpected<score::cpp::blank>(alloc_result.error());
-        }
-        // NOLINTNEXTLINE(score-banned-function)
-        std::memcpy(alloc_result.value().data(), in_args.data(), in_args.size());
-    }
-
-    if (!return_buf.empty())
-    {
-        auto alloc_result = binding_->AllocateReturnType(kQueuePos);
-        if (!alloc_result.has_value())
-        {
-            return MakeUnexpected<score::cpp::blank>(alloc_result.error());
-        }
-
-        is_return_type_ptr_active_[kQueuePos] = true;
-        const auto call_result = binding_->DoCall(kQueuePos);
-        is_return_type_ptr_active_[kQueuePos] = false;
-
-        if (!call_result.has_value())
-        {
-            return call_result;
-        }
-        // NOLINTNEXTLINE(score-banned-function)
-        std::memcpy(return_buf.data(), alloc_result.value().data(), return_buf.size());
-    }
-    else
-    {
-        const auto call_result = binding_->DoCall(kQueuePos);
-        if (!call_result.has_value())
-        {
-            return call_result;
-        }
-    }
-
-    return {};
+ResultBlank GenericProxyMethod::Call(const std::size_t queue_position) noexcept
+{
+    return binding_->DoCall(queue_position);
 }
 
 }  // namespace score::mw::com::impl

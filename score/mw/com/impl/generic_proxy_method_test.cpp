@@ -26,8 +26,6 @@
 #include <gtest/gtest.h>
 
 #include <array>
-#include <cstdint>
-#include <cstring>
 #include <memory>
 
 namespace score::mw::com::impl
@@ -97,69 +95,65 @@ TEST_F(GenericProxyMethodTest, MoveConstructionUpdatesRegistrationInProxyBase)
     EXPECT_EQ(&methods.at("dummy_method").get(), static_cast<ProxyMethodBase*>(&moved));
 }
 
-TEST_F(GenericProxyMethodTest, CallForwardsInArgsToBinding)
+TEST_F(GenericProxyMethodTest, AllocateInArgsForwardsToBinding)
 {
-    RecordProperty("Description", "Call writes in-args into the binding's AllocateInArgs buffer and invokes DoCall.");
+    RecordProperty("Description", "AllocateInArgs forwards queue_position to the binding and returns its span.");
     RecordProperty("TestType", "Requirements-based test");
 
     std::array<std::byte, 4U> shm_in_args{};
-    std::array<std::byte, 4U> shm_return{};
-    const std::int32_t input_val{42};
-    const std::int32_t return_val{99};
-    // NOLINTNEXTLINE(score-banned-function)
-    std::memcpy(shm_return.data(), &return_val, sizeof(return_val));
-
     EXPECT_CALL(binding_mock_, AllocateInArgs(0U))
         .WillOnce(Return(score::Result<score::cpp::span<std::byte>>{shm_in_args}));
-    EXPECT_CALL(binding_mock_, AllocateReturnType(0U))
-        .WillOnce(Return(score::Result<score::cpp::span<std::byte>>{shm_return}));
-    EXPECT_CALL(binding_mock_, DoCall(0U)).WillOnce(Return(ResultBlank{}));
 
-    std::array<std::byte, 4U> in_arg_buf{};
-    std::array<std::byte, 4U> return_buf{};
-    // NOLINTNEXTLINE(score-banned-function)
-    std::memcpy(in_arg_buf.data(), &input_val, sizeof(input_val));
-
-    const auto result = method_->Call(in_arg_buf, return_buf);
-    EXPECT_TRUE(result.has_value());
-
-    std::int32_t received{};
-    // NOLINTNEXTLINE(score-banned-function)
-    std::memcpy(&received, return_buf.data(), sizeof(received));
-    EXPECT_EQ(received, return_val);
+    const auto result = method_->AllocateInArgs(0U);
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result.value().data(), shm_in_args.data());
 }
 
-TEST_F(GenericProxyMethodTest, CallPropagatesAllocateInArgsError)
+TEST_F(GenericProxyMethodTest, AllocateReturnTypeForwardsToBinding)
 {
-    RecordProperty("Description", "Call returns the error from AllocateInArgs without calling DoCall.");
+    RecordProperty("Description", "AllocateReturnType forwards queue_position to the binding and returns its span.");
+    RecordProperty("TestType", "Requirements-based test");
+
+    std::array<std::byte, 4U> shm_return{};
+    EXPECT_CALL(binding_mock_, AllocateReturnType(0U))
+        .WillOnce(Return(score::Result<score::cpp::span<std::byte>>{shm_return}));
+
+    const auto result = method_->AllocateReturnType(0U);
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result.value().data(), shm_return.data());
+}
+
+TEST_F(GenericProxyMethodTest, CallForwardsQueuePositionToDoCall)
+{
+    RecordProperty("Description", "Call forwards queue_position to DoCall on the binding.");
+    RecordProperty("TestType", "Requirements-based test");
+
+    EXPECT_CALL(binding_mock_, DoCall(0U)).WillOnce(Return(ResultBlank{}));
+
+    EXPECT_TRUE(method_->Call(0U).has_value());
+}
+
+TEST_F(GenericProxyMethodTest, AllocateInArgsPropagatesBindingError)
+{
+    RecordProperty("Description", "AllocateInArgs propagates errors from the binding.");
     RecordProperty("TestType", "Requirements-based test");
 
     EXPECT_CALL(binding_mock_, AllocateInArgs(0U))
         .WillOnce(Return(MakeUnexpected(ComErrc::kBindingFailure)));
-    EXPECT_CALL(binding_mock_, DoCall(_)).Times(0);
 
-    std::array<std::byte, 4U> in_buf{};
-    std::array<std::byte, 4U> ret_buf{};
-    const auto result = method_->Call(in_buf, ret_buf);
+    const auto result = method_->AllocateInArgs(0U);
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error(), ComErrc::kBindingFailure);
 }
 
 TEST_F(GenericProxyMethodTest, CallPropagatesDoCallError)
 {
-    RecordProperty("Description", "Call returns the error from DoCall.");
+    RecordProperty("Description", "Call propagates errors from DoCall.");
     RecordProperty("TestType", "Requirements-based test");
 
-    std::array<std::byte, 4U> shm_in{};
-    std::array<std::byte, 4U> shm_ret{};
-    EXPECT_CALL(binding_mock_, AllocateInArgs(0U)).WillOnce(Return(score::Result<score::cpp::span<std::byte>>{shm_in}));
-    EXPECT_CALL(binding_mock_, AllocateReturnType(0U))
-        .WillOnce(Return(score::Result<score::cpp::span<std::byte>>{shm_ret}));
     EXPECT_CALL(binding_mock_, DoCall(0U)).WillOnce(Return(MakeUnexpected(ComErrc::kBindingFailure)));
 
-    std::array<std::byte, 4U> in_buf{};
-    std::array<std::byte, 4U> ret_buf{};
-    const auto result = method_->Call(in_buf, ret_buf);
+    const auto result = method_->Call(0U);
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error(), ComErrc::kBindingFailure);
 }
