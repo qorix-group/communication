@@ -123,6 +123,9 @@ using DataTypeMetaInfo = impl::DataTypeMetaInfo;
 /// \brief Information required to create a generic event.
 using EventInfo = impl::EventInfo;
 
+
+using MethodInfo = impl::MethodInfo;
+
 /// \api
 /// \brief Parameters for creating a GenericSkeleton.
 using GenericSkeletonServiceElementInfo = impl::GenericSkeletonServiceElementInfo;
