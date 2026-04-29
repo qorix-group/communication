@@ -24,13 +24,30 @@ cc_binary(
     ],
     data = ["etc/mw_com_config.json"],
     features = COMPILER_WARNING_FEATURES,
-    visibility = ["//examples:__pkg__"],
     deps = [
         ":sample_sender_receiver",
         "//score/mw/com",
         "@boost.program_options",
         "@score_baselibs//score/language/futurecpp",
-        "@score_baselibs//score/mw/log",
+        "@score_logging//score/mw/log",
+    ],
+)
+
+cc_binary(
+    name = "ipc_bridge_method_cpp",
+    srcs = [
+        "assert_handler.cpp",
+        "assert_handler.h",
+        "main_method.cpp",
+    ],
+    data = ["etc/mw_com_config.json"],
+    features = COMPILER_WARNING_FEATURES,
+    deps = [
+        ":sample_method_caller",
+        "//score/mw/com",
+        "@boost.program_options",
+        "@score_baselibs//score/language/futurecpp",
+        "@score_logging//score/mw/log",
     ],
 )
 
@@ -46,7 +63,23 @@ cc_library(
     deps = [
         ":datatype",
         "//score/mw/com",
-        "@score_baselibs//score/mw/log",
+        "@score_logging//score/mw/log",
+    ],
+)
+
+cc_library(
+    name = "sample_method_caller",
+    srcs = [
+        "sample_method_caller.cpp",
+    ],
+    hdrs = [
+        "sample_method_caller.h",
+    ],
+    features = COMPILER_WARNING_FEATURES,
+    deps = [
+        ":datatype",
+        "//score/mw/com",
+        "@score_logging//score/mw/log",
     ],
 )
 
@@ -83,7 +116,6 @@ rust_binary(
     srcs = ["ipc_bridge.rs"],
     data = ["etc/mw_com_config.json"],
     features = ["link_std_cpp_lib"],
-    visibility = ["//examples:__pkg__"],
     deps = [
         ":ipc_bridge_gen_rs",
         "//score/mw/com/impl/rust:mw_com",

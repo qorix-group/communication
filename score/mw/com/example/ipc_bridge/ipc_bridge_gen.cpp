@@ -14,7 +14,7 @@
 #include "score/mw/com/impl/rust/bridge_macros.h"
 
 BEGIN_EXPORT_MW_COM_INTERFACE(mw_com_IpcBridge, ::score::mw::com::IpcBridgeProxy, ::score::mw::com::IpcBridgeSkeleton)
-EXPORT_MW_COM_EVENT(mw_com_IpcBridge, ::score::mw::com::MapApiLanesStamped, map_api_lanes_stamped_)
 END_EXPORT_MW_COM_INTERFACE()
 
 EXPORT_MW_COM_TYPE(mw_com_MapApiLanesStamped, ::score::mw::com::MapApiLanesStamped)
+

@@ -288,13 +288,69 @@ struct MapApiLanesStamped
     std::size_t hash_value;
 };
 
+/// @brief Route segment information for method calls
+struct RouteSegmentInfo
+{
+    RouteSegmentInfo() = default;
+
+    RouteSegmentInfo(RouteSegmentInfo&&) = default;
+
+    RouteSegmentInfo(const RouteSegmentInfo&) = default;
+
+    RouteSegmentInfo& operator=(RouteSegmentInfo&&) = default;
+
+    RouteSegmentInfo& operator=(const RouteSegmentInfo&) = default;
+
+    /// @brief Segment ID along the route
+    std::uint32_t segment_id{0U};
+
+    /// @brief Array of segment waypoints coordinates
+    std::array<std::uint32_t, 16U> waypoint_ids;
+
+    /// @brief Speed limit for this segment
+    std::uint32_t speed_limit_kmh{0U};
+
+    /// @brief Road type for this segment
+    std::uint32_t road_type{0U};
+};
+
+/// @brief Route information structure used by methods
+struct RouteInformation
+{
+    RouteInformation() = default;
+
+    RouteInformation(RouteInformation&&) = default;
+
+    RouteInformation(const RouteInformation&) = default;
+
+    RouteInformation& operator=(RouteInformation&&) = default;
+
+    RouteInformation& operator=(const RouteInformation&) = default;
+
+    /// @brief Array of route segments
+    std::array<RouteSegmentInfo, 16U> route_segments;
+
+    /// @brief Total route distance in meters
+    std::uint32_t total_distance_m{0U};
+
+    /// @brief Estimated time to travel route in seconds
+    std::uint32_t estimated_time_s{0U};
+};
+
 template <typename Trait>
 class IpcBridgeInterface : public Trait::Base
 {
   public:
     using Trait::Base::Base;
 
+    /// @brief Event that publishes stamped map lanes
     typename Trait::template Event<MapApiLanesStamped> map_api_lanes_stamped_{*this, "map_api_lanes_stamped"};
+
+    /// @brief Method that calculates route hash based on segment ID
+    /// @param segment_id The segment ID to calculate hash for
+    /// @return Calculated hash value
+    typename Trait::template Method<std::uint64_t(std::uint32_t)> calculate_route_hash{*this,
+                                                                                         "calculate_route_hash"};
 };
 
 using IpcBridgeProxy = AsProxy<IpcBridgeInterface>;

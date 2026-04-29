@@ -19,6 +19,12 @@
               "eventName": "dummy_data_stamped",
               "eventId": 2
             }
+          ],
+          "methods": [
+            {
+              "methodName": "calculate_route_hash",
+              "methodId": 3
+            }
           ]
         }
       ]
@@ -36,16 +42,10 @@
         {
           "instanceId": 1,
           "allowedConsumer": {
-            "QM": [
-              4002,
-              0
-            ]
+            "QM": [4002, 0, 1000]
           },
           "allowedProvider": {
-            "QM": [
-              4001,
-              0
-            ]
+            "QM": [4001, 0]
           },
           "asil-level": "QM",
           "binding": "SHM",
@@ -54,6 +54,40 @@
               "eventName": "map_api_lanes_stamped",
               "numberOfSampleSlots": 30,
               "maxSubscribers": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "instanceSpecifier": "example/ipc_bridge/methods",
+      "serviceTypeName": "/score/adp/MapApiLanesStamped",
+      "version": {
+        "major": 1,
+        "minor": 0
+      },
+      "instances": [
+        {
+          "instanceId": 1,
+          "allowedConsumer": {
+            "QM": [4002, 0, 1000]
+          },
+          "allowedProvider": {
+            "QM": [4001, 0]
+          },
+          "asil-level": "QM",
+          "binding": "SHM",
+          "events": [
+            {
+              "eventName": "map_api_lanes_stamped",
+              "numberOfSampleSlots": 30,
+              "maxSubscribers": 5
+            }
+          ],
+          "methods": [
+            {
+              "methodName": "calculate_route_hash",
+              "queueSize": 10
             }
           ]
         }
