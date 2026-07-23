@@ -941,6 +941,10 @@ auto SharedMemoryResource::reserveSharedMemory() const noexcept -> void
 auto SharedMemoryResource::mapMemoryIntoProcess() noexcept -> void
 {
     // get all the memory _we_ need
+    // RST-0167 does not apply: file_descriptor_ is a shared memory object FD obtained from shm_open() or
+    // typed/anonymous memory allocation APIs - not a connection to a QNX channel owned by this process.
+    // Justification: It is a false positive.
+    // NOLINTNEXTLINE(bmw-banned-function): Justification above
     const auto result = ::score::os::Mman::instance().mmap(nullptr,
                                                            virtual_address_space_to_reserve_,
                                                            this->map_mode_,
