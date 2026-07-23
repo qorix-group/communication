@@ -43,5 +43,6 @@
 //score/mw/service:factory
 //score/mw/service:provided_service
 //score/mw/service:provided_service_container
+//score/mw/service:proxy_data
 //score/mw/service:proxy_future
 //score/mw/service:service
