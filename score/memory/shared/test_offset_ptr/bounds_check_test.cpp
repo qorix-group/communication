@@ -82,7 +82,8 @@ TEST(OffsetPtrBoundsCheckDeathTest, IndexDereferenceGoesOutOfMemoryRegion)
 
     // When accessing that array through the []-operator which goes out of the memory region
     // Then the bounds checking kicks in
-    SCORE_LANGUAGE_FUTURECPP_EXPECT_CONTRACT_VIOLATED(offset_ptr[gMemoryPool.GetEndOfValidRegion() - gMemoryPool.GetStartOfValidRegion()]);
+    SCORE_LANGUAGE_FUTURECPP_EXPECT_CONTRACT_VIOLATED(
+        offset_ptr[gMemoryPool.GetEndOfValidRegion() - gMemoryPool.GetStartOfValidRegion()]);
 }
 
 std::vector<TestParams> GenerateOffsetPtrAddressesThatPassBoundsChecks(BoundsCheckMemoryPool<PointedType>& memory_pool)
@@ -201,9 +202,9 @@ TEST_P(OffsetPtrBoundsCheckFixture, DereferencingOffsetPtrReturnsCorrectValue)
 {
     RecordProperty("Verifies", "SCR-5899238");
     RecordProperty("Description", "Checks that dereferencing performs bounds checking");
-    RecordProperty("TestType", "requirements-based"); // requirements test
+    RecordProperty("TestType", "requirements-based");  // requirements test
     RecordProperty("Priority", "1");
-    RecordProperty("DerivationTechnique", "requirements-analysis"); // requirements
+    RecordProperty("DerivationTechnique", "requirements-analysis");  // requirements
 
     const auto& params = GetParam();
 
@@ -221,9 +222,9 @@ TEST_P(OffsetPtrBoundsCheckFixture, GettingOffsetPtr)
 {
     RecordProperty("Verifies", "SCR-5899238");
     RecordProperty("Description", "Checks that calling get() performs bounds checking");
-    RecordProperty("TestType", "requirements-based"); // requirements test
+    RecordProperty("TestType", "requirements-based");  // requirements test
     RecordProperty("Priority", "1");
-    RecordProperty("DerivationTechnique", "requirements-analysis"); // requirements
+    RecordProperty("DerivationTechnique", "requirements-analysis");  // requirements
 
     const auto& params = GetParam();
 
@@ -241,9 +242,9 @@ TEST_P(OffsetPtrBoundsCheckFixture, GettingOffsetPtrWithTypedGet)
 {
     RecordProperty("Verifies", "SCR-5899238");
     RecordProperty("Description", "Checks that calling typed get() performs bounds checking");
-    RecordProperty("TestType", "requirements-based"); // requirements test
+    RecordProperty("TestType", "requirements-based");  // requirements test
     RecordProperty("Priority", "1");
-    RecordProperty("DerivationTechnique", "requirements-analysis"); // requirements
+    RecordProperty("DerivationTechnique", "requirements-analysis");  // requirements
 
     const auto& params = GetParam();
 
@@ -261,9 +262,9 @@ TEST_P(OffsetPtrBoundsCheckFixture, GettingOffsetPtrWithSizedGet)
 {
     RecordProperty("Verifies", "SCR-5899238");
     RecordProperty("Description", "Checks that calling get() that accepts size as argument performs bounds checking");
-    RecordProperty("TestType", "requirements-based"); // requirements test
+    RecordProperty("TestType", "requirements-based");  // requirements test
     RecordProperty("Priority", "1");
-    RecordProperty("DerivationTechnique", "requirements-analysis"); // requirements
+    RecordProperty("DerivationTechnique", "requirements-analysis");  // requirements
 
     const auto& params = GetParam();
 
@@ -320,9 +321,9 @@ TEST_P(OffsetPtrBoundsCheckDeathFixture, DereferencingOffsetPtrTerminates)
 {
     RecordProperty("Verifies", "SCR-5899238");
     RecordProperty("Description", "Checks that dereferencing performs bounds checking");
-    RecordProperty("TestType", "requirements-based"); // requirements test
+    RecordProperty("TestType", "requirements-based");  // requirements test
     RecordProperty("Priority", "1");
-    RecordProperty("DerivationTechnique", "requirements-analysis"); // requirements
+    RecordProperty("DerivationTechnique", "requirements-analysis");  // requirements
 
     const auto& params = GetParam();
 
@@ -338,9 +339,9 @@ TEST_P(OffsetPtrBoundsCheckDeathFixture, OffsetPtrGetTerminates)
 {
     RecordProperty("Verifies", "SCR-5899238");
     RecordProperty("Description", "Checks that calling get() performs bounds checking");
-    RecordProperty("TestType", "requirements-based"); // requirements test
+    RecordProperty("TestType", "requirements-based");  // requirements test
     RecordProperty("Priority", "1");
-    RecordProperty("DerivationTechnique", "requirements-analysis"); // requirements
+    RecordProperty("DerivationTechnique", "requirements-analysis");  // requirements
 
     const auto& params = GetParam();
 
@@ -368,9 +369,9 @@ TEST_P(OffsetPtrBoundsCheckDeathFixture, OffsetPtrTypedGetTerminates)
 {
     RecordProperty("Verifies", "SCR-5899238");
     RecordProperty("Description", "Checks that calling typed get() performs bounds checking");
-    RecordProperty("TestType", "requirements-based"); // requirements test
+    RecordProperty("TestType", "requirements-based");  // requirements test
     RecordProperty("Priority", "1");
-    RecordProperty("DerivationTechnique", "requirements-analysis"); // requirements
+    RecordProperty("DerivationTechnique", "requirements-analysis");  // requirements
 
     const auto& params = GetParam();
 
@@ -379,16 +380,17 @@ TEST_P(OffsetPtrBoundsCheckDeathFixture, OffsetPtrTypedGetTerminates)
 
     // When getting a raw pointer from the copied OffsetPtr<void> by explicitly specifying the type
     // Then the program should terminate
-    SCORE_LANGUAGE_FUTURECPP_EXPECT_CONTRACT_VIOLATED(score::cpp::ignore = ptr_to_offset_ptr->template get<PointedType>());
+    SCORE_LANGUAGE_FUTURECPP_EXPECT_CONTRACT_VIOLATED(score::cpp::ignore =
+                                                          ptr_to_offset_ptr->template get<PointedType>());
 }
 
 TEST_P(OffsetPtrBoundsCheckDeathFixture, OffsetPtrSizedGetTerminates)
 {
     RecordProperty("Verifies", "SCR-5899238");
     RecordProperty("Description", "Checks that calling get() that takes size as argument performs bounds checking");
-    RecordProperty("TestType", "requirements-based"); // requirements test
+    RecordProperty("TestType", "requirements-based");  // requirements test
     RecordProperty("Priority", "1");
-    RecordProperty("DerivationTechnique", "requirements-analysis"); // requirements
+    RecordProperty("DerivationTechnique", "requirements-analysis");  // requirements
 
     const auto& params = GetParam();
 
@@ -410,16 +412,17 @@ TEST_P(OffsetPtrBoundsCheckDeathFixture, PointerOperatorTerminates)
 
     // When getting calling the pointer operator on the OffsetPtr
     // Then the program should terminate
-    SCORE_LANGUAGE_FUTURECPP_EXPECT_CONTRACT_VIOLATED(score::cpp::ignore = static_cast<PointedType*>(*ptr_to_offset_ptr));
+    SCORE_LANGUAGE_FUTURECPP_EXPECT_CONTRACT_VIOLATED(score::cpp::ignore =
+                                                          static_cast<PointedType*>(*ptr_to_offset_ptr));
 }
 
 TEST_P(OffsetPtrBoundsCheckDeathFixture, ArrowOperatorTerminates)
 {
     RecordProperty("Verifies", "SCR-5899238");
     RecordProperty("Description", "Checks that calling get() performs bounds checking");
-    RecordProperty("TestType", "requirements-based"); // requirements test
+    RecordProperty("TestType", "requirements-based");  // requirements test
     RecordProperty("Priority", "1");
-    RecordProperty("DerivationTechnique", "requirements-analysis"); // requirements
+    RecordProperty("DerivationTechnique", "requirements-analysis");  // requirements
 
     const auto& params = GetParam();
 

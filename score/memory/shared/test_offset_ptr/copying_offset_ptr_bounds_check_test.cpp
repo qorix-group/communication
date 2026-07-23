@@ -18,8 +18,8 @@
 
 #include <score/assert_support.hpp>
 
-#include <score/utility.hpp>
 #include <gtest/gtest.h>
+#include <score/utility.hpp>
 #include <cstdint>
 #include <utility>
 #include <vector>
@@ -326,7 +326,8 @@ TEST_P(OffsetPtrCopyStartAndEndChecksDeathFixture, GettingOffsetPointerWithTyped
 
     // When getting a raw pointer from the copied OffsetPtr<void> by explicitly specifying the type
     // Then the program should terminate
-    SCORE_LANGUAGE_FUTURECPP_EXPECT_CONTRACT_VIOLATED(score::cpp::ignore = ptr_to_offset_ptr->template get<PointedType>());
+    SCORE_LANGUAGE_FUTURECPP_EXPECT_CONTRACT_VIOLATED(score::cpp::ignore =
+                                                          ptr_to_offset_ptr->template get<PointedType>());
 }
 
 TEST_P(OffsetPtrCopyStartAndEndChecksDeathFixture, GettingOffsetPointerWithSizedGetTerminates)
@@ -366,7 +367,8 @@ TEST_P(OffsetPtrCopyStartAndEndChecksDeathFixture, PointerOperatorTerminates)
 
     // When getting calling the pointer operator on the copied OffsetPtr
     // Then the program should terminate
-    SCORE_LANGUAGE_FUTURECPP_EXPECT_CONTRACT_VIOLATED(score::cpp::ignore = static_cast<PointedType*>(*ptr_to_offset_ptr));
+    SCORE_LANGUAGE_FUTURECPP_EXPECT_CONTRACT_VIOLATED(score::cpp::ignore =
+                                                          static_cast<PointedType*>(*ptr_to_offset_ptr));
 }
 
 TEST_P(OffsetPtrCopyStartAndEndChecksDeathFixture, ArrowOperatorTerminates)

@@ -66,7 +66,7 @@ constexpr std::size_t CalculateAlignedSize(const std::size_t size, const std::si
     if (size > alignment)
     {
         SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(size <= (std::numeric_limits<std::size_t>::max() - alignment),
-                               "Addition would overflow!!");
+                                                    "Addition would overflow!!");
         return size + alignment - (size % alignment);
     }
     return alignment;
@@ -228,9 +228,10 @@ auto AddUnsignedToSigned(SignedInteger signed_value, std::make_unsigned_t<Signed
     // Cast the unsigned result to a signed result. This function ensures that it uses only behaviour defined by the
     // standard.
     const auto signed_result = UndoSignedToUnsignedIntegerCast(unsigned_result);
-    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(signed_result >= signed_value,
-                           "If signed_result is smaller than signed_value, it indicates that an overflow ocurred due "
-                           "to signed_value + unsigned_value not fitting into SignedInteger type.");
+    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(
+        signed_result >= signed_value,
+        "If signed_result is smaller than signed_value, it indicates that an overflow ocurred due "
+        "to signed_value + unsigned_value not fitting into SignedInteger type.");
     return signed_result;
 }
 
@@ -254,9 +255,10 @@ auto SubtractUnsignedFromSigned(SignedInteger signed_value, std::make_unsigned_t
     // Cast the unsigned result to a signed result. This function ensures that it uses only behaviour defined by the
     // standard.
     const auto signed_result = UndoSignedToUnsignedIntegerCast(unsigned_result);
-    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(signed_result <= signed_value,
-                           "If signed_result is larger than signed_value, it indicates that an underflow ocurred due "
-                           "to signed_value - unsigned_value not fitting into SignedInteger type.");
+    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(
+        signed_result <= signed_value,
+        "If signed_result is larger than signed_value, it indicates that an underflow ocurred due "
+        "to signed_value - unsigned_value not fitting into SignedInteger type.");
     return signed_result;
 }
 

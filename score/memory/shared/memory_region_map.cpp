@@ -184,8 +184,9 @@ void MemoryRegionMapImpl<AtomicIndirectorType>::RemoveKnownRegion(const std::uin
         new_known_regions = known_regions_versions_.at(static_cast<std::size_t>(latest_known_region_version_));
         const auto region_it = new_known_regions.find(memory_range_start);
 
-        SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(region_it != new_known_regions.cend(),
-                               "Cannot remove memory range whose start address does not exist in map.");
+        SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(
+            region_it != new_known_regions.cend(),
+            "Cannot remove memory range whose start address does not exist in map.");
         score::cpp::ignore = new_known_regions.erase(region_it);
 
         // Set the refcount of our new version to 0

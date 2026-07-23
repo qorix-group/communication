@@ -15,8 +15,8 @@
 #include "score/memory/shared/pointer_arithmetic_util.h"
 #include "score/memory/shared/shared_memory_error.h"
 
-#include "score/utils/meyer_singleton/meyer_singleton.h"
 #include "score/mw/log/logging.h"
+#include "score/utils/meyer_singleton/meyer_singleton.h"
 
 #include <score/utility.hpp>
 

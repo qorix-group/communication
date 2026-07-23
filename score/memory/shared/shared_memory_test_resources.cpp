@@ -45,7 +45,7 @@ class IAccessControlListMockWrapper : public score::os::IAccessControlList
     explicit IAccessControlListMockWrapper(score::os::IAccessControlList* mock) : mock_{mock} {};
 
     score::cpp::expected_blank<score::os::Error> AllowUser(const UserIdentifier uid,
-                                                  const score::os::Acl::Permission permission) override
+                                                           const score::os::Acl::Permission permission) override
     {
         return mock_->AllowUser(uid, permission);
     }
@@ -105,7 +105,7 @@ SharedMemoryResourceTestAttorney::SharedMemoryResourceTestAttorney(SharedMemoryR
 }
 
 void* SharedMemoryResourceTestAttorney::do_allocate_using_mock_atomic_indirector(std::size_t bytes,
-                                                                                  std::size_t alignment)
+                                                                                 std::size_t alignment)
 {
     return resource_.do_allocate_with_indirector<score::concurrency::AtomicIndirectorMock>(bytes, alignment);
 }
@@ -144,7 +144,8 @@ score::cpp::expected<std::shared_ptr<SharedMemoryResource>, score::os::Error> Sh
     }
 }
 
-score::cpp::expected<std::shared_ptr<SharedMemoryResource>, score::os::Error> SharedMemoryResourceTestAttorney::CreateAnonymous(
+score::cpp::expected<std::shared_ptr<SharedMemoryResource>, score::os::Error>
+SharedMemoryResourceTestAttorney::CreateAnonymous(
     std::uint64_t shared_memory_resource_id,
     const std::size_t user_space_to_reserve,
     SharedMemoryResource::InitializeCallback initialize_callback,
@@ -178,7 +179,8 @@ score::cpp::expected<std::shared_ptr<SharedMemoryResource>, score::os::Error> Sh
     }
 }
 
-score::cpp::expected<std::shared_ptr<SharedMemoryResource>, score::os::Error> SharedMemoryResourceTestAttorney::CreateOrOpen(
+score::cpp::expected<std::shared_ptr<SharedMemoryResource>, score::os::Error>
+SharedMemoryResourceTestAttorney::CreateOrOpen(
     std::string input_path,
     const std::size_t user_space_to_reserve,
     SharedMemoryResource::InitializeCallback initialize_callback,
@@ -456,10 +458,10 @@ void SharedMemoryResourceTest::expectSharedMemorySuccessfullyCreated(
     }
     else
     {
-        const auto oflags =
-            (!typed_memory_allocation_return_value.has_value())
-                ? score::os::Fcntl::Open::kReadWrite | score::os::Fcntl::Open::kCreate | score::os::Fcntl::Open::kExclusive
-                : score::os::Fcntl::Open::kReadWrite | score::os::Fcntl::Open::kExclusive;
+        const auto oflags = (!typed_memory_allocation_return_value.has_value())
+                                ? score::os::Fcntl::Open::kReadWrite | score::os::Fcntl::Open::kCreate |
+                                      score::os::Fcntl::Open::kExclusive
+                                : score::os::Fcntl::Open::kReadWrite | score::os::Fcntl::Open::kExclusive;
 
         if (typedmemory_mock_ == nullptr)
         {

@@ -53,9 +53,9 @@ TEST_F(SharedMemoryResourceOpenTest, OpensSharedMemoryReadOnlyByDefault)
     RecordProperty(
         "Description",
         "Can open shared memory segment read-only. Only opens shared memory segment provided in constructor.");
-    RecordProperty("TestType", "requirements-based"); // requirements test
+    RecordProperty("TestType", "requirements-based");  // requirements test
     RecordProperty("Priority", "1");
-    RecordProperty("DerivationTechnique", "requirements-analysis"); // requirements
+    RecordProperty("DerivationTechnique", "requirements-analysis");  // requirements
 
     InSequence sequence{};
     constexpr std::int32_t file_descriptor = 5;
@@ -73,9 +73,9 @@ TEST_F(SharedMemoryResourceOpenTest, OpeningSharedMemoryFreesResourcesOnDestruct
 {
     RecordProperty("Verifies", "SCR-6367126");
     RecordProperty("Description", "SharedMemoryResource shall free resources only on destruction.");
-    RecordProperty("TestType", "requirements-based"); // requirements test
+    RecordProperty("TestType", "requirements-based");  // requirements test
     RecordProperty("Priority", "1");
-    RecordProperty("DerivationTechnique", "requirements-analysis"); // requirements
+    RecordProperty("DerivationTechnique", "requirements-analysis");  // requirements
 
     InSequence sequence{};
     constexpr std::int32_t file_descriptor = 1;
@@ -103,10 +103,11 @@ TEST_F(SharedMemoryResourceOpenTest, OpeningSharedMemoryFreesResourcesOnDestruct
             return score::cpp::blank{};
         }));
     EXPECT_CALL(*unistd_mock_, close(file_descriptor))
-        .WillOnce(::testing::InvokeWithoutArgs([&file_descriptor_closed]() -> score::cpp::expected_blank<score::os::Error> {
-            file_descriptor_closed = true;
-            return score::cpp::blank{};
-        }));
+        .WillOnce(
+            ::testing::InvokeWithoutArgs([&file_descriptor_closed]() -> score::cpp::expected_blank<score::os::Error> {
+                file_descriptor_closed = true;
+                return score::cpp::blank{};
+            }));
 
     // When constructing a SharedMemoryResource with Open option
     {
@@ -126,9 +127,9 @@ TEST_F(SharedMemoryResourceOpenTest, OpensSharedMemoryWillWaitUntilLockFileIsGon
 {
     RecordProperty("Verifies", "SCR-5899175");
     RecordProperty("Description", "Can open shared memory segment read-only after a lock was created");
-    RecordProperty("TestType", "requirements-based"); // requirements test
+    RecordProperty("TestType", "requirements-based");  // requirements test
     RecordProperty("Priority", "1");
-    RecordProperty("DerivationTechnique", "requirements-analysis"); // requirements
+    RecordProperty("DerivationTechnique", "requirements-analysis");  // requirements
 
     InSequence sequence{};
     constexpr std::int32_t file_descriptor = 5;
@@ -199,9 +200,9 @@ TEST_F(SharedMemoryResourceOpenTest, OpensSharedMemoryReadWrite)
     RecordProperty(
         "Description",
         "Can open shared memory segment read-write. Only opens shared memory segment provided in constructor.");
-    RecordProperty("TestType", "requirements-based"); // requirements test
+    RecordProperty("TestType", "requirements-based");  // requirements test
     RecordProperty("Priority", "1");
-    RecordProperty("DerivationTechnique", "requirements-analysis"); // requirements
+    RecordProperty("DerivationTechnique", "requirements-analysis");  // requirements
 
     InSequence sequence{};
     constexpr std::int32_t file_descriptor = 5;
@@ -220,9 +221,9 @@ TEST_F(SharedMemoryResourceOpenTest, OpeningResourceThatDoesNotExistWillReturnEr
     RecordProperty("Verifies", "SCR-32158471");
     RecordProperty("Description",
                    "Checks that Open will return an error when the underlying resource cannot be found.");
-    RecordProperty("TestType", "requirements-based"); // requirements test
+    RecordProperty("TestType", "requirements-based");  // requirements test
     RecordProperty("Priority", "1");
-    RecordProperty("DerivationTechnique", "requirements-analysis"); // requirements
+    RecordProperty("DerivationTechnique", "requirements-analysis");  // requirements
 
     constexpr bool is_read_write = false;
     constexpr std::int32_t lock_file_descriptor = 10;
@@ -231,8 +232,9 @@ TEST_F(SharedMemoryResourceOpenTest, OpeningResourceThatDoesNotExistWillReturnEr
     expectCreateLockFileReturns(TestValues::sharedMemorySegmentLockPath, lock_file_descriptor);
 
     // and that when the shared memory segment is opened, it fails with an error that no such file or directory exists
-    expectShmOpenReturns(
-        TestValues::sharedMemorySegmentPath, score::cpp::make_unexpected(Error::createFromErrno(ENOENT)), is_read_write);
+    expectShmOpenReturns(TestValues::sharedMemorySegmentPath,
+                         score::cpp::make_unexpected(Error::createFromErrno(ENOENT)),
+                         is_read_write);
 
     // and the lock file is cleaned up when the function returns
     EXPECT_CALL(*unistd_mock_, close(lock_file_descriptor));
@@ -252,9 +254,9 @@ TEST_F(SharedMemoryResourceOpenTest, OpeningResourceWithoutTheRequiredACLsWillRe
     RecordProperty("Description",
                    "Checks that Open will return an error when the process doesn't have the correct permissions to "
                    "open the underlying resource.");
-    RecordProperty("TestType", "requirements-based"); // requirements test
+    RecordProperty("TestType", "requirements-based");  // requirements test
     RecordProperty("Priority", "1");
-    RecordProperty("DerivationTechnique", "requirements-analysis"); // requirements
+    RecordProperty("DerivationTechnique", "requirements-analysis");  // requirements
 
     constexpr bool is_read_write = false;
     constexpr std::int32_t lock_file_descriptor = 10;
@@ -263,8 +265,9 @@ TEST_F(SharedMemoryResourceOpenTest, OpeningResourceWithoutTheRequiredACLsWillRe
     expectCreateLockFileReturns(TestValues::sharedMemorySegmentLockPath, lock_file_descriptor);
 
     // and that when the shared memory segment is opened, it fails with a permission denied error
-    expectShmOpenReturns(
-        TestValues::sharedMemorySegmentPath, score::cpp::make_unexpected(Error::createFromErrno(EACCES)), is_read_write);
+    expectShmOpenReturns(TestValues::sharedMemorySegmentPath,
+                         score::cpp::make_unexpected(Error::createFromErrno(EACCES)),
+                         is_read_write);
 
     // and the lock file is cleaned up when the function returns
     EXPECT_CALL(*unistd_mock_, close(lock_file_descriptor));
@@ -721,8 +724,9 @@ TEST_F(SharedMemoryResourceOpenDeathTest, OpensSharedMemoryTerminatesProcessIfLo
     constexpr bool is_read_write = false;
 
     // Given that lock file creation fails (another process holds it)
-    expectCreateLockFileReturns(
-        TestValues::sharedMemorySegmentLockPath, score::cpp::make_unexpected(Error::createFromErrno(EEXIST)), is_death_test);
+    expectCreateLockFileReturns(TestValues::sharedMemorySegmentLockPath,
+                                score::cpp::make_unexpected(Error::createFromErrno(EEXIST)),
+                                is_death_test);
     // And the lock file is always present (never goes away)
     expectOpenLockFileReturns(TestValues::sharedMemorySegmentLockPath, score::cpp::blank{}, is_death_test);
 

@@ -287,9 +287,9 @@ TEST_P(SharedMemoryFactoryTest, SharedMemoryResourceIsCreatedWithCorrectPath)
     RecordProperty("Verifies", "SCR-6223575");
     RecordProperty("Description",
                    "The SharedMemoryFactory shall return the Shared Memory Resource associated with the given path.");
-    RecordProperty("TestType", "requirements-based"); // requirements test
+    RecordProperty("TestType", "requirements-based");  // requirements test
     RecordProperty("Priority", "1");
-    RecordProperty("DerivationTechnique", "requirements-analysis"); // requirements
+    RecordProperty("DerivationTechnique", "requirements-analysis");  // requirements
 
     InSequence sequence{};
     // Given that we can successfully create a shared memory region
@@ -321,14 +321,15 @@ TEST_F(SharedMemoryFactoryTest, SharedMemoryResourceFallbackToSystemMemory)
     RecordProperty("Verifies", "SCR-6223575");
     RecordProperty("Description",
                    "The SharedMemoryFactory shall return the Shared Memory Resource associated with the given path.");
-    RecordProperty("TestType", "requirements-based"); // requirements test
+    RecordProperty("TestType", "requirements-based");  // requirements test
     RecordProperty("Priority", "1");
-    RecordProperty("DerivationTechnique", "requirements-analysis"); // requirements
+    RecordProperty("DerivationTechnique", "requirements-analysis");  // requirements
 
     InSequence sequence{};
     std::array<std::uint8_t, kSharedMemorySize> dataRegion{};
     // Given that allocation in typed-memory fails
-    const auto in_typed_memory_allocated_return_value = score::cpp::make_unexpected(score::os::Error::createFromErrno(ENOENT));
+    const auto in_typed_memory_allocated_return_value =
+        score::cpp::make_unexpected(score::os::Error::createFromErrno(ENOENT));
     const bool typed_memory_parameter = true;
     expectSharedMemorySuccessfullyCreated(kFileDescriptor,
                                           kLockFileDescriptor,
@@ -361,9 +362,9 @@ TEST_F(SharedMemoryFactoryTest, SharedMemoryResourceIsOpenedWithCorrectPath)
     RecordProperty("Verifies", "SCR-6223575");
     RecordProperty("Description",
                    "The SharedMemoryFactory shall return the Shared Memory Resource associated with the given path.");
-    RecordProperty("TestType", "requirements-based"); // requirements test
+    RecordProperty("TestType", "requirements-based");  // requirements test
     RecordProperty("Priority", "1");
-    RecordProperty("DerivationTechnique", "requirements-analysis"); // requirements
+    RecordProperty("DerivationTechnique", "requirements-analysis");  // requirements
 
     InSequence sequence{};
     constexpr bool is_read_write = false;
@@ -407,7 +408,8 @@ TEST_P(SharedMemoryFactoryTest, FailureToCreateOrOpenSharedMemoryReturnsNullPtr)
     constexpr std::int32_t lock_file_descriptor = 1;
     constexpr std::int32_t open_lock_file_descriptor = 10;
     constexpr bool is_read_write = true;
-    const auto typed_memory_allocation_return_value = score::cpp::make_unexpected(score::os::Error::createFromErrno(ENOENT));
+    const auto typed_memory_allocation_return_value =
+        score::cpp::make_unexpected(score::os::Error::createFromErrno(ENOENT));
     const bool typed_memory_parameter = GetParam();
 
     // Given that the shared memory resource cannot be created or opened:
@@ -416,8 +418,9 @@ TEST_P(SharedMemoryFactoryTest, FailureToCreateOrOpenSharedMemoryReturnsNullPtr)
     expectCreateLockFileReturns(TestValues::sharedMemorySegmentLockPath, open_lock_file_descriptor);
 
     // And the shared memory region doesn't exist when we first try to open it
-    expectShmOpenReturns(
-        TestValues::sharedMemorySegmentPath, score::cpp::make_unexpected(Error::createFromErrno(ENOENT)), is_read_write);
+    expectShmOpenReturns(TestValues::sharedMemorySegmentPath,
+                         score::cpp::make_unexpected(Error::createFromErrno(ENOENT)),
+                         is_read_write);
 
     // and the lock file is cleaned up after the failed open attempt
     EXPECT_CALL(*unistd_mock_, close(open_lock_file_descriptor));
@@ -502,9 +505,9 @@ TEST_F(SharedMemoryFactoryTest, AllowsAccessToMatchingProvidersPreventsNonMatchi
     RecordProperty("Description",
                    "Checks that SharedMemoryFactory::Open will return a nullptr if the provided of the "
                    "SharedMemoryResource to be opened is not in the passed list of allowed providers.");
-    RecordProperty("TestType", "requirements-based"); // requirements test
+    RecordProperty("TestType", "requirements-based");  // requirements test
     RecordProperty("Priority", "1");
-    RecordProperty("DerivationTechnique", "requirements-analysis"); // requirements
+    RecordProperty("DerivationTechnique", "requirements-analysis");  // requirements
 
     InSequence sequence{};
     constexpr bool is_read_write = false;
@@ -849,7 +852,9 @@ TEST(SharedMemoryFactoryRemoveStaleArtefactsTest, CallingRemoveStaleArtefactsWil
     const std::string dummy_input_path{"/my_shared_memory_path"};
     const auto lock_file_path = SharedMemoryResourceTestAttorney::GetLockFilePath(dummy_input_path);
 
-    EXPECT_CALL(*stat_mock, stat(StrEq(kTSHMDeviceName), _, _)).Times(AtMost(1)).WillRepeatedly(Return(score::cpp::blank{}));
+    EXPECT_CALL(*stat_mock, stat(StrEq(kTSHMDeviceName), _, _))
+        .Times(AtMost(1))
+        .WillRepeatedly(Return(score::cpp::blank{}));
     EXPECT_CALL(*unistd_mock, getpwnam_r(StrEq(kTypedmemdUserName), _, _, _, _))
         .Times(AtMost(1))
         .WillRepeatedly((DoAll(SetArgPointee<1>(pwd), SetArgPointee<4>(&pwd), Return(score::cpp::blank{}))));
@@ -871,7 +876,9 @@ TEST(SharedMemoryFactoryRemoveStaleArtefactsTest, CallingRemoveStaleArtefactsWil
 
     const std::string dummy_input_path{"/my_shared_memory_path"};
 
-    EXPECT_CALL(*stat_mock, stat(StrEq(kTSHMDeviceName), _, _)).Times(AtMost(1)).WillRepeatedly(Return(score::cpp::blank{}));
+    EXPECT_CALL(*stat_mock, stat(StrEq(kTSHMDeviceName), _, _))
+        .Times(AtMost(1))
+        .WillRepeatedly(Return(score::cpp::blank{}));
     EXPECT_CALL(*unistd_mock, getpwnam_r(StrEq(kTypedmemdUserName), _, _, _, _))
         .Times(AtMost(1))
         .WillRepeatedly((DoAll(SetArgPointee<1>(pwd), SetArgPointee<4>(&pwd), Return(score::cpp::blank{}))));
@@ -1116,7 +1123,8 @@ INSTANTIATE_TEST_CASE_P(SharedMemoryFactoryDeathTests, SharedMemoryFactoryDeathT
 TEST_P(SharedMemoryFactoryDeathTest, CreatingSharedMemoryTerminate)
 {
     InSequence sequence{};
-    auto oflags = score::os::Fcntl::Open::kReadWrite | score::os::Fcntl::Open::kCreate | score::os::Fcntl::Open::kExclusive;
+    auto oflags =
+        score::os::Fcntl::Open::kReadWrite | score::os::Fcntl::Open::kCreate | score::os::Fcntl::Open::kExclusive;
     score::cpp::expected<std::int32_t, Error> ret_value = score::cpp::make_unexpected(Error::createFromErrno(EBADF));
     const bool typed_memory_parameter = GetParam();
 
@@ -1158,7 +1166,9 @@ TEST_F(SharedMemoryFactoryDeathTest, FailingToInsertResourceIntoRegistryTerminat
     expectFstatReturns(kFileDescriptor);
 
     // and that the "/dev/typedshm" device exists
-    EXPECT_CALL(*stat_mock_, stat(StrEq(kTSHMDeviceName), _, _)).Times(AtMost(1)).WillRepeatedly(Return(score::cpp::blank{}));
+    EXPECT_CALL(*stat_mock_, stat(StrEq(kTSHMDeviceName), _, _))
+        .Times(AtMost(1))
+        .WillRepeatedly(Return(score::cpp::blank{}));
 
     // and the memory region is mapped into the process
     expectMmapReturns(reinterpret_cast<void*>(1), kFileDescriptor, is_read_write, true);

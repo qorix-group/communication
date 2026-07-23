@@ -61,8 +61,9 @@ TEST_F(SharedMemoryResourceCreateOrOpenTest, SharedMemoryCreatedWhenSharedMemory
     expectCreateLockFileReturns(TestValues::sharedMemorySegmentLockPath, open_lock_file_descriptor);
 
     // And the shared memory region also doesn't exist
-    expectShmOpenReturns(
-        TestValues::sharedMemorySegmentPath, score::cpp::make_unexpected(Error::createFromErrno(ENOENT)), is_read_write);
+    expectShmOpenReturns(TestValues::sharedMemorySegmentPath,
+                         score::cpp::make_unexpected(Error::createFromErrno(ENOENT)),
+                         is_read_write);
 
     // and the lock file is cleaned up after the failed open attempt
     EXPECT_CALL(*unistd_mock_, close(open_lock_file_descriptor));
@@ -110,8 +111,9 @@ TEST_F(SharedMemoryResourceCreateOrOpenTest, SharedMemoryOpenedWhenSharedMemoryI
     expectCreateLockFileReturns(TestValues::sharedMemorySegmentLockPath, open_lock_file_descriptor);
 
     // And the shared memory region doesn't exist when we first try to open it
-    expectShmOpenReturns(
-        TestValues::sharedMemorySegmentPath, score::cpp::make_unexpected(Error::createFromErrno(ENOENT)), is_read_write);
+    expectShmOpenReturns(TestValues::sharedMemorySegmentPath,
+                         score::cpp::make_unexpected(Error::createFromErrno(ENOENT)),
+                         is_read_write);
 
     // and the lock file is cleaned up after the failed open attempt
     EXPECT_CALL(*unistd_mock_, close(open_lock_file_descriptor));
@@ -155,8 +157,10 @@ TEST_F(SharedMemoryResourceCreateOrOpenDeathTest, OpeningSharedMemoryWithUnknown
     expectCreateLockFileReturns(TestValues::sharedMemorySegmentLockPath, lock_file_descriptor, is_death_test);
 
     // And we get an unknown error when trying to open the shared memory region
-    expectShmOpenReturns(
-        TestValues::sharedMemorySegmentPath, score::cpp::make_unexpected(Error::createFromErrno(EOF)), true, is_death_test);
+    expectShmOpenReturns(TestValues::sharedMemorySegmentPath,
+                         score::cpp::make_unexpected(Error::createFromErrno(EOF)),
+                         true,
+                         is_death_test);
 
     // Then the program terminates when creating or opening a shared memory region with CreateOrOpen
     EXPECT_DEATH(SharedMemoryResourceTestAttorney::CreateOrOpen(

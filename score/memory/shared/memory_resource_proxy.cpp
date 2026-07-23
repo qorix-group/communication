@@ -83,8 +83,8 @@ void MemoryResourceProxy::PerformBoundsCheck(const std::uint64_t memory_identifi
     if (!memory_bounds.has_value())
     {
         score::mw::log::LogError("shm") << __func__ << __LINE__
-                                      << "MemoryResourceProxy's memory identifier:" << memory_identifier
-                                      << "could not be found in MemoryResourceRegistry";
+                                        << "MemoryResourceProxy's memory identifier:" << memory_identifier
+                                        << "could not be found in MemoryResourceRegistry";
         std::terminate();
     }
 
@@ -92,9 +92,9 @@ void MemoryResourceProxy::PerformBoundsCheck(const std::uint64_t memory_identifi
     if (!IsMemoryResourceProxyWithinMemoryBounds(this, memory_bounds.value()))
     {
         score::mw::log::LogError("shm") << __func__ << __LINE__ << "MemoryResourceProxy at"
-                                      << CastPointerToInteger(static_cast<const void*>(this))
-                                      << "is out of memory bounds: [" << memory_bounds->GetStartAddress() << ":"
-                                      << memory_bounds->GetEndAddress() << "]";
+                                        << CastPointerToInteger(static_cast<const void*>(this))
+                                        << "is out of memory bounds: [" << memory_bounds->GetStartAddress() << ":"
+                                        << memory_bounds->GetEndAddress() << "]";
         std::terminate();
     }
 }

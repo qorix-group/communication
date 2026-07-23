@@ -51,7 +51,8 @@ class ISharedMemoryResource : public ManagedMemoryResource
 
     using FileDescriptor = os::Acl::FileDescriptor;
 
-    using AccessControlListFactory = score::cpp::callback<std::unique_ptr<score::os::IAccessControlList>(FileDescriptor)>;
+    using AccessControlListFactory =
+        score::cpp::callback<std::unique_ptr<score::os::IAccessControlList>(FileDescriptor)>;
 
     class AccessControl
     {

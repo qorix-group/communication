@@ -11,10 +11,10 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 #include "score/memory/shared/typedshm/utils/typed_memory_utils.h"
+#include "score/mw/log/logging.h"
 #include "score/os/errno_logging.h"
 #include "score/os/stat.h"
 #include "score/os/unistd.h"
-#include "score/mw/log/logging.h"
 
 #include <pwd.h>
 #include <vector>
@@ -56,7 +56,7 @@ std::optional<uid_t> AcquireTypedMemoryDaemonUid() noexcept
         if (stat_result.error() != score::os::Error::Code::kNoSuchFileOrDirectory)
         {
             score::mw::log::LogError("shm") << __func__ << __LINE__ << "TypedMemoryDaemonUid cannot be acquired."
-                                          << "Reason:" << stat_result.error();
+                                            << "Reason:" << stat_result.error();
         }
         return std::nullopt;
     }

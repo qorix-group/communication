@@ -36,8 +36,9 @@ std::uintptr_t AddOffsetToPointerAsInteger(const std::uintptr_t pointer_as_integ
                   "If max value of size_t is larger than uintptr_t, then subtracting offset from the max value of "
                   "uintptr_t could underflow.");
 
-    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(pointer_as_integer <= (std::numeric_limits<std::uintptr_t>::max() - offset),
-                           "Could not add offset to pointer. Result would lead to overflow of std::uintptr_t");
+    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(
+        pointer_as_integer <= (std::numeric_limits<std::uintptr_t>::max() - offset),
+        "Could not add offset to pointer. Result would lead to overflow of std::uintptr_t");
     return pointer_as_integer + offset;
 }
 
@@ -56,8 +57,9 @@ std::uintptr_t AddSignedOffsetToPointerAsInteger(const std::uintptr_t ptr_as_int
 
 std::uintptr_t SubtractOffsetFromPointerAsInteger(const std::uintptr_t pointer_as_integer, const std::size_t offset)
 {
-    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(pointer_as_integer >= offset,
-                           "Could not subtract offset from pointer. Result would lead to underflow of std::size_t");
+    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(
+        pointer_as_integer >= offset,
+        "Could not subtract offset from pointer. Result would lead to underflow of std::size_t");
     return pointer_as_integer - offset;
 }
 
@@ -158,8 +160,8 @@ std::ptrdiff_t SubtractPointersBytes(const void* const first, const void* const 
     if (absolute_value_result_as_integer > static_cast<std::uintptr_t>(ptr_diff_max))
     {
         score::mw::log::LogFatal("shm") << "Could not subtract " << second_address_as_integer << "from"
-                                      << first_address_as_integer
-                                      << ". Result does not fit into std::ptrdiff_t. Terminating.";
+                                        << first_address_as_integer
+                                        << ". Result does not fit into std::ptrdiff_t. Terminating.";
         SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD(false);
     }
     return -1 * static_cast<std::ptrdiff_t>(absolute_value_result_as_integer);

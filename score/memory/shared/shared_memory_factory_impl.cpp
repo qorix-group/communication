@@ -12,8 +12,8 @@
  ********************************************************************************/
 #include "score/memory/shared/shared_memory_factory_impl.h"
 #include "score/memory/shared/typedshm/utils/typed_memory_utils.h"
-#include "score/os/errno_logging.h"
 #include "score/mw/log/logging.h"
+#include "score/os/errno_logging.h"
 
 #include "score/os/mman.h"
 #include "score/os/unistd.h"
@@ -87,7 +87,8 @@ void InsertResourceIntoMap(
 
     // This emplace should only be done the first time a memory resource is either opened or created in the process.
     // After that, it should be retrieved from by GetResourceIfAlreadyOpened().
-    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(emplace_result.second, "Could not insert memory resource into map as it already exists.");
+    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(emplace_result.second,
+                                                "Could not insert memory resource into map as it already exists.");
 }
 
 auto GetResourceIfAlreadyOpened(
@@ -114,7 +115,7 @@ bool IsShmInTypedMemory(const std::string& path)
     if (!typedmemd_uid.has_value())
     {
         score::mw::log::LogDebug("shm") << "Typed memory daemon uid is not initialized. Shm is not in TypedMemory:"
-                                      << path;
+                                        << path;
         return false;
     }
     const auto file_path = std::string{kTypedSharedMemoryPathPrefix} + path;
@@ -128,8 +129,8 @@ bool IsShmInTypedMemory(const std::string& path)
 
 // Suppress "AUTOSAR C++14 A15-5-3" rule finding. This rule states: "The std::terminate() function shall
 // not be called implicitly."
-// Rationale: score::cpp::expected value() can throw an exception if it's called without a value. Since we check has_value()
-// before calling value(), an exception will never be called and therefore there will never be an implicit
+// Rationale: score::cpp::expected value() can throw an exception if it's called without a value. Since we check
+// has_value() before calling value(), an exception will never be called and therefore there will never be an implicit
 // std::terminate call.
 // coverity[autosar_cpp14_a15_5_3_violation : FALSE]
 auto SharedMemoryFactoryImpl::Open(const std::string& path,
@@ -139,9 +140,9 @@ auto SharedMemoryFactoryImpl::Open(const std::string& path,
 {
     if (IsInterVmShmPath(path))
     {
-        score::mw::log::LogError("shm") << "Opening inter-VM shared memory (path prefix '" << kInterVmSharedShmPrefix
-                                      << "') is not supported. No portable implementation exists yet. Rejecting path: "
-                                      << path;
+        score::mw::log::LogError("shm")
+            << "Opening inter-VM shared memory (path prefix '" << kInterVmSharedShmPrefix
+            << "') is not supported. No portable implementation exists yet. Rejecting path: " << path;
         return nullptr;
     }
 
@@ -167,8 +168,8 @@ auto SharedMemoryFactoryImpl::Open(const std::string& path,
         if (!checkUidMatch(ownerUid, allowedProviders.value()))
         {
             score::mw::log::LogWarn("shm") << "Could not open Shared Memory. Uid of " << ownerUid
-                                         << " provided does not exist in allowedProviders. This is likely a "
-                                            "misconfiguration of allowedProviders.";
+                                           << " provided does not exist in allowedProviders. This is likely a "
+                                              "misconfiguration of allowedProviders.";
             return nullptr;
         }
     }
@@ -176,17 +177,17 @@ auto SharedMemoryFactoryImpl::Open(const std::string& path,
 }
 
 auto score::memory::shared::SharedMemoryFactoryImpl::Create(std::string path,
-                                                          InitializeCallback cb,
-                                                          const std::size_t user_space_to_reserve,
-                                                          const UserPermissions& permissions,
-                                                          const bool prefer_typed_memory) noexcept
+                                                            InitializeCallback cb,
+                                                            const std::size_t user_space_to_reserve,
+                                                            const UserPermissions& permissions,
+                                                            const bool prefer_typed_memory) noexcept
     -> std::shared_ptr<ISharedMemoryResource>
 {
     if (IsInterVmShmPath(path))
     {
-        score::mw::log::LogError("shm") << "Creating inter-VM shared memory (path prefix '" << kInterVmSharedShmPrefix
-                                      << "') is not supported. No portable implementation exists yet. Rejecting path: "
-                                      << path;
+        score::mw::log::LogError("shm")
+            << "Creating inter-VM shared memory (path prefix '" << kInterVmSharedShmPrefix
+            << "') is not supported. No portable implementation exists yet. Rejecting path: " << path;
         return nullptr;
     }
 
@@ -218,10 +219,10 @@ auto score::memory::shared::SharedMemoryFactoryImpl::Create(std::string path,
 }
 
 auto score::memory::shared::SharedMemoryFactoryImpl::CreateAnonymous(std::uint64_t shared_memory_resource_id,
-                                                                   InitializeCallback cb,
-                                                                   const std::size_t user_space_to_reserve,
-                                                                   const UserPermissions& permissions,
-                                                                   const bool prefer_typed_memory) noexcept
+                                                                     InitializeCallback cb,
+                                                                     const std::size_t user_space_to_reserve,
+                                                                     const UserPermissions& permissions,
+                                                                     const bool prefer_typed_memory) noexcept
     -> std::shared_ptr<ISharedMemoryResource>
 {
     std::lock_guard<std::mutex> lock{mutex_};
@@ -264,10 +265,9 @@ auto score::memory::shared::SharedMemoryFactoryImpl::CreateOrOpen(
 {
     if (IsInterVmShmPath(path))
     {
-        score::mw::log::LogError("shm") << "Creating or opening inter-VM shared memory (path prefix '"
-                                      << kInterVmSharedShmPrefix
-                                      << "') is not supported. No portable implementation exists yet. Rejecting path: "
-                                      << path;
+        score::mw::log::LogError("shm")
+            << "Creating or opening inter-VM shared memory (path prefix '" << kInterVmSharedShmPrefix
+            << "') is not supported. No portable implementation exists yet. Rejecting path: " << path;
         return nullptr;
     }
 
@@ -292,8 +292,8 @@ auto score::memory::shared::SharedMemoryFactoryImpl::CreateOrOpen(
                                                                typed_memory_ptr);
         if (!result.has_value())
         {
-            score::mw::log::LogWarn("shm") << __func__ << __LINE__ << "Could not create or open Shared Memory " << path
-                                         << ":" << result.error();
+            score::mw::log::LogWarn("shm")
+                << __func__ << __LINE__ << "Could not create or open Shared Memory " << path << ":" << result.error();
             return nullptr;
         }
         resource = result.value();

@@ -12,8 +12,8 @@
  ********************************************************************************/
 #include "score/memory/shared/flock/flock_mutex.h"
 
-#include "score/os/errno.h"
 #include "score/mw/log/logging.h"
+#include "score/os/errno.h"
 
 #include <exception>
 

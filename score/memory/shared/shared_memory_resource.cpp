@@ -11,8 +11,8 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 #include "score/memory/shared/shared_memory_resource.h"
-#include "score/language/safecpp/string_view/zstring_view.h"
 #include "score/concurrency/atomic_indirector.h"
+#include "score/language/safecpp/string_view/zstring_view.h"
 #include "score/memory/shared/memory_resource_proxy.h"
 #include "score/memory/shared/memory_resource_registry.h"
 #include "score/memory/shared/pointer_arithmetic_util.h"
@@ -23,6 +23,9 @@
 #include "score/language/safecpp/safe_math/safe_math.h"
 
 #include "score/bitmanipulation/bitmask_operators.h"
+#include "score/mw/log/log_stream.h"
+#include "score/mw/log/log_types.h"
+#include "score/mw/log/logging.h"
 #include "score/os/errno.h"
 #include "score/os/errno_logging.h"
 #include "score/os/fcntl.h"
@@ -30,9 +33,6 @@
 #include "score/os/stat.h"
 #include "score/os/unistd.h"
 #include "score/os/utils/acl/i_access_control_list.h"
-#include "score/mw/log/log_stream.h"
-#include "score/mw/log/log_types.h"
-#include "score/mw/log/logging.h"
 
 #include <score/assert.hpp>
 #include <score/hash.hpp>
@@ -301,7 +301,8 @@ SharedMemoryResource::~SharedMemoryResource()
     if (this->file_descriptor_ != -1)
     {
         this->deinitalizeInternalsInSharedMemory();
-        score::cpp::ignore = ::score::os::Mman::instance().munmap(this->base_address_, virtual_address_space_to_reserve_);
+        score::cpp::ignore =
+            ::score::os::Mman::instance().munmap(this->base_address_, virtual_address_space_to_reserve_);
         // The reason for banning is, because it's error-prone to use. One should use abstractions e.g. provided by
         // the C++ standard library. For Shared Memory handling there is no abstraction, which is why we created this
         // library.
@@ -362,7 +363,7 @@ score::cpp::expected<std::shared_ptr<SharedMemoryResource>, score::os::Error> Sh
     if (!result.has_value())
     {
         score::mw::log::LogError("shm") << "Unexpected error while creating Shared Memory Resource with errno"
-                                      << result.error();
+                                        << result.error();
 
         return score::cpp::make_unexpected(result.error());
     }
@@ -385,7 +386,7 @@ score::cpp::expected<std::shared_ptr<SharedMemoryResource>, score::os::Error> Sh
     if (!result.has_value())
     {
         score::mw::log::LogError("shm") << "Unexpected error while creating anonymous shared-memory resource with errno"
-                                      << result.error();
+                                        << result.error();
 
         return score::cpp::make_unexpected(result.error());
     }
@@ -407,8 +408,8 @@ score::cpp::expected<std::shared_ptr<SharedMemoryResource>, score::os::Error> Sh
     const auto result = resource->CreateOrOpenImpl(user_space_to_reserve, std::move(initialize_callback), permissions);
     if (!result.has_value())
     {
-        score::mw::log::LogError("shm") << "Unexpected error while creating or opening shared-memory resource with errno"
-                                      << result.error();
+        score::mw::log::LogError("shm")
+            << "Unexpected error while creating or opening shared-memory resource with errno" << result.error();
 
         return score::cpp::make_unexpected(result.error());
     }
@@ -426,8 +427,9 @@ score::cpp::expected<std::shared_ptr<SharedMemoryResource>, score::os::Error> Sh
     const auto result = resource->OpenImpl(is_read_write);
     if (!result.has_value())
     {
-        score::mw::log::LogError("shm") << __func__ << __LINE__ << "Unexpected error while opening shared-memory resource"
-                                      << resource->GetIdentifier() << "with errno" << result.error();
+        score::mw::log::LogError("shm") << __func__ << __LINE__
+                                        << "Unexpected error while opening shared-memory resource"
+                                        << resource->GetIdentifier() << "with errno" << result.error();
         return score::cpp::make_unexpected(result.error());
     }
     return resource;
@@ -474,10 +476,10 @@ SharedMemoryResource::SharedMemoryResource(std::variant<std::string, std::uint64
       log_identification_{std::holds_alternative<std::string>(identifier)
                               ? "file: " + std::get<std::string>(identifier)
                               : "id: " + std::to_string(std::get<std::uint64_t>(identifier))},
-      memory_identifier_{
-          std::holds_alternative<std::string>(identifier)
-              ? score::cpp::hash_bytes(std::get<std::string>(identifier).data(), std::get<std::string>(identifier).size())
-              : std::get<std::uint64_t>(identifier)},
+      memory_identifier_{std::holds_alternative<std::string>(identifier)
+                             ? score::cpp::hash_bytes(std::get<std::string>(identifier).data(),
+                                                      std::get<std::string>(identifier).size())
+                             : std::get<std::uint64_t>(identifier)},
       shared_memory_resource_identifier_{identifier},
       start_{nullptr}
 {
@@ -494,8 +496,8 @@ SharedMemoryResource::SharedMemoryResource(std::variant<std::string, std::uint64
 // std::terminate call.
 // coverity[autosar_cpp14_a15_5_3_violation : FALSE]
 score::cpp::expected_blank<Error> SharedMemoryResource::CreateImpl(const std::size_t user_space_to_reserve,
-                                                            const InitializeCallback initialize_callback,
-                                                            const UserPermissions& permissions) noexcept
+                                                                   const InitializeCallback initialize_callback,
+                                                                   const UserPermissions& permissions) noexcept
 {
     this->opening_mode_ = Fcntl::Open::kReadWrite;
     this->map_mode_ = ::score::os::Mman::Protection::kRead | ::score::os::Mman::Protection::kWrite;
@@ -548,8 +550,8 @@ score::cpp::expected_blank<Error> SharedMemoryResource::CreateImpl(const std::si
 }
 
 score::cpp::expected_blank<Error> SharedMemoryResource::CreateOrOpenImpl(const std::size_t user_space_to_reserve,
-                                                                  InitializeCallback initialize_callback,
-                                                                  const UserPermissions& permissions) noexcept
+                                                                         InitializeCallback initialize_callback,
+                                                                         const UserPermissions& permissions) noexcept
 {
     const auto* const path = std::get_if<std::string>(&shared_memory_resource_identifier_);
     SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(path != nullptr, "shm-object file path is not set.");
@@ -561,8 +563,9 @@ score::cpp::expected_blank<Error> SharedMemoryResource::CreateOrOpenImpl(const s
     {
         if (open_result.error() == Error::Code::kNoSuchFileOrDirectory)
         {
-            score::mw::log::LogDebug("shm") << "Could not open shared-memory resource with path" << *path << "with errno"
-                                          << open_result.error() << "Attempting to create it now instead.";
+            score::mw::log::LogDebug("shm")
+                << "Could not open shared-memory resource with path" << *path << "with errno" << open_result.error()
+                << "Attempting to create it now instead.";
 
             const auto creation_result = CreateImpl(user_space_to_reserve, std::move(initialize_callback), permissions);
             // If the shared memory segment could not be created because another process has created it or has acquired
@@ -572,9 +575,10 @@ score::cpp::expected_blank<Error> SharedMemoryResource::CreateOrOpenImpl(const s
                 // Create() should terminate for any other error
                 std::stringstream s{};
                 s << "Creating shared memory region failed with errno:" << creation_result.error();
-                SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(((creation_result.error() == Error::Code::kDeviceOrResourceBusy) ||
-                                        (creation_result.error() == Error::Code::kObjectExists)),
-                                       s.str().c_str());
+                SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(
+                    ((creation_result.error() == Error::Code::kDeviceOrResourceBusy) ||
+                     (creation_result.error() == Error::Code::kObjectExists)),
+                    s.str().c_str());
 
                 score::mw::log::LogDebug("shm")
                     << "Could not create shared-memory region with errno:" << creation_result.error()
@@ -681,8 +685,8 @@ auto SharedMemoryResource::GetLockFilePath(const std::string& input_path) noexce
 // coverity[autosar_cpp14_m7_3_1_violation] false-positive: class method (Ticket-234468)
 auto SharedMemoryResource::getMemoryResourceProxy() noexcept -> const MemoryResourceProxy*
 {
-    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(this->control_block_ != nullptr,
-                           "Control block containing MemoryResourceProxy has not yet been created.");
+    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(
+        this->control_block_ != nullptr, "Control block containing MemoryResourceProxy has not yet been created.");
 
     return &this->control_block_->memoryResourceProxy;
 }
@@ -733,35 +737,25 @@ auto SharedMemoryResource::do_allocate_with_indirector(const std::size_t bytes, 
             AddOffsetToPointer(this->base_address_, already_allocated_bytes);
 
         void* const new_address_aligned =
-            detail::do_allocation_algorithm(allocation_start_address,
-                                            allocation_end_address,
-                                            bytes,
-                                            alignment);
+            detail::do_allocation_algorithm(allocation_start_address, allocation_end_address, bytes, alignment);
 
         if (new_address_aligned == nullptr)
         {
             score::mw::log::LogFatal("shm")
-                << "Cannot allocate shared memory block of size " << bytes
-                << " with alignment " << alignment
+                << "Cannot allocate shared memory block of size " << bytes << " with alignment " << alignment
                 << " at: ["
                 // The resulting pointer is used for logging and is not dereferenced.
                 // NOLINTNEXTLINE(score-banned-function) see above
-                << PointerToLogValue(allocation_start_address) << ":"
-                << PointerToLogValue(allocation_end_address)
-                << "]. Does not fit within shared memory segment: ["
-                << PointerToLogValue(this->base_address_) << ":"
-                << PointerToLogValue(this->getEndAddress())
-                << "]. Already allocated bytes: " << already_allocated_bytes
-                << ". Virtual address space to reserve: "
-                << virtual_address_space_to_reserve_;
+                << PointerToLogValue(allocation_start_address) << ":" << PointerToLogValue(allocation_end_address)
+                << "]. Does not fit within shared memory segment: [" << PointerToLogValue(this->base_address_) << ":"
+                << PointerToLogValue(this->getEndAddress()) << "]. Already allocated bytes: " << already_allocated_bytes
+                << ". Virtual address space to reserve: " << virtual_address_space_to_reserve_;
             std::terminate();
         }
 
-        const auto padding =
-            SubtractPointersBytes(new_address_aligned, allocation_start_address);
+        const auto padding = SubtractPointersBytes(new_address_aligned, allocation_start_address);
 
-        const auto total_allocated_bytes =
-            safe_math::Add(bytes, padding).value();
+        const auto total_allocated_bytes = safe_math::Add(bytes, padding).value();
 
         const std::size_t new_already_allocated_bytes =
             safe_math::Add(already_allocated_bytes, total_allocated_bytes).value();
@@ -769,19 +763,17 @@ auto SharedMemoryResource::do_allocate_with_indirector(const std::size_t bytes, 
         // Atomically publish the advanced bump pointer. If another allocator updated the
         // bump pointer first, compare_exchange_weak updates already_allocated_bytes with the
         // latest value and the next loop iteration recalculates the allocation.
-        if (AtomicIndirectorType<std::size_t>::compare_exchange_weak(
-            this->control_block_->alreadyAllocatedBytes,
-                already_allocated_bytes,
-                new_already_allocated_bytes,
-                std::memory_order_acq_rel,
-                std::memory_order_acquire))
+        if (AtomicIndirectorType<std::size_t>::compare_exchange_weak(this->control_block_->alreadyAllocatedBytes,
+                                                                     already_allocated_bytes,
+                                                                     new_already_allocated_bytes,
+                                                                     std::memory_order_acq_rel,
+                                                                     std::memory_order_acquire))
         {
             return new_address_aligned;
         }
     }
 
-    score::mw::log::LogFatal("shm")
-        << "Failed to reserve shared memory after " << max_retries << " attempts.";
+    score::mw::log::LogFatal("shm") << "Failed to reserve shared memory after " << max_retries << " attempts.";
     std::terminate();
 }
 
@@ -807,14 +799,12 @@ auto SharedMemoryResource::getBaseAddress() const noexcept -> void*
     // hence the warning is suppressed.
     // Suppress "AUTOSAR C++14 M9-3-1" rule finding: "Const member functions shall not return non-const pointers or
     // references to class-data."
-    // Rationale: In the long term, this function will return a pointer to const (will be done in Ticket-170815). However,
-    // since we have many users of this function whose code would need to be updated, this isn't a priority for the
-    // moment. While this function returns a non-const pointer to shared memory, our safety requirements and high level
-    // design ensure that modifying this data (by a QM process for example) cannot lead to violations of safety goals
-    // (e.g. through restricting write access of certain processes, bounds checking etc.). Therefore, we suppress this
-    // warning for now.
-    // coverity[autosar_cpp14_m9_3_1_violation]
-    // coverity[autosar_cpp14_a9_3_1_violation]
+    // Rationale: In the long term, this function will return a pointer to const (will be done in Ticket-170815).
+    // However, since we have many users of this function whose code would need to be updated, this isn't a priority for
+    // the moment. While this function returns a non-const pointer to shared memory, our safety requirements and high
+    // level design ensure that modifying this data (by a QM process for example) cannot lead to violations of safety
+    // goals (e.g. through restricting write access of certain processes, bounds checking etc.). Therefore, we suppress
+    // this warning for now. coverity[autosar_cpp14_m9_3_1_violation] coverity[autosar_cpp14_a9_3_1_violation]
     return this->base_address_;
 }
 
@@ -898,8 +888,8 @@ void SharedMemoryResource::CompensateUmask(const os::Stat::Mode target_rights) c
         auto result = score::os::Stat::instance().fchmod(file_descriptor_, target_rights);
         if (!result.has_value())
         {
-            score::mw::log::LogWarn("shm") << "Unable to fchmod on shm-object" << log_identification_ << ": "
-                                         << std::move(result).error();
+            score::mw::log::LogWarn("shm")
+                << "Unable to fchmod on shm-object" << log_identification_ << ": " << std::move(result).error();
         }
     }
 }
@@ -910,15 +900,15 @@ auto SharedMemoryResource::ApplyPermissions(const UserPermissions& permissions) 
     if (std::holds_alternative<UserPermissionsMap>(permissions))
     {
         const auto& permission_map_ptr = std::get_if<UserPermissionsMap>(&permissions);
-        SCORE_LANGUAGE_FUTURECPP_PRECONDITION_PRD_MESSAGE(permission_map_ptr != nullptr, "Could not get user permissions map");
+        SCORE_LANGUAGE_FUTURECPP_PRECONDITION_PRD_MESSAGE(permission_map_ptr != nullptr,
+                                                          "Could not get user permissions map");
 
         // Suppress "AUTOSAR C++14 A18-5-8" rule finding. This rule states: "Objects that do not outlive a function
         // shall
         // have automatic storage duration".
-        // The acl_factory_ is an score::cpp::callback which returns a std::unique_ptr. We return a unique_ptr since we want to
-        // be able to use dynamic dispatch to mock the IAccessControlList but also want the caller of the callback to be
-        // the sole owner of the IAccessControlList.
-        // coverity[autosar_cpp14_a18_5_8_violation]
+        // The acl_factory_ is an score::cpp::callback which returns a std::unique_ptr. We return a unique_ptr since we
+        // want to be able to use dynamic dispatch to mock the IAccessControlList but also want the caller of the
+        // callback to be the sole owner of the IAccessControlList. coverity[autosar_cpp14_a18_5_8_violation]
         auto acl = acl_factory_(file_descriptor_);
         for (const auto& permission : *permission_map_ptr)
         {
@@ -942,8 +932,8 @@ auto SharedMemoryResource::reserveSharedMemory() const noexcept -> void
     if (!truncation_result.has_value())
     {
         score::mw::log::LogFatal("shm") << __func__ << __LINE__ << "Could not ftruncate file to size"
-                                      << virtual_address_space_to_reserve_ << "for" << log_identification_
-                                      << "with error" << truncation_result.error();
+                                        << virtual_address_space_to_reserve_ << "for" << log_identification_
+                                        << "with error" << truncation_result.error();
         std::terminate();
     }
 }
@@ -952,17 +942,17 @@ auto SharedMemoryResource::mapMemoryIntoProcess() noexcept -> void
 {
     // get all the memory _we_ need
     const auto result = ::score::os::Mman::instance().mmap(nullptr,
-                                                         virtual_address_space_to_reserve_,
-                                                         this->map_mode_,
-                                                         ::score::os::Mman::Map::kShared,
-                                                         this->file_descriptor_,
-                                                         0);
+                                                           virtual_address_space_to_reserve_,
+                                                           this->map_mode_,
+                                                           ::score::os::Mman::Map::kShared,
+                                                           this->file_descriptor_,
+                                                           0);
 
     if (!result.has_value())
     {
         score::mw::log::LogFatal("shm") << __func__ << __LINE__
-                                      << "Unexpected error while mapping memory into process for" << log_identification_
-                                      << "with errno" << result.error() << ". Terminating.";
+                                        << "Unexpected error while mapping memory into process for"
+                                        << log_identification_ << "with errno" << result.error() << ". Terminating.";
         std::terminate();
     }
 
@@ -1023,11 +1013,11 @@ score::cpp::expected_blank<score::os::Error> SharedMemoryResource::CreateLockFil
     lock_file = LockFile::Create(this->lock_file_path_.value());
     if (!lock_file.has_value())
     {
-        score::mw::log::LogWarn("shm") << __func__ << __LINE__
-                                     << "Unexpected error while creating Shared Memory Resource with"
-                                     << log_identification_
-                                     << ". The lock file is already locked indicating that the shared memory region is "
-                                        "already being created.";
+        score::mw::log::LogWarn("shm")
+            << __func__ << __LINE__ << "Unexpected error while creating Shared Memory Resource with"
+            << log_identification_
+            << ". The lock file is already locked indicating that the shared memory region is "
+               "already being created.";
         return score::cpp::make_unexpected(Error::createFromErrno(EBUSY));
     }
     return {};
@@ -1064,8 +1054,8 @@ void SharedMemoryResource::AllocateInTypedMemory(const UserPermissions& permissi
         {
             is_shm_in_typed_memory_ = true;
             file_descriptor_ = allocate_anonymous_typed_memory_result.value();
-            score::mw::log::LogInfo("shm") << __func__ << __LINE__
-                                         << "Successfully allocated anonymous shared-memory in typed memory";
+            score::mw::log::LogInfo("shm")
+                << __func__ << __LINE__ << "Successfully allocated anonymous shared-memory in typed memory";
         }
         else
         {
@@ -1078,7 +1068,7 @@ void SharedMemoryResource::AllocateInTypedMemory(const UserPermissions& permissi
 }
 
 score::cpp::expected_blank<score::os::Error> SharedMemoryResource::OpenSharedMemory(const Fcntl::Open& flags,
-                                                                           Stat::Mode mode) noexcept
+                                                                                    Stat::Mode mode) noexcept
 {
     const auto* const path = std::get_if<std::string>(&shared_memory_resource_identifier_);
     if (path != nullptr)
@@ -1098,7 +1088,7 @@ score::cpp::expected_blank<score::os::Error> SharedMemoryResource::OpenSharedMem
             else
             {
                 score::mw::log::LogFatal("shm") << "Unexpected error while opening shared-memory Resource using"
-                                              << log_identification_ << "with errno" << result.error();
+                                                << log_identification_ << "with errno" << result.error();
                 std::terminate();
             }
         }
@@ -1115,7 +1105,7 @@ score::cpp::expected_blank<score::os::Error> SharedMemoryResource::OpenSharedMem
             if (!shm_open_result.has_value())
             {
                 score::mw::log::LogFatal("shm") << "Unexpected error while opening anonymous shared-memory Resource"
-                                              << "with errno" << shm_open_result.error();
+                                                << "with errno" << shm_open_result.error();
                 std::terminate();
             }
             else

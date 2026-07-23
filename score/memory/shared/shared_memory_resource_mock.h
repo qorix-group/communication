@@ -14,8 +14,8 @@
 #define SCORE_LIB_MEMORY_SHARED_SHARED_MEMORY_RESOURCE_MOCK_H
 
 #include "score/memory/shared/i_shared_memory_resource.h"
-#include <score/memory_resource.hpp>
 #include <gmock/gmock.h>
+#include <score/memory_resource.hpp>
 
 #include <string>
 

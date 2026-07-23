@@ -461,7 +461,7 @@ auto OffsetPtr<PointedType>::CalculateOffsetFromPointer(const void* const offset
     }
     const difference_type offset = SubtractPointersBytes(pointed_to_address, offset_ptr_address);
     SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(offset != detail_offset_ptr::kNullPtrRepresentation,
-                           "Calculated offset must not equal the null representation.");
+                                                "Calculated offset must not equal the null representation.");
     return offset;
 }
 
@@ -555,23 +555,27 @@ auto OffsetPtr<PointedType>::GetPointerWithBoundsCheck(
         const auto is_offset_ptr_in_memory_region = offset_ptr_bounds.has_value();
         if (is_offset_ptr_in_memory_region)
         {
-            // We use SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD instead of std::terminate so that we can check these in unit tests using
-            // SCORE_LANGUAGE_FUTURECPP_EXPECT_CONTRACT_VIOLATED instead of death tests (since death tests are very slow).
-            SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD(DoesOffsetPtrInSharedMemoryPassBoundsChecks(offset_ptr_address,
-                                                                       offset,
-                                                                       offset_ptr_bounds.value(),
-                                                                       pointed_type_size,
-                                                                       sizeof(OffsetPtr<PointedType>)));
+            // We use SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD instead of std::terminate so that we can check these in unit
+            // tests using SCORE_LANGUAGE_FUTURECPP_EXPECT_CONTRACT_VIOLATED instead of death tests (since death tests
+            // are very slow).
+            SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD(
+                DoesOffsetPtrInSharedMemoryPassBoundsChecks(offset_ptr_address,
+                                                            offset,
+                                                            offset_ptr_bounds.value(),
+                                                            pointed_type_size,
+                                                            sizeof(OffsetPtr<PointedType>)));
         }
         else
         {
-            // We use SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD instead of std::terminate so that we can check these in unit tests using
-            // SCORE_LANGUAGE_FUTURECPP_EXPECT_CONTRACT_VIOLATED instead of death tests (since death tests are very slow).
-            SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD(DoesOffsetPtrNotInSharedMemoryPassBoundsChecks(offset_ptr_address,
-                                                                          offset,
-                                                                          offset_ptr_memory_bounds_when_not_in_shm,
-                                                                          pointed_type_size,
-                                                                          sizeof(OffsetPtr<PointedType>)));
+            // We use SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD instead of std::terminate so that we can check these in unit
+            // tests using SCORE_LANGUAGE_FUTURECPP_EXPECT_CONTRACT_VIOLATED instead of death tests (since death tests
+            // are very slow).
+            SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD(
+                DoesOffsetPtrNotInSharedMemoryPassBoundsChecks(offset_ptr_address,
+                                                               offset,
+                                                               offset_ptr_memory_bounds_when_not_in_shm,
+                                                               pointed_type_size,
+                                                               sizeof(OffsetPtr<PointedType>)));
         }
     }
 
@@ -1024,8 +1028,8 @@ inline auto operator-(const OffsetPtr<T1>& offset_ptr1, const OffsetPtr<T2>& off
     // of two elements of the same array must be a multiple of sizeof(T1). Therefore, this branch will only be
     // entered if offset_ptr1 and offset_ptr2 don't point to elements of the same array. This violates a
     // precondition of this function so we terminate.
-    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE((offset_result.has_value()),
-                           "Different between OffsetPtr addresses is not multiple of PointedType size.");
+    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(
+        (offset_result.has_value()), "Different between OffsetPtr addresses is not multiple of PointedType size.");
     return offset_result.value();
 }
 
@@ -1047,8 +1051,9 @@ inline auto operator-(const OffsetPtr<T1>& offset_ptr1, T2* const ptr2) -> typen
     // of two elements of the same array must be a multiple of sizeof(T1). Therefore, this branch will only be
     // entered if offset_ptr1 and offset_ptr2 don't point to elements of the same array. This violates a
     // precondition of this function so we terminate.
-    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE((offset_result.has_value()),
-                           "Different between OffsetPtr and ptr addresses is not multiple of PointedType size.");
+    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(
+        (offset_result.has_value()),
+        "Different between OffsetPtr and ptr addresses is not multiple of PointedType size.");
     return offset_result.value();
 }
 
@@ -1070,8 +1075,9 @@ inline auto operator-(T1* const ptr1, const OffsetPtr<T2>& offset_ptr2) -> typen
     // of two elements of the same array must be a multiple of sizeof(T1). Therefore, this branch will only be
     // entered if offset_ptr1 and offset_ptr2 don't point to elements of the same array. This violates a
     // precondition of this function so we terminate.
-    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE((offset_result.has_value()),
-                           "Different between OffsetPtr and ptr addresses is not multiple of PointedType size.");
+    SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(
+        (offset_result.has_value()),
+        "Different between OffsetPtr and ptr addresses is not multiple of PointedType size.");
     return offset_result.value();
 }
 

@@ -12,9 +12,9 @@
  ********************************************************************************/
 #include "score/memory/shared/shared_memory_test_resources.h"
 
+#include "fake/my_memory_resource.h"
 #include "score/concurrency/atomic_indirector.h"
 #include "score/concurrency/atomic_mock.h"
-#include "fake/my_memory_resource.h"
 #include "score/memory/shared/pointer_arithmetic_util.h"
 
 #include "score/hash.hpp"
@@ -47,9 +47,9 @@ TEST_F(SharedMemoryResourceAllocateTest, AssociatedMemoryResourceProxyForwardsCa
     RecordProperty("Description",
                    "The SharedMemoryResource shall return an associated proxy and allocate calls will allocate the "
                    "requested memory.");
-    RecordProperty("TestType", "requirements-based"); // requirements test
+    RecordProperty("TestType", "requirements-based");  // requirements test
     RecordProperty("Priority", "1");
-    RecordProperty("DerivationTechnique", "requirements-analysis"); // requirements
+    RecordProperty("DerivationTechnique", "requirements-analysis");  // requirements
 
     InSequence sequence{};
     constexpr std::int32_t file_descriptor = 5;
@@ -79,9 +79,9 @@ TEST_F(SharedMemoryResourceAllocateTest, SharedMemoryResourceAllocatesAlignedMem
     RecordProperty(
         "Description",
         "SharedMemoryResource shall allocate memory in accordance to the alignment of that CPU architecture.");
-    RecordProperty("TestType", "requirements-based"); // requirements test
+    RecordProperty("TestType", "requirements-based");  // requirements test
     RecordProperty("Priority", "1");
-    RecordProperty("DerivationTechnique", "requirements-analysis"); // requirements
+    RecordProperty("DerivationTechnique", "requirements-analysis");  // requirements
 
     InSequence sequence{};
     constexpr std::int32_t file_descriptor = 5;
@@ -115,9 +115,9 @@ TEST_F(SharedMemoryResourceAllocateTest,
     RecordProperty(
         "Description",
         "SharedMemoryResource shall allocate memory in accordance to the alignment of that CPU architecture.");
-    RecordProperty("TestType", "requirements-based"); // requirements test
+    RecordProperty("TestType", "requirements-based");  // requirements test
     RecordProperty("Priority", "1");
-    RecordProperty("DerivationTechnique", "requirements-analysis"); // requirements
+    RecordProperty("DerivationTechnique", "requirements-analysis");  // requirements
 
     InSequence sequence{};
     constexpr std::int32_t file_descriptor = 5;
@@ -209,9 +209,9 @@ TEST_F(SharedMemoryResourceAllocateDeathTest, AllocatingBlockLargerThanAllocated
     RecordProperty("Verifies", "SCR-6240703");
     RecordProperty("Description",
                    "The process shall terminate when the SharedMemoryResource cannot allocate the requested memory.");
-    RecordProperty("TestType", "requirements-based"); // requirements test
+    RecordProperty("TestType", "requirements-based");  // requirements test
     RecordProperty("Priority", "1");
-    RecordProperty("DerivationTechnique", "requirements-analysis"); // requirements
+    RecordProperty("DerivationTechnique", "requirements-analysis");  // requirements
 
     InSequence sequence{};
     constexpr std::int32_t file_descriptor = 5;
@@ -254,9 +254,9 @@ TEST_F(SharedMemoryResourceAllocateDeathTest, AllocationFailureLogsCorrectStartA
 {
     RecordProperty("Verifies", "SCR-6240703");
     RecordProperty("Description", "The allocation failure log shall contain the valid allocation start address");
-    RecordProperty("TestType", "requirements-based"); // requirements test
+    RecordProperty("TestType", "requirements-based");  // requirements test
     RecordProperty("Priority", "1");
-    RecordProperty("DerivationTechnique", "requirements-analysis"); // requirements
+    RecordProperty("DerivationTechnique", "requirements-analysis");  // requirements
 
     InSequence sequence{};
     constexpr std::int32_t file_descriptor = 5;

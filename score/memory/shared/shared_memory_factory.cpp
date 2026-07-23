@@ -33,26 +33,27 @@ ISharedMemoryFactory* SharedMemoryFactory::mock_{nullptr};
 auto score::memory::shared::SharedMemoryFactory::Open(
     const std::string& path,
     const bool is_read_write,
-    const std::optional<score::cpp::span<const uid_t>>& allowedProviders) noexcept -> std::shared_ptr<ISharedMemoryResource>
+    const std::optional<score::cpp::span<const uid_t>>& allowedProviders) noexcept
+    -> std::shared_ptr<ISharedMemoryResource>
 {
     return instance().Open(path, is_read_write, allowedProviders);
 }
 
 auto score::memory::shared::SharedMemoryFactory::Create(std::string path,
-                                                      InitializeCallback cb,
-                                                      const std::size_t user_space_to_reserve,
-                                                      const UserPermissions& permissions,
-                                                      const bool prefer_typed_memory) noexcept
+                                                        InitializeCallback cb,
+                                                        const std::size_t user_space_to_reserve,
+                                                        const UserPermissions& permissions,
+                                                        const bool prefer_typed_memory) noexcept
     -> std::shared_ptr<ISharedMemoryResource>
 {
     return instance().Create(std::move(path), std::move(cb), user_space_to_reserve, permissions, prefer_typed_memory);
 }
 
 auto score::memory::shared::SharedMemoryFactory::CreateAnonymous(std::uint64_t shared_memory_resource_id,
-                                                               InitializeCallback cb,
-                                                               const std::size_t user_space_to_reserve,
-                                                               const UserPermissions& permissions,
-                                                               const bool prefer_typed_memory) noexcept
+                                                                 InitializeCallback cb,
+                                                                 const std::size_t user_space_to_reserve,
+                                                                 const UserPermissions& permissions,
+                                                                 const bool prefer_typed_memory) noexcept
     -> std::shared_ptr<ISharedMemoryResource>
 {
     return instance().CreateAnonymous(

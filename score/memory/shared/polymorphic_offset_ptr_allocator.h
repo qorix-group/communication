@@ -138,8 +138,8 @@ template <typename T>
 // "AUTOSAR C++14 A15-5-3" rule finding. This rule states: "The std::terminate() function shall not be called
 // implicitly" Rationale: The OffsetPtr's copy constructor will be called in this function which is not noexcept.
 // However, it is marked not noexcept to allow using exceptions during testing only (using the
-// SCORE_LANGUAGE_FUTURECPP_EXPECT_CONTRACT_VIOLATED macro) and will NEVER throw an exception in production code. Therefore, an implicit
-// termination due to an exception being thrown will never occur here in production.
+// SCORE_LANGUAGE_FUTURECPP_EXPECT_CONTRACT_VIOLATED macro) and will NEVER throw an exception in production code.
+// Therefore, an implicit termination due to an exception being thrown will never occur here in production.
 // coverity[autosar_cpp14_a15_5_3_violation]
 OffsetPtr<const MemoryResourceProxy> PolymorphicOffsetPtrAllocator<T>::getMemoryResourceProxy() const noexcept
 {

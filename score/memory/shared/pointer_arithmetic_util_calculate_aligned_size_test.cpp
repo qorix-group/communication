@@ -94,7 +94,8 @@ TEST(PointerArithmeticCalculateAlignedSizeOfSequenceTest,
 {
     // When calling CalculateAlignedSizeOfSequence with only a DataTypeSizeInfo containing alignment == 0
     // Then the program terminates
-    SCORE_LANGUAGE_FUTURECPP_EXPECT_CONTRACT_VIOLATED(score::cpp::ignore = CalculateAlignedSizeOfSequence({{24, 8}, {8, 0}, {16, 16}}));
+    SCORE_LANGUAGE_FUTURECPP_EXPECT_CONTRACT_VIOLATED(score::cpp::ignore =
+                                                          CalculateAlignedSizeOfSequence({{24, 8}, {8, 0}, {16, 16}}));
 }
 
 }  // namespace

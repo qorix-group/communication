@@ -58,7 +58,8 @@ TEST_F(TypedMemoryFixture, AllocateNamedTypedMemorySuccessPermisionWriteable)
 {
     const permission::UserPermissions permissions{permission::WorldWritable{}};
     EXPECT_CALL(*shared_memory_mock_, AllocateNamedTypedMemory(_, _, _)).WillOnce(Return(score::cpp::blank{}));
-    score::memory::shared::internal::TypedMemoryImpl typed_memory{std::move(mman_mock_), std::move(shared_memory_mock_)};
+    score::memory::shared::internal::TypedMemoryImpl typed_memory{std::move(mman_mock_),
+                                                                  std::move(shared_memory_mock_)};
     const auto result = typed_memory.AllocateNamedTypedMemory(std::size_t{1}, std::string{"/dev/example"}, permissions);
     EXPECT_TRUE(result.has_value());
 }
@@ -66,7 +67,8 @@ TEST_F(TypedMemoryFixture, AllocateNamedTypedMemorySuccessPermisionReadable)
 {
     const permission::UserPermissions permissions{permission::WorldReadable{}};
     EXPECT_CALL(*shared_memory_mock_, AllocateNamedTypedMemory(_, _, _)).WillOnce(Return(score::cpp::blank{}));
-    score::memory::shared::internal::TypedMemoryImpl typed_memory{std::move(mman_mock_), std::move(shared_memory_mock_)};
+    score::memory::shared::internal::TypedMemoryImpl typed_memory{std::move(mman_mock_),
+                                                                  std::move(shared_memory_mock_)};
     const auto result = typed_memory.AllocateNamedTypedMemory(std::size_t{1}, std::string{"/dev/example"}, permissions);
     EXPECT_TRUE(result.has_value());
 }
@@ -75,7 +77,8 @@ TEST_F(TypedMemoryFixture, AllocateNamedTypedMemorySuccessPermisionExecutable)
     permission::UserPermissionsMap map{{score::os::Acl::Permission::kExecute, std::vector<uid_t>{12}}};
     const permission::UserPermissions permissions{map};
     EXPECT_CALL(*shared_memory_mock_, AllocateNamedTypedMemory(_, _, _)).WillOnce(Return(score::cpp::blank{}));
-    score::memory::shared::internal::TypedMemoryImpl typed_memory{std::move(mman_mock_), std::move(shared_memory_mock_)};
+    score::memory::shared::internal::TypedMemoryImpl typed_memory{std::move(mman_mock_),
+                                                                  std::move(shared_memory_mock_)};
     const auto result = typed_memory.AllocateNamedTypedMemory(std::size_t{1}, std::string{"/dev/example"}, permissions);
     EXPECT_TRUE(result.has_value());
 }
@@ -85,7 +88,8 @@ TEST_F(TypedMemoryFixture, AllocateNamedTypedMemoryFail)
     EXPECT_CALL(*shared_memory_mock_, AllocateNamedTypedMemory(_, _, _)).WillOnce([this]() {
         return score::cpp::make_unexpected(score::os::Error::createFromErrno(ENOSYS));
     });
-    score::memory::shared::internal::TypedMemoryImpl typed_memory{std::move(mman_mock_), std::move(shared_memory_mock_)};
+    score::memory::shared::internal::TypedMemoryImpl typed_memory{std::move(mman_mock_),
+                                                                  std::move(shared_memory_mock_)};
     const auto result = typed_memory.AllocateNamedTypedMemory(std::size_t{1}, std::string{"/dev/example"}, permissions);
     EXPECT_FALSE(result.has_value());
 }
@@ -95,7 +99,8 @@ TEST_F(TypedMemoryFixture, AllocateAndOpenAnonymousTypedMemoryAllocateFail)
     EXPECT_CALL(*shared_memory_mock_, AllocateHandleTypedMemory(_, _)).WillOnce([this]() {
         return score::cpp::make_unexpected(score::os::Error::createFromErrno(ENOSYS));
     });
-    score::memory::shared::internal::TypedMemoryImpl typed_memory{std::move(mman_mock_), std::move(shared_memory_mock_)};
+    score::memory::shared::internal::TypedMemoryImpl typed_memory{std::move(mman_mock_),
+                                                                  std::move(shared_memory_mock_)};
     const auto result = typed_memory.AllocateAndOpenAnonymousTypedMemory(std::size_t{1});
     EXPECT_FALSE(result.has_value());
     EXPECT_EQ(result.error(), score::os::Error::createFromErrno(ENOSYS));
@@ -107,7 +112,8 @@ TEST_F(TypedMemoryFixture, AllocateAndOpenAnonymousTypedMemoryOpenHandleFail)
     EXPECT_CALL(*mman_mock_, shm_open_handle(_, _)).WillOnce([this]() {
         return score::cpp::make_unexpected(score::os::Error::createFromErrno(ENOSYS));
     });
-    score::memory::shared::internal::TypedMemoryImpl typed_memory{std::move(mman_mock_), std::move(shared_memory_mock_)};
+    score::memory::shared::internal::TypedMemoryImpl typed_memory{std::move(mman_mock_),
+                                                                  std::move(shared_memory_mock_)};
     const auto result = typed_memory.AllocateAndOpenAnonymousTypedMemory(std::size_t{1});
     EXPECT_FALSE(result.has_value());
     EXPECT_EQ(result.error(), score::os::Error::createFromErrno(ENOSYS));
@@ -117,7 +123,8 @@ TEST_F(TypedMemoryFixture, AllocateAndOpenAnonymousTypedMemoryOpenHandleOk)
 {
     EXPECT_CALL(*shared_memory_mock_, AllocateHandleTypedMemory(_, _)).WillOnce(Return(score::cpp::blank{}));
     EXPECT_CALL(*mman_mock_, shm_open_handle(_, _)).WillOnce(Return(1));
-    score::memory::shared::internal::TypedMemoryImpl typed_memory{std::move(mman_mock_), std::move(shared_memory_mock_)};
+    score::memory::shared::internal::TypedMemoryImpl typed_memory{std::move(mman_mock_),
+                                                                  std::move(shared_memory_mock_)};
     const auto result = typed_memory.AllocateAndOpenAnonymousTypedMemory(std::size_t{1});
     EXPECT_TRUE(result.has_value());
     EXPECT_EQ(result.value(), 1);
@@ -126,7 +133,8 @@ TEST_F(TypedMemoryFixture, AllocateAndOpenAnonymousTypedMemoryOpenHandleOk)
 TEST_F(TypedMemoryFixture, UnlinkOk)
 {
     EXPECT_CALL(*shared_memory_mock_, Unlink(_)).WillOnce(Return(score::cpp::blank{}));
-    score::memory::shared::internal::TypedMemoryImpl typed_memory{std::move(mman_mock_), std::move(shared_memory_mock_)};
+    score::memory::shared::internal::TypedMemoryImpl typed_memory{std::move(mman_mock_),
+                                                                  std::move(shared_memory_mock_)};
     const auto result = typed_memory.Unlink(std::string{"/dev/example"});
     EXPECT_TRUE(result.has_value());
 }
@@ -135,7 +143,8 @@ TEST_F(TypedMemoryFixture, UnlinkFail)
 {
     EXPECT_CALL(*shared_memory_mock_, Unlink(_))
         .WillOnce(Return(score::cpp::make_unexpected(score::os::Error::createFromErrno(ENOSYS))));
-    score::memory::shared::internal::TypedMemoryImpl typed_memory{std::move(mman_mock_), std::move(shared_memory_mock_)};
+    score::memory::shared::internal::TypedMemoryImpl typed_memory{std::move(mman_mock_),
+                                                                  std::move(shared_memory_mock_)};
     const auto result = typed_memory.Unlink(std::string{"/dev/example"});
     EXPECT_FALSE(result.has_value());
     EXPECT_EQ(result.error(), score::os::Error::createFromErrno(ENOSYS));
@@ -146,7 +155,8 @@ TEST_F(TypedMemoryFixture, GetCreatorUidOk)
     constexpr uid_t kUid = 1234;
     EXPECT_CALL(*shared_memory_mock_, GetCreatorUid(_, _))
         .WillOnce(DoAll(SetArgReferee<1>(kUid), Return(score::cpp::blank{})));
-    score::memory::shared::internal::TypedMemoryImpl typed_memory{std::move(mman_mock_), std::move(shared_memory_mock_)};
+    score::memory::shared::internal::TypedMemoryImpl typed_memory{std::move(mman_mock_),
+                                                                  std::move(shared_memory_mock_)};
     const auto result = typed_memory.GetCreatorUid(std::string{"/dev/example"});
     EXPECT_TRUE(result.has_value());
     EXPECT_EQ(result.value(), kUid);
@@ -156,7 +166,8 @@ TEST_F(TypedMemoryFixture, GetCreatorUidFail)
 {
     EXPECT_CALL(*shared_memory_mock_, GetCreatorUid(_, _))
         .WillOnce(Return(score::cpp::make_unexpected(score::os::Error::createFromErrno(ENOSYS))));
-    score::memory::shared::internal::TypedMemoryImpl typed_memory{std::move(mman_mock_), std::move(shared_memory_mock_)};
+    score::memory::shared::internal::TypedMemoryImpl typed_memory{std::move(mman_mock_),
+                                                                  std::move(shared_memory_mock_)};
     const auto result = typed_memory.GetCreatorUid(std::string{"/dev/example"});
     EXPECT_FALSE(result.has_value());
     EXPECT_EQ(result.error(), score::os::Error::createFromErrno(ENOSYS));

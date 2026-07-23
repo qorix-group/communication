@@ -73,7 +73,8 @@ MyBoundedMemoryResource::MyBoundedMemoryResource(const std::pair<void*, void*> m
     {
         const bool registration_result =
             MemoryResourceRegistry::getInstance().insert_resource({memoryResourceId_, this});
-        SCORE_LANGUAGE_FUTURECPP_ASSERT_MESSAGE(registration_result, "Could not register memory resource with registry");
+        SCORE_LANGUAGE_FUTURECPP_ASSERT_MESSAGE(registration_result,
+                                                "Could not register memory resource with registry");
     }
     manager_ = AllocateMemoryResourceProxy(memoryResourceId_);
 }
@@ -98,11 +99,11 @@ void* MyBoundedMemoryResource::do_allocate(const std::size_t bytes, std::size_t 
     if (new_address_aligned == nullptr)
     {
         score::mw::log::LogFatal("shm") << "Cannot allocate memory block of size" << bytes << " at: ["
-                                      << PointerToLogValue(new_address_aligned) << ":"
-                                      << PointerToLogValue(AddOffsetToPointer(new_address_aligned, bytes))
-                                      << "]. Does not fit within shared memory segment: ["
-                                      << PointerToLogValue(baseAddress_) << ":"
-                                      << PointerToLogValue(this->getEndAddress()) << "]";
+                                        << PointerToLogValue(new_address_aligned) << ":"
+                                        << PointerToLogValue(AddOffsetToPointer(new_address_aligned, bytes))
+                                        << "]. Does not fit within shared memory segment: ["
+                                        << PointerToLogValue(baseAddress_) << ":"
+                                        << PointerToLogValue(this->getEndAddress()) << "]";
         std::terminate();
     }
     const auto padding = SubtractPointersBytes(new_address_aligned, allocation_start_address);

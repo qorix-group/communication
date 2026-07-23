@@ -12,10 +12,10 @@
  ********************************************************************************/
 #include "score/memory/shared/lock_file.h"
 
+#include "score/mw/log/logging.h"
 #include "score/os/fcntl.h"
 #include "score/os/stat.h"
 #include "score/os/unistd.h"
-#include "score/mw/log/logging.h"
 
 #include <score/utility.hpp>
 
@@ -42,14 +42,14 @@ std::optional<LockFile> LockFile::Create(std::string path) noexcept
     if (!create_result.has_value())
     {
         score::mw::log::LogError("shm") << "LockFile::Create failed to open file: " << path
-                                      << " | Error: " << create_result.error().ToString();
+                                        << " | Error: " << create_result.error().ToString();
         return {};
     }
     auto result = score::os::Stat::instance().chmod(path.data(), kReadAccessForAll);
     if (!result.has_value())
     {
         score::mw::log::LogError("shm") << "LockFile::Create failed to chmod file: " << path
-                                      << " | Error: " << result.error().ToString();
+                                        << " | Error: " << result.error().ToString();
         return {};
     }
     constexpr bool owns_file{true};
@@ -68,14 +68,14 @@ std::optional<LockFile> LockFile::CreateOrOpen(std::string path, bool take_owner
     if (!create_result.has_value())
     {
         score::mw::log::LogError("shm") << "LockFile::CreateOrOpen failed to open file: " << path
-                                      << " | Error: " << create_result.error().ToString();
+                                        << " | Error: " << create_result.error().ToString();
         return {};
     }
     auto result = score::os::Stat::instance().chmod(path.data(), kReadAccessForAll);
     if (!result.has_value())
     {
         score::mw::log::LogError("shm") << "LockFile::CreateOrOpen failed to chmod file: " << path
-                                      << " | Error: " << result.error().ToString();
+                                        << " | Error: " << result.error().ToString();
         return {};
     }
     return LockFile{std::move(path), create_result.value(), take_ownership};
@@ -93,7 +93,7 @@ std::optional<LockFile> LockFile::Open(std::string path) noexcept
     if (!create_result.has_value())
     {
         score::mw::log::LogError("shm") << "LockFile::Open failed to open file: " << path
-                                      << " | Error: " << create_result.error().ToString();
+                                        << " | Error: " << create_result.error().ToString();
         return {};
     }
     constexpr bool owns_file{false};

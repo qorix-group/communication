@@ -85,9 +85,9 @@ TEST_F(SharedMemoryResourceCreateTest, CreateSharedMemoryFreesResourcesOnDestruc
 {
     RecordProperty("Verifies", "SCR-6367126");
     RecordProperty("Description", "SharedMemoryResource shall free resources only on destruction.");
-    RecordProperty("TestType", "requirements-based"); // requirements test
+    RecordProperty("TestType", "requirements-based");  // requirements test
     RecordProperty("Priority", "1");
-    RecordProperty("DerivationTechnique", "requirements-analysis"); // requirements
+    RecordProperty("DerivationTechnique", "requirements-analysis");  // requirements
 
     InSequence sequence{};
     constexpr std::int32_t file_descriptor = 1;
@@ -111,10 +111,11 @@ TEST_F(SharedMemoryResourceCreateTest, CreateSharedMemoryFreesResourcesOnDestruc
             return score::cpp::blank{};
         }));
     EXPECT_CALL(*unistd_mock_, close(1))
-        .WillOnce(::testing::InvokeWithoutArgs([&file_descriptor_closed]() -> score::cpp::expected_blank<score::os::Error> {
-            file_descriptor_closed = true;
-            return score::cpp::blank{};
-        }));
+        .WillOnce(
+            ::testing::InvokeWithoutArgs([&file_descriptor_closed]() -> score::cpp::expected_blank<score::os::Error> {
+                file_descriptor_closed = true;
+                return score::cpp::blank{};
+            }));
 
     // When constructing a SharedMemoryResource with create option
     {
@@ -203,10 +204,10 @@ TEST_F(SharedMemoryResourceCreateTest, SetsMapPermissionsCorrectly)
     };
 
     score::cpp::ignore = SharedMemoryResourceTestAttorney::Create(TestValues::sharedMemorySegmentPath,
-                                                           TestValues::some_share_memory_size,
-                                                           emptyInitCallback,
-                                                           permissions,
-                                                           &acl_mock);
+                                                                  TestValues::some_share_memory_size,
+                                                                  emptyInitCallback,
+                                                                  permissions,
+                                                                  &acl_mock);
 }
 
 TEST_F(SharedMemoryResourceCreateTest, CreateSharedMemoryWithAllocateNamedTypedMemoryFails)
@@ -378,10 +379,10 @@ TEST_F(SharedMemoryResourceCreateTest, SetsWorldReadablePermissionsCorrectly)
     // When constructing a SharedMemoryResource with create option and world readable Permissions
     WorldReadable permissions{};
     score::cpp::ignore = SharedMemoryResourceTestAttorney::Create(TestValues::sharedMemorySegmentPath,
-                                                           TestValues::some_share_memory_size,
-                                                           emptyInitCallback,
-                                                           permissions,
-                                                           &acl_mock);
+                                                                  TestValues::some_share_memory_size,
+                                                                  emptyInitCallback,
+                                                                  permissions,
+                                                                  &acl_mock);
 }
 
 TEST_F(SharedMemoryResourceCreateTest, SetsWorldWritablePermissionsCorrectly)
@@ -405,7 +406,8 @@ TEST_F(SharedMemoryResourceCreateTest, SetsWorldWritablePermissionsCorrectly)
     expectShmOpenWithCreateFlagAndModeReturns(
         TestValues::sharedMemorySegmentPath, readWriteAccessForEveryBody, file_descriptor);
     expectFstatReturns(file_descriptor);
-    EXPECT_CALL(*stat_mock_, fchmod(file_descriptor, readWriteAccessForEveryBody)).WillOnce(Return(score::cpp::blank{}));
+    EXPECT_CALL(*stat_mock_, fchmod(file_descriptor, readWriteAccessForEveryBody))
+        .WillOnce(Return(score::cpp::blank{}));
 
     // Then we don't set any permissions
     EXPECT_CALL(acl_mock, AllowUser(_, _)).Times(0);
@@ -424,10 +426,10 @@ TEST_F(SharedMemoryResourceCreateTest, SetsWorldWritablePermissionsCorrectly)
     // When constructing a SharedMemoryResource with create option and world writable Permissions
     WorldWritable permissions{};
     score::cpp::ignore = SharedMemoryResourceTestAttorney::Create(TestValues::sharedMemorySegmentPath,
-                                                           TestValues::some_share_memory_size,
-                                                           emptyInitCallback,
-                                                           permissions,
-                                                           &acl_mock);
+                                                                  TestValues::some_share_memory_size,
+                                                                  emptyInitCallback,
+                                                                  permissions,
+                                                                  &acl_mock);
 }
 TEST_F(SharedMemoryResourceCreateTest, FailingToCompensateUmaskWillNotCrash)
 {
@@ -472,10 +474,10 @@ TEST_F(SharedMemoryResourceCreateTest, FailingToCompensateUmaskWillNotCrash)
     // When constructing a SharedMemoryResource with create option and world writable Permissions
     WorldWritable permissions{};
     score::cpp::ignore = SharedMemoryResourceTestAttorney::Create(TestValues::sharedMemorySegmentPath,
-                                                           TestValues::some_share_memory_size,
-                                                           emptyInitCallback,
-                                                           permissions,
-                                                           &acl_mock);
+                                                                  TestValues::some_share_memory_size,
+                                                                  emptyInitCallback,
+                                                                  permissions,
+                                                                  &acl_mock);
 
     // Then we don't crash
 }
@@ -524,10 +526,10 @@ TEST_F(SharedMemoryResourceCreateTest, SettingPermissionsErrorDoesNotCrash)
         {score::os::Acl::Permission::kWrite, {43}},
     };
     score::cpp::ignore = SharedMemoryResourceTestAttorney::Create(TestValues::sharedMemorySegmentPath,
-                                                           TestValues::some_share_memory_size,
-                                                           emptyInitCallback,
-                                                           permissions,
-                                                           &acl_mock);
+                                                                  TestValues::some_share_memory_size,
+                                                                  emptyInitCallback,
+                                                                  permissions,
+                                                                  &acl_mock);
 }
 
 TEST_F(SharedMemoryResourceCreateTest, CreatingSharedMemoryFillsRegistryKnownRegions)
@@ -597,8 +599,9 @@ TEST_F(SharedMemoryResourceCreateDeathTest, CreateSharedMemoryTerminatesIfCreati
     expectCreateLockFileReturns(TestValues::sharedMemorySegmentLockPath, lock_file_descriptor, is_death_test);
 
     // and we get an unexpected error when opening the shared memory
-    expectShmOpenWithCreateFlagReturns(
-        TestValues::sharedMemorySegmentPath, score::cpp::make_unexpected(Error::createFromErrno(ENOENT)), is_death_test);
+    expectShmOpenWithCreateFlagReturns(TestValues::sharedMemorySegmentPath,
+                                       score::cpp::make_unexpected(Error::createFromErrno(ENOENT)),
+                                       is_death_test);
 
     // Then the program terminates when constructing a SharedMemoryResource with create option
     EXPECT_DEATH(SharedMemoryResourceTestAttorney::Create(
@@ -610,9 +613,9 @@ TEST_F(SharedMemoryResourceCreateDeathTest, UnableToTruncateSharedMemoryCausesTe
 {
     RecordProperty("Verifies", "SCR-6240638");
     RecordProperty("Description", "A process shall terminate, if the truncation of a shared memory segment fails.");
-    RecordProperty("TestType", "requirements-based"); // requirements test
+    RecordProperty("TestType", "requirements-based");  // requirements test
     RecordProperty("Priority", "1");
-    RecordProperty("DerivationTechnique", "requirements-analysis"); // requirements
+    RecordProperty("DerivationTechnique", "requirements-analysis");  // requirements
 
     InSequence sequence{};
     constexpr std::int32_t file_descriptor = 1;

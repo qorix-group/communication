@@ -75,7 +75,7 @@ TEST_F(SharedMemoryResourceCreateAnonymousTest, CreatingAnonymousSharedMemoryInT
     std::array<std::uint8_t, 500U> data_region{};
     const auto readAccessForEveryBody =
         ::score::os::ModeToInteger(::score::os::Stat::Mode::kReadUser | ::score::os::Stat::Mode::kWriteUser |
-                                 ::score::os::Stat::Mode::kReadGroup | ::score::os::Stat::Mode::kReadOthers);
+                                   ::score::os::Stat::Mode::kReadGroup | ::score::os::Stat::Mode::kReadOthers);
     bool isInitialized = false;
 
     EXPECT_CALL(*typedmemory_mock_, AllocateAndOpenAnonymousTypedMemory(_))
@@ -119,7 +119,7 @@ TEST_F(SharedMemoryResourceCreateAnonymousTest, CreatingAnonymousSharedMemoryInS
     std::array<std::uint8_t, 500U> data_region{};
     const auto readAccessForEveryBody =
         ::score::os::ModeToInteger(::score::os::Stat::Mode::kReadUser | ::score::os::Stat::Mode::kWriteUser |
-                                 ::score::os::Stat::Mode::kReadGroup | ::score::os::Stat::Mode::kReadOthers);
+                                   ::score::os::Stat::Mode::kReadGroup | ::score::os::Stat::Mode::kReadOthers);
     bool isInitialized = false;
 
     EXPECT_CALL(*typedmemory_mock_, AllocateAndOpenAnonymousTypedMemory(_)).Times(0);
@@ -161,7 +161,7 @@ TEST_F(SharedMemoryResourceCreateAnonymousTest, CreatingAnonymousSharedMemoryInS
     std::array<std::uint8_t, 500U> data_region{};
     const auto readAccessForEveryBody =
         ::score::os::ModeToInteger(::score::os::Stat::Mode::kReadUser | ::score::os::Stat::Mode::kWriteUser |
-                                 ::score::os::Stat::Mode::kReadGroup | ::score::os::Stat::Mode::kReadOthers);
+                                   ::score::os::Stat::Mode::kReadGroup | ::score::os::Stat::Mode::kReadOthers);
     bool isInitialized = false;
 
     EXPECT_CALL(*typedmemory_mock_, AllocateAndOpenAnonymousTypedMemory(_)).Times(0);
@@ -201,10 +201,11 @@ TEST_F(SharedMemoryResourceCreateAnonymousDeathTest, CreatingAnonymousSharedMemo
 {
     InSequence sequence{};
     score::memory::shared::SealedShm::InjectMock(&sealedshm_mock_);
-    const auto create_anonymous_error_return_value{score::cpp::make_unexpected(score::os::Error::createFromErrno(ENOENT))};
+    const auto create_anonymous_error_return_value{
+        score::cpp::make_unexpected(score::os::Error::createFromErrno(ENOENT))};
     const auto readAccessForEveryBody =
         ::score::os::ModeToInteger(::score::os::Stat::Mode::kReadUser | ::score::os::Stat::Mode::kWriteUser |
-                                 ::score::os::Stat::Mode::kReadGroup | ::score::os::Stat::Mode::kReadOthers);
+                                   ::score::os::Stat::Mode::kReadGroup | ::score::os::Stat::Mode::kReadOthers);
 
     EXPECT_CALL(*typedmemory_mock_, AllocateAndOpenAnonymousTypedMemory(_)).Times(0);
 

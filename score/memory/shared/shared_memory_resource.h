@@ -343,15 +343,15 @@ class SharedMemoryResource : public ISharedMemoryResource, public std::enable_sh
     /// \return in case of error an score::os::Error is returned.
     // coverity[autosar_cpp14_m7_3_1_violation] false-positive: class method (Ticket-234468)
     score::cpp::expected_blank<score::os::Error> CreateImpl(const std::size_t user_space_to_reserve,
-                                                   const InitializeCallback initialize_callback,
-                                                   const UserPermissions& permissions) noexcept;
+                                                            const InitializeCallback initialize_callback,
+                                                            const UserPermissions& permissions) noexcept;
 
     /// \brief Called by SharedMemoryResource::CreateOrOpen() after calling the constructor.
     /// \return in case of error an score::os::Error is returned.
     // coverity[autosar_cpp14_m7_3_1_violation] false-positive: class method (Ticket-234468)
     score::cpp::expected_blank<score::os::Error> CreateOrOpenImpl(const std::size_t user_space_to_reserve,
-                                                         InitializeCallback initialize_callback,
-                                                         const UserPermissions& permissions) noexcept;
+                                                                  InitializeCallback initialize_callback,
+                                                                  const UserPermissions& permissions) noexcept;
 
     /// \brief Called by SharedMemoryResource::Open() after calling the constructor.
     /// \details Despite being an "open" operation, this method creates a temporary lock file to prevent a race
@@ -377,9 +377,7 @@ class SharedMemoryResource : public ISharedMemoryResource, public std::enable_sh
     class ControlBlock
     {
       public:
-        explicit ControlBlock(const std::size_t id) noexcept : alreadyAllocatedBytes{}, memoryResourceProxy{id}
-        {
-        }
+        explicit ControlBlock(const std::size_t id) noexcept : alreadyAllocatedBytes{}, memoryResourceProxy{id} {}
 
         // Suppress "AUTOSAR C++14 M11-0-1" rule findings. This rule states: "Member data in non-POD class types shall
         // be private.".
@@ -421,7 +419,8 @@ class SharedMemoryResource : public ISharedMemoryResource, public std::enable_sh
     bool do_is_equal(const memory_resource& other) const noexcept override;
 
     // coverity[autosar_cpp14_m7_3_1_violation] false-positive: class method (Ticket-234468)
-    score::cpp::expected_blank<score::os::Error> CreateLockFileForNamedSharedMemory(std::optional<LockFile>& lock_file) noexcept;
+    score::cpp::expected_blank<score::os::Error> CreateLockFileForNamedSharedMemory(
+        std::optional<LockFile>& lock_file) noexcept;
     // coverity[autosar_cpp14_m7_3_1_violation] false-positive: class method (Ticket-234468)
     void AllocateInTypedMemory(const UserPermissions& permissions, os::Fcntl::Open& flags) noexcept;
 
@@ -447,7 +446,8 @@ class SharedMemoryResource : public ISharedMemoryResource, public std::enable_sh
     /// \todo This method needs refactoring
     /// \return Empty result in case of success, score::os::Error in case of error.
     // coverity[autosar_cpp14_m7_3_1_violation] false-positive: class method (Ticket-234468)
-    score::cpp::expected_blank<score::os::Error> OpenSharedMemory(const os::Fcntl::Open& flags, os::Stat::Mode mode) noexcept;
+    score::cpp::expected_blank<score::os::Error> OpenSharedMemory(const os::Fcntl::Open& flags,
+                                                                  os::Stat::Mode mode) noexcept;
     void SealAnonymousOrReserveNamedSharedMemory() noexcept;
 };
 
