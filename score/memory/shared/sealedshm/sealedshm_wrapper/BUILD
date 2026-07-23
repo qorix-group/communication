@@ -12,8 +12,8 @@
 # *******************************************************************************
 
 load("@rules_cc//cc:defs.bzl", "cc_library")
-load("@score_baselibs//:bazel/unit_tests.bzl", "cc_gtest_unit_test", "cc_unit_test_suites_for_host_and_qnx")
-load("@score_baselibs//score/language/safecpp:toolchain_features.bzl", "COMPILER_WARNING_FEATURES")
+load("//quality/unit_testing:unit_testing.bzl", "cc_unit_test")
+load("//score/mw:common_features.bzl", "COMPILER_WARNING_FEATURES")
 
 cc_library(
     name = "sealedshm",
@@ -27,8 +27,8 @@ cc_library(
     features = COMPILER_WARNING_FEATURES,
     tags = ["FFI"],
     visibility = [
-        "@score_baselibs//score/memory/shared:__subpackages__",
-        "@score_baselibs//score/memory/shared/test:__subpackages__",
+        "//score/memory/shared:__subpackages__",
+        "//score/memory/shared/test:__subpackages__",
     ],
     deps = [
         "@score_baselibs//score/language/futurecpp",
@@ -53,7 +53,7 @@ cc_library(
         "sealed_shm_mock.h",
     ],
     visibility = [
-        "@score_baselibs//score/memory/shared:__pkg__",
+        "//score/memory/shared:__pkg__",
     ],
     deps = [
         "@googletest//:gtest",
@@ -62,13 +62,13 @@ cc_library(
     ],
 )
 
-cc_gtest_unit_test(
+cc_unit_test(
     name = "unit_test",
     srcs = [
         "sealed_shm_test.cpp",
     ],
     visibility = [
-        "@score_baselibs//score/memory:__pkg__",
+        "//score/memory:__pkg__",
     ],
     deps = [
         ":sealedshm",
@@ -78,14 +78,4 @@ cc_gtest_unit_test(
         "@platforms//os:linux": [],
         "@platforms//os:qnx": ["@score_baselibs//score/os/mocklib/qnx:mman_mock"],
     }),
-)
-
-cc_unit_test_suites_for_host_and_qnx(
-    name = "unit_test_suite",
-    cc_unit_tests = [
-        ":unit_test",
-    ],
-    visibility = [
-        "@score_baselibs//score/memory/shared:__pkg__",
-    ],
 )

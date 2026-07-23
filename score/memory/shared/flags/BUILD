@@ -17,8 +17,8 @@ bool_flag(
     name = "use_typedshmd",
     build_setting_default = False,
     visibility = [
+        "//score/memory/shared/flags:__pkg__",
         "@score_baselibs//score/analysis/tracing/daemon/flags:__pkg__",
-        "@score_baselibs//score/memory/shared/flags:__pkg__",
     ],
 )
 
@@ -29,7 +29,7 @@ config_setting(
     },
     visibility = [
         "//platform/aas/mw/com/impl:__subpackages__",
-        "@score_baselibs//score/memory/shared/typedshm/typedshm_wrapper:__subpackages__",
-        "@score_baselibs//score/memory/shared/typedshm/utils:__subpackages__",
+        "//score/memory/shared/typedshm/typedshm_wrapper:__subpackages__",
+        "//score/memory/shared/typedshm/utils:__subpackages__",
     ],
 )

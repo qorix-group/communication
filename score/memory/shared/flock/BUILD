@@ -12,8 +12,8 @@
 # *******************************************************************************
 
 load("@rules_cc//cc:defs.bzl", "cc_library")
-load("@score_baselibs//:bazel/unit_tests.bzl", "cc_gtest_unit_test", "cc_unit_test_suites_for_host_and_qnx")
-load("@score_baselibs//score/language/safecpp:toolchain_features.bzl", "COMPILER_WARNING_FEATURES")
+load("//quality/unit_testing:unit_testing.bzl", "cc_unit_test")
+load("//score/mw:common_features.bzl", "COMPILER_WARNING_FEATURES")
 
 cc_library(
     name = "flock_mutex",
@@ -26,7 +26,7 @@ cc_library(
     ],
     tags = ["FFI"],
     deps = [
-        "@score_baselibs//score/memory/shared:lock_file",
+        "//score/memory/shared:lock_file",
     ],
 )
 
@@ -44,7 +44,7 @@ cc_library(
     ],
     deps = [
         ":flock_mutex",
-        "@score_baselibs//score/memory/shared:lock_file",
+        "//score/memory/shared:lock_file",
     ],
 )
 
@@ -62,7 +62,7 @@ cc_library(
     ],
     deps = [
         ":flock_mutex",
-        "@score_baselibs//score/memory/shared:lock_file",
+        "//score/memory/shared:lock_file",
     ],
 )
 
@@ -76,18 +76,18 @@ cc_library(
         "//visibility:public",  # platform_only
     ],
     deps = [
-        "@score_baselibs//score/memory/shared:lock_file",
+        "//score/memory/shared:lock_file",
     ],
 )
 
-cc_gtest_unit_test(
+cc_unit_test(
     name = "unit_test",
     srcs = [
         "flock_mutex_test.cpp",
     ],
     features = COMPILER_WARNING_FEATURES,
     visibility = [
-        "@score_baselibs//score/memory:__pkg__",
+        "//score/memory:__pkg__",
     ],
     deps = [
         ":exclusive_flock_mutex",
@@ -96,15 +96,5 @@ cc_gtest_unit_test(
         "@score_baselibs//score/os:fcntl",
         "@score_baselibs//score/os/mocklib:fcntl_mock",
         "@score_baselibs//score/os/mocklib:stat_mock",
-    ],
-)
-
-cc_unit_test_suites_for_host_and_qnx(
-    name = "unit_test_suite",
-    cc_unit_tests = [
-        ":unit_test",
-    ],
-    visibility = [
-        "@score_baselibs//score/memory/shared:__pkg__",
     ],
 )

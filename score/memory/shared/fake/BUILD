@@ -12,7 +12,7 @@
 # *******************************************************************************
 
 load("@rules_cc//cc:defs.bzl", "cc_library")
-load("@score_baselibs//score/language/safecpp:toolchain_features.bzl", "COMPILER_WARNING_FEATURES")
+load("//score/mw:common_features.bzl", "COMPILER_WARNING_FEATURES")
 
 cc_library(
     name = "fake_memory_resources",
@@ -28,9 +28,9 @@ cc_library(
     features = COMPILER_WARNING_FEATURES,
     visibility = ["//visibility:public"],
     deps = [
+        "//score/memory/shared:shared_memory_resource",
+        "//score/memory/shared:types",
         "@score_baselibs//score/language/futurecpp",
-        "@score_baselibs//score/memory/shared:shared_memory_resource",
-        "@score_baselibs//score/memory/shared:types",
     ],
 )
 
@@ -47,8 +47,8 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":fake_memory_resources",
+        "//score/memory/shared:i_shared_memory_resource",
+        "//score/memory/shared:types",
         "@score_baselibs//score/language/futurecpp",
-        "@score_baselibs//score/memory/shared:i_shared_memory_resource",
-        "@score_baselibs//score/memory/shared:types",
     ],
 )
