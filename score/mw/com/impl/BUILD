@@ -543,9 +543,9 @@ cc_library(
         ":binding_type",
         ":data_type_meta_info",
         ":generic_skeleton_event_binding",
+        "//score/memory/shared:i_shared_memory_resource",
         "//score/mw/com/impl/configuration",
         "@score_baselibs//score/language/futurecpp",
-        "@score_baselibs//score/memory/shared:i_shared_memory_resource",
         "@score_baselibs//score/result",
     ],
 )
@@ -1025,9 +1025,9 @@ cc_library(
     hdrs = ["runtime.h"],
     features = COMPILER_WARNING_FEATURES,
     implementation_deps = [
+        "//score/memory/shared:types",
         "//score/mw/com/impl/tracing:tracing_runtime",
         "//score/mw/com/impl/tracing/configuration:tracing_filter_config_parser",
-        "@score_baselibs//score/memory/shared:types",
         "@score_baselibs//score/mw/log",
         "@score_baselibs//score/utils/meyer_singleton",
     ],
