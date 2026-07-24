@@ -309,7 +309,28 @@ class ProxyFieldImpl : public ProxyFieldBase
               typename = std::enable_if_t<is_tag_enabled<T, SampleDataType, WithGetter, Tags...>::value>>
     score::Result<MethodReturnTypePtr<T>> Get() noexcept
     {
-        return proxy_method_get_dispatch_->operator()();
+        // If the method call itself fails, then we return the error code to the user here.
+        auto method_call_result = proxy_method_get_dispatch_->operator()();
+        if (!method_call_result.has_value())
+        {
+            return MakeUnexpected<MethodReturnTypePtr<T>>(std::move(method_call_result).error());
+        }
+
+        // If the method call itself succeeded but executing the getter itself on skeleton side failed (e.g. because
+        // reading the field value failed), then we return the error code to the user as well.
+        auto getter_return_type_ptr = std::move(method_call_result).value();
+        if (!getter_return_type_ptr->has_value())
+        {
+            return MakeUnexpected<MethodReturnTypePtr<T>>(std::move(*getter_return_type_ptr).error());
+        }
+
+        // If the method call and executing the getter itself succeeded, then we return a pointer to the set value to
+        // the user.
+        T& value_ptr = getter_return_type_ptr->value();
+
+        MethodReturnTypePtr<T> return_value{value_ptr, std::move(getter_return_type_ptr)};
+
+        return return_value;
     }
 
     /**
