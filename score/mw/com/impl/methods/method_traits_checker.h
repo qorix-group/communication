@@ -13,6 +13,7 @@
 #ifndef SCORE_MW_COM_IMPL_METHODS_METHOD_TRAITS_CHECKER_H
 #define SCORE_MW_COM_IMPL_METHODS_METHOD_TRAITS_CHECKER_H
 
+#include "score/mw/com/impl/configuration/quality_type.h"
 #include "score/mw/com/impl/methods/callable_traits.h"
 
 #include <score/assert.hpp>
@@ -23,6 +24,13 @@
 
 namespace score::mw::com::impl
 {
+
+/// \brief Enum to indicate whether a method handler callable is expected to have QualityType as its first argument.
+enum class WithQuality
+{
+    TRUE,
+    FALSE
+};
 
 enum class FailureMode
 {
@@ -85,52 +93,81 @@ struct get_method_in_args<std::tuple<TupleArgs...>>
 template <typename T>
 using get_method_in_args_t = typename get_method_in_args<T>::type;
 
-template <FailureMode FailureMode, typename CallableArgs>
+template <FailureMode FailureMode, WithQuality WithQualityType, typename CallableArgs>
 void AssertCallableHasNoInArgsOrReturn()
 {
-    CompileOrRuntimeAssert<std::is_same_v<CallableArgs, std::tuple<>>, FailureMode>(
-        "Registered method callable must not have any arguments since the method signature does not specify "
-        "any in arguments or return type!");
+    if constexpr (WithQualityType == WithQuality::TRUE)
+    {
+        CompileOrRuntimeAssert<std::is_same_v<CallableArgs, std::tuple<QualityType>>, FailureMode>(
+            "Registered method callable must have only one argument of type QualityType since the method signature "
+            "does not specify any in arguments or return type!");
+    }
+    else
+    {
+        CompileOrRuntimeAssert<std::is_same_v<CallableArgs, std::tuple<>>, FailureMode>(
+            "Registered method callable must not have any arguments since the method signature does not specify "
+            "any in arguments or return type!");
+    }
 }
 
-template <FailureMode FailureMode, typename CallableArgs, typename ReturnType, typename... ArgTypes>
+template <FailureMode FailureMode,
+          WithQuality WithQualityType,
+          typename CallableArgs,
+          typename ReturnType,
+          typename... ArgTypes>
 void AssertCallableHasInArgsAndReturn()
 {
-    using MethodInArgTuple = get_method_in_args_t<CallableArgs>;
-    using MethodReturnType = get_method_return_type_t<CallableArgs>;
-
-    using ExpectedInArgTypeTuple = std::tuple<const ArgTypes&...>;
-    using ExpectedReturnType = ReturnType&;
-
-    CompileOrRuntimeAssert<std::is_same_v<MethodReturnType, ExpectedReturnType>, FailureMode>(
-        "Registered method callable must have the method return type as first argument as non-const "
-        "reference!");
-    CompileOrRuntimeAssert<std::is_same_v<MethodInArgTuple, ExpectedInArgTypeTuple>, FailureMode>(
-        "Registered method callable must have the same in argument types as the method signature "
-        "following the return type, but with const reference semantics!");
+    if constexpr (WithQualityType == WithQuality::TRUE)
+    {
+        using ExpectedCallableArgs = std::tuple<QualityType, ReturnType&, const ArgTypes&...>;
+        CompileOrRuntimeAssert<std::is_same_v<CallableArgs, ExpectedCallableArgs>, FailureMode>(
+            "Registered method callable must have QualityType as first argument, followed by the method return "
+            "type as non-const reference and the in argument types from the method signature as const references!");
+    }
+    else
+    {
+        using ExpectedCallableArgs = std::tuple<ReturnType&, const ArgTypes&...>;
+        CompileOrRuntimeAssert<std::is_same_v<CallableArgs, ExpectedCallableArgs>, FailureMode>(
+            "Registered method callable must have the method return type as first argument as non-const "
+            "reference, followed by the in argument types from the method signature as const references!");
+    }
 }
 
-template <FailureMode FailureMode, typename CallableArgs, typename ReturnType>
+template <FailureMode FailureMode, WithQuality WithQualityType, typename CallableArgs, typename ReturnType>
 void AssertCallableHasReturnTypeOnly()
 {
-    using MethodReturnType = get_method_return_type_t<CallableArgs>;
-    using ExpectedReturnType = ReturnType&;
-
-    CompileOrRuntimeAssert<std::is_same_v<MethodReturnType, ExpectedReturnType>, FailureMode>(
-        "Registered method callable must have the method return type as only argument as non-const "
-        "reference "
-        "!");
+    if constexpr (WithQualityType == WithQuality::TRUE)
+    {
+        using ExpectedCallableArgs = std::tuple<QualityType, ReturnType&>;
+        CompileOrRuntimeAssert<std::is_same_v<CallableArgs, ExpectedCallableArgs>, FailureMode>(
+            "Registered method callable must have QualityType as first argument and the method return type as "
+            "second argument as non-const reference!");
+    }
+    else
+    {
+        using ExpectedCallableArgs = std::tuple<ReturnType&>;
+        CompileOrRuntimeAssert<std::is_same_v<CallableArgs, ExpectedCallableArgs>, FailureMode>(
+            "Registered method callable must have the method return type as only argument as non-const reference!");
+    }
 }
 
-template <FailureMode FailureMode, typename CallableArgs, typename... ArgTypes>
+template <FailureMode FailureMode, WithQuality WithQualityType, typename CallableArgs, typename... ArgTypes>
 void AssertCallableHasInArgsOnly()
 {
-    using MethodInArgTuple = CallableArgs;
-    using ExpectedInArgTypeTuple = std::tuple<const ArgTypes&...>;
-
-    CompileOrRuntimeAssert<std::is_same_v<MethodInArgTuple, ExpectedInArgTypeTuple>, FailureMode>(
-        "Registered method callable must have only the in argument types from the method signature, but "
-        "with const reference semantics!");
+    if constexpr (WithQualityType == WithQuality::TRUE)
+    {
+        using ExpectedCallableArgs = std::tuple<QualityType, const ArgTypes&...>;
+        CompileOrRuntimeAssert<std::is_same_v<CallableArgs, ExpectedCallableArgs>, FailureMode>(
+            "Registered method callable must have QualityType as first argument followed by the in argument types "
+            "from the method signature as const references!");
+    }
+    else
+    {
+        using ExpectedCallableArgs = std::tuple<const ArgTypes&...>;
+        CompileOrRuntimeAssert<std::is_same_v<CallableArgs, ExpectedCallableArgs>, FailureMode>(
+            "Registered method callable must have only the in argument types from the method signature as const "
+            "references!");
+    }
 }
 
 }  // namespace detail
@@ -146,7 +183,11 @@ void AssertCallableHasInArgsOnly()
 ///   `void(const ArgTypes&...)`
 /// - If `ReturnType` is `void` and there are no in arguments:
 ///   `void()`
-template <FailureMode FailureMode, typename Callable, typename ReturnType, typename... ArgTypes>
+template <FailureMode FailureMode,
+          WithQuality WithQuality,
+          typename Callable,
+          typename ReturnType,
+          typename... ArgTypes>
 constexpr void AssertMethodHandlerSupportsMethodSignature()
 {
     using CallableReturnType = typename get_callable_return_type<Callable>::type;
@@ -165,7 +206,7 @@ constexpr void AssertMethodHandlerSupportsMethodSignature()
     // time testing is enabled in SWP-46885, we can likely simplify the branching in this code.
     if constexpr (!has_in_args && !has_return_type)
     {
-        detail::AssertCallableHasNoInArgsOrReturn<FailureMode, CallableArgs>();
+        detail::AssertCallableHasNoInArgsOrReturn<FailureMode, WithQuality, CallableArgs>();
     }
     else
     {
@@ -177,18 +218,18 @@ constexpr void AssertMethodHandlerSupportsMethodSignature()
         }
         else
         {
-
             if constexpr (has_in_args && has_return_type)
             {
-                detail::AssertCallableHasInArgsAndReturn<FailureMode, CallableArgs, ReturnType, ArgTypes...>();
+                detail::
+                    AssertCallableHasInArgsAndReturn<FailureMode, WithQuality, CallableArgs, ReturnType, ArgTypes...>();
             }
             else if constexpr (!has_in_args && has_return_type)
             {
-                detail::AssertCallableHasReturnTypeOnly<FailureMode, CallableArgs, ReturnType>();
+                detail::AssertCallableHasReturnTypeOnly<FailureMode, WithQuality, CallableArgs, ReturnType>();
             }
             else if constexpr (has_in_args && !has_return_type)
             {
-                detail::AssertCallableHasInArgsOnly<FailureMode, CallableArgs, ArgTypes...>();
+                detail::AssertCallableHasInArgsOnly<FailureMode, WithQuality, CallableArgs, ArgTypes...>();
             }
         }
     }
