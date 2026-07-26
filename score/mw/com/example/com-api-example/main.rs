@@ -26,7 +26,7 @@ use std::thread;
 use score_log as log;
 use stdout_logger::StdoutLoggerBuilder;
 
-use com_api::{Builder, InstanceSpecifier, LolaRuntimeBuilderImpl, Runtime, RuntimeBuilder};
+use score_com::{Builder, InstanceSpecifier, LolaRuntimeBuilderImpl, Runtime, RuntimeBuilder};
 
 use com_api_example::{VehicleMonitorConsumer, VehicleMonitorProducer};
 

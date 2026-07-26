@@ -38,7 +38,7 @@ use std::sync::Arc;
 
 use score_log as log;
 
-use concept::{
+use score_com_concept::{
     AllocationFailureReason, Builder, CommData, Error, EventFailedReason, InstanceSpecifier,
     Interface, Producer, ProducerBuilder, ProducerFailedReason, ProviderInfo, Publisher, Result,
     SampleMaybeUninit, SampleMut, ServiceFailedReason,
@@ -531,7 +531,7 @@ impl<I: Interface, B: FFIBridge> Builder<I::Producer<LolaRuntimeImpl<B>>>
 mod test {
     use super::*;
     use bridge_ffi_mock::{MockFFIBridge, MockPointerAllocator, SharedMockBridge};
-    use concept::InstanceSpecifier;
+    use score_com_concept::{InstanceSpecifier};
     use mockall::predicate::*;
     use mockall::Sequence;
 
@@ -541,9 +541,9 @@ mod test {
         value: i32,
     }
 
-    unsafe impl concept::Reloc for TestData {}
+    unsafe impl score_com_concept::Reloc for TestData {}
 
-    impl concept::CommData for TestData {
+    impl score_com_concept::CommData for TestData {
         const ID: &'static str = "TestData";
     }
 

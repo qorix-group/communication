@@ -36,7 +36,7 @@
 /// With default UID generation (module path + interface name):
 /// ```ignore
 /// mod abc {
-///     use com_api_concept::interface;
+///     use score_com::interface;
 ///     interface!(
 ///         interface Vehicle {
 ///             left_tire: Event<Tire>,
@@ -57,7 +57,7 @@
 /// With custom UID:
 /// ```ignore
 /// mod abc {
-///     use com_api_concept::interface;
+///     use score_com::interface;
 ///     interface!(
 ///         interface Vehicle {
 ///             Id = "AbcInterface",
@@ -131,24 +131,24 @@ macro_rules! interface {
 macro_rules! interface_common {
     // Default: auto ID = module path + type name
     ($id:ident) => {
-        com_api::paste::paste! {
+        score_com::paste::paste! {
             pub struct [<$id Interface>] {}
-            impl com_api::Interface for [<$id Interface>] {
+            impl score_com::Interface for [<$id Interface>] {
                 const INTERFACE_ID: &'static str =
                     concat!(module_path!(), "::", stringify!($id));
-                type Consumer<R: com_api::Runtime + ?Sized> = [<$id Consumer>]<R>;
-                type Producer<R: com_api::Runtime + ?Sized> = [<$id Producer>]<R>;
+                type Consumer<R: score_com::Runtime + ?Sized> = [<$id Consumer>]<R>;
+                type Producer<R: score_com::Runtime + ?Sized> = [<$id Producer>]<R>;
             }
         }
     };
     // Explicit ID override
     ($id:ident, $uid:expr) => {
-        com_api::paste::paste! {
+        score_com::paste::paste! {
             pub struct [<$id Interface>] {}
-            impl com_api::Interface for [<$id Interface>] {
+            impl score_com::Interface for [<$id Interface>] {
                 const INTERFACE_ID: &'static str = $uid;
-                type Consumer<R: com_api::Runtime + ?Sized> = [<$id Consumer>]<R>;
-                type Producer<R: com_api::Runtime + ?Sized> = [<$id Producer>]<R>;
+                type Consumer<R: score_com::Runtime + ?Sized> = [<$id Consumer>]<R>;
+                type Producer<R: score_com::Runtime + ?Sized> = [<$id Producer>]<R>;
             }
         }
     };
@@ -160,14 +160,14 @@ macro_rules! interface_common {
 #[macro_export]
 macro_rules! interface_consumer {
     ($id:ident, $($event_name:ident, Event<$event_type:ty>),+$(,)?) => {
-        com_api::paste::paste!  {
-            pub struct [<$id Consumer>]<R: com_api::Runtime + ?Sized> {
+        score_com::paste::paste!  {
+            pub struct [<$id Consumer>]<R: score_com::Runtime + ?Sized> {
                 $(
                     pub $event_name: R::Subscriber<$event_type>,
                 )+
             }
 
-            impl<R: com_api::Runtime + ?Sized> com_api::Consumer<R> for [<$id Consumer>]<R> {
+            impl<R: score_com::Runtime + ?Sized> score_com::Consumer<R> for [<$id Consumer>]<R> {
                 fn new(instance_info: R::ConsumerInfo) -> Self {
                     [<$id Consumer>] {
                         $(
@@ -192,23 +192,23 @@ macro_rules! interface_consumer {
 #[macro_export]
 macro_rules! interface_producer {
     ($id:ident, $($event_name:ident, Event<$event_type:ty>),+$(,)?) => {
-        com_api::paste::paste!  {
-            pub struct [<$id Producer>]<R: com_api::Runtime + ?Sized> {
+        score_com::paste::paste!  {
+            pub struct [<$id Producer>]<R: score_com::Runtime + ?Sized> {
                 _runtime: core::marker::PhantomData<R>,
                 instance_info: R::ProviderInfo,
             }
 
-            pub struct [<$id OfferedProducer>]<R: com_api::Runtime + ?Sized> {
+            pub struct [<$id OfferedProducer>]<R: score_com::Runtime + ?Sized> {
                 $(
                     pub $event_name: R::Publisher<$event_type>,
                 )+
                 instance_info: R::ProviderInfo,
             }
 
-            impl<R: com_api::Runtime + ?Sized> com_api::Producer<R> for [<$id Producer>]<R> {
+            impl<R: score_com::Runtime + ?Sized> score_com::Producer<R> for [<$id Producer>]<R> {
                 type Interface = [<$id Interface>];
                 type OfferedProducer = [<$id OfferedProducer>]<R>;
-                fn offer(self) -> com_api::Result<Self::OfferedProducer> {
+                fn offer(self) -> score_com::Result<Self::OfferedProducer> {
                     let offered = [<$id OfferedProducer>] {
                         $(
                             $event_name: R::Publisher::new(
@@ -226,7 +226,7 @@ macro_rules! interface_producer {
                     Ok(offered)
                 }
 
-                fn new(instance_info: R::ProviderInfo) -> com_api::Result<Self> {
+                fn new(instance_info: R::ProviderInfo) -> score_com::Result<Self> {
                     Ok([<$id Producer>] {
                         _runtime: core::marker::PhantomData,
                         instance_info,
@@ -234,11 +234,11 @@ macro_rules! interface_producer {
                 }
             }
 
-            impl<R: com_api::Runtime + ?Sized> com_api::OfferedProducer<R>
+            impl<R: score_com::Runtime + ?Sized> score_com::OfferedProducer<R>
                 for [<$id OfferedProducer>]<R> {
                 type Interface = [<$id Interface>];
                 type Producer = [<$id Producer>]<R>;
-                fn unoffer(self) -> com_api::Result<Self::Producer> {
+                fn unoffer(self) -> score_com::Result<Self::Producer> {
                     let producer = [<$id Producer>] {
                         _runtime: core::marker::PhantomData,
                         instance_info: self.instance_info.clone(),
@@ -255,7 +255,7 @@ macro_rules! interface_producer {
 mod tests {
     /// ```
     /// mod my_module {
-    ///     use com_api::{interface,CommData, Reloc, ProviderInfo, Subscriber, Publisher};
+    ///     use score_com::{interface,CommData, Reloc, ProviderInfo, Subscriber, Publisher};
     ///     #[derive(Debug, Reloc)]
     ///     #[repr(C)]
     ///     pub struct Tire { pub pressure: f32 }
@@ -287,7 +287,7 @@ mod tests {
 
     /// ```
     /// mod my_module {
-    ///     use com_api::{interface, CommData, Reloc, ProviderInfo, Subscriber, Publisher};
+    ///     use score_com::{interface, CommData, Reloc, ProviderInfo, Subscriber, Publisher};
     ///
     ///     #[derive(Debug, Reloc)]
     ///     #[repr(C)]
@@ -321,7 +321,7 @@ mod tests {
 
     /// ```
     /// mod my_module {
-    ///     use com_api::{interface, CommData, Reloc, ProviderInfo, Subscriber, Publisher};
+    ///     use score_com::{interface, CommData, Reloc, ProviderInfo, Subscriber, Publisher};
     ///
     ///     #[derive(Debug, Reloc)]
     ///     #[repr(C)]
@@ -355,7 +355,7 @@ mod tests {
 
     /// ```compile_fail
     /// mod my_module {
-    ///     use com_api::{interface, CommData, Reloc, ProviderInfo, Subscriber, Publisher};
+    ///     use score_com::{interface, CommData, Reloc, ProviderInfo, Subscriber, Publisher};
     ///
     ///     #[derive(Debug, Reloc)]
     ///     #[repr(C)]
@@ -387,7 +387,7 @@ mod tests {
 
     /// ```compile_fail
     /// mod my_module {
-    ///     use com_api::{interface, CommData, Reloc, ProviderInfo, Subscriber, Publisher};
+    ///     use score_com::{interface, CommData, Reloc, ProviderInfo, Subscriber, Publisher};
     ///
     ///     #[derive(Debug, Reloc)]
     ///     #[repr(C)]
@@ -418,8 +418,8 @@ mod tests {
 
     /// ```
     /// mod my_module {
-    ///     use com_api::{interface_common, interface_consumer, interface_producer};
-    ///     use com_api::{CommData, Reloc, ProviderInfo, Subscriber, Publisher};
+    ///     use score_com::{interface_common, interface_consumer, interface_producer};
+    ///     use score_com::{CommData, Reloc, ProviderInfo, Subscriber, Publisher};
     ///
     ///     #[derive(Debug, Reloc)]
     ///     #[repr(C)]
@@ -452,8 +452,8 @@ mod tests {
 
     /// ```
     /// mod my_module {
-    ///     use com_api::{interface_common, interface_consumer, interface_producer};
-    ///     use com_api::{CommData, Reloc, ProviderInfo, Subscriber, Publisher};
+    ///     use score_com::{interface_common, interface_consumer, interface_producer};
+    ///     use score_com::{CommData, Reloc, ProviderInfo, Subscriber, Publisher};
     ///
     ///     #[derive(Debug, Reloc)]
     ///     #[repr(C)]
@@ -485,7 +485,7 @@ mod tests {
 
     /// ```compile_fail
     /// mod my_module {
-    ///      use com_api::{interface_common, CommData, Reloc, ProviderInfo, Subscriber, Publisher};
+    ///      use score_com::{interface_common, CommData, Reloc, ProviderInfo, Subscriber, Publisher};
     ///      #[derive(Debug, Reloc)]
     ///      #[repr(C)]
     ///     pub struct Tire { pub pressure: f32 }
@@ -512,7 +512,7 @@ mod tests {
 
     /// ```compile_fail
     /// mod my_module {
-    ///     use com_api::{interface_common, CommData, Reloc, ProviderInfo, Subscriber, Publisher};
+    ///     use score_com::{interface_common, CommData, Reloc, ProviderInfo, Subscriber, Publisher};
     ///
     ///     #[derive(Debug, Reloc)]
     ///     #[repr(C)]
@@ -541,7 +541,7 @@ mod tests {
 
     /// ```compile_fail
     /// mod my_module {
-    ///     use com_api::{interface_common, CommData, Reloc, ProviderInfo, Subscriber, Publisher};
+    ///     use score_com::{interface_common, CommData, Reloc, ProviderInfo, Subscriber, Publisher};
     ///
     ///     #[derive(Debug, Reloc)]
     ///     #[repr(C)]
@@ -570,7 +570,7 @@ mod tests {
 
     /// ```
     /// mod my_module {
-    ///     use com_api::{interface_consumer, CommData, Reloc, ProviderInfo, Subscriber, Publisher};
+    ///     use score_com::{interface_consumer, CommData, Reloc, ProviderInfo, Subscriber, Publisher};
     ///
     ///     #[derive(Debug, Reloc)]
     ///     #[repr(C)]
@@ -600,7 +600,7 @@ mod tests {
 
     /// ```compile_fail
     /// mod my_module {
-    ///     use com_api::{interface_consumer, CommData, Reloc, ProviderInfo, Subscriber, Publisher};
+    ///     use score_com::{interface_consumer, CommData, Reloc, ProviderInfo, Subscriber, Publisher};
     ///
     ///     #[derive(Debug, Reloc)]
     ///     #[repr(C)]
@@ -626,7 +626,7 @@ mod tests {
 
     /// ```compile_fail
     /// mod my_module {
-    ///     use com_api::{interface_consumer, CommData, Reloc, ProviderInfo, Subscriber, Publisher};
+    ///     use score_com::{interface_consumer, CommData, Reloc, ProviderInfo, Subscriber, Publisher};
     ///
     ///     #[derive(Debug, Reloc)]
     ///     #[repr(C)]
@@ -652,7 +652,7 @@ mod tests {
 
     /// ```compile_fail
     /// mod my_module {
-    ///     use com_api::{interface_producer, CommData, Reloc, ProviderInfo, Subscriber, Publisher};
+    ///     use score_com::{interface_producer, CommData, Reloc, ProviderInfo, Subscriber, Publisher};
     ///
     ///     #[derive(Debug, Reloc)]
     ///     #[repr(C)]
@@ -680,7 +680,7 @@ mod tests {
 
     /// ```compile_fail
     /// mod my_module {
-    ///     use com_api::{interface_producer, CommData, Reloc, ProviderInfo, Subscriber, Publisher};
+    ///     use score_com::{interface_producer, CommData, Reloc, ProviderInfo, Subscriber, Publisher};
     ///
     ///     #[derive(Debug, Reloc)]
     ///     #[repr(C)]
@@ -706,7 +706,7 @@ mod tests {
 
     /// ```compile_fail
     /// mod my_module {
-    ///     use com_api::{interface_producer, CommData, Reloc, ProviderInfo, Subscriber, Publisher};
+    ///     use score_com::{interface_producer, CommData, Reloc, ProviderInfo, Subscriber, Publisher};
     ///
     ///     #[derive(Debug, Reloc)]
     ///     #[repr(C)]
@@ -738,7 +738,7 @@ mod validation_tests {
     #[test]
     fn test_interface_id_auto_generated() {
         mod test_module {
-            use com_api::{CommData, ProviderInfo, Publisher, Reloc, Subscriber};
+            use score_com::{CommData, ProviderInfo, Publisher, Reloc, Subscriber};
 
             #[derive(Debug, Reloc)]
             #[repr(C)]
@@ -758,7 +758,7 @@ mod validation_tests {
             pub fn validate() {
                 // Referencing VehicleInterface by name is itself proof the type was generated;
                 // the compiler enforces the name at compile time.
-                let interface_id = <VehicleInterface as com_api::Interface>::INTERFACE_ID;
+                let interface_id = <VehicleInterface as score_com::Interface>::INTERFACE_ID;
                 let expected_id = concat!(module_path!(), "::", "Vehicle");
                 assert_eq!(
                     interface_id, expected_id,
@@ -772,7 +772,7 @@ mod validation_tests {
     #[test]
     fn test_consumer_type_generated() {
         mod test_module {
-            use com_api::{
+            use score_com::{
                 CommData, Consumer, LolaRuntimeImpl as LolaRuntime, ProviderInfo, Publisher, Reloc,
                 Subscriber,
             };
@@ -817,7 +817,7 @@ mod validation_tests {
     #[test]
     fn test_producer_type_generated() {
         mod test_module {
-            use com_api::{
+            use score_com::{
                 CommData, LolaRuntimeImpl as LolaRuntime, Producer, ProviderInfo, Publisher, Reloc,
                 Subscriber,
             };
@@ -848,7 +848,7 @@ mod validation_tests {
     #[test]
     fn test_offered_producer_type_generated() {
         mod test_module {
-            use com_api::{
+            use score_com::{
                 CommData, LolaRuntimeImpl as LolaRuntime, Producer, ProviderInfo, Publisher, Reloc,
                 Subscriber,
             };
@@ -884,7 +884,7 @@ mod validation_tests {
     #[test]
     fn test_interface_with_custom_id_validation() {
         mod test_module {
-            use com_api::{CommData, Interface, ProviderInfo, Publisher, Reloc, Subscriber};
+            use score_com::{CommData, Interface, ProviderInfo, Publisher, Reloc, Subscriber};
 
             #[derive(Debug, Reloc, Clone)]
             #[repr(C)]
@@ -918,7 +918,7 @@ mod validation_tests {
     #[test]
     fn test_interface_with_multiple_events_validation() {
         mod test_module {
-            use com_api::{
+            use score_com::{
                 CommData, Interface, LolaRuntimeImpl as LolaRuntime, ProviderInfo, Publisher,
                 Reloc, Subscriber,
             };
@@ -980,7 +980,7 @@ mod validation_tests {
     #[test]
     fn test_interface_type_consistency_across_traits() {
         mod test_module {
-            use com_api::{
+            use score_com::{
                 CommData, Interface, LolaRuntimeImpl as LolaRuntime, ProviderInfo, Publisher,
                 Reloc, Subscriber,
             };
@@ -1022,7 +1022,7 @@ mod validation_tests {
     #[test]
     fn test_interface_naming_convention_validation() {
         mod test_module {
-            use com_api::{
+            use score_com::{
                 CommData, LolaRuntimeImpl as LolaRuntime, ProviderInfo, Publisher, Reloc,
                 Subscriber,
             };

@@ -46,7 +46,7 @@ use std::sync::Arc;
 
 use score_log as log;
 
-use concept::{
+use score_com_concept::{
     Builder, CommData, Consumer, ConsumerBuilder, ConsumerDescriptor, ConsumerFailedReason, Error,
     EventFailedReason, InstanceSpecifier, Interface, ReceiveFailedReason, Result, Sample,
     SampleContainer, ServiceDiscovery, ServiceFailedReason, Subscriber, Subscription,
@@ -609,7 +609,7 @@ where
     /// are still in scope.
     ///
     /// ``` compile_fail
-    /// use concept::{CommData, SampleContainer, Subscription};
+    /// use score_com_concept::{CommData, SampleContainer, Subscription};
     /// use com_api_runtime_lola::LolaRuntimeImpl;
     ///
     /// fn demonstrate_sample_container_lifetime_borrow<T, S>(sub: S)
@@ -1252,9 +1252,9 @@ mod test {
         value: i32,
     }
 
-    unsafe impl concept::Reloc for TestData {}
+    unsafe impl score_com_concept::Reloc for TestData {}
 
-    impl concept::CommData for TestData {
+    impl score_com_concept::CommData for TestData {
         const ID: &'static str = "TestData";
     }
 

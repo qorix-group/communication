@@ -15,33 +15,33 @@ load("@rules_rust//rust:defs.bzl", "rust_library")
 
 # Default target with lola runtime
 rust_library(
-    name = "com_api",
-    srcs = ["com_api.rs"],
-    crate_name = "com_api",
+    name = "score_com",
+    srcs = ["score_com.rs"],
+    crate_name = "score_com",
     edition = "2024",
     visibility = [
         "//visibility:public",  # platform_only
     ],
     deps = [
         "//score/mw/com/impl/rust/com-api/com-api-runtime-lola",
-        "//score/mw/com/rust/concept",
+        "//score/mw/com/rust/score_com_concept",
     ],
 )
 
 # Test-only target that additionally exposes the mock runtime.
-# Use this target (instead of :com_api) in test BUILD rules that need MockRuntimeBuilderImpl.
+# Use this target (instead of :score_com) in test BUILD rules that need MockRuntimeBuilderImpl.
 # Mock Runtime is not yet ready - https://github.com/eclipse-score/communication/issues/490
 rust_library(
-    name = "com_api_mock",
+    name = "score_com_mock",
     testonly = True,
-    srcs = ["com_api_mock.rs"],
-    crate_name = "com_api",
+    srcs = ["score_com_mock.rs"],
+    crate_name = "score_com",
     edition = "2024",
     visibility = [
         "//visibility:public",
     ],
     deps = [
-        ":com_api",
+        ":score_com",
         "//score/mw/com/impl/rust/com-api/com-api-runtime-mock",
     ],
 )

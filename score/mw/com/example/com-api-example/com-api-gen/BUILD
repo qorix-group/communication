@@ -25,7 +25,7 @@ rust_library(
     ],
     deps = [
         ":vehicle_gen_cpp",
-        "//score/mw/com/rust:com_api",
+        "//score/mw/com/rust:score_com",
         "@score_baselibs//src/log/score_log",
     ],
 )
@@ -36,7 +36,7 @@ cc_library(
     hdrs = ["vehicle_gen.h"],
     features = COMPILER_WARNING_FEATURES,
     implementation_deps = [
-        "//score/mw/com/rust/ffi_bridge:register_interface",
+        "//score/mw/com/rust/score_com_cpp_bridge:register_interface",
     ],
     alwayslink = True,
 )

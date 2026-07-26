@@ -19,7 +19,7 @@ use crate::{
     LolaConsumerDiscovery, LolaConsumerInfo, LolaProducerBuilder, LolaProviderInfo, LolaPublisher,
     LolaSubscribableImpl,
 };
-use concept::{
+use score_com_concept::{
     Builder, CommData, FindServiceSpecifier, InstanceSpecifier, Interface, Result, Runtime,
     RuntimeBuilder,
 };

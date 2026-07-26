@@ -19,7 +19,7 @@ skinparam defaultTextAlignment center
 
 rectangle "User Application Code" as APP #E1F5FE
 
-rectangle "com-api\n(re-exports & facade)" as FACADE #C8E6C9
+rectangle "score_com\n(re-exports & facade)" as FACADE #C8E6C9
 
 rectangle "Runtimes" as RUNTIMES {
   rectangle "com-api-runtime-lola\n(LoLa implementation)" as RUNTIME_LOLA #FFCCBC
@@ -27,8 +27,8 @@ rectangle "Runtimes" as RUNTIMES {
 }
 
 rectangle "Abstraction" as ABSTRACTION {
-  rectangle "com-api-concept\n(traits & types)" as CONCEPT #C8E6C9
-  rectangle "com-api-concept-macros\n(derive macros)" as MACROS #C8E6C9
+  rectangle "score_com_concept\n(traits & types)" as CONCEPT #C8E6C9
+  rectangle "score_com_macros\n(derive macros)" as MACROS #C8E6C9
 }
 
 rectangle "com-api-ffi-lola\n(C++/Rust FFI bridge)" as FFI #FFE0B2

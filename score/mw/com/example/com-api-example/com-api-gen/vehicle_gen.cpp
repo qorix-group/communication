@@ -12,7 +12,7 @@
  ********************************************************************************/
 
 #include "vehicle_gen.h"
-#include "score/mw/com/rust/ffi_bridge/register_interface.h"
+#include "score/mw/com/rust/score_com_cpp_bridge/register_interface.h"
 
 // Export the Vehicle interface with FFI bindings
 // VehicleInterface Id used  from BEGIN Macro to the END Macro

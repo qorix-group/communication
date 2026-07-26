@@ -14,9 +14,9 @@
 load("@rules_rust//rust:defs.bzl", "rust_doc_test", "rust_proc_macro")
 
 rust_proc_macro(
-    name = "com-api-macros",
+    name = "score-com-macros",
     srcs = ["lib.rs"],
-    crate_name = "com_api_macros",
+    crate_name = "score_com_macros",
     visibility = [
         "//score/mw/com:__subpackages__",
     ],
@@ -27,7 +27,7 @@ rust_proc_macro(
 )
 
 rust_doc_test(
-    name = "com-api-macros-tests",
-    crate = ":com-api-macros",
+    name = "score-com-macros-tests",
+    crate = ":score-com-macros",
     target_compatible_with = ["@platforms//os:linux"],
 )

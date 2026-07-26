@@ -11,10 +11,11 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
-/// This is main library file for the com-api-concept crate, which defines the core traits, types,
-/// and macros for the communication API concept.
+/// This is main library file for the score_com_concept crate, which defines the core traits, types,
+/// and macros for the communication API score_com_concept.
 /// It re-exports the main components of the crate, including the interface macro and the Reloc
-/// type, which is used for safe data relocation in the communication API.
+/// type, which is used for safe data relocation in the communication API. The crate is accessible
+/// through the `score_com` crate.
 /// The interface macro generates the necessary types and trait implementations for defining
 /// communication interfaces,
 /// while the Reloc type provides a safe abstraction for moving data across thread or process

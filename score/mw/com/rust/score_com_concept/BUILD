@@ -15,11 +15,11 @@ load("@rules_rust//rust:defs.bzl", "rust_doc_test", "rust_library", "rust_test")
 load("//quality/unit_testing:unit_testing.bzl", "rust_unit_test")
 
 rust_library(
-    name = "concept",
+    name = "score_com_concept",
     srcs = glob(["**/*.rs"]),
     edition = "2024",
     proc_macro_deps = [
-        "//score/mw/com/rust/com_api_macros:com-api-macros",
+        "//score/mw/com/rust/score_com_macros:score-com-macros",
         "@score_communication_crate_index//:paste",
     ],
     visibility = [
@@ -34,28 +34,28 @@ rust_library(
 )
 
 rust_test(
-    name = "concept-test",
-    crate = ":concept",
+    name = "score_com_concept-test",
+    crate = ":score_com_concept",
     edition = "2024",
     tags = ["manual"],
-    deps = [":concept"],
+    deps = [":score_com_concept"],
 )
 
 rust_doc_test(
-    name = "concept-macros-tests",
-    crate = ":concept",
+    name = "score_com_concept-macros-tests",
+    crate = ":score_com_concept",
     # LIMITATION: rust_doc_test has a issue in rules_rust where it inherits crate_type="lib"
     # from the wrapped library instead of overriding to "bin" (like rust_test does).
     # This causes _add_native_link_flags() to skip CC native dependencies.
     # With LLVM's strict LLD linker, this results in undefined symbol errors when
     # the crate depends on C++ libraries. GCC masks this with broader archive scanning.
     tags = ["manual"],
-    deps = ["//score/mw/com/rust:com_api"],
+    deps = ["//score/mw/com/rust:score_com"],
 )
 
 rust_unit_test(
-    name = "concept-macros-unit-tests",
+    name = "score_com_concept-macros-unit-tests",
     srcs = ["interface_macros.rs"],
     features = ["link_std_cpp_lib"],
-    deps = ["//score/mw/com/rust:com_api"],
+    deps = ["//score/mw/com/rust:score_com"],
 )

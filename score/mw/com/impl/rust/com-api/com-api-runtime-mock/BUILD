@@ -19,7 +19,7 @@ rust_library(
     edition = "2024",
     visibility = ["//score/mw/com:__subpackages__"],
     deps = [
-        "//score/mw/com/rust/concept",
+        "//score/mw/com/rust/score_com_concept",
         "@score_communication_crate_index//:futures",
     ],
 )

@@ -32,7 +32,7 @@ note bottom of LAYER1
 end note
 
 rectangle " ABSTRACTION LAYER " as LAYER2 #C8E6C9 {
-  card "Concept Traits(com-api-concept)\nRuntime, Subscriber, Publisher" as TRAITS
+  card "Concept Traits(score_com_concept)\nRuntime, Subscriber, Publisher" as TRAITS
   card " Interface specific type(generated-code-interface-specific)\nConsumer, Producer, Interface" as GEN_API
 }
 

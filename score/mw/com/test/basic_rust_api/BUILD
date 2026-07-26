@@ -21,7 +21,7 @@ cc_library(
     hdrs = ["bigdata_com_api_gen.h"],
     features = COMPILER_WARNING_FEATURES,
     implementation_deps = [
-        "//score/mw/com/rust/ffi_bridge:register_interface",
+        "//score/mw/com/rust/score_com_cpp_bridge:register_interface",
     ],
     deps = [
         "//score/mw/com/test/common_test_resources:bigdata_type",
@@ -39,6 +39,6 @@ rust_library(
     ],
     deps = [
         ":bigdata_com_api_gen_cpp",
-        "//score/mw/com/rust:com_api",
+        "//score/mw/com/rust:score_com",
     ],
 )

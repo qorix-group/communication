@@ -35,7 +35,7 @@ use futures::stream::{self, Stream};
 use std::collections::VecDeque;
 use std::path::Path;
 
-use concept::{
+use score_com_concept::{
     Builder, CommData, Consumer, ConsumerBuilder, ConsumerDescriptor, FindServiceSpecifier,
     InstanceSpecifier, Interface, Producer, ProducerBuilder, ProviderInfo, Publisher, Result,
     Runtime, RuntimeBuilder, Sample, SampleContainer, SampleMaybeUninit, SampleMut,
@@ -509,7 +509,7 @@ impl RuntimeBuilderImpl {
 
 #[cfg(test)]
 mod test {
-    use concept::{Publisher, SampleContainer, SampleMaybeUninit, SampleMut, Subscription};
+    use score_com_concept::{Publisher, SampleContainer, SampleMaybeUninit, SampleMut, Subscription};
 
     #[test]
     fn receive_stuff() {

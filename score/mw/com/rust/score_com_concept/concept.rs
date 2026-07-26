@@ -11,7 +11,7 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
-//! This crate defines the concepts and traits of the COM API. It does not provide any concrete
+//! This crate defines the score_com_concepts and traits of the COM API. It does not provide any concrete
 //! implementations. It is meant to be used as a common interface for different implementations
 //! of the COM API, e.g., for different IPC backends.
 //!
@@ -50,7 +50,7 @@
 
 use crate::error::*;
 use crate::Reloc;
-pub use com_api_macros::CommData;
+pub use score_com_macros::CommData;
 use containers::fixed_capacity::FixedCapacityQueue;
 use core::fmt::Debug;
 use core::future::Future;
@@ -58,7 +58,7 @@ use core::ops::{Deref, DerefMut};
 use futures::stream::Stream;
 use std::path::Path;
 
-/// Result type alias with `std::result::Result` using `com_api::Error` as error type
+/// Result type alias with `std::result::Result` using `score_com::Error` as error type
 pub type Result<T> = core::result::Result<T, Error>;
 
 /// A factory-like trait for constructing complex objects through a builder pattern.

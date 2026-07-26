@@ -52,7 +52,7 @@
 //!
 //! ## Producer (Service Provider)
 //! ```ignore
-//! use com_api::*;
+//! use score_com::*;
 //! use std::path::Path;
 //!
 //! // 1. Initialize runtime with configuration
@@ -78,7 +78,7 @@
 //!
 //! ## Consumer (Service Client)
 //! ```ignore
-//! use com_api::*;
+//! use score_com::*;
 //! use std::path::Path;
 //!
 //! // 1. Initialize runtime
@@ -128,13 +128,13 @@
 //!
 //! ```
 //! # Further reading
-//! - `com_api_concept` crate — trait definitions and full API documentation
-//! - `doc/com_api_high_level_design_detail.md` — internal architecture and layer details
+//! - `score_com_concept` crate — trait definitions and full API documentation
+//! - `doc/high_level_design_detail.md` — internal architecture and layer details
 
 pub use com_api_runtime_lola::LolaRuntimeImpl;
 pub use com_api_runtime_lola::RuntimeBuilderImpl as LolaRuntimeBuilderImpl;
 
-pub use concept::{
+pub use score_com_concept::{
     interface, interface_common, interface_consumer, interface_producer, Builder, CommData,
     Consumer, ConsumerBuilder, ConsumerDescriptor, Error, FindServiceSpecifier, InstanceSpecifier,
     Interface, OfferedProducer, PlacementDefault, Producer, ProducerBuilder, ProviderInfo,
@@ -144,4 +144,4 @@ pub use concept::{
 
 #[doc(hidden)]
 // See eclipse-score/communication/issues/173 - `paste`crate is still in discussion regarding rust safety certification.
-pub use concept::paste;
+pub use score_com_concept::paste;

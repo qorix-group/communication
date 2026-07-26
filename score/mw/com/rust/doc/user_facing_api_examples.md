@@ -30,7 +30,7 @@ The runtime (e.g. the LoLa backend) is initialised through a builder. Call `load
 <summary>Examples:</summary>
 
 ```rust
-use com_api::{LolaRuntimeBuilderImpl, Result, Runtime, RuntimeBuilder};
+use score_com::{LolaRuntimeBuilderImpl, Result, Runtime, RuntimeBuilder};
 use std::path::Path;
 
 // LOLA Runtime initialization with configuration
@@ -66,7 +66,7 @@ fn initialize_lola_runtime() -> Result<impl Runtime> {
 <summary>Examples:</summary>
 
 ```rust
-use com_api::InstanceSpecifier;
+use score_com::InstanceSpecifier;
 
 // Creating a valid instance specifier
 fn setup_service_instance() -> Result<()> {
@@ -114,7 +114,7 @@ Service discovery is performed by calling `Runtime::find_service()`, which retur
 <summary>Examples:</summary>
 
 ```rust
-use com_api::{Runtime, InstanceSpecifier, FindServiceSpecifier};
+use score_com::{Runtime, InstanceSpecifier, FindServiceSpecifier};
 use com_api_gen::VehicleInterface;
 
 // Create consumer for the specified service identifier
@@ -210,7 +210,7 @@ A consumer is constructed from a successful service discovery result. Once a mat
 <summary>Examples:</summary>
 
 ```rust
-use com_api::{Result, Runtime, FindServiceSpecifier, InstanceSpecifier, Subscription};
+use score_com::{Result, Runtime, FindServiceSpecifier, InstanceSpecifier, Subscription};
 use com_api_gen::{VehicleInterface, VehicleConsumer, Tire};
 
 // Discover and create consumer for the service
@@ -257,7 +257,7 @@ fn subscribe_event<R: Runtime>(
 <summary>Examples:</summary>
 
 ```rust
-use com_api::{Result, SampleContainer, Subscription};
+use score_com::{Result, SampleContainer, Subscription};
 use com_api_gen::Tire;
 
 // Polling for events - Synchronous receive API
@@ -292,7 +292,7 @@ fn read_tire_data<R: Runtime>(
 <summary>Examples:</summary>
 
 ```rust
-use com_api::{Result, SampleContainer, Subscription};
+use score_com::{Result, SampleContainer, Subscription};
 use com_api_gen::Tire;
 
 // Async receive - waits for samples to arrive no wait timeout
@@ -337,7 +337,7 @@ async fn read_tire_data_async<R: Runtime>(
 <summary>Examples:</summary>
 
 ```rust
-use com_api::{Result, SampleContainer, Subscription};
+use score_com::{Result, SampleContainer, Subscription};
 use com_api_gen::Tire;
 use futures::channel::oneshot;
 use futures::FutureExt;
@@ -398,7 +398,7 @@ async fn read_tire_data_with_timeout<R: Runtime>(
 <summary>Examples:</summary>
 
 ```rust
-use com_api::{Result, Subscription};
+use score_com::{Result, Subscription};
 use com_api_gen::Tire;
 use futures::StreamExt;
 
@@ -448,7 +448,7 @@ A producer is constructed by calling `Runtime::producer_builder()` with an `Inst
 <summary>Examples:</summary>
 
 ```rust
-use com_api::{Runtime, Producer, OfferedProducer, InstanceSpecifier};
+use score_com::{Runtime, Producer, OfferedProducer, InstanceSpecifier};
 use com_api_gen::{VehicleInterface, VehicleOfferedProducer, Tire};
 
 // Create and offer a service producer
@@ -508,7 +508,7 @@ All communicated types must implement `CommData`, which bounds `T: Reloc + Send 
 <summary>Examples:</summary>
 
 ```rust
-use com_api::{CommData, Sample, SampleMaybeUninit};
+use score_com::{CommData, Sample, SampleMaybeUninit};
 use com_api_gen::Tire;
 
 // Tire data type defined in com_api_gen
@@ -549,7 +549,7 @@ fn compare_samples(
 <summary>Examples:</summary>
 
 ```rust
-use com_api::{SampleContainer, Subscription};
+use score_com::{SampleContainer, Subscription};
 use com_api_gen::Tire;
 
 // Process batch of samples

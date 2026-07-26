@@ -13,9 +13,8 @@
 
 //! Test-only re-export of the full COM API including the mock runtime.
 //!
-//! Depend on `//score/mw/com/rust:com_api_mock` (instead of `:com_api`) in your
-//! test `BUILD` rule to get access to `MockRuntimeBuilderImpl` and `MockRuntimeImpl`.
+//! Depend on `//score/mw/com/rust:score_com_mock` (instead of `:score_com`).
 
-pub use com_api::*;
+pub use score_com::*;
 pub use com_api_runtime_mock::MockRuntimeImpl;
 pub use com_api_runtime_mock::RuntimeBuilderImpl as MockRuntimeBuilderImpl;

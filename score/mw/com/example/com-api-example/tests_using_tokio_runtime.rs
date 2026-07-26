@@ -31,7 +31,7 @@
 
 #[cfg(test)]
 mod test {
-    use com_api::{
+    use score_com::{
         Builder, FindServiceSpecifier, InstanceSpecifier, LolaRuntimeBuilderImpl, OfferedProducer,
         Producer, Publisher, Runtime, RuntimeBuilder, SampleContainer, SampleMaybeUninit,
         SampleMut, ServiceDiscovery, Subscriber, Subscription,
@@ -49,13 +49,13 @@ mod test {
     const TIMEOUT_FOR_SIMULATION_MS: u64 = 1000;
     const PRODUCER_ITERATIONS: usize = 5;
     const CONSUMER_ITERATIONS: usize = 5;
-    static LOLA_RUNTIME: OnceLock<com_api::LolaRuntimeImpl> = OnceLock::new();
+    static LOLA_RUNTIME: OnceLock<score_com::LolaRuntimeImpl> = OnceLock::new();
     // it will create a singleton instance of LolaRuntime for testing,
     // and it will be shared across different test cases,
     // so that the runtime initialization is done only once for all tests,
     // and re-initialization of backend is avoided,
     // as it prints warning if backend is initialized more than once.
-    fn get_test_runtime() -> &'static com_api::LolaRuntimeImpl {
+    fn get_test_runtime() -> &'static score_com::LolaRuntimeImpl {
         LOLA_RUNTIME.get_or_init(|| {
             let lola_runtime_builder =
                 init_lola_runtime_builder(std::path::Path::new(TEST_CONFIG_PATH));

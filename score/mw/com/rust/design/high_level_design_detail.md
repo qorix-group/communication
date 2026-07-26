@@ -41,7 +41,7 @@ The COM API follows a layered architecture separating abstract contracts from co
 
 
 ### Abstraction layer
-**Location**: [concept/](../concept/concept.rs)
+**Location**: [score_com_concept/](../score_com_concept/score_com_concept.rs)
 
 The Abstraction Layer defines platform-independent interfaces through a carefully designed set of traits. These traits establish contracts that any runtime implementation must fulfill. The layer also contains generated code around the generic traits using Rust-macros, making the API convenient for applications to use.
 
@@ -96,7 +96,7 @@ The LoLa Runtime is responsible for translating generic trait operations into co
 - **Zero-copy data handling**: Leverages shared memory backend through `Sample<T>` and `SampleMaybeUninit<T>` types for efficient data access.
 - **Automated resource lifecycle management**: Manages lifecycle of C++ LoLa proxies and skeletons through automatic cleanup via Rust's `Drop` trait.
 
-**Supported concept Traits by LoLa Runtime**
+**Supported score_com_concept Traits by LoLa Runtime**
 
 | Trait/Type | Supported |
 |-----------|:---------:|
@@ -168,8 +168,8 @@ All event data transmitted via IPC must implement the `CommData` trait using der
 
 ### Code Organization
 When extending the COM API:
-1. **Generic Features**: Add to `com-api-concept` for implementation-agnostic traits
-2. **LoLa Implementation**: Add to `com-api-runtime-lola` for concrete implementation of `com-api-concept` using the MW::COM (LoLa) backend
+1. **Generic Features**: Add to `score_com_concept` for implementation-agnostic traits
+2. **LoLa Implementation**: Add to `com-api-runtime-lola` for concrete implementation of `score_com_concept` using the MW::COM (LoLa) backend
 3. **Examples**: Update or add to `com-api-example` directory for demonstration code
 
 ### Naming Conventions
@@ -182,5 +182,5 @@ All naming in the COM-API adheres to [Rust Naming Guidelines](https://rust-lang.
 
 | Target | Purpose |
 |--------|---------|
-| `//score/mw/com/rust/concept` | Generic trait definitions and `CommData` / `Reloc` contracts |
-| `//score/mw/com/rust/com_api_macros` | Derive macros for `CommData` and `Reloc` |
+| `//score/mw/com/rust/score_com_concept` | Generic trait definitions and `CommData` / `Reloc` contracts |
+| `//score/mw/com/rust/score_com_macros` | Derive macros for `CommData` and `Reloc` |
