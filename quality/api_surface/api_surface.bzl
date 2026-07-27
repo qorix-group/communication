@@ -27,6 +27,8 @@ Provides:
     also implicitly creates a <name>.update runnable target to regenerate the lock file
 """
 
+visibility(["//..."])
+
 def _get_include_args(compilation_context):
     """Build include and define arguments from a CcInfo compilation context."""
     args = []

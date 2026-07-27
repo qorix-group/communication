@@ -27,6 +27,8 @@ root is the pack directory (containing `qlpack.yml`, `codeql-suites/`, `rules/`
 and `.codeql/libraries/`).
 """
 
+visibility("//...")
+
 def _codeql_release_pack_impl(repository_ctx):
     repository_ctx.download(
         url = repository_ctx.attr.urls,

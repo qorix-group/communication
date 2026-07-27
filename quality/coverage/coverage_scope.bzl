@@ -24,6 +24,8 @@ workspace root). The coverage reporter uses this to restrict reports to exactly
 the files that are part of a dependable_element's implementation.
 """
 
+visibility(["//..."])
+
 # =============================================================================
 # Provider to carry collected source file paths through the aspect
 # =============================================================================
