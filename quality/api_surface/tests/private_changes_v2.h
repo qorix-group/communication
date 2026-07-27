@@ -17,7 +17,8 @@
 #include <map>
 #include <string>
 
-namespace test {
+namespace test
+{
 
 /// \brief Same public API as private_changes.h::StableApi, but the private
 /// implementation has changed completely.
@@ -26,7 +27,8 @@ namespace test {
 /// API surface extracted from this header MUST be identical to the one from
 /// private_changes.h even though every private member differs.
 /// \api
-class StableApi {
+class StableApi
+{
   public:
     /// \brief Default constructor.
     StableApi();

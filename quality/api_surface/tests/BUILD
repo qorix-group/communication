@@ -306,6 +306,7 @@ py_test(
     name = "api_extraction_validation_test",
     srcs = ["test_api_extraction_validation.py"],
     data = [
+        ":all_private_api_test_gen",
         ":basic_class_api_test_gen",
         ":constexpr_members_api_test_gen",
         ":cpp_attributes_api_test_gen",
@@ -319,6 +320,7 @@ py_test(
         ":member_function_templates_api_test_gen",
         ":multi_inheritance_api_test_gen",
         ":private_changes_api_test_gen",
+        ":private_changes_v2_api_test_gen",
         ":protected_methods_api_test_gen",
         ":ref_qualifiers_api_test_gen",
         ":result_type_regression_api_test_gen",
@@ -326,8 +328,6 @@ py_test(
         ":template_alias_api_test_gen",
         ":type_alias_api_test_gen",
         ":types_in_signatures_api_test_gen",
-        ":private_changes_v2_api_test_gen",
-        ":all_private_api_test_gen",
     ],
     main = "test_api_extraction_validation.py",
 )

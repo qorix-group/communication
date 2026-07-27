@@ -15,14 +15,16 @@
 
 #include <string>
 
-namespace test {
+namespace test
+{
 
 /// \brief A class that exposes no public members at all.
 ///
 /// Negative case: only the class type itself is part of the API surface; none
 /// of its members (all private) may appear as public symbols.
 /// \api
-class OnlyPrivate {
+class OnlyPrivate
+{
   private:
     int secret_;
     std::string token_;
@@ -30,13 +32,15 @@ class OnlyPrivate {
     int compute() const;
 };
 
-namespace detail {
+namespace detail
+{
 
 /// \brief A helper that lives in an internal namespace.
 ///
 /// Negative case: nothing declared inside `test::detail` may be exported to the
 /// public API surface, regardless of access specifier.
-class HiddenHelper {
+class HiddenHelper
+{
   public:
     void publicButInternal();
     int alsoInternal(int x) const;
