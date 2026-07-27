@@ -65,15 +65,6 @@ body:
     default: 0
   validations:
     required: true
-- type: dropdown
-  attributes:
-    label: Expected Closure Version
-    options:
-      - 0.5
-      - 1.0
-    default: 0
-  validations:
-    required: false
 - type: checkboxes
   attributes:
     label: Category
