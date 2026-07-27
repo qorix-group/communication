@@ -16,6 +16,8 @@ load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 load("@score_itf//:defs.bzl", "py_itf_test")
 load("@score_rules_imagefs//rules/qnx:ifs.bzl", "qnx_ifs")
 
+visibility(["//..."])
+
 def _extend_list_in_kwargs(kwargs, key, values):
     kwargs[key] = kwargs.get(key, []) + values
     return kwargs

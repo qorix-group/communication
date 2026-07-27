@@ -32,6 +32,8 @@ Then add ":quality_links" to sphinx_module srcs, and in quality_reports.rst:
   .. include:: quality_links.rst
 """
 
+visibility(["//..."])
+
 def _generate_quality_links_impl(ctx):
     docs_version = ctx.var.get("DOCS_VERSION", "")
     docs_base_url = ctx.var.get("DOCS_BASE_URL", "").rstrip("/")
