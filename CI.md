@@ -56,12 +56,12 @@ Note: Configuration marked as "NA" are considered as not applicable because the 
 
 And this is the list of bazel `--config=` for the supported configurations:
 
-|              | GCC 12.2 + libstdc++                          | GCC 15 + libstdc++ | QCC (GCC 12.2) + libc++ | Clang 22 + libc++        |
-|--------------|-----------------------------------------------|--------------------|-------------------------|--------------------------|
-| x86-64 linux | --config=linux_x86_64_score_gcc_12_2_0_posix  | (default)          | NA                      | Config not yet available |
-| ARM64 linux  | --config=linux_aarch64_score_gcc_12_2_0_posix | Not supported yet  | NA                      | Config not yet available |
-| x86-64 QNX   | NA                                            | NA                 | --config=qnx_x86_64     | NA                       |
-| ARM64 QNX    | NA                                            | NA                 | --config=qnx_arm64      | NA                       |
+|              | GCC 12.2 + libstdc++ | GCC 15 + libstdc++                         | QCC (GCC 12.2) + libc++           | Clang 22 + libc++         |
+|--------------|----------------------|--------------------------------------------|-----------------------------------|---------------------------|
+| x86-64 linux | linux_x64_gcc_12     | (default) / linux_arm64_gcc_15 / linux_x64 | NA                                | linux_x64_clang_22 /clang |
+| ARM64 linux  | linux_arm64_gcc_12   | linux_arm64_gcc_15 / linux_arm64           | NA                                | linux_arm64_clang_22      |
+| x86-64 QNX   | NA                   | NA                                         | qnx_x64_qcc_12 / qnx_x64          | NA                        |
+| ARM64 QNX    | NA                   | NA                                         | qnx_arm64_qcc_12 / qnx_arm64 /qnx | NA                        |
 
 ## Pipelines
 
