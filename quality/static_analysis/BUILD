@@ -19,11 +19,13 @@ py_binary(
         "--codeql_path=$(location @codeql_bundle//:codeql_cli)",
         "--config_path=$(location :config)",
         "--analysis_report_path=$(location @codeql_coding_standards//:analysis_report)",
+        "--guideline_recategorize_path=$(location @codeql_coding_standards//:guideline_recategorize)",
     ],
     data = [
         ":config",
         "@codeql_bundle//:codeql_cli",
         "@codeql_coding_standards//:analysis_report",
+        "@codeql_coding_standards//:guideline_recategorize",
         "@codeql_coding_standards//:process_coding_standards_config",
         "@codeql_coding_standards_compiled//:pack",
     ],
@@ -36,6 +38,13 @@ py_binary(
 filegroup(
     name = "config",
     srcs = ["config.yaml"],
+)
+
+py_test(
+    name = "codeql_lint_test",
+    srcs = ["codeql_lint_test.py"],
+    data = ["codeql_lint.py"],
+    target_compatible_with = ["@platforms//os:linux"],
 )
 
 # The `sarif` CLI from the sarif-tools PyPI package

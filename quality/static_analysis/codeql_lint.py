@@ -20,6 +20,7 @@ import shutil
 
 
 TMP_PATH_FOR_DATABASES = "/var/tmp/codeql_databases"
+CODING_STANDARDS_CONFIG_RELATIVE_PATH = "quality/static_analysis/coding-standards.yaml"
 
 
 # Default query suite (relative to the MISRA C++ pack root) run by the analysis.
@@ -169,6 +170,8 @@ def analyze_database(
     database_path,
     source_root,
     analysis_report_path=None,
+    recategorize_path=None,
+    coding_standards_config_path=None,
     query_spec=None,
     output_prefix="codeql",
     output_dir=None,
@@ -211,6 +214,12 @@ def analyze_database(
         f"{common_analyze_flags} "
         f"--format=sarifv2.1.0 --output={sarif_path}",
         shell=True, check=True)
+
+    recategorize_sarif(
+        recategorize_path,
+        coding_standards_config_path,
+        sarif_path,
+    )
 
     # Generate reports using CodeQL analysis_report tool
     if analysis_report_path and os.path.exists(analysis_report_path):
@@ -255,11 +264,59 @@ def analyze_database(
             print(f"Report generation exception: {e}")
 
 
+def recategorize_sarif(recategorize_path, coding_standards_config_path, sarif_path):
+    if not recategorize_path:
+        return sarif_path
+    if not coding_standards_config_path or not os.path.isfile(coding_standards_config_path):
+        raise RuntimeError(
+            f"Coding standards config file not found: {coding_standards_config_path!r}"
+        )
+
+    recategorize_path = os.path.realpath(recategorize_path)
+    coding_standards_schema_path, sarif_schema_path = _find_recategorization_schema_paths()
+    coding_standards_schema_path = os.path.realpath(coding_standards_schema_path)
+    sarif_schema_path = os.path.realpath(sarif_schema_path)
+    recategorized_sarif_path = f"{sarif_path}.recategorized"
+    subprocess.run(
+        [
+            recategorize_path,
+            "--coding-standards-schema-file",
+            coding_standards_schema_path,
+            "--sarif-schema-file",
+            sarif_schema_path,
+            coding_standards_config_path,
+            sarif_path,
+            recategorized_sarif_path,
+        ],
+        check=True,
+    )
+    os.replace(recategorized_sarif_path, sarif_path)
+    return sarif_path
+
+
+def _find_recategorization_schema_paths():
+    from python.runfiles import Runfiles
+
+    runfiles = Runfiles.Create()
+    coding_standards_schema_path = runfiles.Rlocation(
+        "codeql_coding_standards/schemas/coding-standards-schema-1.0.0.json"
+    )
+    sarif_schema_path = runfiles.Rlocation(
+        "codeql_coding_standards/schemas/sarif-schema-2.1.0.json"
+    )
+    if not coding_standards_schema_path or not os.path.isfile(coding_standards_schema_path):
+        raise RuntimeError("Failed to load Coding Standards schema!")
+    if not sarif_schema_path or not os.path.isfile(sarif_schema_path):
+        raise RuntimeError("Failed to load Sarif schema!")
+    return coding_standards_schema_path, sarif_schema_path
+
+
 def main():
     parser = argparse.ArgumentParser(description="Run CodeQL linting operations")
     parser.add_argument("--codeql_path", help="Path to CodeQL binary")
     parser.add_argument("--config_path", help="CodeQL config file")
     parser.add_argument("--analysis_report_path", help="Path to analysis_report binary")
+    parser.add_argument("--guideline_recategorize_path", help="Path to guideline recategorization binary")
     parser.add_argument("--target", nargs="+", help="Bazel targets to build")
     parser.add_argument("--phase", choices=["create-database", "analyze-database", "all"],
                        default="all", help="Execution phase")
@@ -279,6 +336,9 @@ def main():
 
     # Make codeql_path absolute
     codeql_path = os.path.abspath(args.codeql_path) if args.codeql_path else None
+    coding_standards_config_path = os.path.join(source_root, CODING_STANDARDS_CONFIG_RELATIVE_PATH)
+    if not os.path.isabs(coding_standards_config_path):
+        coding_standards_config_path = os.path.abspath(coding_standards_config_path)
 
     if args.phase == "create-database":
         os.makedirs(os.path.dirname(args.database_path), exist_ok=True)
@@ -288,6 +348,8 @@ def main():
     elif args.phase == "analyze-database":
         analyze_database(codeql_path, args.database_path, source_root,
                         analysis_report_path=args.analysis_report_path,
+                        recategorize_path=args.guideline_recategorize_path,
+                        coding_standards_config_path=coding_standards_config_path,
                         query_spec=args.query_spec, output_prefix=args.output_prefix,
                         output_dir=args.output_dir)
 
@@ -305,6 +367,8 @@ def main():
                            build_configs=args.build_configs)
             analyze_database(codeql_path, database_location, source_root,
                            analysis_report_path=args.analysis_report_path,
+                           recategorize_path=args.guideline_recategorize_path,
+                           coding_standards_config_path=coding_standards_config_path,
                            query_spec=args.query_spec, output_prefix=args.output_prefix,
                            output_dir=args.output_dir)
 
@@ -344,5 +408,3 @@ def _get_bazel_info(source_root):
 
 if __name__ == "__main__":
     main()
-
-
