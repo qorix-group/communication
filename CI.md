@@ -135,9 +135,6 @@ Runs all C++ unit tests under thread sanitizer.
 Each unit test target also has a maximum run time [as the job for unit tests without sanitizers](./CI.md#build-everything-and-run-unit-tests-host)
 and the same stability design where a test is rerun 3 times in case of failure.
 
-In case that a test had to be retried, that information is uploaded to some storage and made it visible in Power BI. Such
-information will only be collected from the gate pipeline.
-
 This job cannot be combined with any of the other sanitizer jobs due to how sanitizers work.
 If the tool used for sanitizers is ever changed, this decision could be revisited.
 
