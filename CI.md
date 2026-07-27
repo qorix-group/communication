@@ -193,6 +193,13 @@ at least one time, it is considered a bug and a ticket is created.
 The setup of this job is exactly the same as [the one running in check and merge](#run-integration-tests-x86-64-linux)
 but with the addition of the flag `--runs_per_test=20`.
 
+#### Generate and deploy documentation
+
+#### Cache recreation
+
+To be able to have fast feedback, all our CI job use Bazel cache. To avoid permanent cache poisoning and cache size exploding, the cache is recreated nightly.
+More details can be found in the [cache strategy design document](./.github/cache-strategy.md).
+
 ## Post-mortem analysis and follow-up actions
 
 It is acknowledged that this design is not perfect, and experience will teach us that this design will have to be adapted.
