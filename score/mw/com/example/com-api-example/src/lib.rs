@@ -16,7 +16,7 @@ pub mod producer;
 pub use consumer::VehicleMonitorConsumer;
 pub use producer::VehicleMonitorProducer;
 
-use com_api::{Interface, Producer};
+use score_com::{Interface, Producer};
 use com_api_gen::VehicleInterface;
 
 // Type aliases for generated consumer and offered producer types for the Vehicle interface

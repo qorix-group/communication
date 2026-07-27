@@ -12,7 +12,7 @@
  ********************************************************************************/
 
 use crate::VehicleOfferedProducer;
-use com_api::{
+use score_com::{
     Builder, InstanceSpecifier, OfferedProducer, Producer, Publisher, Result, Runtime,
     SampleMaybeUninit, SampleMut,
 };
