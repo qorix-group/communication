@@ -120,6 +120,11 @@ def get_all_public_targets(repo_root):
         "attr(visibility, //visibility:public, //...)",
         "--output=label",
         "--keep_going",
+        # The dependency-compatibility checker rewrites MODULE.bazel to pin
+        # alternative versions, which makes the committed lockfile stale. Skip
+        # lockfile verification so this nested query still resolves; on an
+        # unmodified tree the lockfile matches and the result is unchanged.
+        "--lockfile_mode=off",
     ]
 
     env = os.environ.copy()
