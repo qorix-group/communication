@@ -14,7 +14,6 @@
 name: "Improvement / Task"
 description: Issue to track a improvement / task
 title: "Improvement: Your Improvement title"
-labels: ["codeowner_review"]
 body:
 - type: textarea
   attributes:
