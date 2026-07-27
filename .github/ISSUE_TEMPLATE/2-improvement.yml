@@ -37,7 +37,7 @@ body:
       - Estimate the effort, resources, risk for the realization
       - Impact to users of the feature
   validations:
-    required: true
+    required: false
 - type: checkboxes
   attributes:
     label: Category
