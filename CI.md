@@ -39,7 +39,7 @@ could be random. For the purpose of this design we consider all goals equal.
 
 S-CORE Communication supports multiple architectures, compilers, and operating systems. Some of them are only supported for development and
 some are supported for production.
-In the CI we do not test we do not test all combinations in all pipelines, we try to find a combination that helps us to find most of the issues
+In the CI we do not test all combinations in all pipelines, we try to find a combination that helps us to find most of the issues
 without duplication. If we believe that most issues are dected with certain combinations, the rest of combinations might not run in the check and
 merge pipeline but only in the nightly pipeline.
 
