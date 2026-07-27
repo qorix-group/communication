@@ -500,6 +500,23 @@ codeql_release_pack(
     urls = ["https://github.com/github/codeql-coding-standards/releases/download/v{version}/coding-standards-codeql-packs.zip".format(version = CODING_STANDARDS_VERSION)],
 )
 
+# Self-contained (single-file .NET publish) Linux x64 build of the official
+# Microsoft SARIF SDK's Sarif.Multitool, distributed as the npm package
+# @microsoft/sarif-multitool-linux (the same tool used by
+# .github/actions/00_infrastructure/merge_sarif_reports for rules_lint, and by
+# //quality/static_analysis:merge_codeql_findings for the Linux/QNX CodeQL
+# union). Fetched by pinned URL + sha256 (like codeql_bundle above) rather
+# than via `npx` at runtime, so the merge step needs no network access and is
+# fully reproducible.
+http_archive(
+    name = "sarif_multitool",
+    build_file = "//third_party/sarif:sarif_multitool.BUILD",
+    patch_cmds = ["chmod +x Sarif.Multitool"],
+    sha256 = "019fe2535318b1954579bea1dac391b652e90e24dea11082625abd9a25d3816d",
+    strip_prefix = "package",
+    url = "https://registry.npmjs.org/@microsoft/sarif-multitool-linux/-/sarif-multitool-linux-5.6.0.tgz",
+)
+
 register_toolchains(
     "//bazel/toolchains:sphinx_toolchain",
     dev_dependency = True,
