@@ -47,6 +47,10 @@ LolaMethodInstanceDeployment::QueueSize GetQueueSize(HandleType parent_handle,
                                                      const std::string& method_name_str,
                                                      MethodType method_type);
 
+bool IsMethodOrFieldEnabled(const LolaServiceInstanceDeployment& lola_service_instance_deployment,
+                            const std::string& method_name_str,
+                            MethodType method_type);
+
 template <typename ReturnType, typename... ArgTypes>
 lola::TypeErasedCallQueue::TypeErasedElementInfo GetTypeErasedElementInfo(HandleType parent_handle,
                                                                           const std::string& method_name_str,
@@ -123,13 +127,10 @@ Result<std::unique_ptr<ProxyMethodBinding>> ProxyMethodBindingFactoryImpl<Return
             const auto& lola_service_instance_deployment =
                 GetServiceInstanceDeploymentBinding<LolaServiceInstanceDeployment>(service_instance_deployment);
 
-            const auto method_it = lola_service_instance_deployment.methods_.find(method_name_str);
-            SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(method_it != lola_service_instance_deployment.methods_.end(),
-                                                        "Could not find method deployment information for method");
-            if (!method_it->second.enabled_)
+            if (!detail::IsMethodOrFieldEnabled(lola_service_instance_deployment, method_name_str, method_type))
             {
                 score::mw::log::LogDebug("lola")
-                    << "Proxy Method " << method_name_str
+                    << "Proxy field or method " << method_name_str
                     << " was disabled in the instance deployment configuration. Not creating a binding for it.";
                 return nullptr;
             }
