@@ -63,6 +63,8 @@ And this is the list of bazel `--config=` for the supported configurations:
 | x86-64 QNX   | NA                   | NA                                         | qnx_x64_qcc_12 / qnx_x64          | NA                        |
 | ARM64 QNX    | NA                   | NA                                         | qnx_arm64_qcc_12 / qnx_arm64 /qnx | NA                        |
 
+Note: Not all configs exist right now, that will be fixed in https://github.com/eclipse-score/communication/issues/792.
+
 ## Pipelines
 
 ### Check and merge queue
@@ -91,6 +93,8 @@ we want this to be enforced in checks and not rely on the reviewers.
 Ensure that the Markdown files are formatted following our decided style.
 The goal is not to ensure a specific format but to have consistency in the project.
 With a linter, we also want to reduce the possibility of errors and maximize compatibility across different Markdown viewers.
+
+Note: Not yet implemented, it will be done with https://github.com/eclipse-score/communication/issues/786.
 
 #### Formatting and linting of Bazel files
 
@@ -144,7 +148,11 @@ If the tool used for sanitizers is ever changed, this decision could be revisite
 
 #### Run all C++ tests with the hardned standard library (libstdc++) (x86-64 linux)
 
+Note: Not yet implemented, it will be done with https://github.com/eclipse-score/communication/issues/788.
+
 #### Run all C++ tests with the hardned standard library (libc++) (x86-64 linux)
+
+Note: Not yet implemented, it will be done with https://github.com/eclipse-score/communication/issues/789.
 
 #### Clang-tidy checks (x86-64 linux)
 
@@ -153,6 +161,8 @@ Runs the [clang-tidy checks](./.clang-tidy) for the host.
 #### Clang-tidy checks (ARM64 QNX)
 
 Runs the [clang-tidy checks](./.clang-tidy) for the target.
+
+Note: Not yet implemented, it will be done with https://github.com/eclipse-score/communication/issues/790.
 
 #### API checks
 
@@ -168,6 +178,8 @@ Makes sure that S-CORE Communication can be integrated as a module, and that it 
 ### Periodic 24h (at 20:00 UTC)
 
 #### Job to check for deprecated warnings
+
+Note: Not yet implemented, it will be done with https://github.com/eclipse-score/communication/issues/791.
 
 #### CodeQL checks (x86-64 linux)
 
