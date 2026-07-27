@@ -672,5 +672,82 @@ class TestSfinae(unittest.TestCase):
         self.assertIn("enable_if", sym["signature"])
         self.assertIn("is_signed", sym["signature"])
 
+
+def public_surface(result: dict) -> dict:
+    """Return a comparable {qualified_name: signature} map of the public API."""
+    return {
+        s["qualified_name"]: s.get("signature", "")
+        for s in get_all_symbols(result)
+    }
+
+
+class TestPrivateAttributeChanges(unittest.TestCase):
+    """Stability: changing private attributes must not change the public API.
+
+    private_changes.h and private_changes_v2.h declare the same public class
+    (test::StableApi with the same public members) but have completely different
+    private data members and helper methods. The extracted public API surface
+    must therefore be identical.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.v1 = load_api_surface("private_changes")
+        cls.v2 = load_api_surface("private_changes_v2")
+
+    def test_public_surface_identical(self):
+        self.assertEqual(
+            public_surface(self.v1),
+            public_surface(self.v2),
+            "Private-only changes must not alter the public API surface",
+        )
+
+    def test_public_members_present_in_both(self):
+        for result in (self.v1, self.v2):
+            qnames = qualified_names(get_all_symbols(result))
+            self.assertIn("test::StableApi::process", qnames)
+            self.assertIn("test::StableApi::name", qnames)
+
+    def test_no_private_members_leak(self):
+        # Union of the (different) private members from both headers.
+        private_members = {
+            "name_", "history_", "cache_", "updateHistory", "clearCache",
+            "counters_", "revision_", "dirty_", "recompute", "invalidate",
+            "lookup",
+        }
+        for result in (self.v1, self.v2):
+            names = symbol_names(get_all_symbols(result))
+            for member in private_members:
+                self.assertNotIn(member, names, f"Private member leaked: {member}")
+
+
+class TestNegativeCases(unittest.TestCase):
+    """Negative cases: symbols that must NOT appear in the public API surface."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.result = load_api_surface("all_private")
+        cls.symbols = get_all_symbols(cls.result)
+
+    def test_all_private_members_absent(self):
+        """A class with only private members exposes none of them."""
+        names = symbol_names(self.symbols)
+        for member in ("secret_", "token_", "mutate", "compute"):
+            self.assertNotIn(member, names, f"Private member leaked: {member}")
+
+    def test_internal_namespace_excluded(self):
+        """Nothing inside test::detail is exported, even public members."""
+        for qn in qualified_names(self.symbols):
+            self.assertNotIn("detail", qn, f"Internal symbol leaked: {qn}")
+        names = symbol_names(self.symbols)
+        self.assertNotIn("publicButInternal", names)
+        self.assertNotIn("alsoInternal", names)
+        self.assertNotIn("hiddenFreeFunction", names)
+
+    def test_missing_symbol_not_found(self):
+        """Looking up a symbol that does not exist returns None."""
+        self.assertIsNone(find_symbol(self.symbols, "test::DoesNotExist"))
+
+
 if __name__ == "__main__":
     unittest.main()

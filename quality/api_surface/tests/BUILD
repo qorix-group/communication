@@ -194,6 +194,19 @@ cc_library(
     hdrs = ["sfinae.h"],
 )
 
+# Negative / stability cases: a second private-changes variant with the same
+# public API but different private members, and an all-private / internal class.
+
+cc_library(
+    name = "private_changes_v2_lib",
+    hdrs = ["private_changes_v2.h"],
+)
+
+cc_library(
+    name = "all_private_lib",
+    hdrs = ["all_private.h"],
+)
+
 # API surface generation + comparison for the additional cases.
 
 api_surface_test(
@@ -273,6 +286,20 @@ api_surface_test(
     target = ":sfinae_lib",
 )
 
+api_surface_test(
+    name = "private_changes_v2_api_test",
+    check_docs = False,
+    lock_file = "golden/private_changes_v2.lock.json",
+    target = ":private_changes_v2_lib",
+)
+
+api_surface_test(
+    name = "all_private_api_test",
+    check_docs = False,
+    lock_file = "golden/all_private.lock.json",
+    target = ":all_private_lib",
+)
+
 # Python assertion test that validates the CONTENT of extracted API surfaces
 # (not just that they match a lock file, but that specific expectations hold)
 py_test(
@@ -299,8 +326,27 @@ py_test(
         ":template_alias_api_test_gen",
         ":type_alias_api_test_gen",
         ":types_in_signatures_api_test_gen",
+        ":private_changes_v2_api_test_gen",
+        ":all_private_api_test_gen",
     ],
     main = "test_api_extraction_validation.py",
+)
+
+# End-to-end test that drives the full clang -> extract_api.py pipeline directly
+# (no committed lock files): it runs clang to produce an AST dump and feeds it to
+# extract_api.py, then asserts on the extracted API surface. Uses the hermetic
+# LLVM toolchain clang via the CLANG_PATH environment variable.
+py_test(
+    name = "extract_api_test",
+    srcs = ["test_extract_api.py"],
+    data = [
+        "//quality/api_surface:extract_api",
+        "@llvm_toolchain//:bin/clang-cpp",
+    ] + glob(["*.h"]),
+    env = {
+        "CLANG_PATH": "$(rootpath @llvm_toolchain//:bin/clang-cpp)",
+    },
+    main = "test_extract_api.py",
 )
 
 py_test(
