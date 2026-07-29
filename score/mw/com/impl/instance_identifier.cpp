@@ -44,7 +44,7 @@ Configuration* InstanceIdentifier::configuration_{nullptr};
 // std::bad_optional_access which leds to std::terminate().
 // This suppression should be removed after fixing [Ticket-173043](broken_link_j/Ticket-173043)
 // coverity[autosar_cpp14_a15_5_3_violation : FALSE]
-score::Result<InstanceIdentifier> InstanceIdentifier::Create(std::string&& serialized_format) noexcept
+score::Result<InstanceIdentifier> InstanceIdentifier::Create(std::string&& serialized_format)
 {
     if (configuration_ == nullptr)
     {
@@ -80,7 +80,7 @@ score::Result<InstanceIdentifier> InstanceIdentifier::Create(std::string&& seria
 // Rationale: Delegation to a separate constructor complexifies the code significantly.
 // This adds more risk than doing the initialization of the members in each constructor.
 // coverity[autosar_cpp14_a12_1_5_violation : FALSE]
-InstanceIdentifier::InstanceIdentifier(const json::Object& json_object, std::string&& serialized_string) noexcept
+InstanceIdentifier::InstanceIdentifier(const json::Object& json_object, std::string&& serialized_string)
     : instance_deployment_{nullptr}, type_deployment_{nullptr}, serialized_string_{std::move(serialized_string)}
 {
     const auto serialization_version = GetValueFromJson<std::uint32_t>(json_object, kSerializationVersionKey);
@@ -161,7 +161,7 @@ InstanceIdentifierView::InstanceIdentifierView(const InstanceIdentifier& identif
 // an exception.
 // This suppression should be removed after fixing [Ticket-173043](broken_link_j/Ticket-173043)
 // coverity[autosar_cpp14_a15_5_3_violation : FALSE]
-auto InstanceIdentifierView::GetServiceInstanceId() const noexcept -> std::optional<ServiceInstanceId>
+auto InstanceIdentifierView::GetServiceInstanceId() const -> std::optional<ServiceInstanceId>
 {
     auto visitor = score::cpp::overload(
         [](const LolaServiceInstanceDeployment& deployment) -> std::optional<ServiceInstanceId> {

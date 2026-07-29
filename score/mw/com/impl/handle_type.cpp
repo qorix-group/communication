@@ -26,8 +26,7 @@ namespace score::mw::com::impl
 namespace
 {
 
-ServiceInstanceId ExtractInstanceId(std::optional<ServiceInstanceId> instance_id,
-                                    const InstanceIdentifier& identifier) noexcept
+ServiceInstanceId ExtractInstanceId(std::optional<ServiceInstanceId> instance_id, const InstanceIdentifier& identifier)
 {
     if (instance_id.has_value())
     {

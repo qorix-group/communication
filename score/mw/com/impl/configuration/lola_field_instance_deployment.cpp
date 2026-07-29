@@ -43,7 +43,7 @@ LolaFieldInstanceDeployment::LolaFieldInstanceDeployment(const score::json::Obje
 {
 }
 
-LolaFieldInstanceDeployment LolaFieldInstanceDeployment::CreateFromJson(const score::json::Object& json_object) noexcept
+LolaFieldInstanceDeployment LolaFieldInstanceDeployment::CreateFromJson(const score::json::Object& json_object)
 {
     // Delegate event-specific parsing to LolaEventInstanceDeployment (which also checks serialization version).
     auto event_deployment = LolaEventInstanceDeployment::CreateFromJson(json_object);

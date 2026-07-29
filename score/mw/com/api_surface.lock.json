@@ -71,7 +71,7 @@
       "name": "Create",
       "qualified_name": "score::mw::com::InstanceIdentifier::Create",
       "kind": "method",
-      "signature": "static Create : score::Result<InstanceIdentifier> (std::string &&) noexcept"
+      "signature": "static Create : score::Result<InstanceIdentifier> (std::string &&)"
     },
     {
       "name": "InstanceIdentifier",
@@ -227,7 +227,7 @@
       "name": "Create",
       "qualified_name": "score::mw::com::GenericProxy::Create",
       "kind": "method",
-      "signature": "static Create : Result<GenericProxy> (HandleType) noexcept"
+      "signature": "static Create : Result<GenericProxy> (HandleType)"
     },
     {
       "name": "FindService",
@@ -311,7 +311,7 @@
       "name": "Subscribe",
       "qualified_name": "score::mw::com::GenericProxyEvent::Subscribe",
       "kind": "method",
-      "signature": "Subscribe : Result<void> (const std::size_t) noexcept"
+      "signature": "Subscribe : Result<void> (const std::size_t)"
     },
     {
       "name": "UnsetReceiveHandler",
@@ -799,7 +799,7 @@
       "name": "ProxyEventBase",
       "qualified_name": "score::mw::com::GenericProxyEvent::ProxyEventBase",
       "kind": "constructor",
-      "signature": "ProxyEventBase : void (std::string_view, Result<std::unique_ptr<ProxyEventBindingBase>>) noexcept"
+      "signature": "ProxyEventBase : void (std::string_view, Result<std::unique_ptr<ProxyEventBindingBase>>)"
     },
     {
       "name": "ProxyEventBase",
@@ -841,13 +841,13 @@
       "name": "Create",
       "qualified_name": "score::mw::com::GenericSkeleton::Create",
       "kind": "method",
-      "signature": "static Create : Result<GenericSkeleton> (const InstanceIdentifier &, const GenericSkeletonServiceElementInfo &) noexcept [[nodiscard]]"
+      "signature": "static Create : Result<GenericSkeleton> (const InstanceIdentifier &, const GenericSkeletonServiceElementInfo &) [[nodiscard]]"
     },
     {
       "name": "Create",
       "qualified_name": "score::mw::com::GenericSkeleton::Create",
       "kind": "method",
-      "signature": "static Create : Result<GenericSkeleton> (const InstanceSpecifier &, const GenericSkeletonServiceElementInfo &) noexcept [[nodiscard]]"
+      "signature": "static Create : Result<GenericSkeleton> (const InstanceSpecifier &, const GenericSkeletonServiceElementInfo &) [[nodiscard]]"
     },
     {
       "name": "GetEvents",

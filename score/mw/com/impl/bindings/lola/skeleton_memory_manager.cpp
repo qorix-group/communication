@@ -195,7 +195,7 @@ void* SkeletonMemoryManager::CreateGenericEventDataInCreatedSharedMemory(
     const ElementFqId element_fq_id,
     const SkeletonEventProperties& element_properties,
     size_t sample_size,
-    size_t sample_alignment) noexcept
+    size_t sample_alignment)
 {
     // Guard against over-aligned types (Short-term solution protection)
     if (sample_alignment > alignof(std::max_align_t))
@@ -239,7 +239,7 @@ void* SkeletonMemoryManager::CreateGenericEventDataInCreatedSharedMemory(
 
 void* SkeletonMemoryManager::RetrieveGenericEventDataFromOpenedSharedMemory(
     const ElementFqId element_fq_id,
-    const SkeletonEventProperties& element_properties) noexcept
+    const SkeletonEventProperties& element_properties)
 {
     SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(storage_ != nullptr, "Service data storage is not available.");
 

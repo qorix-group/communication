@@ -26,7 +26,7 @@
 namespace score::mw::com::impl::lola
 {
 
-Result<void> SubscribedState::SubscribeEvent(const std::size_t max_sample_count) noexcept
+Result<void> SubscribedState::SubscribeEvent(const std::size_t max_sample_count)
 {
     // Suppress "AUTOSAR C++14 A4-7-1" rule finding. This rule states: "An integer expression shall
     // not lead to data loss.".
@@ -83,7 +83,7 @@ void SubscribedState::UnsetReceiveHandler() noexcept
     state_machine_.event_receive_handler_manager_.Unregister();
 }
 
-std::optional<std::uint16_t> SubscribedState::GetMaxSampleCount() const noexcept
+std::optional<std::uint16_t> SubscribedState::GetMaxSampleCount() const
 {
     SCORE_LANGUAGE_FUTURECPP_ASSERT_MESSAGE(
         state_machine_.subscription_data_.max_sample_count_.value() > 0U,

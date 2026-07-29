@@ -98,7 +98,7 @@ class ProxyMethodBindingFactoryImpl<ReturnType(ArgTypes...)> : public IProxyMeth
     Result<std::unique_ptr<ProxyMethodBinding>> Create(HandleType parent_handle,
                                                        ProxyBinding& parent_binding,
                                                        const std::string_view method_name,
-                                                       MethodType method_type) noexcept override;
+                                                       MethodType method_type) override;
 };
 
 template <typename ReturnType, typename... ArgTypes>
@@ -106,7 +106,7 @@ Result<std::unique_ptr<ProxyMethodBinding>> ProxyMethodBindingFactoryImpl<Return
     HandleType parent_handle,
     ProxyBinding& parent_binding,
     const std::string_view method_name,
-    MethodType method_type) noexcept
+    MethodType method_type)
 {
     auto method_name_str = std::string{method_name};
 

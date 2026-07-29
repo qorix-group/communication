@@ -172,7 +172,7 @@ std::size_t FindNumberOfTracingSlots(
     const std::unordered_map<TracePointKey, std::set<InstanceSpecifierView>>& trace_point_map,
     std::unordered_set<ServiceElementIdentifierView>& service_element_identifier_view_set,
     const score::mw::com::impl::Configuration& configuration,
-    ServiceElementType service_element_type) noexcept
+    ServiceElementType service_element_type)
 {
     std::size_t number_of_needed_traceing_slots{0U};
     // Suppress "AUTOSAR C++14 A0-1-1", The rule states: "A project shall not contain instances of non-volatile

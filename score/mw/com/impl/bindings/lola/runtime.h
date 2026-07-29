@@ -105,7 +105,7 @@ class Runtime final : public IRuntime
     pid_t pid_;
     std::uint32_t application_id_;
 
-    std::uint32_t DetermineApplicationIdentifier(const Configuration& config) const noexcept;
+    std::uint32_t DetermineApplicationIdentifier(const Configuration& config) const;
 };
 
 }  // namespace score::mw::com::impl::lola

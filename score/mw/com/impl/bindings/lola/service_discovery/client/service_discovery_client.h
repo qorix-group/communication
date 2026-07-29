@@ -54,20 +54,19 @@ class ServiceDiscoveryClient final : public IServiceDiscoveryClient
 
     ~ServiceDiscoveryClient() noexcept override;
 
-    [[nodiscard]] Result<void> OfferService(const InstanceIdentifier instance_identifier) noexcept override;
+    [[nodiscard]] Result<void> OfferService(const InstanceIdentifier instance_identifier) override;
 
     [[nodiscard]] Result<void> StopOfferService(
         const InstanceIdentifier instance_identifier,
         const IServiceDiscovery::QualityTypeSelector quality_type_selector) noexcept override;
 
-    [[nodiscard]] Result<void> StartFindService(
-        const FindServiceHandle find_service_handle,
-        FindServiceHandler<HandleType> handler,
-        const EnrichedInstanceIdentifier enriched_instance_identifier) noexcept override;
+    [[nodiscard]] Result<void> StartFindService(const FindServiceHandle find_service_handle,
+                                                FindServiceHandler<HandleType> handler,
+                                                const EnrichedInstanceIdentifier enriched_instance_identifier) override;
 
     [[nodiscard]] Result<void> StopFindService(const FindServiceHandle find_service_handle) noexcept override;
     [[nodiscard]] Result<ServiceHandleContainer<HandleType>> FindService(
-        const EnrichedInstanceIdentifier enriched_instance_identifier) noexcept override;
+        const EnrichedInstanceIdentifier enriched_instance_identifier) override;
 
   private:
     class SearchRequest
@@ -147,7 +146,7 @@ class ServiceDiscoveryClient final : public IServiceDiscoveryClient
     void UnlinkWatchWithSearchRequest(const WatchesContainer::iterator& watch_iterator,
                                       const SearchRequestsContainer::iterator& search_iterator) noexcept;
 
-    void OnInstanceDirectoryCreated(const WatchesContainer::iterator& watch_iterator, std::string_view name) noexcept;
+    void OnInstanceDirectoryCreated(const WatchesContainer::iterator& watch_iterator, std::string_view name);
 
     void OnInstanceFlagFileCreated(const WatchesContainer::iterator& watch_iterator,
                                    const std::string_view name) noexcept;

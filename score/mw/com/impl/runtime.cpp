@@ -144,7 +144,7 @@ auto Runtime::getInstance() noexcept -> IRuntime&
 // std::bad_optional_access which leds to std::terminate(). This suppression should be removed after fixing
 // [Ticket-173043](broken_link_j/Ticket-173043)
 // coverity[autosar_cpp14_a15_5_3_violation : FALSE]
-Runtime& Runtime::getInstanceInternal() noexcept
+Runtime& Runtime::getInstanceInternal()
 {
     TouchStaticDependencies();
     // Suppress "AUTOSAR C++14 A3-3-2" rule finding. This rule states: "Static and thread-local objects shall be
@@ -261,7 +261,7 @@ auto Runtime::GetServiceDiscovery() & noexcept -> IServiceDiscovery&
     return service_discovery_;
 }
 
-auto Runtime::GetTracingFilterConfig() const noexcept -> const tracing::ITracingFilterConfig*
+auto Runtime::GetTracingFilterConfig() const -> const tracing::ITracingFilterConfig*
 {
     if (!tracing_filter_configuration_.has_value())
     {
