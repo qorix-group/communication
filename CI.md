@@ -83,10 +83,14 @@ When creating merge commits, conflicts might arise. If that is the case, and con
 hard to see in a pull request what was change. Because of that, to reduce the chance that unintentional changes are merged,
 we forbid merge commits in pull requests.
 
+Note: Not yet implemented, it will be done with https://github.com/eclipse-score/communication/issues/800.
+
 #### Check for exactly one new line at the end of the file
 
 Time and focus is lost in a PR review when files do not have exactly one new line at the end of the file. To save time from everyone
 we want this to be enforced in checks and not rely on the reviewers.
+
+Note: Not yet implemented for all file types, it will be done with https://github.com/eclipse-score/communication/issues/801.
 
 #### Markdown formatter and linter
 
@@ -175,7 +179,7 @@ Makes sure that S-CORE Communication can be integrated as a module, and that it 
 
 #### Safety sentinel checks
 
-### Periodic 24h (at 20:00 UTC)
+### Periodic 24h (at 00:00 UTC)
 
 #### Job to check for deprecated warnings
 
