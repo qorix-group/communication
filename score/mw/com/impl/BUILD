@@ -276,6 +276,7 @@ cc_library(
     ],
     deps = [
         ":error",
+        ":field_getter_setter_signatures",
         ":field_tags",
         ":method_type",
         ":skeleton_event",
@@ -343,6 +344,7 @@ cc_library(
         "//score/mw/com:__subpackages__",
     ],
     deps = [
+        ":field_getter_setter_signatures",
         ":field_tags",
         ":method_type",
         ":proxy_event",
@@ -781,6 +783,18 @@ cc_library(
     visibility = ["//score/mw/com:__subpackages__"],
     deps = [
         ":field_tags",
+    ],
+)
+
+cc_library(
+    name = "field_getter_setter_signatures",
+    srcs = ["field_getter_setter_signatures.cpp"],
+    hdrs = ["field_getter_setter_signatures.h"],
+    features = COMPILER_WARNING_FEATURES,
+    tags = ["FFI"],
+    visibility = ["//score/mw/com:__subpackages__"],
+    deps = [
+        "@score_baselibs//score/result",
     ],
 )
 

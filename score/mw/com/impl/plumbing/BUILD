@@ -330,6 +330,7 @@ cc_library(
         ":lola_proxy_element_building_blocks",
         ":proxy_event_binding_factory",
         ":proxy_method_binding_factory",
+        "//score/mw/com/impl:field_getter_setter_signatures",
         "//score/mw/com/impl:method_type",
         "@score_baselibs//score/language/futurecpp",
     ],
