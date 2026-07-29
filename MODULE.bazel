@@ -456,7 +456,7 @@ http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "ht
 # (@codeql_coding_standards_compiled). These two must always come from the same
 # release, so their version is defined once here and both derive their download
 # URL from it.
-CODING_STANDARDS_VERSION = "2.61.0"
+CODING_STANDARDS_VERSION = "2.62.0"
 
 # The version of this tool needs to be deduced by the mentioned compatible version of the codeql_coding_standards release!
 http_archive(
@@ -471,7 +471,7 @@ http_archive(
     build_file = "//third_party/codeql:codeql_coding_standards.BUILD",
     patch_args = ["-p1"],
     patches = ["//third_party/codeql:codeql_coding_standards_misra.patch"],
-    sha256 = "a0ab708bfcd06e29b5f1ddaf49470bd5f234aa23de527aa893572a25a6ff7f47",
+    sha256 = "2aa4f4c3efd87eb24fe33bbef7f982b616a6653ae4f2a67ece268ef50cdd1ff3",
     strip_prefix = "codeql-coding-standards-{version}".format(version = CODING_STANDARDS_VERSION),
     urls = ["https://github.com/github/codeql-coding-standards/archive/refs/tags/v{version}.tar.gz".format(version = CODING_STANDARDS_VERSION)],
 )
@@ -488,7 +488,7 @@ codeql_release_pack = use_repo_rule(
 codeql_release_pack(
     name = "codeql_coding_standards_compiled",
     pack_tarball = "misra-cpp-coding-standards.tgz",
-    sha256 = "fdddef5a7ca1c66ebdbe6c79c60c7b5b6b274dbc3c9ecbc4bb9a0a13cead20a1",
+    sha256 = "775e34cb36e522c30f3c4381c0758a7fbe29e6c9a5428eb6c9ad67ebd145cb0b",
     urls = ["https://github.com/github/codeql-coding-standards/releases/download/v{version}/coding-standards-codeql-packs.zip".format(version = CODING_STANDARDS_VERSION)],
 )
 
