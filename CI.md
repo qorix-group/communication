@@ -148,7 +148,10 @@ If the tool used for sanitizers is ever changed, this decision could be revisite
 
 #### Run integration tests (x86-64 linux)
 
-#### Run integration tests (ARM64 QNX)
+#### Run integration tests (x86-64 QNX)
+
+We run integration tests in an x86-64 and not in ARM64 due to lack of ARM64 machines. If we would want to run them in ARM64, we would have to run them in simulated HW with the deficits that this implies.
+This is not considered an issue because our code is mainly architecture independent. We expect to find the issues regarding different type signess or different type sizes with our static analysis jobs configured for ARM64.
 
 #### Run all C++ tests with the hardned standard library (libstdc++) (x86-64 linux)
 
