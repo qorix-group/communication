@@ -270,6 +270,17 @@ TEST(GetCerrLoggerTest, ConcurrentLoggingProducesCompleteNonInterleavedLines)
 // while main() calls std::exit(0), running static destruction concurrently. With the fix the logger holds no static
 // state that gets destroyed, so the child must terminate normally (exit code 0) instead of aborting.
 //
+// Why the destruction order is guaranteed (and why the worker is NOT torn down first): std::exit does not unwind
+// the stack, so the automatic `std::thread worker` handle's destructor never runs ([support.start.term]: "no
+// destructors are called for objects with automatic storage duration"). std::exit also does not join or stop other
+// threads, nor run the thread-local destructors of threads other than the calling one - so the detached worker keeps
+// executing concurrently through static destruction. The logger's mutex is a function-local `static` (static storage
+// duration, shared across threads), not a `thread_local`, so it is destroyed in the static-destruction phase while
+// the worker is still logging. The "last thread-local destructor is sequenced-before the first static destructor"
+// rule applies only to the exiting thread's `thread_local` objects and is therefore irrelevant here. Accessing the
+// static after its destruction is exactly the UB the standard warns about (the reason threads must be joined before
+// exit) - i.e. precisely the bug under test.
+//
 // Note on portability: a literal SIGABRT reproduction of the *old* code is platform-dependent - glibc's
 // pthread_mutex_lock on a destroyed plain mutex succeeds instead of returning EINVAL, so on the host this test
 // passes even against the buggy implementation (verified empirically); only the QNX no-exception runtime aborts.
@@ -293,6 +304,9 @@ TEST(GetCerrLoggerShutdownDeathTest, LoggingThreadSurvivesStaticDestructionAtExi
                 }
             });
             worker.detach();
+            // Detached: std::exit neither joins nor destroys this thread, and it never runs the automatic `worker`
+            // handle's destructor, so the thread keeps logging while the logger's function-local `static` is torn
+            // down - the destruction order that surfaces the original crash.
             while (!started.load(std::memory_order_acquire))
             {
             }
