@@ -285,6 +285,26 @@ TEST_F(SkeletonBaseOfferFixture, CallingPrepareOfferWhenSkeletonBindingPrepareOf
     ASSERT_EQ(offer_result.error(), ComErrc::kBindingFailure);
 }
 
+TEST_F(SkeletonBaseOfferFixture, PrepareStopOfferIsNotCalledWhenSkeletonBindingPrepareOfferReturnsError)
+{
+    // Given a constructed Skeleton with a valid identifier
+    CreateSkeleton(GetInstanceIdentifierWithValidBinding());
+
+    // Expect that PrepareOffer fails when being called on the binding
+    EXPECT_CALL(*binding_mock_, PrepareOffer(_, _, _))
+        .WillOnce(Return(MakeUnexpected(ComErrc::kInvalidBindingInformation)));
+
+    // Expect that PrepareStopOffer is not called on the any bindings
+    EXPECT_CALL(*binding_mock_, PrepareStopOffer(_)).Times(0);
+    EXPECT_CALL(*event_binding_mock_1_, PrepareStopOffer()).Times(0);
+    EXPECT_CALL(*event_binding_mock_2_, PrepareStopOffer()).Times(0);
+    EXPECT_CALL(*field_binding_mock_1_, PrepareStopOffer()).Times(0);
+    EXPECT_CALL(*field_binding_mock_2_, PrepareStopOffer()).Times(0);
+
+    // When offering a Service
+    score::cpp::ignore = skeleton_->OfferService();
+}
+
 TEST_F(SkeletonBaseOfferFixture, CallingPrepareOfferWhenEventBindingFailsReturnsError)
 {
     RecordProperty("Verifies", "SCR-6222081, SCR-21856131, SCR-17434118");
@@ -316,6 +336,25 @@ TEST_F(SkeletonBaseOfferFixture, CallingPrepareOfferWhenEventBindingFailsReturns
     ASSERT_EQ(offer_result.error(), ComErrc::kBindingFailure);
 }
 
+TEST_F(SkeletonBaseOfferFixture,
+       SkeletonAndOfferedEventBindingsBallPrepareStopOfferWhenSkeletonEventBindingPrepareOfferReturnsError)
+{
+    // Given a constructed Skeleton with a valid identifier
+    CreateSkeleton(GetInstanceIdentifierWithValidBinding());
+
+    // Expect that PrepareOffer fails on the second event binding
+    EXPECT_CALL(*event_binding_mock_2_, PrepareOffer())
+        .WillOnce(Return(MakeUnexpected(ComErrc::kInvalidBindingInformation)));
+
+    // Expect that PrepareStopOffer is called on the first event binding and the skeleton binding, but not on the second
+    EXPECT_CALL(*binding_mock_, PrepareStopOffer(_));
+    EXPECT_CALL(*event_binding_mock_1_, PrepareStopOffer());
+    EXPECT_CALL(*event_binding_mock_2_, PrepareStopOffer()).Times(0);
+
+    // When offering a Service
+    score::cpp::ignore = skeleton_->OfferService();
+}
+
 TEST_F(SkeletonBaseOfferFixture, CallingPrepareOfferWhenFieldValueNotSetReturnsError)
 {
     RecordProperty("Verifies", "SCR-6222081, SCR-21856131, SCR-17434118");
@@ -337,6 +376,32 @@ TEST_F(SkeletonBaseOfferFixture, CallingPrepareOfferWhenFieldValueNotSetReturnsE
     // Then the result contains an error that the initial value is not valid
     ASSERT_FALSE(offer_result.has_value());
     ASSERT_EQ(offer_result.error(), ComErrc::kFieldValueIsNotValid);
+}
+
+TEST_F(SkeletonBaseOfferFixture,
+       SkeletonAndEventAndOfferedFieldBindingsCallPrepareStopOfferWhenSkeletonFieldBindingPrepareOfferReturnsError)
+{
+    // Given a constructed Skeleton with a valid identifier
+    CreateSkeleton(GetInstanceIdentifierWithValidBinding());
+
+    // Expect that PrepareOffer fails on the second field binding
+    EXPECT_CALL(*field_binding_mock_2_, PrepareOffer())
+        .WillOnce(Return(MakeUnexpected(ComErrc::kInvalidBindingInformation)));
+
+    // Expect that PrepareStopOffer is called on the first field binding, both event bindings and the skeleton binding,
+    // but not on the second field binding
+    EXPECT_CALL(*binding_mock_, PrepareStopOffer(_));
+    EXPECT_CALL(*event_binding_mock_1_, PrepareStopOffer());
+    EXPECT_CALL(*event_binding_mock_2_, PrepareStopOffer());
+    EXPECT_CALL(*field_binding_mock_1_, PrepareStopOffer());
+    EXPECT_CALL(*field_binding_mock_2_, PrepareStopOffer()).Times(0);
+
+    // and given the initial field values are set
+    std::ignore = skeleton_->dummy_field.Update(kInitialFieldValue);
+    std::ignore = skeleton_->dummy_field2.Update(kInitialFieldValue2);
+
+    // When offering a Service
+    score::cpp::ignore = skeleton_->OfferService();
 }
 
 TEST_F(SkeletonBaseOfferFixture, CallingPrepareOfferWhenFieldBindingFailsReturnsError)
@@ -366,6 +431,30 @@ TEST_F(SkeletonBaseOfferFixture, CallingPrepareOfferWhenFieldBindingFailsReturns
     // Then the result contains an error that the binding failed
     ASSERT_FALSE(offer_result.has_value());
     ASSERT_EQ(offer_result.error(), ComErrc::kBindingFailure);
+}
+
+TEST_F(SkeletonBaseOfferFixture, AllBindingsCallPrepareStopOfferWhenServiceDiscoveryPrepareOfferReturnsError)
+{
+    // Given a constructed Skeleton with a valid identifier
+    CreateSkeleton(GetInstanceIdentifierWithValidBinding());
+
+    // Expect that PrepareOffer fails on the service discovery binding
+    EXPECT_CALL(service_discovery_mock_, OfferService(_))
+        .WillOnce(Return(MakeUnexpected(ComErrc::kInvalidBindingInformation)));
+
+    // Expect that PrepareStopOffer is called on all the bindings
+    EXPECT_CALL(*binding_mock_, PrepareStopOffer(_));
+    EXPECT_CALL(*event_binding_mock_1_, PrepareStopOffer());
+    EXPECT_CALL(*event_binding_mock_2_, PrepareStopOffer());
+    EXPECT_CALL(*field_binding_mock_1_, PrepareStopOffer());
+    EXPECT_CALL(*field_binding_mock_2_, PrepareStopOffer());
+
+    // and given the initial field values are set
+    std::ignore = skeleton_->dummy_field.Update(kInitialFieldValue);
+    std::ignore = skeleton_->dummy_field2.Update(kInitialFieldValue2);
+
+    // When offering a Service
+    score::cpp::ignore = skeleton_->OfferService();
 }
 
 using SkeletonBaseOfferDeathTest = SkeletonBaseOfferFixture;
@@ -444,6 +533,8 @@ TEST_F(SkeletonBaseStopOfferFixture, StopOfferIsNotCalledIfServiceWasNotOffered)
 
     // Or when destroying the skeleton
 }
+
+TEST_F(SkeletonBaseStopOfferFixture, StopOfferDoesNotDispatchToBindingsIfOfferFailed) {}
 
 using SkeletonBaseMoveFixture = SkeletonBaseFixture;
 TEST_F(SkeletonBaseOfferFixture, OfferServiceReturnsErrorWhenServiceDiscoveryOfferServiceFails)
