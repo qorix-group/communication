@@ -24,17 +24,9 @@ validate_json_schema_test(
 )
 
 cc_library(
-    name = "field_types",
-    srcs = [
-        "notifier_only_enabled_field.cpp",
-        "set_and_notifier_enabled_field.cpp",
-        "test_constants.cpp",
-    ],
-    hdrs = [
-        "notifier_only_enabled_field.h",
-        "set_and_notifier_enabled_field.h",
-        "test_constants.h",
-    ],
+    name = "test_constants",
+    srcs = ["test_constants.cpp"],
+    hdrs = ["test_constants.h"],
     features = COMPILER_WARNING_FEATURES,
     deps = [
         "//score/mw/com",
@@ -48,13 +40,14 @@ cc_library(
     features = COMPILER_WARNING_FEATURES,
     deps = [
         ":common_resources",
-        ":field_types",
+        ":test_constants",
         "//score/mw/com",
         "//score/mw/com/test/common_test_resources:fail_test",
         "//score/mw/com/test/common_test_resources:process_synchronizer",
         "//score/mw/com/test/common_test_resources:proxy_container",
         "//score/mw/com/test/common_test_resources:proxy_event_receiver",
         "//score/mw/com/test/common_test_resources:proxy_event_state_change_notifier",
+        "//score/mw/com/test/fields/set_and_notifier/datatypes:field_datatypes",
     ],
 )
 
@@ -65,11 +58,12 @@ cc_library(
     features = COMPILER_WARNING_FEATURES,
     deps = [
         ":common_resources",
-        ":field_types",
+        ":test_constants",
         "//score/mw/com",
         "//score/mw/com/test/common_test_resources:fail_test",
         "//score/mw/com/test/common_test_resources:process_synchronizer",
         "//score/mw/com/test/common_test_resources:skeleton_container",
+        "//score/mw/com/test/fields/set_and_notifier/datatypes:field_datatypes",
     ],
 )
 

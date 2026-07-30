@@ -16,8 +16,8 @@
 #include "score/mw/com/test/common_test_resources/fail_test.h"
 #include "score/mw/com/test/common_test_resources/process_synchronizer.h"
 #include "score/mw/com/test/common_test_resources/skeleton_container.h"
-#include "score/mw/com/test/fields/set_and_notifier/notifier_only_enabled_field.h"
-#include "score/mw/com/test/fields/set_and_notifier/set_and_notifier_enabled_field.h"
+#include "score/mw/com/test/fields/set_and_notifier/datatypes/notifier_only_enabled_field.h"
+#include "score/mw/com/test/fields/set_and_notifier/datatypes/set_and_notifier_enabled_field.h"
 #include "score/mw/com/test/fields/set_and_notifier/test_constants.h"
 
 #include <iostream>

@@ -18,8 +18,8 @@
 #include "score/mw/com/test/common_test_resources/proxy_container.h"
 #include "score/mw/com/test/common_test_resources/proxy_event_receiver.h"
 #include "score/mw/com/test/common_test_resources/proxy_event_state_change_notifier.h"
-#include "score/mw/com/test/fields/set_and_notifier/notifier_only_enabled_field.h"
-#include "score/mw/com/test/fields/set_and_notifier/set_and_notifier_enabled_field.h"
+#include "score/mw/com/test/fields/set_and_notifier/datatypes/notifier_only_enabled_field.h"
+#include "score/mw/com/test/fields/set_and_notifier/datatypes/set_and_notifier_enabled_field.h"
 #include "score/mw/com/test/fields/set_and_notifier/test_constants.h"
 #include "score/mw/com/types.h"
 
