@@ -26,3 +26,14 @@ def consumer(target, scenario, config, **kwargs):
 def provider(target, scenario, config, **kwargs):
     args = ["--mode", scenario.value, "--service-instance-manifest", f"./etc/{config}"]
     return target.wrap_exec("bin/provider", args, cwd="/opt/MainProviderApp", **kwargs)
+
+
+def consumer_and_provider(target, scenario, config, **kwargs):
+    args = ["--mode", scenario.value, "--service-instance-manifest", f"./etc/{config}"]
+    return target.wrap_exec(
+        "bin/consumer_and_provider",
+        args,
+        cwd="/opt/MainConsumerAndProviderApp",
+        wait_on_exit=True,
+        **kwargs,
+    )

@@ -20,5 +20,3 @@ def test_field_set_and_notifier_value(target):
         with consumer(target, FieldScenario.SET_AND_NOTIFIER, "mw_com_config.json"):
             pass
 
-
-# TODO: Add a dedicated get scenario test once getter-enabled field mode is available.

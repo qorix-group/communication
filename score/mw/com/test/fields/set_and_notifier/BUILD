@@ -107,6 +107,26 @@ cc_binary(
     ],
 )
 
+cc_binary(
+    name = "consumer_and_provider",
+    srcs = ["main_consumer_and_provider.cpp"],
+    data = [
+        "config/mw_com_config.json",
+    ],
+    features = COMPILER_WARNING_FEATURES + [
+        "aborts_upon_exception",
+    ],
+    visibility = ["//score/mw/com/test/fields:__pkg__"],
+    deps = [
+        ":common_resources",
+        ":field_consumer",
+        ":field_provider",
+        "//score/mw/com",
+        "//score/mw/com/test/common_test_resources:stop_token_sig_term_handler",
+        "@score_baselibs//score/mw/log",
+    ],
+)
+
 cc_library(
     name = "common_resources",
     srcs = ["common_resources.cpp"],
@@ -136,6 +156,20 @@ pkg_application(
     name = "consumer-pkg",
     app_name = "MainConsumerApp",
     bin = [":consumer"],
+    etc = [
+        "config/logging.json",
+        "config/mw_com_config.json",
+    ],
+    visibility = [
+        "//platform/aas/test/mw/com:__pkg__",
+        "//score/mw/com/test/fields/set_and_notifier:__subpackages__",
+    ],
+)
+
+pkg_application(
+    name = "consumer_and_provider-pkg",
+    app_name = "MainConsumerAndProviderApp",
+    bin = [":consumer_and_provider"],
     etc = [
         "config/logging.json",
         "config/mw_com_config.json",
