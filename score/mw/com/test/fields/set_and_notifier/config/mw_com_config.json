@@ -41,12 +41,12 @@
             {
               "fieldName": "notifier_only_enabled_field",
               "maxSubscribers": 1,
-              "numberOfSampleSlots": 2
+              "numberOfSampleSlots": 4
             },
             {
               "fieldName": "set_and_notifier_enabled_field",
               "maxSubscribers": 1,
-              "numberOfSampleSlots": 2
+              "numberOfSampleSlots": 4
             }
           ]
         }

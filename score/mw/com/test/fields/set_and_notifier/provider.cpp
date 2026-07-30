@@ -69,8 +69,10 @@ void run_notifier_provider(const score::cpp::stop_token& stop_token)
 
     // Step 5. Update field with updated value
     std::cout << "\nProvider: Step 5 - Update field with updated value" << std::endl;
+    for (std::size_t i = 0; i < kTotalNumValuesToSend - 1U; ++i)
     {
-        const auto update_result = service.notifier_only_enabled_field.Update(kUpdatedValue);
+        const auto update_result =
+            service.notifier_only_enabled_field.Update(kUpdatedValue + static_cast<std::int32_t>(i));
         if (!update_result.has_value())
         {
             FailTest("Provider: Unable to update field with updated value: ", update_result.error());
@@ -129,15 +131,27 @@ void run_set_and_notifier_provider(const score::cpp::stop_token& stop_token)
     std::cout << "\nProvider: Step 5 - Offer service" << std::endl;
     skeleton_container.OfferService("set_and_notifier");
 
-    // Step 6. Wait for consumer done notification
-    std::cout << "\nProvider: Step 6 - Wait for consumer done notification" << std::endl;
+    // Step 6. Update field with updated value
+    std::cout << "\nProvider: Step 6 - Update field with updated value" << std::endl;
+    for (std::size_t i = 0; i < kTotalNumValuesToSend - 1U; ++i)
+    {
+        const auto update_result =
+            service.set_and_notifier_enabled_field.Update(kUpdatedValue + static_cast<std::int32_t>(i));
+        if (!update_result.has_value())
+        {
+            FailTest("Provider: Unable to update field with updated value: ", update_result.error());
+        }
+    }
+
+    // Step 7. Wait for consumer done notification
+    std::cout << "\nProvider: Step 7 - Wait for consumer done notification" << std::endl;
     if (!process_synchronizer_result->WaitWithAbort(stop_token))
     {
         FailTest("Provider: WaitWithAbort was stopped by stop_token instead of notification");
     }
 
-    // Step 7. Stop offering service
-    std::cout << "\nProvider: Step 7 - Stop offering service" << std::endl;
+    // Step 8. Stop offering service
+    std::cout << "\nProvider: Step 8 - Stop offering service" << std::endl;
     service.StopOfferService();
 }
 

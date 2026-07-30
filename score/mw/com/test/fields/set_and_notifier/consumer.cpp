@@ -66,7 +66,6 @@ void run_notifier_consumer(const score::cpp::stop_token& stop_token)
 
     // Step 2. Register unified receive handler that verifies samples arrive in the expected order
     std::cout << "\nConsumer: Step 2 - Register unified receive handler" << std::endl;
-    constexpr auto kMaxNumSamples{2U};
     ProxyEventReceiver field_receiver{proxy.notifier_only_enabled_field};
 
     // Step 3. Register state change handler
@@ -75,7 +74,11 @@ void run_notifier_consumer(const score::cpp::stop_token& stop_token)
 
     // Step 4. Subscribe to field with enough buffer for all samples the provider will send
     std::cout << "\nConsumer: Step 4 - Subscribe to field" << std::endl;
-    std::ignore = proxy.notifier_only_enabled_field.Subscribe(kMaxNumSamples);
+    const auto subscribe_result = proxy.notifier_only_enabled_field.Subscribe(kTotalNumValuesToSend);
+    if (!subscribe_result.has_value())
+    {
+        FailTest("Consumer: Subscribe failed in notifier scenario: ", subscribe_result.error());
+    }
 
     // Step 5. Wait for subscription
     std::cout << "\nConsumer: Step 5 - Wait for subscription" << std::endl;
@@ -87,18 +90,22 @@ void run_notifier_consumer(const score::cpp::stop_token& stop_token)
     // Step 6. Wait for all expected samples
     std::cout << "\nConsumer: Step 6 - Wait for all expected samples" << std::endl;
     std::size_t sample_index{0U};
-    auto value_callback = [&sample_index](const auto& sample_ptr) noexcept {
-        if (sample_index == 0U && *sample_ptr != kInitialValue)
+    auto get_sent_samples_callback = [&sample_index](const auto& sample_ptr) noexcept {
+        const auto expected_value =
+            sample_index == 0U ? kInitialValue : kUpdatedValue + static_cast<std::int32_t>(sample_index - 1U);
+        const auto& received_value = *sample_ptr;
+        if (received_value != expected_value)
         {
-            FailTest("Consumer: Did not receive expected initial value ", kInitialValue, " in notifier scenario");
-        }
-        else if (sample_index == 1U && *sample_ptr != kUpdatedValue)
-        {
-            FailTest("Consumer: Did not receive expected updated value ", kUpdatedValue, " in notifier scenario");
+            FailTest("Consumer: Received unexpected value. Expected: ",
+                     expected_value,
+                     ". Received: ",
+                     received_value,
+                     " for sample index: ",
+                     sample_index);
         }
         ++sample_index;
     };
-    if (!field_receiver.WaitForSamples(stop_token, kMaxNumSamples, std::move(value_callback)))
+    if (!field_receiver.WaitForSamples(stop_token, kTotalNumValuesToSend, std::move(get_sent_samples_callback)))
     {
         FailTest("Consumer: Did not receive all expected samples in notifier scenario");
     }
@@ -125,7 +132,6 @@ void run_set_and_notifier_consumer(const score::cpp::stop_token& stop_token)
 
     // Step 2. Register unified receive handler that verifies samples arrive in the expected order
     std::cout << "\nConsumer: Step 2 - Register unified receive handler" << std::endl;
-    constexpr auto kMaxNumSamples{1U};
     ProxyEventReceiver field_receiver{proxy.set_and_notifier_enabled_field};
 
     // Step 3. Register state change handler
@@ -134,34 +140,40 @@ void run_set_and_notifier_consumer(const score::cpp::stop_token& stop_token)
 
     // Step 4. Subscribe to field with enough buffer for all samples the provider will send
     std::cout << "\nConsumer: Step 4 - Subscribe to field" << std::endl;
-    std::ignore = proxy.set_and_notifier_enabled_field.Subscribe(kMaxNumSamples);
+    std::ignore = proxy.set_and_notifier_enabled_field.Subscribe(kTotalNumValuesToSend);
 
-    // Step 5. Wait for subscription and verify initial value
+    // Step 5. Wait for subscription
     std::cout << "\nConsumer: Step 5 - Wait for subscription and verify initial value" << std::endl;
     if (!subscription_notifier.WaitForStateChange(stop_token, SubscriptionState::kSubscribed))
     {
         FailTest("Consumer: Subscription failed in set scenario");
     }
 
+    // Step 6. Wait for all expected samples
+    std::cout << "\nConsumer: Step 6 - Wait for all expected samples" << std::endl;
     std::size_t sample_index{0U};
-    auto value_callback = [&sample_index](const auto& sample_ptr) noexcept {
-        if (sample_index == 0U && *sample_ptr != kInitialValue)
+    auto get_sent_samples_callback = [&sample_index](const auto& sample_ptr) noexcept {
+        const auto expected_value =
+            sample_index == 0U ? kInitialValue : kUpdatedValue + static_cast<std::int32_t>(sample_index - 1U);
+        const auto& received_value = *sample_ptr;
+        if (received_value != expected_value)
         {
-            FailTest("Consumer: Did not receive initial value ", kInitialValue, " in set scenario");
-        }
-        else if (sample_index == 1U && *sample_ptr != kSetRequestValue * 2 + 1)
-        {
-            FailTest("Consumer: Did not receive transformed value ", kSetRequestValue * 2 + 1, " after Set call");
+            FailTest("Consumer: Received unexpected value. Expected: ",
+                     expected_value,
+                     ". Received: ",
+                     received_value,
+                     " for sample index: ",
+                     sample_index);
         }
         ++sample_index;
     };
-    if (!field_receiver.WaitForSamples(stop_token, 1U, std::move(value_callback)))
+    if (!field_receiver.WaitForSamples(stop_token, kTotalNumValuesToSend, std::move(get_sent_samples_callback)))
     {
-        FailTest("Consumer: Did not receive initial value ", kInitialValue, " in set scenario");
+        FailTest("Consumer: Did not receive all expected samples in notifier scenario");
     }
 
-    // Step 6. Set new field value and verify accepted value matches expected transformed value
-    std::cout << "\nConsumer: Step 6 - Set field value and verify accepted value" << std::endl;
+    // Step 7. Set new field value and verify accepted value matches expected transformed value
+    std::cout << "\nConsumer: Step 7 - Set field value and verify accepted value" << std::endl;
     const auto set_result = proxy.set_and_notifier_enabled_field.Set(kSetRequestValue);
     if (!set_result.has_value())
     {
@@ -175,9 +187,15 @@ void run_set_and_notifier_consumer(const score::cpp::stop_token& stop_token)
             "Consumer: Set accepted value mismatch. Expected ", kSetRequestValue * 2 + 1, " but got ", accepted_value);
     }
 
-    // Step 7. Verify transformed value received via field notification
-    std::cout << "\nConsumer: Step 7 - Verify transformed value via field notification" << std::endl;
-    if (!field_receiver.WaitForSamples(stop_token, 1U, std::move(value_callback)))
+    // Step 8. Verify transformed value received via field notification
+    std::cout << "\nConsumer: Step 8 - Verify transformed value via field notification" << std::endl;
+    auto get_set_sample_callback = [](const auto& sample_ptr) noexcept {
+        if (*sample_ptr != kSetRequestValue * 2 + 1)
+        {
+            FailTest("Consumer: Did not receive transformed value ", kSetRequestValue * 2 + 1, " after Set call");
+        }
+    };
+    if (!field_receiver.WaitForSamples(stop_token, 1U, std::move(get_set_sample_callback)))
     {
         FailTest("Consumer: Did not receive transformed value ", kSetRequestValue * 2 + 1, " after Set call");
     }
