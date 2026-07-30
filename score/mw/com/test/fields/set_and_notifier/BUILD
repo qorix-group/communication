@@ -33,12 +33,12 @@ validate_json_schema_test(
 cc_library(
     name = "field_types",
     srcs = [
-        "initial_only_field.cpp",
+        "notifier_only_enabled_field.cpp",
         "set_and_notifier_enabled_field.cpp",
         "test_constants.cpp",
     ],
     hdrs = [
-        "initial_only_field.h",
+        "notifier_only_enabled_field.h",
         "set_and_notifier_enabled_field.h",
         "test_constants.h",
     ],

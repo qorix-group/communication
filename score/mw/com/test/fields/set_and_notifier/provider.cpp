@@ -16,15 +16,13 @@
 #include "score/mw/com/test/common_test_resources/fail_test.h"
 #include "score/mw/com/test/common_test_resources/process_synchronizer.h"
 #include "score/mw/com/test/common_test_resources/skeleton_container.h"
-#include "score/mw/com/test/fields/set_and_notifier/initial_only_field.h"
+#include "score/mw/com/test/fields/set_and_notifier/notifier_only_enabled_field.h"
 #include "score/mw/com/test/fields/set_and_notifier/set_and_notifier_enabled_field.h"
 #include "score/mw/com/test/fields/set_and_notifier/test_constants.h"
 
-#include <chrono>
 #include <iostream>
 #include <optional>
 #include <string_view>
-#include <utility>
 
 namespace score::mw::com::test
 {
@@ -50,7 +48,7 @@ void run_notifier_provider(const score::cpp::stop_token& stop_token)
 
     // Step 2. Create skeleton
     std::cout << "\nProvider: Step 2 - Create skeleton" << std::endl;
-    SkeletonContainer<InitialOnlySkeleton> skeleton_container{};
+    SkeletonContainer<NotifierOnlyEnabledSkeleton> skeleton_container{};
     skeleton_container.CreateSkeleton(kInstanceSpecifier, "notifier");
 
     auto& service = skeleton_container.GetSkeleton();
@@ -58,7 +56,7 @@ void run_notifier_provider(const score::cpp::stop_token& stop_token)
     // Step 3. Update initial field value
     std::cout << "\nProvider: Step 3 - Update initial field value" << std::endl;
     {
-        const auto update_result = service.initial_only_field.Update(kInitialValue);
+        const auto update_result = service.notifier_only_enabled_field.Update(kInitialValue);
         if (!update_result.has_value())
         {
             FailTest("Provider: Unable to update initial field value: ", update_result.error());
@@ -72,7 +70,7 @@ void run_notifier_provider(const score::cpp::stop_token& stop_token)
     // Step 5. Update field with updated value
     std::cout << "\nProvider: Step 5 - Update field with updated value" << std::endl;
     {
-        const auto update_result = service.initial_only_field.Update(kUpdatedValue);
+        const auto update_result = service.notifier_only_enabled_field.Update(kUpdatedValue);
         if (!update_result.has_value())
         {
             FailTest("Provider: Unable to update field with updated value: ", update_result.error());

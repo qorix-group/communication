@@ -18,7 +18,7 @@
 #include "score/mw/com/test/common_test_resources/proxy_container.h"
 #include "score/mw/com/test/common_test_resources/proxy_event_receiver.h"
 #include "score/mw/com/test/common_test_resources/proxy_event_state_change_notifier.h"
-#include "score/mw/com/test/fields/set_and_notifier/initial_only_field.h"
+#include "score/mw/com/test/fields/set_and_notifier/notifier_only_enabled_field.h"
 #include "score/mw/com/test/fields/set_and_notifier/set_and_notifier_enabled_field.h"
 #include "score/mw/com/test/fields/set_and_notifier/test_constants.h"
 #include "score/mw/com/types.h"
@@ -62,22 +62,22 @@ void run_notifier_consumer(const score::cpp::stop_token& stop_token)
 
     // Step 1. Find service and create proxy
     std::cout << "\nConsumer: Step 1 - Find service and create proxy" << std::endl;
-    ProxyContainer<InitialOnlyProxy> proxy_container{};
+    ProxyContainer<NotifierOnlyEnabledProxy> proxy_container{};
     proxy_container.CreateProxy(kInstanceSpecifier, "notifier");
     auto& proxy = proxy_container.GetProxy();
 
     // Step 2. Register unified receive handler that verifies samples arrive in the expected order
     std::cout << "\nConsumer: Step 2 - Register unified receive handler" << std::endl;
     constexpr auto kMaxNumSamples{2U};
-    ProxyEventReceiver field_receiver{proxy.initial_only_field};
+    ProxyEventReceiver field_receiver{proxy.notifier_only_enabled_field};
 
     // Step 3. Register state change handler
     std::cout << "\nConsumer: Step 3 - Register state change handler" << std::endl;
-    ProxyEventStateChangeNotifier subscription_notifier{proxy.initial_only_field};
+    ProxyEventStateChangeNotifier subscription_notifier{proxy.notifier_only_enabled_field};
 
     // Step 4. Subscribe to field with enough buffer for all samples the provider will send
     std::cout << "\nConsumer: Step 4 - Subscribe to field" << std::endl;
-    std::ignore = proxy.initial_only_field.Subscribe(kMaxNumSamples);
+    std::ignore = proxy.notifier_only_enabled_field.Subscribe(kMaxNumSamples);
 
     // Step 5. Wait for subscription
     std::cout << "\nConsumer: Step 5 - Wait for subscription" << std::endl;
@@ -105,7 +105,7 @@ void run_notifier_consumer(const score::cpp::stop_token& stop_token)
         FailTest("Consumer: Did not receive all expected samples in notifier scenario");
     }
 
-    proxy.initial_only_field.Unsubscribe();
+    proxy.notifier_only_enabled_field.Unsubscribe();
 }
 
 void run_set_and_notifier_consumer(const score::cpp::stop_token& stop_token)
