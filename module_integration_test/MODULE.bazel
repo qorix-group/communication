@@ -8,7 +8,7 @@ bazel_dep(name = "rules_cc", version = "0.2.17")
 bazel_dep(name = "score_baselibs", version = "0.2.9")
 git_override(
     module_name = "score_baselibs",
-    commit = "82f9402474d6dd210fb0cfe5d1867f0d757318c4",
+    commit = "8b26bb6faa1cf639adeeef73121edf02aae53aa1",
     patch_strip = 1,
     # Patch baselibs with a QNX8 workaround for poll
     # until a fix is provided by the QNX SDP

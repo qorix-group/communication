@@ -14,6 +14,7 @@ module(name = "score_communication")
 
 # Dependencies that will get propagated to our users as transitive dependencies
 bazel_dep(name = "bazel_skylib", version = "1.9.0")
+bazel_dep(name = "boost.container", version = "1.83.0.bcr.4")
 bazel_dep(name = "boost.interprocess", version = "1.83.0.bcr.4")
 bazel_dep(name = "boost.program_options", version = "1.83.0.bcr.4")
 bazel_dep(name = "download_utils", version = "1.2.2")
@@ -29,7 +30,7 @@ bazel_dep(name = "score_qnx_unit_tests", version = "0.2.0")
 bazel_dep(name = "score_baselibs", version = "0.2.9")
 git_override(
     module_name = "score_baselibs",
-    commit = "82f9402474d6dd210fb0cfe5d1867f0d757318c4",
+    commit = "8b26bb6faa1cf639adeeef73121edf02aae53aa1",
     patch_strip = 1,
     # Patch baselibs with a QNX8 workaround for poll
     # until a fix is provided by the QNX SDP
