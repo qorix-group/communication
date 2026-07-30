@@ -16,6 +16,6 @@ from test_fixture import consumer, provider, FieldScenario
 
 def test_field_notifier_initial_value(target):
     """Test field initial value exchange between provider and consumer."""
-    with provider(target, FieldScenario.NOTIFIER, "initial_only_field_mw_com_config.json"):
-        with consumer(target, FieldScenario.NOTIFIER, "initial_only_field_mw_com_config.json"):
+    with provider(target, FieldScenario.NOTIFIER, "mw_com_config.json"):
+        with consumer(target, FieldScenario.NOTIFIER, "mw_com_config.json"):
             pass

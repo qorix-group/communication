@@ -19,7 +19,7 @@
 namespace score::mw::com::test
 {
 
-constexpr const char* const kInstanceSpecifierString = "test/fields/set_and_notifier";
+constexpr const char* const kInstanceSpecifierString = "/score/mw/com/test/fields/set_and_get_and_notifier_instance";
 
 constexpr std::int32_t kInitialValue = 18;
 constexpr std::int32_t kSetRequestValue = 1234;

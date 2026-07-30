@@ -23,13 +23,6 @@ validate_json_schema_test(
     tags = ["lint"],
 )
 
-validate_json_schema_test(
-    name = "validate_initial_only_field_lola_schema",
-    json = "config/initial_only_field_mw_com_config.json",
-    schema = "//score/mw/com:config_schema",
-    tags = ["lint"],
-)
-
 cc_library(
     name = "field_types",
     srcs = [
@@ -83,7 +76,6 @@ cc_binary(
     name = "provider",
     srcs = ["main_provider.cpp"],
     data = [
-        "config/initial_only_field_mw_com_config.json",
         "config/mw_com_config.json",
     ],
     features = COMPILER_WARNING_FEATURES + [
@@ -104,7 +96,6 @@ cc_binary(
     name = "consumer",
     srcs = ["main_consumer.cpp"],
     data = [
-        "config/initial_only_field_mw_com_config.json",
         "config/mw_com_config.json",
     ],
     features = COMPILER_WARNING_FEATURES + [
@@ -124,7 +115,6 @@ pkg_application(
     app_name = "MainProviderApp",
     bin = [":provider"],
     etc = [
-        "config/initial_only_field_mw_com_config.json",
         "config/logging.json",
         "config/mw_com_config.json",
     ],
@@ -139,7 +129,6 @@ pkg_application(
     app_name = "MainConsumerApp",
     bin = [":consumer"],
     etc = [
-        "config/initial_only_field_mw_com_config.json",
         "config/logging.json",
         "config/mw_com_config.json",
     ],
