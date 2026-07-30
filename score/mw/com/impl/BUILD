@@ -164,6 +164,7 @@ cc_library(
         "//score/mw/com/impl/plumbing",
         "//score/mw/com/impl/plumbing:generic_skeleton_event_binding_factory",
         "@score_baselibs//score/language/futurecpp",
+        "@score_baselibs//score/memory:data_type_size_info",
     ],
     tags = ["FFI"],
     visibility = [
@@ -236,6 +237,11 @@ cc_library(
     visibility = [
         "//score/mw/com:__pkg__",
         "//score/mw/com/impl:__subpackages__",
+    ],
+    deps = [
+        ":error",
+        "@score_baselibs//score/memory:data_type_size_info",
+        "@score_baselibs//score/result",
     ],
 )
 
@@ -1241,6 +1247,16 @@ cc_unit_test(
     srcs = ["method_type_test.cpp"],
     features = COMPILER_WARNING_FEATURES,
     deps = [":method_type"],
+)
+
+cc_unit_test(
+    name = "data_type_meta_info_test",
+    srcs = ["data_type_meta_info_test.cpp"],
+    deps = [
+        ":data_type_meta_info",
+        ":error",
+        "@score_baselibs//score/result",
+    ],
 )
 
 cc_unit_test(

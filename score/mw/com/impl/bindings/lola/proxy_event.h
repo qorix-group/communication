@@ -160,9 +160,9 @@ inline const std::uint8_t* ProxyEvent<SampleType>::InitialiseEventSlotsRawArray(
     const void* const event_slots_raw_array = meta_info_.event_slots_raw_array_.get(event_slots_raw_array_size);
 
     SCORE_LANGUAGE_FUTURECPP_PRECONDITION_PRD_MESSAGE(nullptr != event_slots_raw_array, "Null event slot array");
-    SCORE_LANGUAGE_FUTURECPP_PRECONDITION_PRD_MESSAGE(meta_info_.data_type_info_.size == sizeof(SampleType),
+    SCORE_LANGUAGE_FUTURECPP_PRECONDITION_PRD_MESSAGE(meta_info_.data_type_info_.Size() == sizeof(SampleType),
                                                       "Event sample size mismatch");
-    SCORE_LANGUAGE_FUTURECPP_PRECONDITION_PRD_MESSAGE(meta_info_.data_type_info_.alignment == alignof(SampleType),
+    SCORE_LANGUAGE_FUTURECPP_PRECONDITION_PRD_MESSAGE(meta_info_.data_type_info_.Alignment() == alignof(SampleType),
                                                       "Event sample alignment mismatch");
 
     return static_cast<const std::uint8_t*>(event_slots_raw_array);

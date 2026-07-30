@@ -112,6 +112,7 @@ cc_unit_test(
         "//score/mw/com/impl/test:dummy_instance_identifier_builder",
         "//score/mw/com/impl/test:runtime_mock_guard",
         "@googletest//:gtest",
+        "@score_baselibs//score/memory:data_type_size_info",
         "@score_baselibs//score/result",
     ],
 )
