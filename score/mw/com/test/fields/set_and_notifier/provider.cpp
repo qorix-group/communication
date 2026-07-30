@@ -143,28 +143,14 @@ void run_set_and_notifier_provider(const score::cpp::stop_token& stop_token)
 
 }  // namespace
 
-std::optional<ProviderMode> ParseProviderMode(std::string_view mode)
-{
-    if (mode == "notifier")
-    {
-        return ProviderMode::kNotifier;
-    }
-    if (mode == "set_and_notifier")
-    {
-        return ProviderMode::kSetAndNotifier;
-    }
-    // TODO: Add "get" mode provider scenario coverage once getter-enabled field variant is introduced.
-    return std::nullopt;
-}
-
-void run_provider(const score::cpp::stop_token& stop_token, ProviderMode mode)
+void run_provider(const score::cpp::stop_token& stop_token, TestMode mode)
 {
     switch (mode)
     {
-        case ProviderMode::kNotifier:
+        case TestMode::kNotifier:
             run_notifier_provider(stop_token);
             return;
-        case ProviderMode::kSetAndNotifier:
+        case TestMode::kSetAndNotifier:
             run_set_and_notifier_provider(stop_token);
             return;
     }

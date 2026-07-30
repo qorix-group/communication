@@ -25,8 +25,6 @@
 
 #include <score/stop_token.hpp>
 
-#include "score/mw/com/test/common_test_resources/command_line_parser.h"
-
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
@@ -186,61 +184,14 @@ void run_set_and_notifier_consumer(const score::cpp::stop_token& stop_token)
     proxy.set_and_notifier_enabled_field.Unsubscribe();
 }
 
-std::optional<ConsumerMode> ParseConsumerMode(std::string_view mode)
-{
-    if (mode == "notifier")
-    {
-        return ConsumerMode::kNotifier;
-    }
-    if (mode == "set_and_notifier")
-    {
-        return ConsumerMode::kSetAndNotifier;
-    }
-    // TODO: Add "get" mode consumer scenario coverage once getter-enabled field variant is introduced.
-    return std::nullopt;
-}
-
-ConsumerConfig ParseConsumerConfig(int argc, const char** argv)
-{
-    constexpr auto kModeArg = "mode";
-    constexpr auto kServiceInstanceManifestArg = "service-instance-manifest";
-
-    const std::vector<std::pair<std::string, std::string>> parameter_description_pairs{
-        {kModeArg, "Consumer mode: notifier or set_and_notifier"},
-        {kServiceInstanceManifestArg, "Path to the service instance manifest"},
-    };
-
-    const auto args = ParseCommandLineArguments(argc, argv, parameter_description_pairs);
-
-    const auto mode_result = GetValueIfProvided<std::string>(args, kModeArg);
-    if (!mode_result.has_value())
-    {
-        FailTest("Consumer: missing or invalid --", kModeArg, " argument");
-    }
-
-    const auto mode = ParseConsumerMode(mode_result.value());
-    if (!mode.has_value())
-    {
-        FailTest("Consumer: unsupported --", kModeArg, " value: ", mode_result.value());
-    }
-
-    const auto manifest_result = GetValueIfProvided<std::string>(args, kServiceInstanceManifestArg);
-    if (!manifest_result.has_value())
-    {
-        FailTest("Consumer: missing or invalid --", kServiceInstanceManifestArg, " argument");
-    }
-
-    return ConsumerConfig{mode.value(), manifest_result.value()};
-}
-
-void run_consumer(const score::cpp::stop_token& stop_token, ConsumerMode mode)
+void run_consumer(const score::cpp::stop_token& stop_token, TestMode mode)
 {
     switch (mode)
     {
-        case ConsumerMode::kNotifier:
+        case TestMode::kNotifier:
             run_notifier_consumer(stop_token);
             return;
-        case ConsumerMode::kSetAndNotifier:
+        case TestMode::kSetAndNotifier:
             run_set_and_notifier_consumer(stop_token);
             return;
     }

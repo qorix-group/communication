@@ -47,9 +47,9 @@ cc_library(
     hdrs = ["consumer.h"],
     features = COMPILER_WARNING_FEATURES,
     deps = [
+        ":common_resources",
         ":field_types",
         "//score/mw/com",
-        "//score/mw/com/test/common_test_resources:command_line_parser",
         "//score/mw/com/test/common_test_resources:fail_test",
         "//score/mw/com/test/common_test_resources:process_synchronizer",
         "//score/mw/com/test/common_test_resources:proxy_container",
@@ -64,6 +64,7 @@ cc_library(
     hdrs = ["provider.h"],
     features = COMPILER_WARNING_FEATURES,
     deps = [
+        ":common_resources",
         ":field_types",
         "//score/mw/com",
         "//score/mw/com/test/common_test_resources:fail_test",
@@ -83,6 +84,7 @@ cc_binary(
     ],
     visibility = ["//score/mw/com/test/fields:__pkg__"],
     deps = [
+        ":common_resources",
         ":field_provider",
         "//score/mw/com",
         "//score/mw/com/test/common_test_resources:command_line_parser",
@@ -103,10 +105,22 @@ cc_binary(
     ],
     visibility = ["//score/mw/com/test/fields:__pkg__"],
     deps = [
+        ":common_resources",
         ":field_consumer",
         "//score/mw/com",
         "//score/mw/com/test/common_test_resources:stop_token_sig_term_handler",
         "@score_baselibs//score/mw/log",
+    ],
+)
+
+cc_library(
+    name = "common_resources",
+    srcs = ["common_resources.cpp"],
+    hdrs = ["common_resources.h"],
+    features = COMPILER_WARNING_FEATURES,
+    deps = [
+        "//score/mw/com/test/common_test_resources:command_line_parser",
+        "//score/mw/com/test/common_test_resources:fail_test",
     ],
 )
 
