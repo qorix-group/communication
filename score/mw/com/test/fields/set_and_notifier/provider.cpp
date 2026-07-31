@@ -28,18 +28,11 @@ namespace score::mw::com::test
 namespace
 {
 
-const std::string kNotifierConsumerDoneShmPath{"/fields_notifier_consumer_done"};
-const std::string kSetAndNotifierConsumerDoneShmPath{"/fields_set_and_notifier_consumer_done"};
-
-// InstanceSpecifier::Create can only fail if the provided string is invalid.
-// Verified once here; all test functions reuse this constant.
-const InstanceSpecifier kInstanceSpecifier = InstanceSpecifier::Create(std::string{kInstanceSpecifierString}).value();
-
 void run_notifier_provider(const score::cpp::stop_token& stop_token)
 {
     // Step 1. Create process synchronizer
     std::cout << "\nProvider: Step 1 - Create process synchronizer" << std::endl;
-    auto done_synchronizer_result = ProcessSynchronizer::Create(kNotifierConsumerDoneShmPath);
+    auto done_synchronizer_result = ProcessSynchronizer::Create(kConsumerDoneShmPath);
     if (!done_synchronizer_result.has_value())
     {
         FailTest("Provider: Could not create done ProcessSynchronizer");
@@ -94,7 +87,7 @@ void run_set_and_notifier_provider(const score::cpp::stop_token& stop_token)
 {
     // Step 1. Create process synchronizer
     std::cout << "\nProvider: Step 1 - Create process synchronizer" << std::endl;
-    auto process_synchronizer_result = ProcessSynchronizer::Create(kSetAndNotifierConsumerDoneShmPath);
+    auto process_synchronizer_result = ProcessSynchronizer::Create(kConsumerDoneShmPath);
     if (!process_synchronizer_result.has_value())
     {
         FailTest("Provider: Could not create ProcessSynchronizer");

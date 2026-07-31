@@ -38,18 +38,9 @@ namespace score::mw::com::test
 namespace
 {
 
-const std::string kNotifierConsumerDoneShmPath{"/fields_notifier_consumer_done"};
-const std::string kSetAndNotifierConsumerDoneShmPath{"/fields_set_and_notifier_consumer_done"};
-
-// InstanceSpecifier::Create can only fail if the provided string is invalid.
-// Verified once here; all test functions reuse this constant.
-const InstanceSpecifier kInstanceSpecifier = InstanceSpecifier::Create(std::string{kInstanceSpecifierString}).value();
-
-}  // namespace
-
 void run_notifier_consumer(const score::cpp::stop_token& stop_token)
 {
-    auto done_synchronizer_result = ProcessSynchronizer::Create(kNotifierConsumerDoneShmPath);
+    auto done_synchronizer_result = ProcessSynchronizer::Create(kConsumerDoneShmPath);
     if (!done_synchronizer_result.has_value())
     {
         FailTest("Consumer: Could not create done ProcessSynchronizer");
@@ -115,7 +106,7 @@ void run_notifier_consumer(const score::cpp::stop_token& stop_token)
 
 void run_set_and_notifier_consumer(const score::cpp::stop_token& stop_token)
 {
-    auto process_synchronizer_result = ProcessSynchronizer::Create(kSetAndNotifierConsumerDoneShmPath);
+    auto process_synchronizer_result = ProcessSynchronizer::Create(kConsumerDoneShmPath);
     if (!process_synchronizer_result.has_value())
     {
         FailTest("Consumer: Could not create ProcessSynchronizer");
@@ -203,6 +194,8 @@ void run_set_and_notifier_consumer(const score::cpp::stop_token& stop_token)
     }
     proxy.set_and_notifier_enabled_field.Unsubscribe();
 }
+
+}  // namespace
 
 void run_consumer(const score::cpp::stop_token& stop_token, TestMode mode)
 {
