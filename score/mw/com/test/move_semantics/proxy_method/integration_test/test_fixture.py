@@ -27,13 +27,9 @@ def consumer_and_provider(target, scenario, **kwargs):
 
 def consumer(target, scenario, **kwargs):
     args = ["--scenario", str(int(scenario)), "--service-instance-manifest", f"./etc/mw_com_config.json"]
-    return target.wrap_exec(
-        "bin/main_consumer", args, cwd="/opt/MainConsumerApp", wait_on_exit=True, **kwargs
-    )
+    return target.wrap_exec("bin/main_consumer", args, cwd="/opt/MainConsumerApp", wait_on_exit=True, **kwargs)
 
 
 def provider(target, scenario, **kwargs):
     args = ["--scenario", str(int(scenario)), "--service-instance-manifest", f"./etc/mw_com_config.json"]
-    return target.wrap_exec(
-        "bin/main_provider", args, cwd="/opt/MainProviderApp", wait_on_exit=True, **kwargs
-    )
+    return target.wrap_exec("bin/main_provider", args, cwd="/opt/MainProviderApp", wait_on_exit=True, **kwargs)
