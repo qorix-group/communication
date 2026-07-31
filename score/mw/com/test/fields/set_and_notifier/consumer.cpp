@@ -181,23 +181,25 @@ void run_set_and_notifier_consumer(const score::cpp::stop_token& stop_token)
     }
     const std::int32_t accepted_value = *(set_result.value());
 
-    if (accepted_value != kSetRequestValue * 2 + 1)
+    if (accepted_value != (kSetRequestValue * 2) + 1)
     {
-        FailTest(
-            "Consumer: Set accepted value mismatch. Expected ", kSetRequestValue * 2 + 1, " but got ", accepted_value);
+        FailTest("Consumer: Set accepted value mismatch. Expected ",
+                 (kSetRequestValue * 2) + 1,
+                 " but got ",
+                 accepted_value);
     }
 
     // Step 8. Verify transformed value received via field notification
     std::cout << "\nConsumer: Step 8 - Verify transformed value via field notification" << std::endl;
     auto get_set_sample_callback = [](const auto& sample_ptr) noexcept {
-        if (*sample_ptr != kSetRequestValue * 2 + 1)
+        if (*sample_ptr != (kSetRequestValue * 2) + 1)
         {
-            FailTest("Consumer: Did not receive transformed value ", kSetRequestValue * 2 + 1, " after Set call");
+            FailTest("Consumer: Did not receive transformed value ", (kSetRequestValue * 2) + 1, " after Set call");
         }
     };
     if (!field_receiver.WaitForSamples(stop_token, 1U, std::move(get_set_sample_callback)))
     {
-        FailTest("Consumer: Did not receive transformed value ", kSetRequestValue * 2 + 1, " after Set call");
+        FailTest("Consumer: Did not receive transformed value ", (kSetRequestValue * 2) + 1, " after Set call");
     }
     proxy.set_and_notifier_enabled_field.Unsubscribe();
 }
@@ -214,4 +216,5 @@ void run_consumer(const score::cpp::stop_token& stop_token, TestMode mode)
             return;
     }
 }
+
 }  // namespace score::mw::com::test

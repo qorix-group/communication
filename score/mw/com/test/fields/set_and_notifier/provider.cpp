@@ -22,7 +22,6 @@
 
 #include <iostream>
 #include <optional>
-#include <string_view>
 
 namespace score::mw::com::test
 {
@@ -112,7 +111,7 @@ void run_set_and_notifier_provider(const score::cpp::stop_token& stop_token)
     std::cout << "\nProvider: Step 3 - Register set handler" << std::endl;
     const auto register_handler_result =
         service.set_and_notifier_enabled_field.RegisterSetHandler([](std::int32_t& value) noexcept {
-            value = value * 2 + 1;
+            value = (value * 2) + 1;
         });
     if (!register_handler_result.has_value())
     {
