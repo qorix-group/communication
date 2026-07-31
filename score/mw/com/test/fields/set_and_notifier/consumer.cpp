@@ -80,23 +80,8 @@ void run_notifier_consumer(const score::cpp::stop_token& stop_token)
 
     // Step 6. Wait for all expected samples
     std::cout << "\nConsumer: Step 6 - Wait for all expected samples" << std::endl;
-    std::size_t sample_index{0U};
-    auto get_sent_samples_callback = [&sample_index](const auto& sample_ptr) noexcept {
-        const auto expected_value =
-            sample_index == 0U ? kInitialValue : kUpdatedValue + static_cast<std::int32_t>(sample_index - 1U);
-        const auto& received_value = *sample_ptr;
-        if (received_value != expected_value)
-        {
-            FailTest("Consumer: Received unexpected value. Expected: ",
-                     expected_value,
-                     ". Received: ",
-                     received_value,
-                     " for sample index: ",
-                     sample_index);
-        }
-        ++sample_index;
-    };
-    if (!field_receiver.WaitForSamples(stop_token, kTotalNumValuesToSend, std::move(get_sent_samples_callback)))
+    const std::vector<std::int32_t> values_to_receive = {20, 30, 35};
+    if (!field_receiver.WaitForSamples(stop_token, values_to_receive))
     {
         FailTest("Consumer: Did not receive all expected samples in notifier scenario");
     }
@@ -142,23 +127,8 @@ void run_set_and_notifier_consumer(const score::cpp::stop_token& stop_token)
 
     // Step 6. Wait for all expected samples
     std::cout << "\nConsumer: Step 6 - Wait for all expected samples" << std::endl;
-    std::size_t sample_index{0U};
-    auto get_sent_samples_callback = [&sample_index](const auto& sample_ptr) noexcept {
-        const auto expected_value =
-            sample_index == 0U ? kInitialValue : kUpdatedValue + static_cast<std::int32_t>(sample_index - 1U);
-        const auto& received_value = *sample_ptr;
-        if (received_value != expected_value)
-        {
-            FailTest("Consumer: Received unexpected value. Expected: ",
-                     expected_value,
-                     ". Received: ",
-                     received_value,
-                     " for sample index: ",
-                     sample_index);
-        }
-        ++sample_index;
-    };
-    if (!field_receiver.WaitForSamples(stop_token, kTotalNumValuesToSend, std::move(get_sent_samples_callback)))
+    const std::vector<std::int32_t> values_to_receive = {20, 30, 35};
+    if (!field_receiver.WaitForSamples(stop_token, values_to_receive))
     {
         FailTest("Consumer: Did not receive all expected samples in notifier scenario");
     }
