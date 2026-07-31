@@ -80,7 +80,7 @@ void run_notifier_consumer(const score::cpp::stop_token& stop_token)
 
     // Step 6. Wait for all expected samples
     std::cout << "\nConsumer: Step 6 - Wait for all expected samples" << std::endl;
-    const std::vector<std::int32_t> values_to_receive = {20, 30, 35};
+    const std::vector<std::int32_t> values_to_receive = {kInitialValue, 20, 30, 35};
     if (!field_receiver.WaitForSamples(stop_token, values_to_receive))
     {
         FailTest("Consumer: Did not receive all expected samples in notifier scenario");
@@ -96,8 +96,14 @@ void run_set_and_notifier_consumer(const score::cpp::stop_token& stop_token)
     {
         FailTest("Consumer: Could not create ProcessSynchronizer");
     }
-    ExitFunctionGuard process_synchronizer_guard{[&process_synchronizer_result]() {
+    auto set_done_synchronizer_result = ProcessSynchronizer::Create(kSetDoneShmPath);
+    if (!set_done_synchronizer_result.has_value())
+    {
+        FailTest("Consumer: Could not create set-done ProcessSynchronizer");
+    }
+    ExitFunctionGuard process_synchronizer_guard{[&process_synchronizer_result, &set_done_synchronizer_result]() {
         process_synchronizer_result->Notify();
+        set_done_synchronizer_result->Notify();
     }};
 
     // Step 1. Find service and create proxy
@@ -127,10 +133,12 @@ void run_set_and_notifier_consumer(const score::cpp::stop_token& stop_token)
 
     // Step 6. Wait for all expected samples
     std::cout << "\nConsumer: Step 6 - Wait for all expected samples" << std::endl;
-    const std::vector<std::int32_t> values_to_receive = {20, 30, 35};
-    if (!field_receiver.WaitForSamples(stop_token, values_to_receive))
     {
-        FailTest("Consumer: Did not receive all expected samples in notifier scenario");
+        const std::vector<std::int32_t> values_to_receive = {kInitialValue, 20, 30, 35};
+        if (!field_receiver.WaitForSamples(stop_token, values_to_receive))
+        {
+            FailTest("Consumer: Did not receive all expected samples in notifier scenario");
+        }
     }
 
     // Step 7. Set new field value and verify accepted value matches expected transformed value
@@ -142,7 +150,8 @@ void run_set_and_notifier_consumer(const score::cpp::stop_token& stop_token)
     }
     const std::int32_t accepted_value = *(set_result.value());
 
-    if (accepted_value != (kSetRequestValue * 2) + 1)
+    const auto expected_accepted_set_value = (kSetRequestValue * 2) + 1;
+    if (accepted_value != expected_accepted_set_value)
     {
         FailTest("Consumer: Set accepted value mismatch. Expected ",
                  (kSetRequestValue * 2) + 1,
@@ -150,18 +159,18 @@ void run_set_and_notifier_consumer(const score::cpp::stop_token& stop_token)
                  accepted_value);
     }
 
-    // Step 8. Verify transformed value received via field notification
-    std::cout << "\nConsumer: Step 8 - Verify transformed value via field notification" << std::endl;
-    auto get_set_sample_callback = [](const auto& sample_ptr) noexcept {
-        if (*sample_ptr != (kSetRequestValue * 2) + 1)
-        {
-            FailTest("Consumer: Did not receive transformed value ", (kSetRequestValue * 2) + 1, " after Set call");
-        }
-    };
-    if (!field_receiver.WaitForSamples(stop_token, 1U, std::move(get_set_sample_callback)))
+    // Step 8. Notify provider that Set() was called
+    std::cout << "\nConsumer: Step 8 - Notify provider that Set() was verified" << std::endl;
+    set_done_synchronizer_result->Notify();
+
+    // Step 9. Wait for additional samples sent after the provider receives the set-complete signal
+    std::cout << "\nConsumer: Step 9 - Wait for all expected samples" << std::endl;
+    const std::vector<std::int32_t> values_to_receive = {expected_accepted_set_value, 10, 100};
+    if (!field_receiver.WaitForSamples(stop_token, values_to_receive))
     {
-        FailTest("Consumer: Did not receive transformed value ", (kSetRequestValue * 2) + 1, " after Set call");
+        FailTest("Consumer: Did not receive all expected samples in notifier scenario");
     }
+
     proxy.set_and_notifier_enabled_field.Unsubscribe();
 }
 
