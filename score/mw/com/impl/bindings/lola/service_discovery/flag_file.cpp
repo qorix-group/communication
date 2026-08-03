@@ -147,8 +147,7 @@ auto GetQualityTypeString(QualityType quality_type) noexcept -> std::string_view
     return result;
 }
 
-auto GetSearchPathForIdentifier(const EnrichedInstanceIdentifier& enriched_instance_identifier) noexcept
-    -> filesystem::Path
+auto GetSearchPathForIdentifier(const EnrichedInstanceIdentifier& enriched_instance_identifier) -> filesystem::Path
 {
     const auto service_id =
         enriched_instance_identifier.GetBindingSpecificServiceId<LolaServiceTypeDeployment>().value();
@@ -243,7 +242,7 @@ auto FlagFile::Exists(const EnrichedInstanceIdentifier& enriched_instance_identi
 // This suppression should be removed after fixing [Ticket-173043](broken_link_j/Ticket-173043)
 // coverity[autosar_cpp14_a15_5_3_violation : FALSE]
 auto FlagFile::CreateSearchPath(const EnrichedInstanceIdentifier& enriched_instance_identifier,
-                                const filesystem::Filesystem& filesystem) noexcept -> Result<filesystem::Path>
+                                const filesystem::Filesystem& filesystem) -> Result<filesystem::Path>
 {
     auto path = GetSearchPathForIdentifier(enriched_instance_identifier);
 

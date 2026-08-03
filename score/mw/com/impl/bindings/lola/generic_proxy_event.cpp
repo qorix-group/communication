@@ -132,7 +132,7 @@ Result<std::size_t> GenericProxyEvent::GetNumNewSamplesAvailableImpl() const noe
 // implicitly". std::terminate() is implicitly called from '.value()' in case it doesn't have a value but as we check
 // before with 'has_value()' so no way for throwing std::bad_optional_access which leds to std::terminate().
 // coverity[autosar_cpp14_a15_5_3_violation : FALSE]
-Result<std::size_t> GenericProxyEvent::GetNewSamplesImpl(Callback&& receiver, TrackerGuardFactory& tracker) noexcept
+Result<std::size_t> GenericProxyEvent::GetNewSamplesImpl(Callback&& receiver, TrackerGuardFactory& tracker)
 {
     const auto max_sample_count = tracker.GetNumAvailableGuards();
 

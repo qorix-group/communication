@@ -111,7 +111,7 @@ class SkeletonMemoryManager final
     auto CreateGenericEventDataInCreatedSharedMemory(const ElementFqId element_fq_id,
                                                      const SkeletonEventProperties& element_properties,
                                                      size_t sample_size,
-                                                     size_t sample_alignment) noexcept -> void*;
+                                                     size_t sample_alignment) -> void*;
 
     /// \brief Opens an EventControl for QM and optionally for ASIL-B (if the Skeleton is ASIL-B) for a specific
     /// event that were created by a previous skeleton.
@@ -133,8 +133,7 @@ class SkeletonMemoryManager final
     /// Generic events use EventMetaInfo as the stable type-erased contract. No interpretation to a
     /// DynamicArray<SampleType> takes place in this case.
     auto RetrieveGenericEventDataFromOpenedSharedMemory(const ElementFqId element_fq_id,
-                                                        const SkeletonEventProperties& element_properties) noexcept
-        -> void*;
+                                                        const SkeletonEventProperties& element_properties) -> void*;
 
     /// \brief Rolls back any existing operations in the TransactionLog corresponding to a SkeletonEvent
     ///

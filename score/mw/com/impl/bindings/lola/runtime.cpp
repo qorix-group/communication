@@ -36,7 +36,7 @@ namespace score::mw::com::impl::lola
 /// \param config The application's configuration object.
 /// \return The determined application identifier (either the configured ID or the process UID).
 
-std::uint32_t Runtime::DetermineApplicationIdentifier(const Configuration& config) const noexcept
+std::uint32_t Runtime::DetermineApplicationIdentifier(const Configuration& config) const
 {
     const auto& global_config = config.GetGlobalConfiguration();
     const auto application_id = global_config.GetApplicationId();

@@ -55,7 +55,7 @@ class InstanceIdentifier final
      * called with a dummy InstanceSpecifier) triggers this.
      * If the configuration has not been set, kInvalidConfiguration is returned.
      */
-    static score::Result<InstanceIdentifier> Create(std::string&& serialized_format) noexcept;
+    static score::Result<InstanceIdentifier> Create(std::string&& serialized_format);
 
     InstanceIdentifier() = delete;
     ~InstanceIdentifier() noexcept = default;
@@ -141,7 +141,7 @@ class InstanceIdentifier final
      * @param json_object Used to construct the InstanceIdentifier (no copies of json_object are made internally).
      * @param serialized_string Serialized string which the json_object is derived from. Used to set serialized_string_.
      */
-    explicit InstanceIdentifier(const json::Object& json_object, std::string&& serialized_string) noexcept;
+    explicit InstanceIdentifier(const json::Object& json_object, std::string&& serialized_string);
 
     /**
      * @brief internal impl. specific ctor.
@@ -241,7 +241,7 @@ class InstanceIdentifierView final
         return identifier_.Serialize();
     };
 
-    std::optional<ServiceInstanceId> GetServiceInstanceId() const noexcept;
+    std::optional<ServiceInstanceId> GetServiceInstanceId() const;
     const ServiceInstanceDeployment& GetServiceInstanceDeployment() const noexcept;
     const ServiceTypeDeployment& GetServiceTypeDeployment() const;
     bool isCompatibleWith(const InstanceIdentifier&) const;

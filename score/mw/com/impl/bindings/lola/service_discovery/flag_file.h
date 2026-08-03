@@ -31,8 +31,7 @@ auto GetQualityTypeString(QualityType quality_type) noexcept -> std::string_view
 /// contains an Instance ID.
 ///
 /// The service discovery path is: `<sd>/mw_com_lola/<service_id>/<instance_id>.
-auto GetSearchPathForIdentifier(const EnrichedInstanceIdentifier& enriched_instance_identifier) noexcept
-    -> filesystem::Path;
+auto GetSearchPathForIdentifier(const EnrichedInstanceIdentifier& enriched_instance_identifier) -> filesystem::Path;
 
 class FlagFile
 {
@@ -66,7 +65,7 @@ class FlagFile
     /// InstanceIdentifier in the filesystem.
     static auto CreateSearchPath(
         const EnrichedInstanceIdentifier& enriched_instance_identifier,
-        const filesystem::Filesystem& filesystem = filesystem::FilesystemFactory{}.CreateInstance()) noexcept
+        const filesystem::Filesystem& filesystem = filesystem::FilesystemFactory{}.CreateInstance())
         -> score::Result<filesystem::Path>;
 
   private:

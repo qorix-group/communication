@@ -28,7 +28,7 @@
 namespace score::mw::com::impl::lola
 {
 
-Result<void> SubscriptionPendingState::SubscribeEvent(const std::size_t max_sample_count) noexcept
+Result<void> SubscriptionPendingState::SubscribeEvent(const std::size_t max_sample_count)
 {
     // Suppress "AUTOSAR C++14 A4-7-1" rule finding. This rule states: "An integer expression shall
     // not lead to data loss.".
@@ -71,7 +71,7 @@ void SubscriptionPendingState::StopOfferEvent() noexcept
     std::terminate();
 }
 
-void SubscriptionPendingState::ReOfferEvent(const pid_t new_event_source_pid) noexcept
+void SubscriptionPendingState::ReOfferEvent(const pid_t new_event_source_pid)
 {
     state_machine_.provider_service_instance_is_available_ = true;
     state_machine_.event_receive_handler_manager_.UpdatePid(new_event_source_pid);
@@ -90,7 +90,7 @@ void SubscriptionPendingState::UnsetReceiveHandler() noexcept
     state_machine_.event_receiver_handler_ = std::nullopt;
 }
 
-std::optional<std::uint16_t> SubscriptionPendingState::GetMaxSampleCount() const noexcept
+std::optional<std::uint16_t> SubscriptionPendingState::GetMaxSampleCount() const
 {
     SCORE_LANGUAGE_FUTURECPP_ASSERT_MESSAGE(
         state_machine_.subscription_data_.max_sample_count_.has_value(),

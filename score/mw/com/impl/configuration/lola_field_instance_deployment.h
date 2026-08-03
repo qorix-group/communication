@@ -33,7 +33,7 @@ class LolaFieldInstanceDeployment
 
     explicit LolaFieldInstanceDeployment(const score::json::Object& json_object) noexcept;
 
-    static LolaFieldInstanceDeployment CreateFromJson(const score::json::Object& json_object) noexcept;
+    static LolaFieldInstanceDeployment CreateFromJson(const score::json::Object& json_object);
 
     score::json::Object Serialize() const noexcept;
 

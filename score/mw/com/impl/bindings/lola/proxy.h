@@ -115,7 +115,7 @@ class Proxy : public ProxyBinding
     // coverity[autosar_cpp14_m3_2_4_violation]
     ~Proxy() override;
 
-    static std::unique_ptr<Proxy> Create(const HandleType handle) noexcept;
+    static std::unique_ptr<Proxy> Create(const HandleType handle);
 
     Proxy(std::shared_ptr<memory::shared::ManagedMemoryResource> control,
           std::shared_ptr<memory::shared::ManagedMemoryResource> data,
@@ -126,22 +126,22 @@ class Proxy : public ProxyBinding
           std::unique_ptr<score::memory::shared::FlockMutexAndLock<score::memory::shared::SharedFlockMutex>>
               service_instance_usage_flock_mutex_and_lock,
           score::filesystem::Filesystem filesystem,
-          ProxyInstanceIdentifier::ProxyInstanceCounter proxy_instance_counter) noexcept;
+          ProxyInstanceIdentifier::ProxyInstanceCounter proxy_instance_counter);
 
     /// Returns the address of the control structure, for the given event ID.
     ///
     /// Terminates if the event control structure cannot be found.
-    ConsumerEventDataControlLocalView<> GetConsumerEventDataControlLocalView(const ElementFqId element_fq_id) noexcept;
+    ConsumerEventDataControlLocalView<> GetConsumerEventDataControlLocalView(const ElementFqId element_fq_id);
 
     /// Returns the EventSubscriptionControl for the given event ID.
     ///
     /// Terminates if the event control structure cannot be found.
-    EventSubscriptionControl<>& GetEventSubscriptionControl(const ElementFqId element_fq_id) noexcept;
+    EventSubscriptionControl<>& GetEventSubscriptionControl(const ElementFqId element_fq_id);
 
     /// Returns the TransactionLogSet for the given event ID.
     ///
     /// Terminates if the event control structure cannot be found.
-    TransactionLogSet& GetTransactionLogSet(const ElementFqId element_fq_id) noexcept;
+    TransactionLogSet& GetTransactionLogSet(const ElementFqId element_fq_id);
 
     /// Retrieves a reference to the event data storage area for a given ElementFqId.
     ///
@@ -158,14 +158,14 @@ class Proxy : public ProxyBinding
     ///
     /// \param element_fq_id The Event ID.
     /// \return An event data meta info.
-    const EventMetaInfo& GetEventMetaInfo(const ElementFqId element_fq_id) const noexcept;
+    const EventMetaInfo& GetEventMetaInfo(const ElementFqId element_fq_id) const;
 
     /// Checks whether the event corresponding to event_name is provided
     ///
     /// It does this by checking whether the event corresponding to event_name exists in shared memory.
     /// \param event_name The event name to check.
     /// \return True if the event name exists, otherwise, false
-    bool IsEventProvided(const std::string_view event_name) const noexcept override;
+    bool IsEventProvided(const std::string_view event_name) const override;
 
     /// \brief Sets up the shared memory for all the methods of the proxy, notifies the skeleton to open the shared
     /// memory and perform any setup on skeleton side.
@@ -216,7 +216,7 @@ class Proxy : public ProxyBinding
     void StopProxyAutoReconnect();
 
     void ServiceAvailabilityChangeHandler(const bool is_service_available);
-    void CleanupMethods() noexcept;
+    void CleanupMethods();
     void InitializeSharedMemoryForMethods(
         memory::shared::ManagedMemoryResource& memory_resource,
         const std::vector<std::pair<UniqueMethodIdentifier, LolaMethodInstanceDeployment::QueueSize>>& method_data,

@@ -50,7 +50,7 @@ class IServiceDiscovery
     [[nodiscard]] virtual Result<ServiceHandleContainer<HandleType>> FindService(
         InstanceIdentifier instance_identifier) noexcept = 0;
     [[nodiscard]] virtual Result<ServiceHandleContainer<HandleType>> FindService(
-        InstanceSpecifier instance_specifier) noexcept = 0;
+        InstanceSpecifier instance_specifier) = 0;
 
   protected:
     IServiceDiscovery(const IServiceDiscovery&) = default;

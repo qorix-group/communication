@@ -194,7 +194,7 @@ template <typename SkeletonServiceElementBinding, typename SkeletonServiceElemen
 auto CreateGenericSkeletonEventOrField(const InstanceIdentifier& identifier,
                                        SkeletonBase& parent,
                                        const std::string_view service_element_name,
-                                       const DataTypeMetaInfo& meta_info) noexcept
+                                       const DataTypeMetaInfo& meta_info)
     -> std::unique_ptr<SkeletonServiceElementBinding>
 {
     static_assert((element_type == ServiceElementType::EVENT) || (element_type == ServiceElementType::FIELD));

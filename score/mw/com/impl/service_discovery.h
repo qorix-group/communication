@@ -55,8 +55,7 @@ class ServiceDiscovery final : public IServiceDiscovery
     [[nodiscard]] Result<void> StopFindService(const FindServiceHandle) noexcept override;
     [[nodiscard]] Result<ServiceHandleContainer<HandleType>> FindService(
         InstanceIdentifier instance_identifier) noexcept override;
-    [[nodiscard]] Result<ServiceHandleContainer<HandleType>> FindService(
-        InstanceSpecifier instance_specifier) noexcept override;
+    [[nodiscard]] Result<ServiceHandleContainer<HandleType>> FindService(InstanceSpecifier instance_specifier) override;
 
   private:
     /// \brief Dispatches to BindingSpecificStartFindService and processes a binding error if returned

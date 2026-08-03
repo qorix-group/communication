@@ -45,7 +45,7 @@ class TransactionLogLocalView
     using UnsubscribeCallback =
         score::cpp::callback<void(TransactionLog::MaxSampleCountType subscription_max_sample_count)>;
 
-    TransactionLogLocalView(TransactionLog& transaction_log) noexcept;
+    TransactionLogLocalView(TransactionLog& transaction_log);
 
     /// \brief Record Subscription / Unsubscription transactions
     ///
@@ -100,7 +100,7 @@ class TransactionLogLocalView
 
   private:
     Result<void> RollbackIncrementTransactions(const DereferenceSlotCallback& dereference_slot_callback) noexcept;
-    Result<void> RollbackSubscribeTransactions(const UnsubscribeCallback& unsubscribe_callback) noexcept;
+    Result<void> RollbackSubscribeTransactions(const UnsubscribeCallback& unsubscribe_callback);
 
     /// \brief View pointing to DynamicArray containing one TransactionLogSlot for each slot in the corresponding
     /// control vector.

@@ -139,7 +139,7 @@ class SubscriptionStateMachine : public std::enable_shared_from_this<Subscriptio
     // Private member methods should be called under lock
     SubscriptionStateBase& GetCurrentEventState() noexcept;
     const SubscriptionStateBase& GetCurrentEventState() const noexcept;
-    void TransitionToState(const SubscriptionStateMachineState newState) noexcept;
+    void TransitionToState(const SubscriptionStateMachineState newState);
 
     // State machine variables
     mutable std::mutex state_mutex_;

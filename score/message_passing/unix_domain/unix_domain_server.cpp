@@ -102,7 +102,7 @@ void UnixDomainServer::ServerConnection::RequestDisconnect() noexcept
     server_.engine_->UnregisterPosixEndpoint(endpoint_);
 }
 
-bool UnixDomainServer::ServerConnection::ProcessInput() noexcept
+bool UnixDomainServer::ServerConnection::ProcessInput()
 {
     std::uint8_t code;
     auto& user_data = *user_data_;
@@ -134,7 +134,7 @@ bool UnixDomainServer::ServerConnection::ProcessInput() noexcept
     return true;
 }
 
-UnixDomainServer::ServerConnection::~ServerConnection() noexcept
+UnixDomainServer::ServerConnection::~ServerConnection() noexcept(false)
 {
     if (user_data_.has_value())
     {

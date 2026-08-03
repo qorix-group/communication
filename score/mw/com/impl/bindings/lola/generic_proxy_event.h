@@ -81,7 +81,7 @@ class GenericProxyEvent final : public GenericProxyEventBinding
     void NotifyServiceInstanceChangedAvailability(bool is_available, pid_t new_event_source_pid) noexcept override;
 
   private:
-    Result<std::size_t> GetNewSamplesImpl(Callback&& receiver, TrackerGuardFactory& tracker) noexcept;
+    Result<std::size_t> GetNewSamplesImpl(Callback&& receiver, TrackerGuardFactory& tracker);
     Result<std::size_t> GetNumNewSamplesAvailableImpl() const noexcept;
 
     ProxyEventCommon proxy_event_common_;

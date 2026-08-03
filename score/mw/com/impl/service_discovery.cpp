@@ -344,7 +344,7 @@ Result<ServiceHandleContainer<HandleType>> ServiceDiscovery::FindService(
 // which leds to std::terminate().
 // This suppression should be removed after fixing [Ticket-173043](broken_link_j/Ticket-173043)
 // coverity[autosar_cpp14_a15_5_3_violation : FALSE]
-Result<ServiceHandleContainer<HandleType>> ServiceDiscovery::FindService(InstanceSpecifier instance_specifier) noexcept
+Result<ServiceHandleContainer<HandleType>> ServiceDiscovery::FindService(InstanceSpecifier instance_specifier)
 {
     ServiceHandleContainer<HandleType> handles;
     const auto instance_identifiers = runtime_.resolve(instance_specifier);

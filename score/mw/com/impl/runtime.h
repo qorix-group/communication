@@ -119,7 +119,7 @@ class Runtime final : public IRuntime
 
     /// \brief see IRuntime::GetTracingFilterConfig
     // coverity[autosar_cpp14_a10_3_1_violation]
-    const tracing::ITracingFilterConfig* GetTracingFilterConfig() const noexcept override final;
+    const tracing::ITracingFilterConfig* GetTracingFilterConfig() const override final;
 
     /// \brief see IRuntime::GetTracingRuntime
     // coverity[autosar_cpp14_a10_3_1_violation]
@@ -129,7 +129,7 @@ class Runtime final : public IRuntime
     /// \return static Runtime (the real one - not a mock!) configured based on the configuration set by one of the
     ///         static Initialize() overloads.
     /// \pre the internal static initialization_config_ has to be initialized with a Configuration.
-    static Runtime& getInstanceInternal() noexcept;
+    static Runtime& getInstanceInternal();
 
     /// \brief pointer to a mock to be used (set via InjectMock())
     static score::mw::com::impl::IRuntime* mock_;
