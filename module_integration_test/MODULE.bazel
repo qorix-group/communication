@@ -23,10 +23,10 @@ git_override(
     remote = "https://github.com/eclipse-score/score-crates.git",
 )
 
-bazel_dep(name = "lobster", version = "1.0.3")
+bazel_dep(name = "lobster", version = "1.0.6")
 git_override(
     module_name = "lobster",
-    commit = "07382c33f95e22992e0f8788c0537ec06877e51f",
+    commit = "0069786d1261d59817fc97cb6e7b359b522e14d5",
     remote = "https://github.com/bmw-software-engineering/lobster.git",
 )
 
