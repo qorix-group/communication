@@ -44,10 +44,12 @@ use std::pin::Pin;
 use std::sync::atomic::{AtomicBool, AtomicUsize};
 use std::sync::Arc;
 
-use com_api_concept::{
+use score_log as log;
+
+use score_com_concept::{
     Builder, CommData, Consumer, ConsumerBuilder, ConsumerDescriptor, ConsumerFailedReason, Error,
-    EventFailedReason, InstanceSpecifier, Interface, ReceiveFailedReason, Result, SampleContainer,
-    ServiceDiscovery, ServiceFailedReason, Subscriber, Subscription,
+    EventFailedReason, InstanceSpecifier, Interface, ReceiveFailedReason, Result, Sample,
+    SampleContainer, ServiceDiscovery, ServiceFailedReason, Subscriber, Subscription,
 };
 
 use bridge_ffi_rs::*;
@@ -56,7 +58,7 @@ use crate::LolaRuntimeImpl;
 
 #[derive(Clone, Debug)]
 pub struct LolaConsumerInfo<B: FFIBridge> {
-    handle_container: Arc<mw_com::proxy::HandleContainer>,
+    handle_container: Arc<HandleContainer>,
     handle_index: usize,
     interface_id: &'static str,
     // LolaFFIBridge (Production case) is a ZST, so cloning it is not overhead,
@@ -104,7 +106,7 @@ where
 }
 
 #[derive(Debug)]
-pub struct Sample<T, B: FFIBridge>
+pub struct LolaSample<T, B: FFIBridge>
 where
     T: CommData + Debug,
 {
@@ -116,7 +118,7 @@ where
 
 pub static ID_COUNTER: AtomicUsize = AtomicUsize::new(0);
 
-impl<T, B: FFIBridge> Sample<T, B>
+impl<T, B: FFIBridge> LolaSample<T, B>
 where
     T: CommData + Debug,
 {
@@ -135,7 +137,7 @@ where
     }
 }
 
-impl<T, B: FFIBridge> Deref for Sample<T, B>
+impl<T, B: FFIBridge> Deref for LolaSample<T, B>
 where
     T: CommData + Debug,
 {
@@ -146,10 +148,10 @@ where
     }
 }
 
-impl<T, B: FFIBridge> com_api_concept::Sample<T> for Sample<T, B> where T: CommData + Debug {}
+impl<T, B: FFIBridge> Sample<T> for LolaSample<T, B> where T: CommData + Debug {}
 
 // Ordering traits for Sample<T> are using id field to provide total ordering
-impl<T, B: FFIBridge> PartialEq for Sample<T, B>
+impl<T, B: FFIBridge> PartialEq for LolaSample<T, B>
 where
     T: CommData + Debug,
 {
@@ -158,9 +160,9 @@ where
     }
 }
 
-impl<T, B: FFIBridge> Eq for Sample<T, B> where T: CommData + Debug {}
+impl<T, B: FFIBridge> Eq for LolaSample<T, B> where T: CommData + Debug {}
 
-impl<T, B: FFIBridge> PartialOrd for Sample<T, B>
+impl<T, B: FFIBridge> PartialOrd for LolaSample<T, B>
 where
     T: CommData + Debug,
 {
@@ -169,7 +171,7 @@ where
     }
 }
 
-impl<T, B: FFIBridge> Ord for Sample<T, B>
+impl<T, B: FFIBridge> Ord for LolaSample<T, B>
 where
     T: CommData + Debug,
 {
@@ -302,7 +304,7 @@ impl std::fmt::Debug for NativeProxyEventBase {
 }
 
 #[derive(Debug)]
-pub struct SubscribableImpl<T, B: FFIBridge> {
+pub struct LolaSubscribableImpl<T, B: FFIBridge> {
     identifier: &'static str,
     instance_info: LolaConsumerInfo<B>,
     proxy_instance: ProxyInstanceManager<B>,
@@ -310,10 +312,15 @@ pub struct SubscribableImpl<T, B: FFIBridge> {
 }
 
 impl<T: CommData + Debug, B: FFIBridge> Subscriber<T, LolaRuntimeImpl<B>>
-    for SubscribableImpl<T, B>
+    for LolaSubscribableImpl<T, B>
 {
-    type Subscription = SubscriberImpl<T, B>;
+    type Subscription = LolaSubscriberImpl<T, B>;
     fn new(identifier: &'static str, instance_info: LolaConsumerInfo<B>) -> Result<Self> {
+        log::info!(
+            "Creating subscriber for identifier: {} with interface_id: {}",
+            identifier,
+            instance_info.interface_id
+        );
         let handle = instance_info.get_handle().ok_or(Error::ConsumerError(
             ConsumerFailedReason::ServiceHandleNotFound,
         ))?;
@@ -328,7 +335,17 @@ impl<T: CommData + Debug, B: FFIBridge> Subscriber<T, LolaRuntimeImpl<B>>
         })
     }
     fn subscribe(self, max_num_samples: usize) -> Result<Self::Subscription> {
+        log::info!(
+            "Subscribing to event: {} for interface_id: {} with max_num_samples: {}",
+            self.identifier,
+            self.instance_info.interface_id,
+            max_num_samples
+        );
         if max_num_samples == 0 {
+            log::error!(
+                "Failed to subscribe: max_num_samples is 0 for event: {}",
+                self.identifier
+            );
             return Err(Error::EventError(EventFailedReason::InvalidMaxSamples));
         }
         let instance_info = self.instance_info.clone();
@@ -352,6 +369,11 @@ impl<T: CommData + Debug, B: FFIBridge> Subscriber<T, LolaRuntimeImpl<B>>
             )
         };
         if !status {
+            log::error!(
+                "Failed to subscribe to event: {} for interface_id: {}",
+                self.identifier,
+                self.instance_info.interface_id
+            );
             return Err(Error::EventError(EventFailedReason::EventNotAvailable));
         }
         let type_ops = unsafe {
@@ -362,7 +384,7 @@ impl<T: CommData + Debug, B: FFIBridge> Subscriber<T, LolaRuntimeImpl<B>>
         .ok_or(Error::EventError(EventFailedReason::EventNotAvailable))?;
 
         // Store in SubscriberImpl with event, max_num_samples
-        Ok(SubscriberImpl {
+        Ok(LolaSubscriberImpl {
             event: ProxyEventManager::new(
                 std::ptr::from_ref(event_instance.get_proxy_event_base()) as *mut ProxyEventBase,
             ),
@@ -468,7 +490,7 @@ impl<'a> DerefMut for ProxyEventManagerGuard<'a> {
 /// It also manages the asynchronous initialization of the receive callback
 /// and the waker storage for async notifications when new samples arrive.
 #[derive(Debug)]
-pub struct SubscriberImpl<T, B: FFIBridge>
+pub struct LolaSubscriberImpl<T, B: FFIBridge>
 where
     T: CommData + Debug,
 {
@@ -483,7 +505,7 @@ where
     _phantom: PhantomData<T>,
 }
 
-impl<T: CommData + Debug, B: FFIBridge> Drop for SubscriberImpl<T, B> {
+impl<T: CommData + Debug, B: FFIBridge> Drop for LolaSubscriberImpl<T, B> {
     fn drop(&mut self) {
         // SAFETY: It is safe to unsubscribe from the event because the event pointer is valid
         // and was created during subscription.
@@ -506,7 +528,7 @@ impl<T: CommData + Debug, B: FFIBridge> Drop for SubscriberImpl<T, B> {
     }
 }
 
-impl<T: CommData + Debug, B: FFIBridge> SubscriberImpl<T, B> {
+impl<T: CommData + Debug, B: FFIBridge> LolaSubscriberImpl<T, B> {
     fn init_async_receive(&self, event_guard: &mut ProxyEventManagerGuard) -> Result<()> {
         let callback_waker = Arc::clone(&self.waker_storage);
         let waker_callback = move || {
@@ -570,12 +592,12 @@ impl<T: CommData + Debug, B: FFIBridge> SubscriberImpl<T, B> {
     }
 }
 
-impl<T, B: FFIBridge> Subscription<T, LolaRuntimeImpl<B>> for SubscriberImpl<T, B>
+impl<T, B: FFIBridge> Subscription<T, LolaRuntimeImpl<B>> for LolaSubscriberImpl<T, B>
 where
     T: CommData + Debug,
 {
-    type Subscriber = SubscribableImpl<T, B>;
-    type Sample<'a> = Sample<T, B>;
+    type Subscriber = LolaSubscribableImpl<T, B>;
+    type Sample<'a> = LolaSample<T, B>;
 
     /// The unsubscribe method consumes the subscription and returns the subscribable instance.
     /// Calling `unsubscribe` while a `SampleContainer` holding samples whose lifetime
@@ -587,7 +609,7 @@ where
     /// are still in scope.
     ///
     /// ``` compile_fail
-    /// use com_api_concept::{CommData, SampleContainer, Subscription};
+    /// use score_com_concept::{CommData, SampleContainer, Subscription};
     /// use com_api_runtime_lola::LolaRuntimeImpl;
     ///
     /// fn demonstrate_sample_container_lifetime_borrow<T, S>(sub: S)
@@ -603,7 +625,7 @@ where
     /// ```
     fn unsubscribe(self) -> Self::Subscriber {
         //Unsubscribe FFI call will be triggered in Drop implementation of SubscriberImpl.
-        SubscribableImpl {
+        LolaSubscribableImpl {
             identifier: self.event_id,
             instance_info: self.instance_info.clone(),
             proxy_instance: self._proxy.clone(),
@@ -700,7 +722,7 @@ struct ReceiveFuture<'a, T: CommData + Debug, F: Future<Output = ()>, B: FFIBrid
     event_guard: Option<ProxyEventManagerGuard<'a>>,
     waker_storage: Arc<AtomicWaker>,
     max_num_samples: usize,
-    scratch: Option<SampleContainer<Sample<T, B>>>,
+    scratch: Option<SampleContainer<LolaSample<T, B>>>,
     new_samples: usize,
     max_samples: usize,
     total_received: usize,
@@ -712,7 +734,7 @@ struct ReceiveFuture<'a, T: CommData + Debug, F: Future<Output = ()>, B: FFIBrid
 impl<'a, T: CommData + Debug, F: Future<Output = ()>, B: FFIBridge> Future
     for ReceiveFuture<'a, T, F, B>
 {
-    type Output = (SampleContainer<Sample<T, B>>, Result<usize>);
+    type Output = (SampleContainer<LolaSample<T, B>>, Result<usize>);
 
     fn poll(mut self: Pin<&mut Self>, ctx: &mut Context<'_>) -> Poll<Self::Output> {
         // Extract Copy values upfront, the rest are accessed via `this` below.
@@ -790,12 +812,12 @@ impl<'a, T: CommData + Debug, F: Future<Output = ()>, B: FFIBridge> Future
 /// concurrent receives on the same subscriber instance.
 /// On each poll, it first yields any buffered samples before attempting to receive more from the FFI callback.
 struct SampleStream<'a, T: CommData + Debug, B: FFIBridge> {
-    subscriber: &'a SubscriberImpl<T, B>,
-    sample_container: SampleContainer<Sample<T, B>>,
+    subscriber: &'a LolaSubscriberImpl<T, B>,
+    sample_container: SampleContainer<LolaSample<T, B>>,
 }
 
 impl<'a, T: CommData + Debug, B: FFIBridge> Stream for SampleStream<'a, T, B> {
-    type Item = Result<Sample<T, B>>;
+    type Item = Result<LolaSample<T, B>>;
 
     fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
         // Yield any buffered samples from a previous batch fetch first.
@@ -849,7 +871,7 @@ impl<'a, T: CommData + Debug, B: FFIBridge> Stream for SampleStream<'a, T, B> {
 /// - C++ passes the same handle both as return value and callback argument; we use only the
 ///   return value to eliminate double-write races and ensure deterministic cleanup.
 struct DiscoveryStateData {
-    handles: Option<mw_com::proxy::HandleContainer>,
+    handles: Option<HandleContainer>,
 }
 
 impl std::fmt::Debug for DiscoveryStateData {
@@ -888,10 +910,12 @@ where
         //If ANY Support is added in Lola, then we need to return all available instances
         //Once FFI layer error handling is in place (SWP-253124), we should convert this error to a proper FFI error instead of using map_err here
         let instance_specifier_lola =
-            mw_com::InstanceSpecifier::try_from(self.instance_specifier.as_ref())
+            bridge_ffi_rs::InstanceSpecifier::try_from(self.instance_specifier.as_ref())
                 .map_err(|_| Error::ServiceError(ServiceFailedReason::InstanceSpecifierInvalid))?;
 
-        let service_handle = mw_com::proxy::find_service(instance_specifier_lola)
+        let service_handle = self
+            .bridge
+            .find_service(instance_specifier_lola)
             .map_err(|_| Error::ServiceError(ServiceFailedReason::ServiceNotFound))?;
 
         let service_handle_arc = Arc::new(service_handle);
@@ -928,7 +952,7 @@ where
         // Convert to Lola InstanceSpecifier early
         //Once FFI layer error handling is in place (SWP-253124), we should convert this error to a proper FFI error instead of using map_err here
         let instance_specifier_lola =
-            mw_com::InstanceSpecifier::try_from(instance_specifier.as_ref())
+            bridge_ffi_rs::InstanceSpecifier::try_from(instance_specifier.as_ref())
                 .map_err(|_| Error::ServiceError(ServiceFailedReason::InstanceSpecifierInvalid));
 
         let waker_storage = Arc::new(futures::task::AtomicWaker::new());
@@ -945,8 +969,7 @@ where
         // synchronously from `start_find_service`'s return value and stored
         // directly in `ServiceDiscoveryFuture`, eliminating the double-write race.
         let discovery_callback = Box::new(
-            move |handles: mw_com::proxy::HandleContainer,
-                  _find_handle: bridge_ffi_rs::NativeFindServiceHandle| {
+            move |handles: HandleContainer, _find_handle: NativeFindServiceHandle| {
                 if let Ok(mut state) = state_ref.lock() {
                     state.handles = Some(handles);
                 }
@@ -955,9 +978,7 @@ where
         );
 
         let dyn_callback: Box<
-            dyn FnMut(mw_com::proxy::HandleContainer, bridge_ffi_rs::NativeFindServiceHandle)
-                + Send
-                + 'static,
+            dyn FnMut(HandleContainer, NativeFindServiceHandle) + Send + 'static,
         > = discovery_callback;
 
         // SAFETY: dyn_callback has the signature FnMut(HandleContainer, NativeFindServiceHandle)
@@ -977,7 +998,7 @@ where
             } else {
                 // Single authoritative source of find_handle — return value only.
                 // Callback's find_handle argument is ignored to prevent double-write.
-                Ok(bridge_ffi_rs::NativeFindServiceHandle::new(raw_handle))
+                Ok(NativeFindServiceHandle::new(raw_handle))
             }
         });
         async move {
@@ -1005,7 +1026,7 @@ where
 /// Stop find service in Drop implementation to ensure that we clean up the find service if the
 /// future is dropped before completion
 struct ServiceDiscoveryFuture<I: Interface, B: FFIBridge> {
-    find_handle: bridge_ffi_rs::NativeFindServiceHandle,
+    find_handle: NativeFindServiceHandle,
     discovery_state: Arc<std::sync::Mutex<DiscoveryStateData>>,
     waker_storage: Arc<futures::task::AtomicWaker>,
     _interface: PhantomData<I>,
@@ -1019,9 +1040,8 @@ impl<I: Interface, B: FFIBridge> Drop for ServiceDiscoveryFuture<I, B> {
         // This unconditional call ensures the C++ discovery operation is always
         // cleaned up, even when the future is dropped before the callback fires.
         unsafe {
-            self.bridge.stop_find_service(
-                self.find_handle.as_mut() as *mut bridge_ffi_rs::FindServiceHandle
-            );
+            self.bridge
+                .stop_find_service(self.find_handle.as_mut() as *mut FindServiceHandle);
         }
     }
 }
@@ -1119,7 +1139,7 @@ impl<I: Interface, B: FFIBridge> ConsumerDescriptor<LolaRuntimeImpl<B>>
 fn try_receive_samples<T: CommData + Debug, B: FFIBridge>(
     bridge: &B,
     event: &mut ProxyEventBase,
-    scratch: &mut SampleContainer<Sample<T, B>>,
+    scratch: &mut SampleContainer<LolaSample<T, B>>,
     max_num_samples: usize,
     max_samples: usize,
     type_ops: &TypeOperationsManager,
@@ -1183,7 +1203,7 @@ fn try_receive_samples<T: CommData + Debug, B: FFIBridge>(
 /// * `max_samples` - Maximum number of samples to maintain in the container
 pub fn create_sample_callback<'a, T: CommData + Debug, B: FFIBridge>(
     bridge: &B,
-    scratch: &'a mut SampleContainer<Sample<T, B>>,
+    scratch: &'a mut SampleContainer<LolaSample<T, B>>,
     max_samples: usize,
     type_ops: &'a TypeOperationsManager,
 ) -> impl FnMut(*mut sample_ptr_rs::SamplePtr<T>) + 'a {
@@ -1195,7 +1215,7 @@ pub fn create_sample_callback<'a, T: CommData + Debug, B: FFIBridge>(
             // and raw_pointer is moved from FFI to Rust ownership here
             let sample_ptr = unsafe { std::ptr::read(raw_sample) };
 
-            let wrapped_sample = Sample {
+            let wrapped_sample = LolaSample {
                 //Relaxed ordering is sufficient here as we just need a unique id for each sample
                 id: ID_COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed),
                 inner: LolaBinding {
@@ -1232,9 +1252,9 @@ mod test {
         value: i32,
     }
 
-    unsafe impl com_api_concept::Reloc for TestData {}
+    unsafe impl score_com_concept::Reloc for TestData {}
 
-    impl com_api_concept::CommData for TestData {
+    impl score_com_concept::CommData for TestData {
         const ID: &'static str = "TestData";
     }
 
@@ -1321,7 +1341,7 @@ mod test {
         // Create a single shared mock with all necessary expectations
         let bridge = SharedMockBridge::new(mock);
 
-        let subscribable = SubscribableImpl::<TestData, SharedMockBridge> {
+        let subscribable = LolaSubscribableImpl::<TestData, SharedMockBridge> {
             identifier: "TestEvent",
             instance_info: make_instance_info(bridge.clone()),
             proxy_instance: make_proxy_instance(bridge.clone(), "TestInterface"),
@@ -1397,7 +1417,7 @@ mod test {
 
         // Create a single shared mock with all necessary expectations
         let bridge = SharedMockBridge::new(mock);
-        let subscribable = SubscribableImpl::<TestData, SharedMockBridge> {
+        let subscribable = LolaSubscribableImpl::<TestData, SharedMockBridge> {
             identifier: "TestEvent",
             instance_info: make_instance_info(bridge.clone()),
             proxy_instance: make_proxy_instance(bridge.clone(), "TestInterface"),
@@ -1454,7 +1474,7 @@ mod test {
             });
 
         let bridge = SharedMockBridge::new(mock);
-        let subscribable = SubscribableImpl::<TestData, SharedMockBridge> {
+        let subscribable = LolaSubscribableImpl::<TestData, SharedMockBridge> {
             identifier: "TestEvent",
             instance_info: make_instance_info(bridge.clone()),
             proxy_instance: make_proxy_instance(bridge.clone(), "TestInterface"),

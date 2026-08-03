@@ -30,13 +30,11 @@ namespace score::mw::com::impl
 {
 
 ProxyBase::ProxyBase(std::unique_ptr<ProxyBinding> proxy_binding, HandleType handle)
-    : proxy_binding_{std::move(proxy_binding)},
-      handle_{std::move(handle)},
-      are_service_element_bindings_valid_{true},
-      events_{},
-      fields_{},
-      methods_{}
+    : proxy_binding_{std::move(proxy_binding)}, handle_{std::move(handle)}, events_{}, fields_{}, methods_{}
 {
+    SCORE_LANGUAGE_FUTURECPP_PRECONDITION_PRD_MESSAGE(
+        proxy_binding_ != nullptr,
+        "Proxy binding should be checked in ProxyWrapperClass::Create() before constructing the ProxyBase.");
 }
 
 const HandleType& ProxyBase::GetHandle() const& noexcept
@@ -101,9 +99,65 @@ score::Result<void> ProxyBase::StopFindService(const FindServiceHandle handle) n
     return stop_find_service_result;
 }
 
-Result<void> ProxyBase::SetupMethods()
+bool ProxyBase::AreBindingsValid() const noexcept
 {
-    const auto result = proxy_binding_->SetupMethods();
+    const bool is_proxy_binding_valid = proxy_binding_ != nullptr;
+
+    const bool are_event_bindings_valid = std::all_of(events_.begin(), events_.end(), [](const auto& element) {
+        const auto binding_construction_result =
+            ProxyEventBaseView{element.second.get().Get()}.GetBindingConstructionResult();
+        if (!binding_construction_result.has_value())
+        {
+            score::mw::log::LogError("lola")
+                << "Proxy event binding construction failed with error: " << binding_construction_result.error();
+        }
+        return binding_construction_result.has_value();
+    });
+    const bool are_field_bindings_valid = std::all_of(fields_.begin(), fields_.end(), [](const auto& element) {
+        const auto event_binding_construction_result =
+            ProxyFieldBaseView{element.second.get().Get()}.GetEventBindingConstructionResult();
+        if (!event_binding_construction_result.has_value())
+        {
+            score::mw::log::LogError("lola") << "Proxy event binding construction for field " << element.first
+                                             << " failed with error : " << event_binding_construction_result.error();
+        }
+
+        const auto setter_binding_construction_result =
+            ProxyFieldBaseView{element.second.get().Get()}.GetSetterBindingConstructionResult();
+        if (!setter_binding_construction_result.has_value())
+        {
+            score::mw::log::LogError("lola") << "Proxy setter method binding construction for field " << element.first
+                                             << " failed with error : " << setter_binding_construction_result.error();
+        }
+
+        const auto getter_binding_construction_result =
+            ProxyFieldBaseView{element.second.get().Get()}.GetGetterBindingConstructionResult();
+        if (!getter_binding_construction_result.has_value())
+        {
+            score::mw::log::LogError("lola") << "Proxy getter method binding construction for field " << element.first
+                                             << " failed with error : " << getter_binding_construction_result.error();
+        }
+
+        return event_binding_construction_result.has_value() && setter_binding_construction_result.has_value() &&
+               getter_binding_construction_result.has_value();
+    });
+    const bool are_method_bindings_valid = std::all_of(methods_.begin(), methods_.end(), [](const auto& element) {
+        const auto binding_construction_result =
+            ProxyMethodBaseView{element.second.get().Get()}.GetBindingConstructionResult();
+        if (!binding_construction_result.has_value())
+        {
+            score::mw::log::LogError("lola")
+                << "Proxy method binding construction failed with error: " << binding_construction_result.error();
+        }
+        return binding_construction_result.has_value();
+    });
+
+    return is_proxy_binding_valid && are_event_bindings_valid && are_field_bindings_valid && are_method_bindings_valid;
+}
+
+Result<void> ProxyBase::SetupMethods(const std::size_t additional_shm_size_bytes)
+{
+    const auto result = proxy_binding_->SetupMethods(additional_shm_size_bytes);
     if (!result.has_value())
     {
         return MakeUnexpected<void>(result.error());
@@ -112,10 +166,23 @@ Result<void> ProxyBase::SetupMethods()
     for (auto& method_key_value_pair : methods_)
     {
         auto& method = method_key_value_pair.second.get().Get();
-        const auto method_init_result = method.InitializeInArgsAndReturnValues();
+        const auto method_init_result = method.InitializeInArgsAndReturnValues(*proxy_binding_);
         if (!method_init_result.has_value())
         {
-            return MakeUnexpected<void>(method_init_result.error());
+            if (method_init_result.error() == ComErrc::kMethodBindingDisabled)
+            {
+                score::mw::log::LogDebug("lola")
+                    << "Proxy method " << method_key_value_pair.first
+                    << " was disabled in the instance deployment configuration. No binding was created for it. "
+                       "Skipping initialization of in-args and return values.";
+            }
+            else
+            {
+                score::mw::log::LogError("lola")
+                    << "Proxy method " << method_key_value_pair.first
+                    << " failed to initialize in-args and return values with error: " << method_init_result.error();
+                return MakeUnexpected<void>(method_init_result.error());
+            }
         }
     }
     return {};
@@ -143,19 +210,17 @@ void ProxyBase::Deinitialize()
 
 ProxyBaseView::ProxyBaseView(ProxyBase& proxy_base) noexcept : proxy_base_(proxy_base) {}
 
-ProxyBinding* ProxyBaseView::GetBinding() noexcept
+ProxyBinding& ProxyBaseView::GetBinding() noexcept
 {
-    return proxy_base_.proxy_binding_.get();
+    SCORE_LANGUAGE_FUTURECPP_PRECONDITION_PRD_MESSAGE(
+        proxy_base_.proxy_binding_ != nullptr,
+        "Proxy binding should be checked in ProxyWrapperClass::Create() before constructing the ProxyBase.");
+    return *proxy_base_.proxy_binding_;
 }
 
 const HandleType& ProxyBaseView::GetAssociatedHandleType() const& noexcept
 {
     return proxy_base_.handle_;
-}
-
-void ProxyBaseView::MarkServiceElementBindingInvalid() noexcept
-{
-    proxy_base_.are_service_element_bindings_valid_ = false;
 }
 
 void ProxyBaseView::RegisterEvent(const std::string_view event_name,

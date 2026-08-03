@@ -27,9 +27,8 @@
 #include "score/mw/com/impl/generic_proxy_event.h"
 #include "score/mw/com/impl/handle_type.h"
 #include "score/mw/com/impl/instance_specifier.h"
+#include "score/mw/com/impl/plumbing/binding_factory_error.h"
 #include "score/mw/com/impl/proxy_base.h"
-#include "score/mw/com/impl/runtime.h"
-#include "score/mw/com/impl/runtime_mock.h"
 #include "score/mw/com/impl/service_discovery_mock.h"
 #include "score/mw/com/impl/test/binding_factory_resources.h"
 #include "score/mw/com/impl/test/dummy_instance_identifier_builder.h"
@@ -57,7 +56,7 @@ namespace test
 class GenericProxyAttorney
 {
   public:
-    GenericProxyAttorney(GenericProxy& generic_proxy) noexcept : generic_proxy_{generic_proxy} {}
+    explicit GenericProxyAttorney(GenericProxy& generic_proxy) noexcept : generic_proxy_{generic_proxy} {}
 
     void FillEventMap(const std::vector<std::string_view>& event_names) noexcept
     {
@@ -175,7 +174,7 @@ class GenericProxyFixture : public ::testing::Test
         // This ideally would be an ON_CALL as we want Create to create a mock binding and return it by default.
         // However, we get a "unknown file: Failure" while running the test in that case. Changing it to an EXPECT_CALL
         // solves the problem.
-        EXPECT_CALL(generic_proxy_event_binding_guard_.factory_mock_, Create(_, _))
+        EXPECT_CALL(generic_proxy_event_binding_guard_.factory_mock_, Create(_, _, _, _))
             .Times(AnyNumber())
             .WillRepeatedly([]() {
                 return std::make_unique<mock_binding::GenericProxyEvent>();
@@ -251,7 +250,7 @@ TEST_F(GenericProxyFixture, CreatingGenericProxyWithConfigurationContainingBlank
     EXPECT_TRUE(generic_proxy_result.has_value());
 }
 
-TEST_F(GenericProxyFixture, CreatingGenericProxyWithNoGenericProxyBindingReturnsError)
+TEST_F(GenericProxyFixture, CreatingGenericProxyReturnsErrorWhenBindingCreationReturnsNullptr)
 {
     RecordProperty("Verifies", "SCR-14005969");
     RecordProperty(
@@ -274,7 +273,23 @@ TEST_F(GenericProxyFixture, CreatingGenericProxyWithNoGenericProxyBindingReturns
     EXPECT_EQ(generic_proxy_result.error(), ComErrc::kBindingFailure);
 }
 
-TEST_F(GenericProxyFixture, CreatingGenericProxyWithNoGenericProxyEventBindingReturnsError)
+TEST_F(GenericProxyFixture, CreatingGenericProxyReturnsErrorWhenBindingCreationReturnsError)
+{
+    // Given a handle created from valid instance and type deployments
+    // and that the Create call on the ProxyBindingFactory returns an error.
+    CreateAHandle({kEventName1, kEventName2, kEventName3});
+    EXPECT_CALL(proxy_binding_factory_mock_guard_.factory_mock_, Create(*handle_))
+        .WillOnce(Return(ByMove(MakeUnexpected(BindingFactoryErrorCode::kProxyCreationFailed))));
+
+    // When creating a GenericProxy
+    auto generic_proxy_result = GenericProxy::Create(*handle_);
+
+    // Then the result should contain an error
+    ASSERT_FALSE(generic_proxy_result.has_value());
+    EXPECT_EQ(generic_proxy_result.error(), ComErrc::kBindingFailure);
+}
+
+TEST_F(GenericProxyFixture, CreatingGenericProxyWhenGenericProxyEventBindingCreationReturnsError)
 {
     RecordProperty("Verifies", "SCR-14005969");
     RecordProperty(
@@ -285,10 +300,11 @@ TEST_F(GenericProxyFixture, CreatingGenericProxyWithNoGenericProxyEventBindingRe
     RecordProperty("DerivationTechnique", "Analysis of requirements");
 
     // Given a handle created from valid instance and type deployments
-    // and that the Create call on the ProxyEventBindingFactory returns a nullptr.
+    // and that the Create call on the ProxyEventBindingFactory returns an error
     CreateAHandle({kEventName1, kEventName2, kEventName3});
-    EXPECT_CALL(generic_proxy_event_binding_guard_.factory_mock_, Create(_, std::string_view{kEventName1}))
-        .WillRepeatedly(Return(ByMove(nullptr)));
+    EXPECT_CALL(generic_proxy_event_binding_guard_.factory_mock_,
+                Create(_, _, std::string_view{kEventName1}, ServiceElementType::EVENT))
+        .WillRepeatedly(Return(ByMove(MakeUnexpected(BindingFactoryErrorCode::kUnsupportedBindingType))));
 
     // When creating a GenericProxy
     auto generic_proxy_result = GenericProxy::Create(*handle_);
@@ -313,11 +329,14 @@ TEST_F(GenericProxyFixture, GenericProxyWillCreateEventBindingsSpecifiedInHandle
     CreateAHandle({kEventName1, kEventName2, kEventName3});
 
     // Then bindings are created for the provided events
-    EXPECT_CALL(generic_proxy_event_binding_guard_.factory_mock_, Create(_, std::string_view{kEventName1}))
+    EXPECT_CALL(generic_proxy_event_binding_guard_.factory_mock_,
+                Create(_, _, std::string_view{kEventName1}, ServiceElementType::EVENT))
         .WillOnce(Return(ByMove(std::make_unique<mock_binding::GenericProxyEvent>())));
-    EXPECT_CALL(generic_proxy_event_binding_guard_.factory_mock_, Create(_, std::string_view{kEventName2}))
+    EXPECT_CALL(generic_proxy_event_binding_guard_.factory_mock_,
+                Create(_, _, std::string_view{kEventName2}, ServiceElementType::EVENT))
         .WillOnce(Return(ByMove(std::make_unique<mock_binding::GenericProxyEvent>())));
-    EXPECT_CALL(generic_proxy_event_binding_guard_.factory_mock_, Create(_, std::string_view{kEventName3}))
+    EXPECT_CALL(generic_proxy_event_binding_guard_.factory_mock_,
+                Create(_, _, std::string_view{kEventName3}, ServiceElementType::EVENT))
         .WillOnce(Return(ByMove(std::make_unique<mock_binding::GenericProxyEvent>())));
 
     // When constructing the generic proxy from the handle
@@ -366,10 +385,14 @@ TEST_F(GenericProxyFixture, GenericProxyWillOnlyCreateEventBindingsForEventsProv
     ON_CALL(*proxy_binding_mock_, IsEventProvided(std::string_view{kEventName3})).WillByDefault(Return(true));
 
     // Then bindings are only created for the provided events
-    EXPECT_CALL(generic_proxy_event_binding_guard_.factory_mock_, Create(_, std::string_view{kEventName1}))
+    EXPECT_CALL(generic_proxy_event_binding_guard_.factory_mock_,
+                Create(_, _, std::string_view{kEventName1}, ServiceElementType::EVENT))
         .WillOnce(Return(ByMove(std::make_unique<mock_binding::GenericProxyEvent>())));
-    EXPECT_CALL(generic_proxy_event_binding_guard_.factory_mock_, Create(_, std::string_view{kEventName2})).Times(0);
-    EXPECT_CALL(generic_proxy_event_binding_guard_.factory_mock_, Create(_, std::string_view{kEventName3}))
+    EXPECT_CALL(generic_proxy_event_binding_guard_.factory_mock_,
+                Create(_, _, std::string_view{kEventName2}, ServiceElementType::EVENT))
+        .Times(0);
+    EXPECT_CALL(generic_proxy_event_binding_guard_.factory_mock_,
+                Create(_, _, std::string_view{kEventName3}, ServiceElementType::EVENT))
         .WillOnce(Return(ByMove(std::make_unique<mock_binding::GenericProxyEvent>())));
 
     // When constructing the generic proxy
@@ -483,9 +506,6 @@ TEST_F(GenericProxyDeathTest, FillingEventMapWithDuplicateEventNamesWillTerminat
     // Given a GenericProxy created from valid instance and type deployments
     CreateAHandle({kEventName1, kEventName2, kEventName3});
     auto generic_proxy = GenericProxy::Create(*handle_).value();
-
-    // and the event is provided in shared memory
-    ON_CALL(*proxy_binding_mock_, IsEventProvided(std::string_view{kEventName1})).WillByDefault(Return(true));
 
     // When trying to fill the event map with duplicate event names
     // Then the process should terminate
@@ -639,6 +659,19 @@ TEST(GenericProxyEventMapTest, CheckEventMapClassInterface)
     score::cpp::ignore = event_map.find(std::string_view{""});
     score::cpp::ignore = event_map.size();
     score::cpp::ignore = event_map.empty();
+}
+
+TEST_F(GenericProxyFixture, CreatingGenericProxyWithLolaBindingAndNoEventsReturnsValidResult)
+{
+    // Given a handle created from a LolaServiceTypeDeployment with no events
+    CreateAHandle({});
+
+    // When constructing the generic proxy from the handle
+    auto generic_proxy_result = GenericProxy::Create(*handle_);
+
+    // Then a valid GenericProxy is created with an empty event map
+    ASSERT_TRUE(generic_proxy_result.has_value());
+    EXPECT_TRUE(generic_proxy_result.value().GetEvents().empty());
 }
 
 }  // namespace

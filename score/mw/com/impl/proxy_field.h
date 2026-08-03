@@ -13,13 +13,17 @@
 #ifndef SCORE_MW_COM_IMPL_PROXY_FIELD_H
 #define SCORE_MW_COM_IMPL_PROXY_FIELD_H
 
+#include "score/mw/com/impl/field_getter_setter_signatures.h"
 #include "score/mw/com/impl/field_tags.h"
+#include "score/mw/com/impl/methods/method_signature_element_ptr.h"
 #include "score/mw/com/impl/methods/proxy_method_with_in_args_and_return.h"
 #include "score/mw/com/impl/methods/proxy_method_with_return_type.h"
 #include "score/mw/com/impl/plumbing/proxy_field_binding_factory.h"
 #include "score/mw/com/impl/proxy_event.h"
 #include "score/mw/com/impl/proxy_event_binding.h"
 #include "score/mw/com/impl/proxy_field_base.h"
+
+#include "score/mw/com/impl/methods/proxy_method_base.h"
 
 #include "score/mw/com/impl/mocking/i_proxy_event.h"
 
@@ -53,10 +57,10 @@ class ProxyFieldAttorney;
 ///         GetFreeSampleCount(), GetNumNewSamplesAvailable(), SetReceiveHandler(), UnsetReceiveHandler(),
 ///         GetNewSamples().
 template <typename SampleDataType, typename... Tags>
-class ProxyField final : public ProxyFieldBase
+class ProxyFieldImpl : public ProxyFieldBase
 {
 
-    // A ProxyField must enable WithGetter or WithNotifier. A field with only WithSetter (or no tags at all)
+    // A ProxyFieldImpl must enable WithGetter or WithNotifier. A field with only WithSetter (or no tags at all)
     // gives the consumer no way to observe the value it can write, making the field useless.
     static_assert(
         contains_type<WithNotifier, Tags...>::value || contains_type<WithGetter, Tags...>::value,
@@ -80,33 +84,27 @@ class ProxyField final : public ProxyFieldBase
     /// \param proxy_base Parent proxy that owns this field's registration.
     /// \param field_name Field's name as it appears in the deployment.
     /// \param event_binding Mock event binding. Must be provided (use nullptr if no event binding is needed).
-    /// \param set_method_binding Optional mock Set-method binding. If nullptr, no ProxyMethod is built for Set
-    ///        (same MarkServiceElementBindingInvalid avoidance as get_method_binding).
-    /// \param get_method_binding Optional mock Get-method binding. If nullptr, no ProxyMethod is built for Get;
-    ///        this avoids the ProxyMethod ctor calling ProxyBaseView::MarkServiceElementBindingInvalid() on the
-    ///        parent, which would otherwise make AreBindingsValid() return false during proxy construction.
-    ProxyField(ProxyBase& proxy_base,
-               const std::string_view field_name,
-               std::unique_ptr<ProxyEventBinding<FieldType>> event_binding,
-               std::unique_ptr<ProxyMethodBinding> set_method_binding = nullptr,
-               std::unique_ptr<ProxyMethodBinding> get_method_binding = nullptr)
-        : ProxyField{proxy_base,
-                     field_name,
-                     std::make_unique<ProxyEvent<FieldType>>(proxy_base, field_name, std::move(event_binding)),
-                     set_method_binding == nullptr
-                         ? nullptr
-                         : std::make_unique<ProxyMethod<FieldType(FieldType)>>(
-                               proxy_base,
-                               field_name,
-                               std::move(set_method_binding),
-                               typename ProxyMethod<FieldType(FieldType)>::FieldOnlyConstructorEnabler{}),
-                     get_method_binding == nullptr
-                         ? nullptr
-                         : std::make_unique<ProxyMethod<FieldType()>>(
-                               proxy_base,
-                               field_name,
-                               std::move(get_method_binding),
-                               typename ProxyMethod<FieldType()>::FieldOnlyConstructorEnabler{})}
+    /// \param set_method_binding Optional mock Set-method binding. If nullptr, no ProxyMethod is built for Set.
+    /// \param get_method_binding Optional mock Get-method binding. If nullptr, no ProxyMethod is built for Get.
+    ProxyFieldImpl(const std::string_view field_name,
+                   std::unique_ptr<ProxyEventBinding<FieldType>> event_binding,
+                   std::unique_ptr<ProxyMethodBinding> set_method_binding = nullptr,
+                   std::unique_ptr<ProxyMethodBinding> get_method_binding = nullptr)
+        : ProxyFieldImpl{
+              field_name,
+              std::make_unique<ProxyEvent<FieldType>>(field_name, std::move(event_binding)),
+              set_method_binding == nullptr
+                  ? nullptr
+                  : std::make_unique<ProxyMethod<SetMethodSignature<FieldType>>>(
+                        field_name,
+                        std::move(set_method_binding),
+                        typename ProxyMethod<SetMethodSignature<FieldType>>::FieldSetterConstructorEnabler{}),
+              get_method_binding == nullptr
+                  ? nullptr
+                  : std::make_unique<ProxyMethod<GetMethodSignature<FieldType>>>(
+                        field_name,
+                        std::move(get_method_binding),
+                        typename ProxyMethod<GetMethodSignature<FieldType>>::FieldGetterConstructorEnabler{})}
     {
     }
 
@@ -117,12 +115,11 @@ class ProxyField final : public ProxyFieldBase
     ///          WithNotifier is present.
     /// \param proxy_base Parent proxy that owns this field's registration.
     /// \param field_name Field's name as it appears in the deployment.
-    ProxyField(ProxyBase& proxy_base, const std::string_view field_name)
-        : ProxyField{proxy_base,
-                     field_name,
-                     MakeEventDispatchIfEnabled(proxy_base, field_name),
-                     MakeSetMethodDispatchIfEnabled(proxy_base, field_name),
-                     MakeGetMethodDispatchIfEnabled(proxy_base, field_name)}
+    ProxyFieldImpl(ProxyBase& proxy_base, const std::string_view field_name)
+        : ProxyFieldImpl{field_name,
+                         MakeEventDispatchIfEnabled(proxy_base, field_name),
+                         MakeSetMethodDispatchIfEnabled(proxy_base, field_name),
+                         MakeGetMethodDispatchIfEnabled(proxy_base, field_name)}
     {
         // Each Make*IfEnabled must have produced a non-null dispatch when the
         // corresponding tag is in the pack.
@@ -138,17 +135,19 @@ class ProxyField final : public ProxyFieldBase
         {
             SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD(proxy_method_get_dispatch_ != nullptr);
         }
+        ProxyBaseView proxy_base_view{proxy_base};
+        proxy_base_view.RegisterField(field_name, GetReferenceToMoveable());
     }
 
-    /// \brief A ProxyField shall not be copyable
-    ProxyField(const ProxyField&) = delete;
-    ProxyField& operator=(const ProxyField&) = delete;
+    /// \brief A ProxyFieldImpl shall not be copyable
+    ProxyFieldImpl(const ProxyFieldImpl&) = delete;
+    ProxyFieldImpl& operator=(const ProxyFieldImpl&) = delete;
 
     /// \brief A ProxyField shall be moveable
-    ProxyField(ProxyField&&) noexcept = default;
-    ProxyField& operator=(ProxyField&&) noexcept = default;
+    ProxyFieldImpl(ProxyFieldImpl&&) noexcept = default;
+    ProxyFieldImpl& operator=(ProxyFieldImpl&&) noexcept = default;
 
-    ~ProxyField() noexcept = default;
+    ~ProxyFieldImpl() noexcept = default;
 
     /**
      * \api
@@ -322,7 +321,28 @@ class ProxyField final : public ProxyFieldBase
               typename = std::enable_if_t<is_tag_enabled<T, SampleDataType, WithSetter, Tags...>::value>>
     score::Result<MethodReturnTypePtr<T>> Set(const SampleDataType& new_field_value) noexcept
     {
-        return proxy_method_set_dispatch_->operator()(new_field_value);
+        // If the method call itself fails, then we return the error code to the user here.
+        auto method_call_result = proxy_method_set_dispatch_->operator()(new_field_value);
+        if (!method_call_result.has_value())
+        {
+            return MakeUnexpected<MethodReturnTypePtr<T>>(std::move(method_call_result).error());
+        }
+
+        // If the method call itself succeeded but executing the setter itself on skeleton side failed (e.g. because
+        // updating the field value failed), then we return the error code to the user as well.
+        auto setter_return_type_ptr = std::move(method_call_result).value();
+        if (!setter_return_type_ptr->has_value())
+        {
+            return MakeUnexpected<MethodReturnTypePtr<T>>(std::move(*setter_return_type_ptr).error());
+        }
+
+        // If the method call and executing the setter itself succeeded, then we return a pointer to the set value to
+        // the user.
+        T& value_ptr = setter_return_type_ptr->value();
+
+        MethodReturnTypePtr<T> return_value{value_ptr, std::move(setter_return_type_ptr)};
+
+        return return_value;
     }
 
     template <typename T = SampleDataType,
@@ -347,7 +367,8 @@ class ProxyField final : public ProxyFieldBase
             return std::make_unique<ProxyEvent<FieldType>>(
                 proxy_base,
                 field_name,
-                ProxyFieldBindingFactory<FieldType>::CreateEventBinding(proxy_base, field_name),
+                ProxyFieldBindingFactory<FieldType>::CreateEventBinding(
+                    proxy_base.GetHandle(), ProxyBaseView{proxy_base}.GetBinding(), field_name),
                 typename ProxyEvent<FieldType>::FieldOnlyConstructorEnabler{});
         }
         else
@@ -360,17 +381,17 @@ class ProxyField final : public ProxyFieldBase
 
     /// \brief Builds the Set-method dispatch via the binding factory when WithSetter is enabled.
     /// \return A valid ProxyMethod dispatch when WithSetter is in the tag pack, nullptr otherwise.
-    static std::unique_ptr<ProxyMethod<FieldType(FieldType)>> MakeSetMethodDispatchIfEnabled(
+    static std::unique_ptr<ProxyMethod<SetMethodSignature<FieldType>>> MakeSetMethodDispatchIfEnabled(
         ProxyBase& proxy_base,
         const std::string_view field_name)
     {
         if constexpr (kHasSetter)
         {
-            return std::make_unique<ProxyMethod<FieldType(FieldType)>>(
-                proxy_base,
+            return std::make_unique<ProxyMethod<SetMethodSignature<FieldType>>>(
                 field_name,
-                ProxyFieldBindingFactory<FieldType>::CreateSetMethodBinding(proxy_base, field_name),
-                typename ProxyMethod<FieldType(FieldType)>::FieldOnlyConstructorEnabler{});
+                ProxyFieldBindingFactory<FieldType>::CreateSetMethodBinding(
+                    proxy_base.GetHandle(), ProxyBaseView{proxy_base}.GetBinding(), field_name),
+                typename ProxyMethod<SetMethodSignature<FieldType>>::FieldSetterConstructorEnabler{});
         }
         else
         {
@@ -382,16 +403,17 @@ class ProxyField final : public ProxyFieldBase
 
     /// \brief Builds the Get-method dispatch via the binding factory when WithGetter is enabled.
     /// \return A valid ProxyMethod dispatch when WithGetter is in the tag pack, nullptr otherwise.
-    static std::unique_ptr<ProxyMethod<FieldType()>> MakeGetMethodDispatchIfEnabled(ProxyBase& proxy_base,
-                                                                                    const std::string_view field_name)
+    static std::unique_ptr<ProxyMethod<GetMethodSignature<FieldType>>> MakeGetMethodDispatchIfEnabled(
+        ProxyBase& proxy_base,
+        const std::string_view field_name)
     {
         if constexpr (kHasGetter)
         {
-            return std::make_unique<ProxyMethod<FieldType()>>(
-                proxy_base,
+            return std::make_unique<ProxyMethod<GetMethodSignature<FieldType>>>(
                 field_name,
-                ProxyFieldBindingFactory<FieldType>::CreateGetMethodBinding(proxy_base, field_name),
-                typename ProxyMethod<FieldType()>::FieldOnlyConstructorEnabler{});
+                ProxyFieldBindingFactory<FieldType>::CreateGetMethodBinding(
+                    proxy_base.GetHandle(), ProxyBaseView{proxy_base}.GetBinding(), field_name),
+                typename ProxyMethod<GetMethodSignature<FieldType>>::FieldGetterConstructorEnabler{});
         }
         else
         {
@@ -401,28 +423,43 @@ class ProxyField final : public ProxyFieldBase
         }
     }
 
-    ProxyField(ProxyBase& proxy_base,
-               const std::string_view field_name,
-               std::unique_ptr<ProxyEvent<FieldType>> proxy_event_dispatch,
-               std::unique_ptr<ProxyMethod<FieldType(FieldType)>> proxy_method_set_dispatch,
-               std::unique_ptr<ProxyMethod<FieldType()>> proxy_method_get_dispatch)
-        : ProxyFieldBase{field_name, proxy_event_dispatch.get()},
+    ProxyFieldImpl(const std::string_view field_name,
+                   std::unique_ptr<ProxyEvent<FieldType>> proxy_event_dispatch,
+                   std::unique_ptr<ProxyMethod<SetMethodSignature<FieldType>>> proxy_method_set_dispatch,
+                   std::unique_ptr<ProxyMethod<GetMethodSignature<FieldType>>> proxy_method_get_dispatch)
+        : ProxyFieldBase{field_name,
+                         proxy_event_dispatch.get(),
+                         proxy_method_set_dispatch.get(),
+                         proxy_method_get_dispatch.get()},
           proxy_event_dispatch_{std::move(proxy_event_dispatch)},
           proxy_method_set_dispatch_{std::move(proxy_method_set_dispatch)},
           proxy_method_get_dispatch_{std::move(proxy_method_get_dispatch)}
     {
-        ProxyBaseView proxy_base_view{proxy_base};
-        proxy_base_view.RegisterField(field_name, GetReferenceToMoveable());
     }
 
     std::unique_ptr<ProxyEvent<FieldType>> proxy_event_dispatch_;
 
-    std::unique_ptr<ProxyMethod<FieldType(FieldType)>> proxy_method_set_dispatch_;
-    std::unique_ptr<ProxyMethod<FieldType()>> proxy_method_get_dispatch_;
+    std::unique_ptr<ProxyMethod<SetMethodSignature<FieldType>>> proxy_method_set_dispatch_;
+    std::unique_ptr<ProxyMethod<GetMethodSignature<FieldType>>> proxy_method_get_dispatch_;
 
-    static_assert(std::is_same_v<decltype(proxy_event_dispatch_), std::unique_ptr<ProxyEvent<FieldType>>>,
-                  "proxy_event_dispatch_ needs to be a unique_ptr since we pass a pointer to it to ProxyFieldBase, so "
-                  "we must ensure that it doesn't move when the ProxyField is moved to avoid dangling references. ");
+    static_assert(
+        std::is_same_v<decltype(proxy_event_dispatch_), std::unique_ptr<ProxyEvent<FieldType>>>,
+        "proxy_event_dispatch_ needs to be a unique_ptr since we pass a pointer to it to ProxyFieldBase, so "
+        "we must ensure that it doesn't move when the ProxyFieldImpl is moved to avoid dangling references. ");
+};
+
+template <typename SampleDataType, typename... Tags>
+class ProxyField final : public ProxyFieldImpl<SampleDataType, Tags...>
+{
+    using ProxyFieldImpl<SampleDataType, Tags...>::ProxyFieldImpl;
+};
+
+template <typename SampleDataType>
+class [[deprecated("Implicit deduction  of field semantics is deprecated. Choose at least WithNotifier or WithGetter")]]
+ProxyField<SampleDataType>
+    final : public ProxyFieldImpl<SampleDataType, WithNotifier>
+{
+    using ProxyFieldImpl<SampleDataType, WithNotifier>::ProxyFieldImpl;
 };
 
 }  // namespace score::mw::com::impl

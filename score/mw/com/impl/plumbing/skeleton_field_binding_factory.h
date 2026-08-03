@@ -16,6 +16,7 @@
 #include "score/mw/com/impl/bindings/lola/element_fq_id.h"
 #include "score/mw/com/impl/bindings/lola/skeleton_event.h"
 #include "score/mw/com/impl/configuration/service_type_deployment.h"
+#include "score/mw/com/impl/field_tags.h"
 #include "score/mw/com/impl/instance_identifier.h"
 #include "score/mw/com/impl/plumbing/i_skeleton_field_binding_factory.h"
 #include "score/mw/com/impl/plumbing/skeleton_field_binding_factory_impl.h"
@@ -38,10 +39,11 @@ class SkeletonFieldBindingFactory final
   public:
     /// \brief See documentation in ISkeletonFieldBindingFactory.
     static std::unique_ptr<SkeletonEventBinding<SampleType>> CreateEventBinding(const InstanceIdentifier& identifier,
-                                                                                SkeletonBase& parent,
-                                                                                const std::string_view field_name)
+                                                                                SkeletonBinding& parent_binding,
+                                                                                const std::string_view field_name,
+                                                                                const FieldTagsStore field_tags_store)
     {
-        return instance().CreateEventBinding(identifier, parent, field_name);
+        return instance().CreateEventBinding(identifier, parent_binding, field_name, field_tags_store);
     }
 
     /// \brief Inject a mock ISkeletonFieldBindingFactory. If a mock is injected, then all calls on

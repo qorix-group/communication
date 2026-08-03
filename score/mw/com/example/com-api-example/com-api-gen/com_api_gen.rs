@@ -11,9 +11,10 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
-use com_api::{interface, CommData, ProviderInfo, Publisher, Reloc, Subscriber};
+use score_com::{interface, CommData, ProviderInfo, Publisher, Reloc, Subscriber};
+use score_log::ScoreDebug;
 
-#[derive(Debug, Reloc, CommData)]
+#[derive(Debug, Reloc, CommData, ScoreDebug)]
 #[repr(C)]
 #[comm_data(id = "Tire")]
 pub struct Tire {
@@ -40,7 +41,7 @@ pub struct Exhaust {}
 // - VehicleOfferedProducer<R> struct that implements OfferedProducer trait for offering
 //   "left_tire" and "exhaust" events.
 interface!(
-    interface Vehicle, {
+    interface Vehicle {
         Id = "VehicleInterface",
         left_tire: Event<Tire>,
         exhaust: Event<Exhaust>,

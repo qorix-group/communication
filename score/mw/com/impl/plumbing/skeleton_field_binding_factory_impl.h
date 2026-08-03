@@ -15,13 +15,17 @@
 
 #include "score/mw/com/impl/bindings/lola/element_fq_id.h"
 #include "score/mw/com/impl/bindings/lola/skeleton_event.h"
+#include "score/mw/com/impl/bindings/lola/skeleton_event_properties.h"
+#include "score/mw/com/impl/field_tags.h"
 #include "score/mw/com/impl/instance_identifier.h"
 #include "score/mw/com/impl/plumbing/i_skeleton_field_binding_factory.h"
 #include "score/mw/com/impl/plumbing/skeleton_service_element_binding_factory_impl.h"
 #include "score/mw/com/impl/skeleton_base.h"
 #include "score/mw/com/impl/skeleton_event_binding.h"
 
+#include <cstdint>
 #include <memory>
+#include <optional>
 #include <string_view>
 
 namespace score::mw::com::impl
@@ -35,8 +39,9 @@ class SkeletonFieldBindingFactoryImpl : public ISkeletonFieldBindingFactory<Samp
   public:
     std::unique_ptr<SkeletonEventBinding<SampleType>> CreateEventBinding(
         const InstanceIdentifier& identifier,
-        SkeletonBase& parent,
-        const std::string_view field_name) noexcept override;
+        SkeletonBinding& parent_binding,
+        const std::string_view field_name,
+        const FieldTagsStore field_tags_store) noexcept override;
 };
 
 template <typename SampleType>
@@ -49,13 +54,15 @@ template <typename SampleType>
 // This suppression should be removed after fixing [Ticket-173043](broken_link_j/Ticket-173043)
 // coverity[autosar_cpp14_a15_5_3_violation : FALSE]
 auto SkeletonFieldBindingFactoryImpl<SampleType>::CreateEventBinding(const InstanceIdentifier& identifier,
-                                                                     SkeletonBase& parent,
-                                                                     const std::string_view field_name) noexcept
+                                                                     SkeletonBinding& parent_binding,
+                                                                     const std::string_view field_name,
+                                                                     const FieldTagsStore field_tags_store) noexcept
     -> std::unique_ptr<SkeletonEventBinding<SampleType>>
 {
     return CreateSkeletonEventOrField<SkeletonEventBinding<SampleType>,
                                       lola::SkeletonEvent<SampleType>,
-                                      ServiceElementType::FIELD>(identifier, parent, field_name);
+                                      ServiceElementType::FIELD>(
+        identifier, parent_binding, field_name, field_tags_store);
 }
 
 }  // namespace score::mw::com::impl

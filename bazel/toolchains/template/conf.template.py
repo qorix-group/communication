@@ -121,6 +121,8 @@ html_theme_options = {
 numfig = True
 
 # Load external needs and log configuration
+suppress_warnings = ["toc.not_readable", "myst.xref_missing"]
+
 needs_external_needs = bazel_sphinx_needs.load_external_needs()
 bazel_sphinx_needs.log_config_info(project)
 
@@ -136,7 +138,7 @@ _plantuml_path = None
 # so Bazel resolves the apparent name "score_tooling" to the correct canonical
 # name regardless of how the dep is declared (local_path_override → "score_tooling+",
 # BCR/git_repository → "score_tooling").
-_candidate = r.Rlocation("score_tooling/tools/sphinx/plantuml", source_repo="")
+_candidate = r.Rlocation("score_tooling/third_party/plantuml/plantuml", source_repo="")
 if _candidate and Path(_candidate).exists():
     _plantuml_path = Path(_candidate)
     logger.info(f"PlantUML resolved from runfiles: {_plantuml_path}")
@@ -144,12 +146,37 @@ if _candidate and Path(_candidate).exists():
 if _plantuml_path is None:
     logger.warning(
         "PlantUML binary not found in runfiles — diagrams will not be rendered. "
-        "Ensure @score_tooling//tools/sphinx:plantuml is in sphinx_build data."
+        "Ensure @score_tooling//third_party/plantuml:plantuml is in sphinx_build data."
     )
 else:
-    # Use PlantUML's built-in Smetana layout engine (Java port of Graphviz).
-    # This avoids requiring an external dot binary in the Bazel sandbox.
-    plantuml = f"{_plantuml_path} -Playout=smetana"
+    _fta_metamodel_dir = ""
+    _metamodel_candidate = r.Rlocation("score_tooling/plantuml/fta_metamodel.puml", source_repo="")
+    if _metamodel_candidate and Path(_metamodel_candidate).exists():
+        _fta_metamodel_dir = str(Path(_metamodel_candidate).parent)
+        logger.info(f"fta_metamodel.puml found at: {_metamodel_candidate}")
+    else:
+        logger.warning(
+            "fta_metamodel.puml not found in runfiles — FTA diagrams using "
+            "!include fta_metamodel.puml will fail to render. "
+            "Ensure @score_tooling//plantuml:fta_metamodel is in sphinx_build data."
+        )
+
+    # Resolve hermetic graphviz dot via Bazel runfiles.
+    _dot_candidate = r.Rlocation("score_tooling/third_party/docs_runtime/dot", source_repo="")
+    if _dot_candidate and Path(_dot_candidate).exists():
+        _dot_path = str(Path(_dot_candidate))
+        logger.info(f"graphviz dot resolved from runfiles: {_dot_path}")
+    else:
+        logger.warning("graphviz dot not found in runfiles — PlantUML will use built-in layout.")
+        _dot_path = None
+
+    _include_flag = (
+        f" --jvm_flag=-Dplantuml.include.path={_fta_metamodel_dir}"
+        if _fta_metamodel_dir
+        else ""
+    )
+    _layout_flag = f" -graphvizdot {_dot_path}" if _dot_path else " -Playout=smetana"
+    plantuml = f"{_plantuml_path}{_include_flag}{_layout_flag}"
     plantuml_output_format = "svg_obj"
 
 

@@ -11,6 +11,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
 
+# Use `bazel mod deps --lockfile_mode=update` to update the lock file
+common --lockfile_mode=error
+
 # In order to overcome stability issues in GitHub
 common --experimental_repository_downloader_retries=10
 common --experimental_scale_timeouts=2.0
@@ -22,13 +25,17 @@ common --http_timeout_scaling=2.0
 build --action_env=BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1
 
 common --@score_baselibs//score/json:base_library=nlohmann
-common --@score_baselibs//score/memory/shared/flags:use_typedshmd=False
+common --//score/memory/shared/flags:use_typedshmd=False
 common --@score_baselibs//score/analysis/tracing/generic_trace_library:implementation=@score_baselibs//score/analysis/tracing/generic_trace_library/stub_implementation
 common --extra_toolchains=@gcc_toolchain_x86_64//:cc_toolchain
 common --extra_toolchains=@score_toolchains_rust//toolchains/ferrocene:ferrocene_x86_64_unknown_linux_gnu
+common --extra_toolchains=//bazel/toolchains:score_communication_libclang_toolchain
 build --incompatible_strict_action_env
 test --test_output=errors
 build --experimental_retain_test_configuration_across_testonly #https://github.com/bazelbuild/bazel/issues/6842
+
+# Do not show warnings from external libraries
+build --output_filter=^(?!(external/.*(googletest|flatbuffers|score_baselibs|google_benchmark|json_schema_validator)|@@?[^/]*(googletest|flatbuffers|score_baselibs|google_benchmark|json_schema_validator)|[/]*quality/compiler_warnings)).*
 
 # Do not treat as errors the warnings from external libraries that are known
 build --per_file_copt=external/.*json_schema_validator.*@-Wno-error=switch

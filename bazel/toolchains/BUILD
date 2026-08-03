@@ -2,15 +2,35 @@ load(
     "@score_tooling//bazel/rules/rules_score:sphinx_toolchain.bzl",
     "sphinx_toolchain",
 )
+load(
+    "@score_tooling//cpp/libclang:libclang_toolchain.bzl",
+    "libclang_toolchain",
+)
 
 # ============================================================================
-# Toolchain for the score build
+# libclang toolchain for the C++ parser used by score rules
 # ============================================================================
+libclang_toolchain(
+    name = "score_communication_libclang",
+    cxx_builtin_include = "@llvm_toolchain_llvm//:cxx_builtin_include",
+    extra_config_site = "@llvm_toolchain_llvm//:extra_config_site",
+    libclang = "@llvm_toolchain_llvm//:lib/libclang.so",
+)
+
+toolchain(
+    name = "score_communication_libclang_toolchain",
+    toolchain = ":score_communication_libclang",
+    toolchain_type = "@score_tooling//cpp/libclang:libclang_toolchain_type",
+    visibility = ["//:__subpackages__"],
+)
+
 py_binary(
     name = "sphinx_build",
     srcs = ["@score_tooling//bazel/rules/rules_score:src/sphinx_wrapper.py"],
     data = [
-        "@score_tooling//tools/sphinx:plantuml",
+        "@score_tooling//plantuml:fta_metamodel",
+        "@score_tooling//third_party/docs_runtime:dot",
+        "@score_tooling//third_party/plantuml",
     ],
     exec_compatible_with = ["@platforms//os:linux"],
     main = "@score_tooling//bazel/rules/rules_score:src/sphinx_wrapper.py",

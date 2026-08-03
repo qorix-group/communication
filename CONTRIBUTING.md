@@ -1,4 +1,4 @@
-# Contributing to the Communication Module
+# Contributing
 
 - Thank you for your interest in contributing to the Communication Module of the Eclipse SCORE project!
 - This guide will walk you through the necessary steps to get started with development, adhere to our standards, and successfully submit your contributions.
@@ -58,10 +58,16 @@ This interferes with the bazel sandboxing mechanism and inhibits the linux-sandb
 Bazel falls back to a less powerful sandboxing mechanism that is insufficient for our project.
 This affects many bazel tests and potentially any bazel runnables.
 
-To work around this issue, you can run the following bash script:
+To work around this issue, you can run a bash script, which you can get by cloning the cicd-actions repository
+
+```
+git clone --depth=1 https://github.com/eclipse-score/cicd-actions
+```
+
+after which you can run
 
 ```bash
-bash actions/unblock_user_namespace_for_linux_sandbox/action_callable.sh
+bash <path to cicd-actions repository>/unblock_user_namespace_for_linux_sandbox/action_callable.sh
 ```
 
 Note. To take this into effect force, a bazel restart by shutting it down 1st
@@ -82,6 +88,36 @@ bazel build //...
 
 # Run all tests
 bazel test //...
+```
+
+### Optional: Configure a local Ubuntu snapshot mirror
+
+The Ubuntu snapshot mirrors are sometimes unreliable. See: https://answers.launchpad.net/launchpad/+question/824541
+
+If you have access to a more reliable Ubuntu snapshot mirror, you can make Bazel try it first while keeping
+the public `snapshot.ubuntu.com` URL as fallback.
+
+An example for such a snapshot mirror service is https://stablebuild.com
+
+1. Create a local downloader config at `user.downloader_config` (this file is ignored by git).
+   Replace the `<private-mirror-tag>` with the tag provided by the StableBuild API
+
+```text
+rewrite snapshot.ubuntu.com/ubuntu/[^/]*/(.*) <private-mirror-tag>.debmirror.stablebuild.com/2026-04-01T10:40:01Z/archive.ubuntu.com/ubuntu/$1
+rewrite snapshot.ubuntu.com/ubuntu/[^/]*/(.*) <private-mirror-tag>.debmirror.stablebuild.com/2026-04-01T10:40:01Z/ports.ubuntu.com/$1
+rewrite snapshot.ubuntu.com/ubuntu/(.*) snapshot.ubuntu.com/ubuntu/$1
+```
+
+2. Point Bazel to this local config in `user.bazelrc` (also ignored by git):
+
+```text
+common --downloader_config=user.downloader_config
+```
+
+3. Restart the Bazel server to reload the downloader config
+
+```shell
+bazel shutdown
 ```
 
 ### Linting Instructions
@@ -130,5 +166,92 @@ bazel test //score/mw/com/message_passing:all
 ## Additional Resources
 
 For project details, documentation, and support resources, please refer to the main [README.md](README.md).
+
+---
+
+## How to Document
+
+This section explains how to document C++ code so it appears in the generated API documentation.
+
+> API documentation is generated using Doxygen and integrated via Breathe.
+> Due to Sphinx version < 9.x limitations with complex C++ templates, use specific class
+> and function directives rather than namespace-level documentation.
+
+### Automatic API Documentation with @api Tag
+
+The project includes an automated RST generation utility that extracts items
+tagged with `@api` in Doxygen comments and generates categorized documentation.
+
+Add the `@api` tag to any Doxygen comment block to include it in the generated API documentation:
+
+```cpp
+/**
+ * @brief Connection handler for client communication
+ * @api
+ */
+class ClientConnection {
+    // ...
+};
+
+/**
+ * @brief Initialize the communication system
+ * @return true if successful
+ * @api
+ */
+bool initialize();
+```
+
+The utility automatically creates:
+
+- **API Index** — overview of all tagged items
+- **Namespace Reference** — namespaces containing `@api` items
+- **Class Reference** — classes and structs with `@api` tag
+- **Member Reference** — functions and methods with `@api` tag
+
+Build integration:
+
+```starlark
+generate_api_rst(
+    name = "generate_api_rst",
+    doxygen_xml = "//path/to:doxygen_target",
+    output_dir = "generated",
+    project_name = "mw::com",
+)
+```
+
+The generated RST files are automatically included in the Sphinx documentation
+under the "Generated API Documentation" section.
+
+### Using Breathe Directives
+
+To document specific classes or functions, use these Breathe directives in RST files:
+
+**Document a specific class:**
+
+```rst
+.. doxygenclass:: score::message_passing::detail::ClientConnection
+    :members:
+    :protected-members:
+    :undoc-members:
+```
+
+**Document a specific function:**
+
+```rst
+.. doxygenfunction:: score::mw::com::functionName
+```
+
+**Document a struct:**
+
+```rst
+.. doxygenstruct:: score::mw::com::ConfigStruct
+    :members:
+```
+
+### Further Resources
+
+- Browse the Doxygen-generated HTML at `bazel-bin/score/mw/com/design/doxygen_build/html/index.html`
+- Review header files in `score/mw/com/` for inline documentation
+- Check the design documentation at `score/mw/com/design/`
 
 **Thank you for contributing to the Eclipse SCORE Communication Module!**

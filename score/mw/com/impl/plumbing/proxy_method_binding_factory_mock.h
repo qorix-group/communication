@@ -25,10 +25,10 @@ namespace score::mw::com::impl
 class ProxyMethodBindingFactoryMock : public IProxyMethodBindingFactory
 {
   public:
-    MOCK_METHOD(std::unique_ptr<ProxyMethodBinding>,
+    MOCK_METHOD(Result<std::unique_ptr<ProxyMethodBinding>>,
                 Create,
                 (HandleType parent_handle,
-                 ProxyBinding* parent_binding,
+                 ProxyBinding& parent_binding,
                  const std::string_view method_name,
                  MethodType method_type),
                 (noexcept, override));

@@ -33,7 +33,7 @@ Test execution
 ┌───────────────────────────┐
 │ generate_coverage_html.sh │  ◄── bazel run //quality/coverage:generate_coverage_html
 └────┬──────────────────────┘
-     │  Extracts html_report/ → cpp_coverage/
+     │  Extracts html_report/ → cpp_coverage_<platform>/
      ▼
 ┌─────────────┐     coverage_justifications.yaml
 │  justify.py  │ ◄── + source files (COV_JUSTIFIED markers)
@@ -92,7 +92,7 @@ merger.py --coverage_dir=<path>           \
 
 1. Reads the list of per-test zip files from `--reports_file`
 2. Extracts profdata + metadata from each zip
-3. Merges all profdata into a single `merged_coverage.profdata` via `llvm-profdata merge`
+3. Merges all per-test profdata artifacts into a single `merged_coverage.profdata` via `llvm-profdata merge`. For baseline-only archives (files not covered by test binaries), the reporter uses `llvm-cov --empty-profile` so baseline coverage no longer depends on synthesizing a baseline profdata file. If no reports are present (or no valid profdata/object files are extracted), the reporter exits early with an empty output file, matching Bazel's empty-coverage behavior.
 4. Generates three output formats:
    - **HTML report** via `llvm-cov show --format=html` with branch counts and expansion views
    - **LCOV data** via `llvm-cov export --format=lcov` (backward compatibility with dashboards)
@@ -105,6 +105,8 @@ merger.py --coverage_dir=<path>           \
 reporter.py --reports_file=<path>   \
             --output_file=<path>
 ```
+
+When invoked via the Bazel wrapper, these core args are accompanied by wrapper-injected arguments (such as `--coverage_allowlist`, `--baseline_objects`, and `--workspace_root`).
 
 **Source filtering:**
 
@@ -141,8 +143,12 @@ Resolves all justified lines from two sources and produces a unified manifest:
 ```
 python3 justify.py --yaml <justifications.yaml>  \
                    --source-root <workspace-path> \
-                   --output <manifest.json>
+                   --output <manifest.json>        \
+                   [--platform <linux|qnx>]
 ```
+
+When `--platform` is specified, only justifications that apply to that platform are included
+in the output manifest. Each justification must declare its `platforms` explicitly.
 
 **Output format (manifest.json):**
 
@@ -163,6 +169,7 @@ python3 justify.py --yaml <justifications.yaml>  \
 - Justification IDs must be unique and kebab-case (lowercase + hyphens)
 - Every justification must have a non-empty `reason`
 - Category must be one of: `defensive_programming`, `tool_false_positive`, `platform_specific`, `other`
+- Platforms are required and must be a non-empty list containing `linux` and/or `qnx`
 - In-code `COV_JUSTIFIED <id>` markers must reference an ID defined in the YAML
 
 **In-code marker patterns:**

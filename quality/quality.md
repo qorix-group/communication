@@ -70,43 +70,73 @@ To analyze a specific target:
 bazel run //quality/static_analysis:codeql_lint -- --target=//score/message_passing/...
 ```
 
-### Running CodeQL in phases
+This command automatically creates the database, generates SARIF, and creates 4 compliance reports in one step.
 
-Create the database once:
+### Automatic Compliance Report Generation
+
+When CodeQL analysis completes, MISRA C++ compliance reports are **automatically generated** using the `analysis_report` tool.
+
+Reports are automatically generated for all analysis modes:
+- `--phase all` (default)
+- `--phase analyze-database` (when analyzing existing database)
+
+The complete pipeline creates:
+
+1. **CodeQL Database** — Analyzed code structure
+   - Location: `bazel-out/codeql_database/` (persistent)
+
+2. **SARIF File** — Machine-readable analysis results (JSON)
+   - Location: `bazel-out/codeql.sarif`
+
+3. **Markdown Reports** — Human-readable compliance documents (4 files)
+   - Location: `bazel-out/analysis_reports/`
+
+#### Run CodeQL with Automatic Reports (Recommended)
+
+**Analyze a specific target with full automatic report generation:**
 
 ```bash
-bazel run //quality/static_analysis:codeql_lint -- \
-  --phase create-database \
-  --database-path /var/tmp/codeql_databases/codeql_db \
-  --target //score/...
+bazel run //quality/static_analysis:codeql_lint -- --target=//score/message_passing
 ```
 
-Run quick analysis (uses incremental queries from config.yaml):
+This single command automatically:
+1. Creates CodeQL database
+2. Generates SARIF file (JSON with 274+ findings)
+3. Generates 4 Markdown reports from SARIF + database
 
-```bash
-bazel run //quality/static_analysis:codeql_lint -- \
-  --phase analyze-database \
-  --database-path /var/tmp/codeql_databases/codeql_db
-```
+The markdown reports are written to `bazel-out/analysis_reports/` for local runs.
+When `--output-dir` is used, they are written to `<output-dir>/analysis_reports/` instead.
+In CI, the nightly workflow copies that directory into `/tmp/codeql-results/analysis_reports/`
+before publishing the artifact.
 
-Run full analysis with a specific query pack (e.g. for nightly):
+#### Generated Reports
 
-```bash
-bazel run //quality/static_analysis:codeql_lint -- \
-  --phase analyze-database \
-  --database-path /var/tmp/codeql_databases/codeql_db \
-  --query-spec "codeql/misra-cpp-coding-standards@2.52.0" \
-  --output-prefix codeql-nightly
-```
+The following markdown files are automatically created in `bazel-out/analysis_reports/`:
 
-The `--phase` argument accepts `create-database`, `analyze-database`, or `all` (default, original behavior). The `--query-spec` argument allows specifying a different query pack or suite for the analysis step. The `--output-prefix` argument controls the output file names.
+- **database_integrity_report.md** — Database validation
+  - Extraction errors (if any)
+  - Successfully extracted files
+  - Database health status
 
-Results are written to the Bazel output directory (`bazel info output_path`):
+- **deviations_report.md** — MISRA compliance waivers
+  - Deviation records and permits
+  - Approved exceptions from standards
+  - Justification and background
 
-- `codeql.sarif` — SARIF v2.1.0 format
-- `codeql.csv` — CSV format
+- **guideline_compliance_summary.md** — Executive summary
+  - **Result**: Compliant or Non-Compliant
+  - Total issues and violations
+  - Rules triggered
 
-The query configuration is defined in [`quality/static_analysis/config.yaml`](static_analysis/config.yaml).
+- **guideline_recategorizations_report.md** — Rule recategorizations
+  - Applied guideline recategorizations
+  - Category remappings
+
+> **Note:** `bazel-out` is a **symlink** into the Bazel cache (`~/.cache/bazel/.../bazel-out`),
+> not a real folder inside the repository. VS Code's Explorer and `find` do not traverse it by
+> default, so the reports may not appear in the sidebar even though they exist on disk. Use `ls`
+> (not `find`) to list them, since `find` skips the symlink unless you pass `-L`.
+
 
 ## Coverage
 
@@ -137,10 +167,10 @@ To extract the HTML report (works for both full and single-target runs):
 bazel run //quality/coverage:generate_coverage_html
 ```
 
-The report is written to `cpp_coverage/index.html`. Open it with:
+The report is written to `cpp_coverage_<platform>/index.html`. Open it with:
 
 ```bash
-xdg-open cpp_coverage/index.html
+xdg-open cpp_coverage_linux/index.html
 ```
 
 ### Coverage Justifications
@@ -168,6 +198,52 @@ Address, undefined behavior, leak, and thread sanitizers are also available:
 bazel test --config=asan //...
 bazel test --config=tsan //...
 ```
+
+## Compiler Warnings
+
+Compiler warning features are defined in [`quality/compiler_warnings/`](compiler_warnings/) and referenced in targets through the shared bundle in [`score/mw/common_features.bzl`](../score/mw/common_features.bzl). Warning features are prefixed with `score_communication_` to avoid collisions with other modules.
+
+Features are enabled per-target via the `features` attribute. The LLVM toolchain enables `score_communication_minimal_warnings` by default (see [`MODULE.bazel`](../MODULE.bazel)).
+
+### Adding Warning Features to a Target
+
+Load the shared bundle and set it in your `cc_library` or `cc_unit_test`:
+
+```starlark
+load("//score/mw:common_features.bzl", "COMPILER_WARNING_FEATURES")
+
+cc_library(
+    name = "my_lib",
+    srcs = ["my_lib.cpp"],
+    hdrs = ["my_lib.h"],
+    features = COMPILER_WARNING_FEATURES,
+)
+```
+
+### Disabling Warnings for a Single Target
+
+Use the `-` prefix to opt out of a feature on a specific target:
+
+```starlark
+cc_library(
+    name = "third_party_wrapper",
+    srcs = ["wrapper.cpp"],
+    features = ["-score_communication_treat_warnings_as_errors"],
+)
+```
+
+### Disabling a Feature Globally
+
+Use `--features=-<feature_name>` on the command line:
+
+```bash
+bazel build //... --features=-score_communication_treat_warnings_as_errors
+```
+
+### Coverage Builds
+
+Coverage builds (`bazel coverage //...`) automatically disable `-Werror` via [`quality/coverage.bazelrc`](coverage.bazelrc).
+
 
 ## Linting
 

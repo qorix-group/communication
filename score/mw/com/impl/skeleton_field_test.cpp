@@ -13,18 +13,22 @@
 #include "score/mw/com/impl/skeleton_field.h"
 
 #include "score/mw/com/impl/bindings/mock_binding/skeleton_method.h"
+#include "score/mw/com/impl/com_error.h"
 #include "score/mw/com/impl/method_type.h"
 #include "score/mw/com/impl/methods/skeleton_method.h"
-#include "score/mw/com/impl/plumbing/skeleton_method_binding_factory_mock.h"
-#include "score/mw/com/impl/runtime.h"
-#include "score/mw/com/impl/runtime_mock.h"
+#include "score/mw/com/impl/methods/skeleton_method_binding.h"
+#include "score/mw/com/impl/sample_allocatee_guard.h"
 #include "score/mw/com/impl/test/binding_factory_resources.h"
 #include "score/mw/com/impl/test/runtime_mock_guard.h"
+
+#include "score/result/result.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <cstdint>
+#include <functional>
 #include <memory>
+#include <optional>
 #include <string_view>
 #include <type_traits>
 #include <utility>
@@ -34,7 +38,7 @@ namespace score::mw::com::impl
 namespace
 {
 
-using TestSampleType = std::uint8_t;
+using TestSampleType = std::uint32_t;
 
 // SFINAE helper to check if RegisterSetHandler is available with "WithSetter" tag.
 template <typename, typename = void>
@@ -57,11 +61,11 @@ using ::testing::ByMove;
 using ::testing::Invoke;
 using ::testing::InvokeWithoutArgs;
 using ::testing::Return;
-using ::testing::StrictMock;
 using ::testing::WithArg;
 
 constexpr std::string_view kFieldName{"Field1"};
 const TestSampleType kDummyInitialValue{42};
+const TestSampleType kDummySetValue{43};
 
 ServiceIdentifierType kServiceIdentifier{make_ServiceIdentifierType("foo", 1U, 0U)};
 std::uint16_t kInstanceId{23U};
@@ -89,7 +93,7 @@ class SkeletonFieldTestFixture : public ::testing::Test
     void SetUp() override
     {
         ON_CALL(skeleton_field_binding_factory_mock_guard_.factory_mock_,
-                CreateEventBinding(kInstanceIdWithLolaBinding, _, kFieldName))
+                CreateEventBinding(kInstanceIdWithLolaBinding, _, kFieldName, _))
             .WillByDefault(InvokeWithoutArgs([this]() {
                 return std::make_unique<mock_binding::SkeletonEventFacade<TestSampleType>>(
                     skeleton_field_binding_mock_);
@@ -110,24 +114,6 @@ class SkeletonFieldTestFixture : public ::testing::Test
         ON_CALL(skeleton_field_set_binding_mock_, RegisterHandler(_)).WillByDefault(Return(Result<void>{}));
     }
 
-    /// \brief Returns a span pointing to storage containing the provided field value
-    std::pair<score::cpp::span<std::byte>, score::cpp::span<std::byte>> CreateFieldSetterInArgAndReturnSpans(
-        const TestSampleType in_arg_value,
-        const TestSampleType return_value)
-    {
-        SCORE_LANGUAGE_FUTURECPP_ASSERT(!in_arg_storage_.has_value());
-        SCORE_LANGUAGE_FUTURECPP_ASSERT(!return_storage_.has_value());
-        score::cpp::ignore = in_arg_storage_.emplace(in_arg_value);
-        score::cpp::ignore = return_storage_.emplace(return_value);
-
-        score::cpp::span<std::byte> in_span{reinterpret_cast<std::byte*>(&(in_arg_storage_.value())),
-                                            sizeof(TestSampleType)};
-        score::cpp::span<std::byte> out_span{reinterpret_cast<std::byte*>(&(return_storage_.value())),
-                                             sizeof(TestSampleType)};
-
-        return {in_span, out_span};
-    }
-
     RuntimeMockGuard runtime_mock_guard_{};
 
     SkeletonFieldBindingFactoryMockGuard<TestSampleType> skeleton_field_binding_factory_mock_guard_{};
@@ -136,9 +122,6 @@ class SkeletonFieldTestFixture : public ::testing::Test
     mock_binding::SkeletonEvent<TestSampleType> skeleton_field_binding_mock_{};
     mock_binding::SkeletonMethod skeleton_field_get_binding_mock_{};
     mock_binding::SkeletonMethod skeleton_field_set_binding_mock_{};
-
-    std::optional<TestSampleType> in_arg_storage_{};
-    std::optional<TestSampleType> return_storage_{};
 };
 
 TEST(SkeletonFieldTest, NotCopyable)
@@ -193,6 +176,79 @@ TEST(SkeletonFieldTest, SkeletonFieldContainsPublicSampleType)
                   "Incorrect FieldType.");
 }
 
+using SkeletonFieldCreationFixture = SkeletonFieldTestFixture;
+TEST_F(SkeletonFieldCreationFixture, CreatingFieldWithNotifierCallsFactoryWithNotifier)
+{
+    // Expect that the factory is called with WithNotifier
+    EXPECT_CALL(skeleton_field_binding_factory_mock_guard_.factory_mock_,
+                CreateEventBinding(kInstanceIdWithLolaBinding, _, kFieldName, FieldTagsStore::Create<WithNotifier>()));
+
+    // When creating a SkeletonField with WithNotifier
+    SkeletonBase skeleton{std::make_unique<mock_binding::Skeleton>(), kInstanceIdWithLolaBinding};
+    SkeletonField<TestSampleType, WithNotifier> my_dummy_field{skeleton, kFieldName};
+}
+
+TEST_F(SkeletonFieldCreationFixture, CreatingFieldWithGetterCallsFactoryWithGetter)
+{
+    // Expect that the factory is called with WithGetter
+    EXPECT_CALL(skeleton_field_binding_factory_mock_guard_.factory_mock_,
+                CreateEventBinding(kInstanceIdWithLolaBinding, _, kFieldName, FieldTagsStore::Create<WithGetter>()));
+
+    // When creating a SkeletonField with WithGetter
+    SkeletonBase skeleton{std::make_unique<mock_binding::Skeleton>(), kInstanceIdWithLolaBinding};
+    SkeletonField<TestSampleType, WithGetter> my_dummy_field{skeleton, kFieldName};
+}
+
+TEST_F(SkeletonFieldCreationFixture, CreatingFieldWithNotifierAndSetterCallsFactoryWithNotifierAndSetter)
+{
+    // Expect that the factory is called with WithNotifier and WithSetter
+    EXPECT_CALL(skeleton_field_binding_factory_mock_guard_.factory_mock_,
+                CreateEventBinding(
+                    kInstanceIdWithLolaBinding, _, kFieldName, FieldTagsStore::Create<WithNotifier, WithSetter>()));
+
+    // When creating a SkeletonField with WithNotifier and WithSetter
+    SkeletonBase skeleton{std::make_unique<mock_binding::Skeleton>(), kInstanceIdWithLolaBinding};
+    SkeletonField<TestSampleType, WithNotifier, WithSetter> my_dummy_field{skeleton, kFieldName};
+}
+
+TEST_F(SkeletonFieldCreationFixture, CreatingFieldWithGetterAndSetterCallsFactoryWithGetterAndSetter)
+{
+    // Expect that the factory is called with WithGetter and WithSetter
+    EXPECT_CALL(skeleton_field_binding_factory_mock_guard_.factory_mock_,
+                CreateEventBinding(
+                    kInstanceIdWithLolaBinding, _, kFieldName, FieldTagsStore::Create<WithGetter, WithSetter>()));
+
+    // When creating a SkeletonField with WithGetter and WithSetter
+    SkeletonBase skeleton{std::make_unique<mock_binding::Skeleton>(), kInstanceIdWithLolaBinding};
+    SkeletonField<TestSampleType, WithGetter, WithSetter> my_dummy_field{skeleton, kFieldName};
+}
+
+TEST_F(SkeletonFieldCreationFixture, CreatingFieldWithNotifierAndGetterCallsFactoryWithNotifierAndGetter)
+{
+    // Expect that the factory is called with WithNotifier and WithGetter
+    EXPECT_CALL(skeleton_field_binding_factory_mock_guard_.factory_mock_,
+                CreateEventBinding(
+                    kInstanceIdWithLolaBinding, _, kFieldName, FieldTagsStore::Create<WithNotifier, WithGetter>()));
+
+    // When creating a SkeletonField with WithNotifier and WithGetter
+    SkeletonBase skeleton{std::make_unique<mock_binding::Skeleton>(), kInstanceIdWithLolaBinding};
+    SkeletonField<TestSampleType, WithNotifier, WithGetter> my_dummy_field{skeleton, kFieldName};
+}
+
+TEST_F(SkeletonFieldCreationFixture,
+       CreatingFieldWithNotifierAndGetterAndSetterCallsFactoryWithNotifierAndGetterAndSetter)
+{
+    // Expect that the factory is called with WithNotifier, WithGetter and WithSetter
+    EXPECT_CALL(
+        skeleton_field_binding_factory_mock_guard_.factory_mock_,
+        CreateEventBinding(
+            kInstanceIdWithLolaBinding, _, kFieldName, FieldTagsStore::Create<WithNotifier, WithGetter, WithSetter>()));
+
+    // When creating a SkeletonField with WithNotifier, WithGetter and WithSetter
+    SkeletonBase skeleton{std::make_unique<mock_binding::Skeleton>(), kInstanceIdWithLolaBinding};
+    SkeletonField<TestSampleType, WithNotifier, WithGetter, WithSetter> my_dummy_field{skeleton, kFieldName};
+}
+
 // When Ticket-104261 is implemented, the Update call does not have to be deferred until OfferService is called. This
 // test can be reworked to remove the call to PrepareOffer() and simply test Update() before PrepareOffer() is called.
 using SkeletonFieldCopyUpdateTest = SkeletonFieldTestFixture;
@@ -210,7 +266,7 @@ TEST_F(SkeletonFieldCopyUpdateTest, CallingUpdateBeforeOfferServiceDefersCallToO
     EXPECT_CALL(skeleton_field_binding_mock_, PrepareOffer()).WillOnce(Return(score::Result<void>{}));
 
     // and Send will be called on the event binding with the initial value and returns an empty result
-    EXPECT_CALL(skeleton_field_binding_mock_, Send(kDummyInitialValue, _))
+    EXPECT_CALL(skeleton_field_binding_mock_, Send(kDummyInitialValue, _, _))
         .WillOnce(InvokeWithoutArgs([&is_send_called_on_binding]() noexcept -> Result<void> {
             is_send_called_on_binding = true;
             return {};
@@ -255,7 +311,7 @@ TEST_F(SkeletonFieldCopyUpdateTest, CallingUpdateBeforeOfferServicePropagatesBin
     EXPECT_CALL(skeleton_field_binding_mock_, PrepareOffer()).WillOnce(Return(score::Result<void>{}));
 
     // and Send will be called on the event binding with the initial value and returns an error
-    EXPECT_CALL(skeleton_field_binding_mock_, Send(kDummyInitialValue, _))
+    EXPECT_CALL(skeleton_field_binding_mock_, Send(kDummyInitialValue, _, _))
         .WillOnce(InvokeWithoutArgs([&is_send_called_on_binding] {
             is_send_called_on_binding = true;
             return MakeUnexpected(ComErrc::kInvalidBindingInformation);
@@ -298,10 +354,10 @@ TEST_F(SkeletonFieldCopyUpdateTest, CallingUpdateAfterOfferServiceDispatchesToBi
     EXPECT_CALL(skeleton_field_binding_mock_, PrepareOffer()).WillOnce(Return(score::Result<void>{}));
 
     // and Send will be called on the event binding with the initial value and returns an empty result
-    EXPECT_CALL(skeleton_field_binding_mock_, Send(kDummyInitialValue, _)).WillOnce(Return(score::Result<void>{}));
+    EXPECT_CALL(skeleton_field_binding_mock_, Send(kDummyInitialValue, _, _)).WillOnce(Return(score::Result<void>{}));
 
     // and Send will be called a second time on the event binding with the updated value and returns an empty result
-    EXPECT_CALL(skeleton_field_binding_mock_, Send(updated_value, _)).WillOnce(Return(score::Result<void>{}));
+    EXPECT_CALL(skeleton_field_binding_mock_, Send(updated_value, _, _)).WillOnce(Return(score::Result<void>{}));
 
     // Given a skeleton created based on a Lola binding
     MyDummySkeleton unit{std::make_unique<mock_binding::Skeleton>(), kInstanceIdWithLolaBinding};
@@ -341,10 +397,10 @@ TEST_F(SkeletonFieldCopyUpdateTest, CallingUpdateAfterOfferServicePropagatesBind
     EXPECT_CALL(skeleton_field_binding_mock_, PrepareOffer()).WillOnce(Return(score::Result<void>{}));
 
     // and Send will be called on the event binding with the initial value and returns an empty result
-    EXPECT_CALL(skeleton_field_binding_mock_, Send(kDummyInitialValue, _)).WillOnce(Return(score::Result<void>{}));
+    EXPECT_CALL(skeleton_field_binding_mock_, Send(kDummyInitialValue, _, _)).WillOnce(Return(score::Result<void>{}));
 
     // and Send will be called a second time on the event binding with the updated value and returns an error
-    EXPECT_CALL(skeleton_field_binding_mock_, Send(updated_value, _))
+    EXPECT_CALL(skeleton_field_binding_mock_, Send(updated_value, _, _))
         .WillOnce(Return(MakeUnexpected(ComErrc::kInvalidBindingInformation)));
 
     // Given a skeleton created based on a Lola binding
@@ -379,7 +435,7 @@ TEST_F(SkeletonFieldAllocateTest, CallingAllocateBeforePrepareOfferDoesNotReturn
     EXPECT_CALL(skeleton_field_binding_mock_, PrepareOffer()).Times(0);
 
     // and Allocate will not be called on the event binding
-    EXPECT_CALL(skeleton_field_binding_mock_, Allocate()).Times(0);
+    EXPECT_CALL(skeleton_field_binding_mock_, Allocate(_)).Times(0);
 
     // Given a skeleton created based on a Lola binding
     MyDummySkeleton unit{std::make_unique<mock_binding::Skeleton>(), kInstanceIdWithLolaBinding};
@@ -404,11 +460,11 @@ TEST_F(SkeletonFieldAllocateTest, CallingAllocateAfterPrepareOfferDispatchesToBi
     EXPECT_CALL(skeleton_field_binding_mock_, PrepareOffer()).WillOnce(Return(score::Result<void>{}));
 
     // and Send will be called on the event binding with the initial value
-    EXPECT_CALL(skeleton_field_binding_mock_, Send(kDummyInitialValue, _));
+    EXPECT_CALL(skeleton_field_binding_mock_, Send(kDummyInitialValue, _, _));
 
     // and Allocate will be called again which returns a valid SampleAllocateePtr
-    EXPECT_CALL(skeleton_field_binding_mock_, Allocate())
-        .WillOnce(Return(ByMove(MakeSampleAllocateePtr(std::make_unique<TestSampleType>()))));
+    EXPECT_CALL(skeleton_field_binding_mock_, Allocate(_))
+        .WillOnce(Return(ByMove(MakeSampleAllocateePtr(std::make_unique<TestSampleType>(), SampleAllocateeGuard{}))));
 
     // Given a skeleton created based on a Lola binding
     MyDummySkeleton unit{std::make_unique<mock_binding::Skeleton>(), kInstanceIdWithLolaBinding};
@@ -445,11 +501,13 @@ TEST_F(SkeletonFieldAllocateTest, CallingAllocateAfterPrepareOfferFailsWhenBindi
     EXPECT_CALL(skeleton_field_binding_mock_, PrepareOffer()).WillOnce(Return(score::Result<void>{}));
 
     // and Send will be called on the event binding with the initial value
-    EXPECT_CALL(skeleton_field_binding_mock_, Send(kDummyInitialValue, _));
+    EXPECT_CALL(skeleton_field_binding_mock_, Send(kDummyInitialValue, _, _));
 
     // and Allocate will be called again which returns a nullptr
-    EXPECT_CALL(skeleton_field_binding_mock_, Allocate())
-        .WillOnce(Return(ByMove(MakeUnexpected(ComErrc::kInvalidConfiguration))));
+    EXPECT_CALL(skeleton_field_binding_mock_, Allocate(_))
+        .WillOnce([](SampleAllocateeGuard) -> Result<SampleAllocateePtr<TestSampleType>> {
+            return MakeUnexpected(ComErrc::kInvalidConfiguration);
+        });
 
     // Given a skeleton created based on a Lola binding
     MyDummySkeleton unit{std::make_unique<mock_binding::Skeleton>(), kInstanceIdWithLolaBinding};
@@ -491,11 +549,11 @@ TEST_F(SkeletonFieldZeroCopyUpdateTest, CallingZeroCopyUpdateAfterOfferServiceDi
     EXPECT_CALL(skeleton_field_binding_mock_, PrepareOffer()).WillOnce(Return(score::Result<void>{}));
 
     // and Send will be called on the event binding with the initial value
-    EXPECT_CALL(skeleton_field_binding_mock_, Send(kDummyInitialValue, _));
+    EXPECT_CALL(skeleton_field_binding_mock_, Send(kDummyInitialValue, _, _));
 
     // and Allocate will be called again which returns a valid SampleAllocateePtr
-    EXPECT_CALL(skeleton_field_binding_mock_, Allocate())
-        .WillOnce(Return(ByMove(MakeSampleAllocateePtr(std::make_unique<TestSampleType>()))));
+    EXPECT_CALL(skeleton_field_binding_mock_, Allocate(_))
+        .WillOnce(Return(ByMove(MakeSampleAllocateePtr(std::make_unique<TestSampleType>(), SampleAllocateeGuard{}))));
 
     // and Send will be called a second time on the event binding with a new value which returns an empty result
     EXPECT_CALL(skeleton_field_binding_mock_, Send(An<SampleAllocateePtr<TestSampleType>>(), _))
@@ -553,11 +611,11 @@ TEST_F(SkeletonFieldZeroCopyUpdateTest, CallingZeroCopyUpdateAfterOfferServicePr
     EXPECT_CALL(skeleton_field_binding_mock_, PrepareOffer()).WillOnce(Return(score::Result<void>{}));
 
     // and Send will be called on the event binding with the initial value
-    EXPECT_CALL(skeleton_field_binding_mock_, Send(kDummyInitialValue, _));
+    EXPECT_CALL(skeleton_field_binding_mock_, Send(kDummyInitialValue, _, _));
 
     // and Allocate will be called again which returns a valid SampleAllocateePtr
-    EXPECT_CALL(skeleton_field_binding_mock_, Allocate())
-        .WillOnce(Return(ByMove(MakeSampleAllocateePtr(std::make_unique<TestSampleType>()))));
+    EXPECT_CALL(skeleton_field_binding_mock_, Allocate(_))
+        .WillOnce(Return(ByMove(MakeSampleAllocateePtr(std::make_unique<TestSampleType>(), SampleAllocateeGuard{}))));
 
     // and Send will be called a second time on the event binding with a new value which returns an error
     EXPECT_CALL(skeleton_field_binding_mock_, Send(An<SampleAllocateePtr<TestSampleType>>(), _))
@@ -615,7 +673,7 @@ TEST_F(SkeletonFieldInitialValueFixture, LatestFieldValueWillBeSetOnPrepareOffer
     EXPECT_CALL(skeleton_field_binding_mock_, PrepareOffer()).WillOnce(Return(score::Result<void>{}));
 
     // and Send will be called only once on the event binding with the latest value
-    EXPECT_CALL(skeleton_field_binding_mock_, Send(latest_value, _));
+    EXPECT_CALL(skeleton_field_binding_mock_, Send(latest_value, _, _));
 
     // Given a skeleton created based on a Lola binding
     MyDummySkeleton unit{std::make_unique<mock_binding::Skeleton>(), kInstanceIdWithLolaBinding};
@@ -669,7 +727,7 @@ TEST_F(SkeletonFieldInitialValueFixture, MoveConstructingFieldBeforePrepareOffer
     EXPECT_CALL(skeleton_field_binding_mock_, PrepareOffer()).WillOnce(Return(score::Result<void>{}));
 
     // and Send will be called on the event binding with the initial value
-    EXPECT_CALL(skeleton_field_binding_mock_, Send(kDummyInitialValue, _));
+    EXPECT_CALL(skeleton_field_binding_mock_, Send(kDummyInitialValue, _, _));
 
     // Given a skeleton created based on a Lola binding
     MyDummySkeleton unit{std::make_unique<mock_binding::Skeleton>(), kInstanceIdWithLolaBinding};
@@ -710,7 +768,7 @@ TEST(SkeletonFieldInitialValueTest, MoveAssigningFieldBeforePrepareOfferWillKeep
     auto skeleton_field_binding_mock_ptr = std::make_unique<mock_binding::SkeletonEvent<TestSampleType>>();
     auto& skeleton_field_binding_mock = *skeleton_field_binding_mock_ptr;
     EXPECT_CALL(skeleton_field_binding_factory_mock_guard.factory_mock_,
-                CreateEventBinding(kInstanceIdWithLolaBinding, _, kFieldName))
+                CreateEventBinding(kInstanceIdWithLolaBinding, _, kFieldName, _))
         .WillOnce(Return(ByMove(std::move(skeleton_field_binding_mock_ptr))));
 
     EXPECT_CALL(skeleton_field_binding_mock, GetBindingType()).WillOnce(Return(BindingType::kLoLa));
@@ -719,7 +777,7 @@ TEST(SkeletonFieldInitialValueTest, MoveAssigningFieldBeforePrepareOfferWillKeep
     EXPECT_CALL(skeleton_field_binding_mock, PrepareOffer()).WillOnce(Return(score::Result<void>{}));
 
     // and Send will be called on the event binding with the initial value from the moved-from field
-    EXPECT_CALL(skeleton_field_binding_mock, Send(kDummyInitialValue, _));
+    EXPECT_CALL(skeleton_field_binding_mock, Send(kDummyInitialValue, _, _));
 
     // Given a skeleton created based on a Lola binding
     MyDummySkeleton unit{std::make_unique<mock_binding::Skeleton>(), kInstanceIdWithLolaBinding};
@@ -741,7 +799,8 @@ TEST(SkeletonFieldInitialValueTest, MoveAssigningFieldBeforePrepareOfferWillKeep
     // and Expecting that a second SkeletonField binding is created
     auto skeleton_field_binding_mock_ptr_2 = std::make_unique<mock_binding::SkeletonEvent<TestSampleType>>();
     auto& skeleton_field_binding_mock_2 = *skeleton_field_binding_mock_ptr_2;
-    EXPECT_CALL(skeleton_field_binding_factory_mock_guard.factory_mock_, CreateEventBinding(identifier2, _, kFieldName))
+    EXPECT_CALL(skeleton_field_binding_factory_mock_guard.factory_mock_,
+                CreateEventBinding(identifier2, _, kFieldName, _))
         .WillOnce(Return(ByMove(std::move(skeleton_field_binding_mock_ptr_2))));
 
     EXPECT_CALL(skeleton_field_binding_mock_2, GetBindingType()).WillOnce(Return(BindingType::kLoLa));
@@ -842,7 +901,52 @@ TEST_F(SkeletonFieldTestFixture, MovingAssigningSkeletonUpdatesFieldMapReference
     EXPECT_EQ(&field, &unit2.my_dummy_field_);
 }
 
-// Helper skeleton that holds a SkeletonField with all three tags.
+using SkeletonFieldDeathTest = SkeletonFieldTestFixture;
+TEST_F(SkeletonFieldDeathTest, DestroyingSkeletonFieldWhileHoldingSampleAllocateePtrTerminates)
+{
+    const TestSampleType initial_value{42};
+
+    RuntimeMockGuard runtime_mock_guard{};
+    ON_CALL(runtime_mock_guard.runtime_mock_, GetTracingFilterConfig()).WillByDefault(Return(nullptr));
+
+    SkeletonFieldBindingFactoryMockGuard<TestSampleType> skeleton_field_binding_factory_mock_guard{};
+
+    // Expecting that a SkeletonField binding is created
+    auto skeleton_field_binding_mock_ptr = std::make_unique<mock_binding::SkeletonEvent<TestSampleType>>();
+    auto& skeleton_field_binding_mock = *skeleton_field_binding_mock_ptr;
+    EXPECT_CALL(skeleton_field_binding_factory_mock_guard.factory_mock_,
+                CreateEventBinding(kInstanceIdWithLolaBinding, _, kFieldName, _))
+        .WillOnce(Return(ByMove(std::move(skeleton_field_binding_mock_ptr))));
+
+    // and that PrepareOffer() is called once on the field binding
+    EXPECT_CALL(skeleton_field_binding_mock, PrepareOffer()).WillOnce(Return(score::Result<void>{}));
+
+    // and that Send() is called once on the field binding with the initial value
+    EXPECT_CALL(skeleton_field_binding_mock, Send(initial_value, _, _));
+
+    // and that Allocate() is called once on the field binding, returning a ptr backed by a real tracker guard
+    EXPECT_CALL(skeleton_field_binding_mock, Allocate(_)).WillOnce([](SampleAllocateeGuard guard) {
+        return MakeSampleAllocateePtr(std::make_unique<TestSampleType>(), std::move(guard));
+    });
+
+    // Given a skeleton which has a mock skeleton-binding
+    auto unit =
+        std::make_unique<MyDummySkeleton>(std::make_unique<mock_binding::Skeleton>(), kInstanceIdWithLolaBinding);
+
+    // and the initial field value has been set and PrepareOffer() has been called
+    std::ignore = unit->my_dummy_field_.Update(initial_value);
+    std::ignore = unit->my_dummy_field_.PrepareOffer();
+
+    // and a slot has been allocated and is still held
+    auto allocated_slot_result = unit->my_dummy_field_.Allocate();
+    ASSERT_TRUE(allocated_slot_result.has_value());
+
+    // When the SkeletonField is destroyed while the SampleAllocateePtr is still held
+    // Then the application terminates
+    EXPECT_DEATH(unit.reset(), "");
+}
+
+// Helper skeleton that holds an EnableSet=true field (setter-capable field)
 class MySetterSkeleton : public SkeletonBase
 {
   public:
@@ -869,18 +973,77 @@ TEST(SkeletonFieldSetHandlerTypeTraitsTest, RegisterSetHandlerOnlyExistsWhenWith
                   "RegisterSetHandler must be SFINAE-removed on a SkeletonField without WithSetter");
 }
 
-using SkeletonFieldSetHandlerTest = SkeletonFieldTestFixture;
+TEST(ProxyFieldNotifierGatingTest, RegisterSetHandlerDoesNotExistWhenNoTagPresent)
+{
+    using DefaultField = SkeletonField<TestSampleType>;
+
+    static_assert(!has_register_set_handler<DefaultField>::value,
+                  "RegisterSetHandler must be SFINAE-removed on a SkeletonField without WithSetter");
+}
+
+class SkeletonFieldSetHandlerTest : public SkeletonFieldTestFixture
+{
+  public:
+    SkeletonFieldSetHandlerTest& GivenASkeletonWithSetterEnabled()
+    {
+        unit_ =
+            std::make_unique<MySetterSkeleton>(std::make_unique<mock_binding::Skeleton>(), kInstanceIdWithLolaBinding);
+
+        return *this;
+    }
+
+    SkeletonFieldSetHandlerTest& WhichCapturesASetHandler()
+    {
+        std::optional<SkeletonMethodBinding::TypeErasedHandler> captured_set_handler{};
+        EXPECT_CALL(skeleton_field_set_binding_mock_, RegisterHandler(_))
+            .WillOnce(Invoke([&captured_set_handler_ = captured_set_handler_](auto handler) {
+                captured_set_handler_ = std::move(handler);
+                return Result<void>{};
+            }));
+        return *this;
+    }
+
+    SkeletonFieldSetHandlerTest& WhichIsOffered()
+    {
+        EXPECT_TRUE(unit_->my_setter_field_.Update(kDummyInitialValue).has_value());
+        EXPECT_TRUE(unit_->my_setter_field_.PrepareOffer().has_value());
+        return *this;
+    }
+
+    /// \brief Returns a span pointing to storage containing the provided field value
+    std::pair<score::cpp::span<std::byte>, score::cpp::span<std::byte>> CreateFieldSetterInArgAndReturnSpans(
+        const TestSampleType in_arg_value,
+        const score::Result<TestSampleType> return_value)
+    {
+        SCORE_LANGUAGE_FUTURECPP_ASSERT(!in_arg_storage_.has_value());
+        SCORE_LANGUAGE_FUTURECPP_ASSERT(!return_storage_.has_value());
+        score::cpp::ignore = in_arg_storage_.emplace(in_arg_value);
+        score::cpp::ignore = return_storage_.emplace(return_value);
+
+        score::cpp::span<std::byte> in_span{reinterpret_cast<std::byte*>(&(in_arg_storage_.value())),
+                                            sizeof(TestSampleType)};
+        score::cpp::span<std::byte> out_span{reinterpret_cast<std::byte*>(&(return_storage_.value())),
+                                             sizeof(score::Result<TestSampleType>)};
+
+        return {in_span, out_span};
+    }
+
+    std::unique_ptr<MySetterSkeleton> unit_{};
+    std::optional<SkeletonMethodBinding::TypeErasedHandler> captured_set_handler_{};
+
+    std::optional<TestSampleType> in_arg_storage_{};
+    std::optional<score::Result<TestSampleType>> return_storage_{};
+};
 
 TEST_F(SkeletonFieldSetHandlerTest, RegisterSetHandlerForwardsToMethodBinding)
 {
     // Expecting that RegisterHandler is called on the field set method binding which returns success
     EXPECT_CALL(skeleton_field_set_binding_mock_, RegisterHandler(_)).WillOnce(Return(Result<void>{}));
 
-    // Given a skeleton containing a field with a setter enabled
-    MySetterSkeleton unit{std::make_unique<mock_binding::Skeleton>(), kInstanceIdWithLolaBinding};
+    GivenASkeletonWithSetterEnabled();
 
     // When RegisterSetHandler is called with a valid (no-op) handler
-    const auto result = unit.my_setter_field_.RegisterSetHandler([](TestSampleType& /*value*/) noexcept {});
+    const auto result = unit_->my_setter_field_.RegisterSetHandler([](TestSampleType& /*value*/) noexcept {});
 
     // Then the registration succeeds
     EXPECT_TRUE(result.has_value());
@@ -892,11 +1055,10 @@ TEST_F(SkeletonFieldSetHandlerTest, RegisterSetHandlerPropagatesBindingError)
     EXPECT_CALL(skeleton_field_set_binding_mock_, RegisterHandler(_))
         .WillOnce(Return(MakeUnexpected(ComErrc::kCommunicationLinkError)));
 
-    // Given a skeleton containing a field with a setter enabled
-    MySetterSkeleton unit{std::make_unique<mock_binding::Skeleton>(), kInstanceIdWithLolaBinding};
+    GivenASkeletonWithSetterEnabled();
 
     // When RegisterSetHandler is called
-    const auto result = unit.my_setter_field_.RegisterSetHandler([](TestSampleType& /*value*/) noexcept {});
+    const auto result = unit_->my_setter_field_.RegisterSetHandler([](TestSampleType& /*value*/) noexcept {});
 
     // Then the error from the binding is propagated
     ASSERT_FALSE(result.has_value());
@@ -905,14 +1067,13 @@ TEST_F(SkeletonFieldSetHandlerTest, RegisterSetHandlerPropagatesBindingError)
 
 TEST_F(SkeletonFieldSetHandlerTest, PrepareOfferFailsWhenSetHandlerNotRegistered)
 {
-    // Given a skeleton containing a field with a setter enabled
-    MySetterSkeleton unit{std::make_unique<mock_binding::Skeleton>(), kInstanceIdWithLolaBinding};
+    GivenASkeletonWithSetterEnabled();
 
     // and given an initial value was set so that the initial-value check does not fail
-    EXPECT_TRUE(unit.my_setter_field_.Update(TestSampleType{42}).has_value());
+    EXPECT_TRUE(unit_->my_setter_field_.Update(TestSampleType{42}).has_value());
 
     // When PrepareOffer is called without having called RegisterSetHandler
-    const auto result = unit.my_setter_field_.PrepareOffer();
+    const auto result = unit_->my_setter_field_.PrepareOffer();
 
     // Then it returns kSetHandlerNotSet
     ASSERT_FALSE(result.has_value());
@@ -921,19 +1082,18 @@ TEST_F(SkeletonFieldSetHandlerTest, PrepareOfferFailsWhenSetHandlerNotRegistered
 
 TEST_F(SkeletonFieldSetHandlerTest, PrepareOfferSucceedsAfterRegisterSetHandler)
 {
-    const TestSampleType kDummyInitialValue{7U};
+    const TestSampleType kSetHandlerInitialValue{7U};
 
-    // Given a skeleton containing a field with a setter enabled
-    MySetterSkeleton unit{std::make_unique<mock_binding::Skeleton>(), kInstanceIdWithLolaBinding};
+    GivenASkeletonWithSetterEnabled();
 
     // Register a valid (no-op) set handler
-    ASSERT_TRUE(unit.my_setter_field_.RegisterSetHandler([](TestSampleType& /*value*/) noexcept {}).has_value());
+    ASSERT_TRUE(unit_->my_setter_field_.RegisterSetHandler([](TestSampleType& /*value*/) noexcept {}).has_value());
 
     // Set the initial field value
-    ASSERT_TRUE(unit.my_setter_field_.Update(kDummyInitialValue).has_value());
+    ASSERT_TRUE(unit_->my_setter_field_.Update(kSetHandlerInitialValue).has_value());
 
     // When PrepareOffer is called
-    const auto result = unit.my_setter_field_.PrepareOffer();
+    const auto result = unit_->my_setter_field_.PrepareOffer();
 
     // Then it succeeds
     EXPECT_TRUE(result.has_value());
@@ -953,282 +1113,192 @@ TEST_F(SkeletonFieldSetHandlerTest, PrepareOfferSucceedsWithoutHandlerWhenWithSe
     EXPECT_TRUE(result.has_value());
 }
 
-TEST(SkeletonFieldSetHandlerTypeTraitsTest, RegisterSetHandlerAcceptsAnyCallable)
+TEST_F(SkeletonFieldSetHandlerTest, RegisterSetHandlerAcceptsStdFunction)
 {
-    RecordProperty("Description",
-                   "RegisterSetHandler() shall accept any callable (lambda, std::function, "
-                   "score::cpp::callback) with signature void(FieldType&). "
-                   "The public interface is not tied to a specific callable type.");
-    RecordProperty("TestType", "Requirements-based test");
-    RecordProperty("Priority", "1");
-    RecordProperty("DerivationTechnique", "Analysis of requirements");
+    GivenASkeletonWithSetterEnabled();
 
-    using HandlerSignature = void(TestSampleType&);
+    // When registering a set handler using std::function
+    std::function<void(TestSampleType&)> std_function_handler = [](TestSampleType& /*value*/) noexcept {};
+    const auto result = unit_->my_setter_field_.RegisterSetHandler(std_function_handler).has_value();
 
-    // lambda
-    static_assert(std::is_invocable_v<std::function<HandlerSignature>, TestSampleType&>,
-                  "std::function with expected signature must be invocable");
-
-    // score::cpp::callback
-    static_assert(std::is_invocable_v<score::cpp::callback<HandlerSignature>, TestSampleType&>,
-                  "score::cpp::callback with expected signature must be invocable");
+    // Then the registration succeeds
+    EXPECT_TRUE(result);
 }
 
-// Handler wrapping: user callback is invoked and the field value is updated
-
-/// Helper: captures the TypeErasedHandler registered on the SkeletonMethodBinding so that
-/// tests can invoke it manually to simulate a proxy calling the setter.
-class CapturingSkeletonMethodBinding : public SkeletonMethodBinding
+TEST_F(SkeletonFieldSetHandlerTest, RegisterSetHandlerAcceptsCppCallback)
 {
-  public:
-    Result<void> RegisterHandler(TypeErasedHandler&& cb) override
-    {
-        captured_handler_ = std::move(cb);
-        return Result<void>{};
-    }
+    GivenASkeletonWithSetterEnabled();
 
-    TypeErasedHandler captured_handler_{};
-};
+    // When registering a set handler using score::cpp::callback
+    score::cpp::callback<void(TestSampleType&)> cpp_callback_handler = [](TestSampleType& /*value*/) noexcept {};
+    const auto result = unit_->my_setter_field_.RegisterSetHandler(std::move(cpp_callback_handler)).has_value();
 
-TEST_F(SkeletonFieldSetHandlerTest, UserCallbackIsInvokedByWrappedHandler)
+    // Then the registration succeeds
+    EXPECT_TRUE(result);
+}
+
+TEST_F(SkeletonFieldSetHandlerTest, CallingMethodHandlerInvokesUserCallback)
 {
-    RecordProperty("Description",
-                   "The callback registered with RegisterSetHandler() is invoked by the wrapped "
-                   "handler that the SkeletonField registers on the SkeletonMethod binding.");
-    RecordProperty("TestType", "Requirements-based test");
-    RecordProperty("Priority", "1");
-    RecordProperty("DerivationTechnique", "Analysis of requirements");
+    testing::MockFunction<void(TestSampleType&)> user_callback_mock{};
 
-    const TestSampleType incoming_value{99U};
-    bool user_callback_called{false};
+    // Expect that the user registered callback will be called with the value provided to the set handler
+    TestSampleType expected_set_value{kDummySetValue};
+    EXPECT_CALL(user_callback_mock, Call(expected_set_value));
 
-    // Use a capturing binding so that we can invoke the type-erased handler later
-    auto capturing_binding = std::make_unique<CapturingSkeletonMethodBinding>();
-    auto& capturing_binding_ref = *capturing_binding;
-    EXPECT_CALL(skeleton_method_binding_factory_mock_guard_.factory_mock_,
-                Create(kInstanceIdWithLolaBinding, _, _, MethodType::kSet))
-        .WillOnce(Return(ByMove(std::move(capturing_binding))));
-    EXPECT_CALL(skeleton_method_binding_factory_mock_guard_.factory_mock_,
-                Create(kInstanceIdWithLolaBinding, _, _, MethodType::kGet))
-        .WillOnce(InvokeWithoutArgs([]() {
-            return std::unique_ptr<SkeletonMethodBinding>{};
+    GivenASkeletonWithSetterEnabled().WhichCapturesASetHandler();
+
+    // and given that a set handler was registered
+    ASSERT_TRUE(unit_->my_setter_field_.RegisterSetHandler(user_callback_mock.AsStdFunction()).has_value());
+
+    WhichIsOffered();
+
+    // When calling the set handler that was captured by the method binding
+    auto [in_span, out_span] =
+        CreateFieldSetterInArgAndReturnSpans(kDummySetValue, score::Result<TestSampleType>{kDummySetValue});
+    captured_set_handler_.value()(in_span, out_span);
+}
+
+TEST_F(SkeletonFieldSetHandlerTest, CallingMethodHandlerInvokesLatestRegisteredUserCallback)
+{
+    testing::MockFunction<void(TestSampleType&)> user_callback_mock{};
+    testing::MockFunction<void(TestSampleType&)> user_callback_mock_2{};
+
+    // Expect that only the second user registered callback will be called with the value provided to the set handler
+    TestSampleType expected_set_value{kDummySetValue};
+    EXPECT_CALL(user_callback_mock, Call(expected_set_value)).Times(0);
+    EXPECT_CALL(user_callback_mock_2, Call(expected_set_value));
+
+    GivenASkeletonWithSetterEnabled();
+
+    // and given that RegisterHandler is called twice on the method binding
+    std::optional<SkeletonMethodBinding::TypeErasedHandler> captured_set_handler{};
+    EXPECT_CALL(skeleton_field_set_binding_mock_, RegisterHandler(_))
+        .Times(2)
+        .WillRepeatedly(Invoke([&captured_set_handler_ = captured_set_handler_](auto handler) {
+            captured_set_handler_ = std::move(handler);
+            return Result<void>{};
         }));
 
-    MySetterSkeleton unit{std::make_unique<mock_binding::Skeleton>(), kInstanceIdWithLolaBinding};
+    // and given that a set handler was registered twice
+    ASSERT_TRUE(unit_->my_setter_field_.RegisterSetHandler(user_callback_mock.AsStdFunction()).has_value());
+    ASSERT_TRUE(unit_->my_setter_field_.RegisterSetHandler(user_callback_mock_2.AsStdFunction()).has_value());
 
-    // Register a set handler that flags it was called
-    ASSERT_TRUE(unit.my_setter_field_
-                    .RegisterSetHandler([&user_callback_called](TestSampleType& /*value*/) noexcept {
-                        user_callback_called = true;
-                    })
-                    .has_value());
+    WhichIsOffered();
 
-    // Offer the service (sets initial value)
-    ASSERT_TRUE(unit.my_setter_field_.Update(TestSampleType{1U}).has_value());
-    ASSERT_TRUE(unit.my_setter_field_.PrepareOffer().has_value());
-
-    // Simulate the proxy invoking the setter by calling the captured type-erased handler.
-    // The SkeletonMethod serializes the incoming value into a byte span before dispatch.
-    // We replicate that serialization here for the single TestSampleType argument.
-    auto [in_span, out_span] = CreateFieldSetterInArgAndReturnSpans(incoming_value, TestSampleType{});
-
-    capturing_binding_ref.captured_handler_(in_span, out_span);
-
-    // Verify the user callback was called
-    EXPECT_TRUE(user_callback_called);
+    // When calling the set handler that was captured by the method binding
+    auto [in_span, out_span] =
+        CreateFieldSetterInArgAndReturnSpans(kDummySetValue, score::Result<TestSampleType>{kDummySetValue});
+    captured_set_handler_.value()(in_span, out_span);
 }
 
-TEST_F(SkeletonFieldSetHandlerTest, UserCallbackCanModifyValueInPlace)
+TEST_F(SkeletonFieldSetHandlerTest, CallingMethodHandlerCallsSend)
 {
-    RecordProperty("Description",
-                   "The set handler callback receives the value by reference. Modifications made "
-                   "inside the callback shall be reflected in the value that is subsequently sent "
-                   "via Update().");
-    RecordProperty("TestType", "Requirements-based test");
-    RecordProperty("Priority", "1");
-    RecordProperty("DerivationTechnique", "Analysis of requirements");
+    // Expect that Send will be called on the event binding twice: (1) when the initial value of the field is set. (2)
+    // with the value provided to the set handler when the handler is called
+    EXPECT_CALL(skeleton_field_binding_mock_, Send(kDummyInitialValue, _, _)).WillOnce(Return(Result<void>{}));
+    EXPECT_CALL(skeleton_field_binding_mock_, Send(kDummySetValue, _, _)).WillOnce(Return(Result<void>{}));
 
-    const TestSampleType incoming_value{10U};
-    const TestSampleType modified_value{20U};  // callback doubles the value
+    GivenASkeletonWithSetterEnabled().WhichCapturesASetHandler();
 
-    EXPECT_CALL(skeleton_field_binding_mock_, PrepareOffer()).WillOnce(Return(Result<void>{}));
-    EXPECT_CALL(skeleton_field_binding_mock_, Send(TestSampleType{1U}, _)).WillOnce(Return(Result<void>{}));
-    // The modified value (20) must be the one forwarded to the event binding
-    EXPECT_CALL(skeleton_field_binding_mock_, Send(modified_value, _)).WillOnce(Return(Result<void>{}));
+    // and given that a set handler was registered
+    ASSERT_TRUE(unit_->my_setter_field_.RegisterSetHandler([](TestSampleType& /*value*/) {}).has_value());
 
-    auto capturing_binding = std::make_unique<CapturingSkeletonMethodBinding>();
-    auto& capturing_binding_ref = *capturing_binding;
-    EXPECT_CALL(skeleton_method_binding_factory_mock_guard_.factory_mock_,
-                Create(kInstanceIdWithLolaBinding, _, _, MethodType::kSet))
-        .WillOnce(Return(ByMove(std::move(capturing_binding))));
-    EXPECT_CALL(skeleton_method_binding_factory_mock_guard_.factory_mock_,
-                Create(kInstanceIdWithLolaBinding, _, _, MethodType::kGet))
-        .WillOnce(InvokeWithoutArgs([]() {
-            return std::unique_ptr<SkeletonMethodBinding>{};
-        }));
+    WhichIsOffered();
 
-    MySetterSkeleton unit{std::make_unique<mock_binding::Skeleton>(), kInstanceIdWithLolaBinding};
-
-    // Register a set handler that doubles the incoming value in-place
-    ASSERT_TRUE(unit.my_setter_field_
-                    .RegisterSetHandler([](TestSampleType& value) noexcept {
-                        value = static_cast<TestSampleType>(value * 2U);
-                    })
-                    .has_value());
-
-    ASSERT_TRUE(unit.my_setter_field_.Update(TestSampleType{1U}).has_value());
-    ASSERT_TRUE(unit.my_setter_field_.PrepareOffer().has_value());
-
-    // Invoke the wrapped handler with incoming_value (10)
-    auto [in_span, out_span] = CreateFieldSetterInArgAndReturnSpans(incoming_value, TestSampleType{});
-
-    // The handler shall call Send with 20, not 10
-    capturing_binding_ref.captured_handler_(in_span, out_span);
+    // When calling the set handler that was captured by the method binding
+    auto [in_span, out_span] =
+        CreateFieldSetterInArgAndReturnSpans(kDummySetValue, score::Result<TestSampleType>{kDummySetValue});
+    captured_set_handler_.value()(in_span, out_span);
 }
 
-TEST_F(SkeletonFieldSetHandlerTest, WrappedHandlerLogsWhenUpdateFails)
+TEST_F(SkeletonFieldSetHandlerTest, MethodHandlerDoesNotTerminateWhenSendFails)
 {
-    RecordProperty("Description",
-                   "When the event binding's Send() fails inside the wrapped set handler, the "
-                   "failure shall be logged and the handler shall complete normally without "
-                   "propagating the error to the proxy caller. The user callback is still "
-                   "invoked before the failed Update().");
-    RecordProperty("TestType", "Requirements-based test");
-    RecordProperty("Priority", "1");
-    RecordProperty("DerivationTechnique", "Analysis of requirements");
-
-    const TestSampleType incoming_value{55U};
-    bool user_callback_called{false};
-
-    EXPECT_CALL(skeleton_field_binding_mock_, PrepareOffer()).WillOnce(Return(Result<void>{}));
-    EXPECT_CALL(skeleton_field_binding_mock_, Send(TestSampleType{1U}, _)).WillOnce(Return(Result<void>{}));
-    // Simulate Update() failure when the wrapped handler is invoked by the proxy
-    EXPECT_CALL(skeleton_field_binding_mock_, Send(incoming_value, _))
+    // Expect that Send will be called on the event binding twice: (1) when the initial value of the field is set. (2)
+    // with the value provided to the set handler when the handler is called which returns an error.
+    EXPECT_CALL(skeleton_field_binding_mock_, Send(kDummyInitialValue, _, _)).WillOnce(Return(Result<void>{}));
+    EXPECT_CALL(skeleton_field_binding_mock_, Send(kDummySetValue, _, _))
         .WillOnce(Return(MakeUnexpected(ComErrc::kCommunicationLinkError)));
 
-    auto capturing_binding = std::make_unique<CapturingSkeletonMethodBinding>();
-    auto& capturing_binding_ref = *capturing_binding;
-    EXPECT_CALL(skeleton_method_binding_factory_mock_guard_.factory_mock_,
-                Create(kInstanceIdWithLolaBinding, _, _, MethodType::kSet))
-        .WillOnce(Return(ByMove(std::move(capturing_binding))));
-    EXPECT_CALL(skeleton_method_binding_factory_mock_guard_.factory_mock_,
-                Create(kInstanceIdWithLolaBinding, _, _, MethodType::kGet))
-        .WillOnce(InvokeWithoutArgs([]() {
-            return std::unique_ptr<SkeletonMethodBinding>{};
-        }));
+    GivenASkeletonWithSetterEnabled().WhichCapturesASetHandler();
 
-    MySetterSkeleton unit{std::make_unique<mock_binding::Skeleton>(), kInstanceIdWithLolaBinding};
+    // and given that a set handler was registered
+    ASSERT_TRUE(unit_->my_setter_field_.RegisterSetHandler([](TestSampleType& /*value*/) {}).has_value());
 
-    ASSERT_TRUE(unit.my_setter_field_
-                    .RegisterSetHandler([&user_callback_called](TestSampleType& /*value*/) noexcept {
-                        user_callback_called = true;
-                    })
-                    .has_value());
+    WhichIsOffered();
 
-    ASSERT_TRUE(unit.my_setter_field_.Update(TestSampleType{1U}).has_value());
-    ASSERT_TRUE(unit.my_setter_field_.PrepareOffer().has_value());
+    // When calling the set handler that was captured by the method binding
+    auto [in_span, out_span] =
+        CreateFieldSetterInArgAndReturnSpans(kDummySetValue, score::Result<TestSampleType>{kDummySetValue});
+    captured_set_handler_.value()(in_span, out_span);
 
-    auto [in_span, out_span] = CreateFieldSetterInArgAndReturnSpans(incoming_value, TestSampleType{});
-
-    // Handler must complete normally even when Update() returns an error
-    capturing_binding_ref.captured_handler_(in_span, out_span);
-
-    // The user callback was invoked before the failed Update()
-    EXPECT_TRUE(user_callback_called);
+    // Then the out span contains an error indicating that the binding failed
+    const auto& return_value = *reinterpret_cast<score::Result<TestSampleType>*>(out_span.data());
+    ASSERT_FALSE(return_value.has_value());
+    EXPECT_EQ(static_cast<ComErrc>(*return_value.error()), ComErrc::kBindingFailure);
 }
 
-TEST_F(SkeletonFieldSetHandlerTest, IsSetHandlerRegisteredFlagIsSetAfterRegistration)
+TEST_F(SkeletonFieldSetHandlerTest, CallingMethodHandlerCallsSendWithValueModifiedByUserCallback)
 {
-    RecordProperty("Description",
-                   "After a successful RegisterSetHandler() call the internal flag "
-                   "is_set_handler_registered_ must be set, which allows PrepareOffer() to proceed.");
-    RecordProperty("TestType", "Requirements-based test");
-    RecordProperty("Priority", "1");
-    RecordProperty("DerivationTechnique", "Analysis of requirements");
+    testing::MockFunction<void(TestSampleType&)> user_callback_mock{};
 
-    const TestSampleType kDummyInitialValue{3U};
+    // Given that the user registered callback will be called which modifies the value in-place
+    TestSampleType expected_set_value{kDummySetValue};
+    const TestSampleType modified_value{kDummySetValue * 2};
+    EXPECT_CALL(user_callback_mock, Call(expected_set_value)).WillOnce(Invoke([](TestSampleType& value) noexcept {
+        value = modified_value;
+    }));
 
-    EXPECT_CALL(skeleton_field_binding_mock_, PrepareOffer()).WillOnce(Return(Result<void>{}));
-    EXPECT_CALL(skeleton_field_binding_mock_, Send(kDummyInitialValue, _)).WillOnce(Return(Result<void>{}));
+    // Expect that Send will be called on the event binding twice: (1) when the initial value of the field is set. (2)
+    // with the value modified by the set handler when the handler is called
+    EXPECT_CALL(skeleton_field_binding_mock_, Send(kDummyInitialValue, _, _)).WillOnce(Return(Result<void>{}));
+    EXPECT_CALL(skeleton_field_binding_mock_, Send(modified_value, _, _)).WillOnce(Return(Result<void>{}));
 
-    EXPECT_CALL(skeleton_field_set_binding_mock_, RegisterHandler(_)).WillOnce(Return(Result<void>{}));
+    GivenASkeletonWithSetterEnabled().WhichCapturesASetHandler();
 
-    MySetterSkeleton unit{std::make_unique<mock_binding::Skeleton>(), kInstanceIdWithLolaBinding};
+    // and given that a set handler was registered
+    ASSERT_TRUE(unit_->my_setter_field_.RegisterSetHandler(user_callback_mock.AsStdFunction()).has_value());
 
-    // Before registration PrepareOffer should fail with kSetHandlerNotSet
-    ASSERT_TRUE(unit.my_setter_field_.Update(kDummyInitialValue).has_value());
+    WhichIsOffered();
+
+    // When calling the set handler that was captured by the method binding
+    auto [in_span, out_span] =
+        CreateFieldSetterInArgAndReturnSpans(kDummySetValue, score::Result<TestSampleType>{kDummySetValue});
+    captured_set_handler_.value()(in_span, out_span);
+}
+
+TEST_F(SkeletonFieldSetHandlerTest, PassingReferenceToHandlerUpdatesStateInPlace)
+{
+    static constexpr int kInitialValue = 42;
+    static constexpr int kModifiedValue = 43;
+
+    GivenASkeletonWithSetterEnabled().WhichCapturesASetHandler();
+
+    // and given that a set handler was registered which modifies its internal state when called
+    class DummyMethodFunctor
     {
-        // Separate scope: verify failure without handler
-        // (We cannot call PrepareOffer twice without a stop-offer in between, so we
-        //  rely on the unit test for "PrepareOfferFailsWhenSetHandlerNotRegistered" for
-        //  that path; here we just confirm the happy path after registration.)
-    }
+      public:
+        void operator()(TestSampleType& /*value*/)
+        {
+            i_ = kModifiedValue;
+        }
 
-    ASSERT_TRUE(unit.my_setter_field_.RegisterSetHandler([](TestSampleType& /*v*/) noexcept {}).has_value());
+        int i_{kInitialValue};
+    };
+    DummyMethodFunctor test_functor{};
+    ASSERT_TRUE(unit_->my_setter_field_.RegisterSetHandler(test_functor).has_value());
 
-    // After registration PrepareOffer must succeed
-    const auto result = unit.my_setter_field_.PrepareOffer();
-    EXPECT_TRUE(result.has_value());
+    WhichIsOffered();
+
+    // When calling the set handler that was captured by the method binding
+    auto [in_span, out_span] =
+        CreateFieldSetterInArgAndReturnSpans(kDummySetValue, score::Result<TestSampleType>{kDummySetValue});
+    captured_set_handler_.value()(in_span, out_span);
+
+    // Then the state of the functor is updated in place when the handler is called by the binding
+    EXPECT_EQ(test_functor.i_, kModifiedValue);
 }
 
-TEST_F(SkeletonFieldSetHandlerTest, SecondRegisterSetHandlerReplacesHandler)
-{
-    RecordProperty("Description",
-                   "Calling RegisterSetHandler() a second time shall replace the previously stored "
-                   "user callback. When the wrapped handler is subsequently invoked, only the second "
-                   "callback shall be called.");
-    RecordProperty("TestType", "Requirements-based test");
-    RecordProperty("Priority", "1");
-    RecordProperty("DerivationTechnique", "Analysis of requirements");
-
-    const TestSampleType incoming_value{11U};
-    bool first_callback_called{false};
-    bool second_callback_called{false};
-
-    EXPECT_CALL(skeleton_field_binding_mock_, PrepareOffer()).WillOnce(Return(Result<void>{}));
-    EXPECT_CALL(skeleton_field_binding_mock_, Send(TestSampleType{1U}, _)).WillOnce(Return(Result<void>{}));
-    EXPECT_CALL(skeleton_field_binding_mock_, Send(incoming_value, _)).WillOnce(Return(Result<void>{}));
-
-    // The method binding is called twice (once per RegisterSetHandler)
-    auto capturing_binding = std::make_unique<CapturingSkeletonMethodBinding>();
-    auto& capturing_binding_ref = *capturing_binding;
-    EXPECT_CALL(skeleton_method_binding_factory_mock_guard_.factory_mock_,
-                Create(kInstanceIdWithLolaBinding, _, _, MethodType::kSet))
-        .WillOnce(Return(ByMove(std::move(capturing_binding))));
-    EXPECT_CALL(skeleton_method_binding_factory_mock_guard_.factory_mock_,
-                Create(kInstanceIdWithLolaBinding, _, _, MethodType::kGet))
-        .WillOnce(Return(ByMove(nullptr)));
-
-    MySetterSkeleton unit{std::make_unique<mock_binding::Skeleton>(), kInstanceIdWithLolaBinding};
-
-    // First registration
-    ASSERT_TRUE(unit.my_setter_field_
-                    .RegisterSetHandler([&first_callback_called](TestSampleType& /*value*/) noexcept {
-                        first_callback_called = true;
-                    })
-                    .has_value());
-
-    // Second registration — replaces the handler stored on the field
-    ASSERT_TRUE(unit.my_setter_field_
-                    .RegisterSetHandler([&second_callback_called](TestSampleType& /*value*/) noexcept {
-                        second_callback_called = true;
-                    })
-                    .has_value());
-
-    ASSERT_TRUE(unit.my_setter_field_.Update(TestSampleType{1U}).has_value());
-    ASSERT_TRUE(unit.my_setter_field_.PrepareOffer().has_value());
-
-    // Invoke the most-recently captured handler (from the second registration)
-    auto [in_span, out_span] = CreateFieldSetterInArgAndReturnSpans(incoming_value, TestSampleType{});
-
-    capturing_binding_ref.captured_handler_(in_span, out_span);
-
-    // Only the second callback must have been called
-    EXPECT_FALSE(first_callback_called);
-    EXPECT_TRUE(second_callback_called);
-}
-
-using SkeletonFieldMoveConstructionFixture = SkeletonFieldTestFixture;
+using SkeletonFieldMoveConstructionFixture = SkeletonFieldSetHandlerTest;
 TEST_F(SkeletonFieldMoveConstructionFixture, SecondRegisterSetHandlerReplacesHandler)
 {
     // Note. This test verifies that moving a skeleton does not break the getter / setter methods stored within a field.
@@ -1243,6 +1313,39 @@ TEST_F(SkeletonFieldMoveConstructionFixture, SecondRegisterSetHandlerReplacesHan
 
     // Then the method should still be usable (validated by calling RegisterSetHandler which dispatches to the method)
     unit2.my_setter_field_.RegisterSetHandler([](TestSampleType& /*value*/) noexcept {});
+}
+
+TEST_F(SkeletonFieldMoveConstructionFixture,
+       CallingMethodHandlerCallsSendWithValueModifiedByUserCallbackAfterMoveConstruction)
+{
+    testing::MockFunction<void(TestSampleType&)> user_callback_mock{};
+
+    // Given that the user registered callback will be called which modifies the value in-place
+    TestSampleType expected_set_value{kDummySetValue};
+    const TestSampleType modified_value{kDummySetValue * 2};
+    EXPECT_CALL(user_callback_mock, Call(expected_set_value)).WillOnce(Invoke([](TestSampleType& value) noexcept {
+        value = modified_value;
+    }));
+
+    // Expect that Send will be called on the event binding twice: (1) when the initial value of the field is set. (2)
+    // with the value modified by the set handler when the handler is called
+    EXPECT_CALL(skeleton_field_binding_mock_, Send(kDummyInitialValue, _, _)).WillOnce(Return(Result<void>{}));
+    EXPECT_CALL(skeleton_field_binding_mock_, Send(modified_value, _, _)).WillOnce(Return(Result<void>{}));
+
+    GivenASkeletonWithSetterEnabled().WhichCapturesASetHandler();
+
+    // and given that a set handler was registered
+    ASSERT_TRUE(unit_->my_setter_field_.RegisterSetHandler(user_callback_mock.AsStdFunction()).has_value());
+
+    WhichIsOffered();
+
+    // and given that the skeleton containing the field is move constructed into a new skeleton
+    MySetterSkeleton unit2{std::move(*unit_)};
+
+    // When calling the set handler that was captured by the method binding
+    auto [in_span, out_span] =
+        CreateFieldSetterInArgAndReturnSpans(kDummySetValue, score::Result<TestSampleType>{kDummySetValue});
+    captured_set_handler_.value()(in_span, out_span);
 }
 
 }  // namespace

@@ -37,22 +37,27 @@ void SkeletonEventFixture::InitialiseSkeletonEvent(const ElementFqId element_fq_
                                                    const std::size_t max_samples,
                                                    const std::uint8_t max_subscribers,
                                                    const bool enforce_max_samples,
-                                                   impl::tracing::SkeletonEventTracingData skeleton_event_tracing_data)
+                                                   impl::tracing::SkeletonEventTracingData skeleton_event_tracing_data,
+                                                   const bool field_getter_enabled,
+                                                   std::optional<InstanceIdentifier> instance_identifier)
 {
     // We defer initialisation of the Skeleton to InitialiseSkeletonEvent to allow test fixtures to set any mocked
     // expectations before creating the skeleton.
-    InitialiseSkeleton(GetValidInstanceIdentifier());
+    InitialiseSkeleton(instance_identifier.has_value() ? *instance_identifier : GetValidInstanceIdentifier());
 
     SkeletonBinding::SkeletonEventBindings events{};
     SkeletonBinding::SkeletonFieldBindings fields{};
     std::optional<SkeletonBinding::RegisterShmObjectTraceCallback> register_shm_object_trace_callback{};
     std::ignore = skeleton_->PrepareOffer(events, fields, std::move(register_shm_object_trace_callback));
 
+    const auto number_of_field_getter_slots = field_getter_enabled ? kMaxConcurrentFieldGetterSamplePtrs : 0U;
+
     skeleton_event_ = std::make_unique<SkeletonEvent<test::TestSampleType>>(
         *skeleton_,
         element_fq_id,
         service_element_name,
-        SkeletonEventProperties{max_samples, max_subscribers, enforce_max_samples},
+        SkeletonEventProperties{
+            max_samples, 0U, number_of_field_getter_slots, false, max_subscribers, enforce_max_samples},
         skeleton_event_tracing_data);
 }
 

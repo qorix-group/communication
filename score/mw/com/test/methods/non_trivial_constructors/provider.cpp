@@ -13,8 +13,8 @@
 #include "score/mw/com/test/methods/non_trivial_constructors/provider.h"
 
 #include "score/mw/com/test/common_test_resources/fail_test.h"
+#include "score/mw/com/test/common_test_resources/process_synchronizer.h"
 #include "score/mw/com/test/common_test_resources/skeleton_container.h"
-#include "score/mw/com/test/methods/methods_test_resources/process_synchronizer.h"
 #include "score/mw/com/test/methods/non_trivial_constructors/test_method_datatype.h"
 
 #include "score/mw/com/types.h"
@@ -35,10 +35,11 @@ const auto kInstanceSpecifier{
 void RegisterMethodHandlerWithInArgsAndReturn(NonTrivialConstructorSkeleton& skeleton,
                                               const std::string& failure_message_prefix)
 {
-    auto handler_with_in_args_and_return = [](NonTriviallyConstructibleType a,
-                                              NonTriviallyConstructibleType b) -> NonTriviallyConstructibleType {
+    auto handler_with_in_args_and_return = [](NonTriviallyConstructibleType& return_value,
+                                              const NonTriviallyConstructibleType& a,
+                                              const NonTriviallyConstructibleType& b) {
         std::cout << "Provider: with_in_args_and_return called with " << a << " + " << b << std::endl;
-        return a + b;
+        return_value = a + b;
     };
     const auto register_result =
         skeleton.with_in_args_and_return.RegisterHandler(std::move(handler_with_in_args_and_return));
@@ -53,7 +54,8 @@ void RegisterMethodHandlerWithInArgsAndReturn(NonTrivialConstructorSkeleton& ske
 void RegisterMethodHandlerWithInArgsOnly(NonTrivialConstructorSkeleton& skeleton,
                                          const std::string& failure_message_prefix)
 {
-    auto handler_with_in_args_only = [](NonTriviallyConstructibleType a, NonTriviallyConstructibleType b) {
+    auto handler_with_in_args_only = [](const NonTriviallyConstructibleType& a,
+                                        const NonTriviallyConstructibleType& b) {
         std::cout << "Provider: with_in_args_only called with " << a << " + " << b << std::endl;
         SCORE_LANGUAGE_FUTURECPP_ASSERT_MESSAGE(a == NonTriviallyConstructibleType{},
                                                 "Unexpected first InArg received!");
@@ -72,9 +74,9 @@ void RegisterMethodHandlerWithInArgsOnly(NonTrivialConstructorSkeleton& skeleton
 void RegisterMethodHandlerWithReturnOnly(NonTrivialConstructorSkeleton& skeleton,
                                          const std::string& failure_message_prefix)
 {
-    auto handler_with_return_only = []() -> NonTriviallyConstructibleType {
+    auto handler_with_return_only = [](NonTriviallyConstructibleType& return_value) {
         std::cout << "Provider: with_return_only called. Returning " << NonTriviallyConstructibleType{} << std::endl;
-        return NonTriviallyConstructibleType{};
+        return_value = NonTriviallyConstructibleType{};
     };
     const auto register_result = skeleton.with_return_only.RegisterHandler(std::move(handler_with_return_only));
     if (!register_result)

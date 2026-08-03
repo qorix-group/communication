@@ -13,6 +13,7 @@
 
 load("@rules_cc//cc:defs.bzl", "cc_library")
 load("@rules_python//sphinxdocs:sphinx_docs_library.bzl", "sphinx_docs_library")
+load("//quality/api_surface:api_surface.bzl", "api_surface_test")
 load("//quality/unit_testing:unit_testing.bzl", "cc_unit_test")
 load("//score/mw:common_features.bzl", "COMPILER_WARNING_FEATURES")
 
@@ -87,6 +88,9 @@ cc_library(
     srcs = ["runtime_configuration.cpp"],
     hdrs = ["runtime_configuration.h"],
     features = COMPILER_WARNING_FEATURES,
+    implementation_deps = [
+        "@score_baselibs//score/mw/log",
+    ],
     tags = ["FFI"],
     visibility = [
         "//score/mw/com:__subpackages__",
@@ -94,8 +98,6 @@ cc_library(
     deps = [
         "@score_baselibs//score/filesystem",
         "@score_baselibs//score/language/futurecpp",
-        "@score_baselibs//score/memory:string_literal",
-        "@score_baselibs//score/mw/log",
     ],
 )
 
@@ -110,6 +112,8 @@ cc_library(
         ":runtime",
         ":types",
         "//score/mw/com/impl",
+        "//score/mw/com/impl/mocking:proxy_wrapper_class_test_view",
+        "//score/mw/com/impl/mocking:skeleton_wrapper_class_test_view",
         "//score/mw/com/impl/mocking:test_type_utilities",
         "//score/mw/com/mocking:i_runtime",
         "//score/mw/com/mocking:test_type_utilities",
@@ -154,4 +158,21 @@ cc_unit_test(
         "@score_baselibs//score/mw/log",
         "@score_baselibs//score/mw/log:recorder_mock",
     ],
+)
+
+# --- API Surface Stability Check ---
+
+api_surface_test(
+    name = "api_surface_test",
+    check_docs = False,
+    lock_file = "api_surface.lock.json",
+    target = ":com",
+)
+
+api_surface_test(
+    name = "api_surface_docs_test",
+    check_docs = True,
+    lock_file = "api_surface.lock.json",
+    tags = ["manual"],
+    target = ":com",
 )

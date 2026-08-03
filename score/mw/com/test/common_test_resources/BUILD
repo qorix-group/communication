@@ -128,12 +128,28 @@ cc_library(
         "//score/mw/com/test:__subpackages__",
     ],
     deps = [
+        "//score/memory/shared",
         "@score_baselibs//score/language/futurecpp",
-        "@score_baselibs//score/memory/shared",
         "@score_baselibs//score/os:fcntl",
         "@score_baselibs//score/os:mman",
         "@score_baselibs//score/os:stat",
         "@score_baselibs//score/os:unistd",
+    ],
+)
+
+cc_library(
+    name = "process_synchronizer",
+    srcs = ["process_synchronizer.cpp"],
+    hdrs = ["process_synchronizer.h"],
+    features = COMPILER_WARNING_FEATURES,
+    visibility = ["//score/mw/com/test:__subpackages__"],
+    deps = [
+        "//score/mw/com/test/common_test_resources:fail_test",
+        "//score/mw/com/test/common_test_resources:shared_memory_object_creator",
+        "//score/mw/com/test/common_test_resources:shared_memory_object_guard",
+        "@score_baselibs//score/mw/log",
+        "@score_baselibs//score/os/utils/interprocess:interprocess_notification",
+        "@score_baselibs//score/result",
     ],
 )
 
@@ -288,12 +304,39 @@ cc_library(
 )
 
 cc_library(
+    name = "proxy_event_state_change_notifier",
+    srcs = ["proxy_event_state_change_notifier.cpp"],
+    hdrs = ["proxy_event_state_change_notifier.h"],
+    features = COMPILER_WARNING_FEATURES,
+    visibility = ["//score/mw/com/test:__subpackages__"],
+    deps = [
+        ":fail_test",
+        "//score/mw/com:types",
+        "@score_baselibs//score/language/futurecpp",
+    ],
+)
+
+cc_library(
+    name = "proxy_event_receiver",
+    srcs = ["proxy_event_receiver.cpp"],
+    hdrs = ["proxy_event_receiver.h"],
+    features = COMPILER_WARNING_FEATURES,
+    visibility = ["//score/mw/com/test:__subpackages__"],
+    deps = [
+        ":fail_test",
+        "//score/mw/com:types",
+        "@score_baselibs//score/concurrency",
+        "@score_baselibs//score/language/futurecpp",
+    ],
+)
+
+cc_library(
     name = "generic_trace_api_test_resources",
     srcs = ["generic_trace_api_test_resources.cpp"],
     hdrs = ["generic_trace_api_test_resources.h"],
     features = COMPILER_WARNING_FEATURES,
     implementation_deps = [
-        "@score_baselibs//score/memory/shared",
+        "//score/memory/shared",
         "@score_baselibs//score/os:fcntl",
         "@score_baselibs//score/os:mman",
         "@score_baselibs//score/os:stat",

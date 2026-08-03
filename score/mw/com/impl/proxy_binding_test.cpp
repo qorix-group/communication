@@ -14,6 +14,7 @@
 
 #include <gtest/gtest.h>
 
+#include <cstddef>
 #include <string_view>
 #include <type_traits>
 
@@ -29,9 +30,7 @@ class MyProxy final : public ProxyBinding
     {
         return true;
     }
-    void RegisterEventBinding(std::string_view, ProxyEventBindingBase&) noexcept override {}
-    void UnregisterEventBinding(std::string_view) noexcept override {}
-    Result<void> SetupMethods() override
+    Result<void> SetupMethods(std::size_t) override
     {
         return {};
     }

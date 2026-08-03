@@ -63,10 +63,17 @@ std::vector<std::string_view> GetEventNameList(const InstanceIdentifier& identif
 
 Result<GenericProxy> GenericProxy::Create(HandleType instance_handle) noexcept
 {
-    auto proxy_binding = ProxyBindingFactory::Create(instance_handle);
+    auto proxy_binding_result = ProxyBindingFactory::Create(instance_handle);
+    if (!proxy_binding_result.has_value())
+    {
+        ::score::mw::log::LogError("lola")
+            << "Could not create GenericProxy as binding failed with error: " << proxy_binding_result.error();
+        return MakeUnexpected(ComErrc::kBindingFailure);
+    }
+    auto proxy_binding = std::move(proxy_binding_result).value();
     if (proxy_binding == nullptr)
     {
-        ::score::mw::log::LogError("lola") << "Could not create GenericProxy as binding could not be created.";
+        ::score::mw::log::LogError("lola") << "Could not create GenericProxy as binding is null.";
         return MakeUnexpected(ComErrc::kBindingFailure);
     }
 
@@ -75,7 +82,18 @@ Result<GenericProxy> GenericProxy::Create(HandleType instance_handle) noexcept
     const auto& instance_identifier = generic_proxy.handle_.GetInstanceIdentifier();
     const auto event_names = GetEventNameList(instance_identifier);
     generic_proxy.FillEventMap(event_names);
-    if (!generic_proxy.AreBindingsValid())
+    auto generic_proxy_events = generic_proxy.GetEvents();
+    const bool are_event_bindings_valid =
+        std::all_of(generic_proxy_events.cbegin(), generic_proxy_events.cend(), [](const auto& element) {
+            const auto binding_construction_result = ProxyEventBaseView{element.second}.GetBindingConstructionResult();
+            if (!binding_construction_result.has_value())
+            {
+                score::mw::log::LogError("lola") << "Generic proxy event binding construction failed with error: "
+                                                 << binding_construction_result.error();
+            }
+            return binding_construction_result.has_value();
+        });
+    if (!are_event_bindings_valid)
     {
         ::score::mw::log::LogError("lola") << "Could not create GenericProxy as binding is invalid.";
         return MakeUnexpected(ComErrc::kBindingFailure);
@@ -85,7 +103,7 @@ Result<GenericProxy> GenericProxy::Create(HandleType instance_handle) noexcept
 
 GenericProxy::GenericProxy(std::unique_ptr<ProxyBinding> proxy_binding, HandleType instance_handle)
     : ProxyBase{std::move(proxy_binding), std::move(instance_handle)},
-      events_(std::make_unique<std::map<std::string_view, GenericProxyEvent>>()),
+      generic_events_(std::make_unique<std::map<std::string_view, GenericProxyEvent>>()),
       is_proxy_owner_{true}
 {
 }
@@ -99,7 +117,9 @@ GenericProxy::~GenericProxy() noexcept
 }
 
 GenericProxy::GenericProxy(GenericProxy&& other) noexcept
-    : ProxyBase{std::move(other)}, events_{std::move(other.events_)}, is_proxy_owner_{std::move(other.is_proxy_owner_)}
+    : ProxyBase{std::move(other)},
+      generic_events_{std::move(other.generic_events_)},
+      is_proxy_owner_{std::move(other.is_proxy_owner_)}
 {
 }
 
@@ -112,7 +132,7 @@ GenericProxy& GenericProxy::operator=(GenericProxy&& other) noexcept
             this->Deinitialize();
         }
         ProxyBase::operator=(std::move(other));
-        events_ = std::move(other.events_);
+        generic_events_ = std::move(other.generic_events_);
         is_proxy_owner_ = std::move(other.is_proxy_owner_);
     }
     return *this;
@@ -124,7 +144,7 @@ void GenericProxy::FillEventMap(const std::vector<std::string_view>& event_names
     {
         if (proxy_binding_->IsEventProvided(event_name))
         {
-            const auto emplace_result = events_->emplace(
+            const auto emplace_result = generic_events_->emplace(
                 std::piecewise_construct, std::forward_as_tuple(event_name), std::forward_as_tuple(*this, event_name));
             SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(emplace_result.second,
                                                         "Could not emplace GenericProxyEvent in map.");
@@ -140,7 +160,7 @@ void GenericProxy::FillEventMap(const std::vector<std::string_view>& event_names
 
 GenericProxy::EventMapView GenericProxy::GetEvents() const noexcept
 {
-    return ServiceElementMapViewFactory<GenericProxyEvent>::Create(*events_);
+    return ServiceElementMapViewFactory<GenericProxyEvent>::Create(*generic_events_);
 }
 
 }  // namespace score::mw::com::impl

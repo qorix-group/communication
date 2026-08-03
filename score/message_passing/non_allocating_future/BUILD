@@ -13,6 +13,7 @@
 
 load("@rules_cc//cc:defs.bzl", "cc_library")
 load("//quality/unit_testing:unit_testing.bzl", "cc_unit_test")
+load("//score/mw:common_features.bzl", "COMPILER_WARNING_FEATURES")
 
 cc_library(
     name = "non_allocating_future",
@@ -22,13 +23,9 @@ cc_library(
     hdrs = [
         "non_allocating_future.h",
     ],
-    features = [
-        "treat_warnings_as_errors",
-        "strict_warnings",
-        "additional_warnings",
-    ],
+    features = COMPILER_WARNING_FEATURES,
     tags = ["FFI"],
-    visibility = ["//visibility:public"],
+    visibility = ["//score/message_passing:__subpackages__"],
 )
 
 cc_unit_test(
@@ -37,7 +34,7 @@ cc_unit_test(
         "non_allocating_future_samples_test.cpp",
         "non_allocating_future_unit_test.cpp",
     ],
-    visibility = ["//visibility:public"],
+    visibility = ["//score/message_passing:__subpackages__"],
     deps = [
         ":non_allocating_future",
     ],

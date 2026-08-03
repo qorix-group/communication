@@ -15,11 +15,13 @@
 
 #include "score/mw/com/impl/bindings/lola/element_fq_id.h"
 #include "score/mw/com/impl/bindings/lola/proxy_event.h"
+#include "score/mw/com/impl/field_getter_setter_signatures.h"
 #include "score/mw/com/impl/method_type.h"
 #include "score/mw/com/impl/plumbing/i_proxy_field_binding_factory.h"
 #include "score/mw/com/impl/plumbing/lola_proxy_element_building_blocks.h"
+#include "score/mw/com/impl/plumbing/proxy_event_binding_factory.h"
 #include "score/mw/com/impl/plumbing/proxy_method_binding_factory.h"
-#include "score/mw/com/impl/proxy_base.h"
+#include "score/mw/com/impl/proxy_binding.h"
 #include "score/mw/com/impl/proxy_event_binding.h"
 #include "score/mw/com/impl/service_element_type.h"
 
@@ -41,16 +43,21 @@ class ProxyFieldBindingFactoryImpl final : public IProxyFieldBindingFactory<Samp
     /// \tparam SampleType Type of the data that is exchanges
     /// \param handle The handle containing the binding information.
     /// \param field_name The binding unspecific name of the event inside the proxy denoted by handle.
-    /// \return An instance of ProxyEventBinding or nullptr in case of an error.
-    std::unique_ptr<ProxyEventBinding<SampleType>> CreateEventBinding(
-        ProxyBase& parent,
+    /// \return An instance of ProxyEventBinding or an error in case binding creation fails.
+    Result<std::unique_ptr<ProxyEventBinding<SampleType>>> CreateEventBinding(
+        HandleType parent_handle,
+        ProxyBinding& parent_binding,
         const std::string_view field_name) noexcept override;
 
-    std::unique_ptr<ProxyMethodBinding> CreateGetMethodBinding(ProxyBase& parent,
-                                                               const std::string_view field_name) noexcept override;
+    Result<std::unique_ptr<ProxyMethodBinding>> CreateGetMethodBinding(
+        HandleType parent_handle,
+        ProxyBinding& parent_binding,
+        const std::string_view field_name) noexcept override;
 
-    std::unique_ptr<ProxyMethodBinding> CreateSetMethodBinding(ProxyBase& parent,
-                                                               const std::string_view field_name) noexcept override;
+    Result<std::unique_ptr<ProxyMethodBinding>> CreateSetMethodBinding(
+        HandleType parent_handle,
+        ProxyBinding& parent_binding,
+        const std::string_view field_name) noexcept override;
 };
 
 template <typename SampleType>
@@ -62,37 +69,33 @@ template <typename SampleType>
 // an exception.
 // This suppression should be removed after fixing [Ticket-173043](broken_link_j/Ticket-173043)
 // coverity[autosar_cpp14_a15_5_3_violation : FALSE]
-inline std::unique_ptr<ProxyEventBinding<SampleType>> ProxyFieldBindingFactoryImpl<SampleType>::CreateEventBinding(
-    ProxyBase& parent,
-    const std::string_view field_name) noexcept
+inline Result<std::unique_ptr<ProxyEventBinding<SampleType>>>
+ProxyFieldBindingFactoryImpl<SampleType>::CreateEventBinding(HandleType parent_handle,
+                                                             ProxyBinding& parent_binding,
+                                                             const std::string_view field_name) noexcept
 {
-    const auto lookup = LookupLolaProxyElement(parent, field_name, ServiceElementType::FIELD);
-    if (!lookup.has_value())
-    {
-        score::mw::log::LogError("lola")
-            << "ProxyField event binding could not be created for field" << field_name
-            << "because the parent proxy binding is not a lola binding or the element could not be resolved.";
-        return nullptr;
-    }
-    return std::make_unique<lola::ProxyEvent<SampleType>>(lookup->parent, lookup->element_fq_id, field_name);
+    return ProxyEventBindingFactory<SampleType>::Create(
+        std::move(parent_handle), parent_binding, field_name, ServiceElementType::FIELD);
 }
 
 template <typename SampleType>
-inline std::unique_ptr<ProxyMethodBinding> ProxyFieldBindingFactoryImpl<SampleType>::CreateGetMethodBinding(
-    ProxyBase& parent,
+inline Result<std::unique_ptr<ProxyMethodBinding>> ProxyFieldBindingFactoryImpl<SampleType>::CreateGetMethodBinding(
+    HandleType parent_handle,
+    ProxyBinding& parent_binding,
     const std::string_view field_name) noexcept
 {
-    return ProxyMethodBindingFactory<SampleType()>::Create(
-        parent.GetHandle(), ProxyBaseView{parent}.GetBinding(), field_name, MethodType::kGet);
+    return ProxyMethodBindingFactory<GetMethodSignature<SampleType>>::Create(
+        std::move(parent_handle), parent_binding, field_name, MethodType::kGet);
 }
 
 template <typename SampleType>
-inline std::unique_ptr<ProxyMethodBinding> ProxyFieldBindingFactoryImpl<SampleType>::CreateSetMethodBinding(
-    ProxyBase& parent,
+inline Result<std::unique_ptr<ProxyMethodBinding>> ProxyFieldBindingFactoryImpl<SampleType>::CreateSetMethodBinding(
+    HandleType parent_handle,
+    ProxyBinding& parent_binding,
     const std::string_view field_name) noexcept
 {
-    return ProxyMethodBindingFactory<SampleType(SampleType)>::Create(
-        parent.GetHandle(), ProxyBaseView{parent}.GetBinding(), field_name, MethodType::kSet);
+    return ProxyMethodBindingFactory<SetMethodSignature<SampleType>>::Create(
+        std::move(parent_handle), parent_binding, field_name, MethodType::kSet);
 }
 
 }  // namespace score::mw::com::impl

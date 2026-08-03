@@ -92,26 +92,34 @@ The following sequence shows the instantiation of a service class up to its serv
 
 <img alt="SKELETON_CREATE_OFFER_SEQ" src="https://www.plantuml.com/plantuml/proxy?src=https://raw.githubusercontent.com/eclipse-score/communication/refs/heads/main/score/mw/com/design/skeleton_proxy/skeleton_create_offer_seq.puml">
 
-#### Binding independent level Registration of skeleton events/fields at their parent skeleton
+#### Binding independent level Registration of skeleton events/fields/methods at their parent skeleton
+
+On construction, the generated skeleton (`DummySkeleton`) checks that all the bindings of its contained service elements
+(events/fields/methods) are valid. This is done by calling the `AreBindingsValid()` on `SkeletonBase`. This will then 
+iterate over the maps of references to its service elements described [below](#binding-independent-level-registration-of-skeleton-eventsfields-at-their-parent-skeleton) 
+and check if each binding was successfully created. If this is not the case, the construction of the skeleton instance 
+returns an error.
 
 Due to our architectural constraints, the `impl::SkeletonBase` (the base class of the generated skeleton/`DummySkeleton`)
-doesn't "know" its event/field children. Because events/fields are the members of the generated skeleton and not the
-`impl::SkeletonBase`. But for various functionalities, we require the `impl::SkeletonBase` to have access to its
-events/fields.
-This is solved by a mechanism, where the event/field members of the generated skeleton class register themselves at
-their parent skeleton, which they got by reference during their creation/`ctor` call. So in their `ctor` they are
-calling `impl::SkeletonBase::RegisterEvent()` resp. `impl::SkeletonBase::RegisterField()`, with their own reference and
-name. So after creation of a generated skeleton, its base class (`impl::SkeletonBase`) has all the event/field members
-stored in `protected` members `events_` and `fields_`, so that in the future these could be even made `public`
-accessible to the generated (user facing) skeleton. Since these user facing skeletons have discrete event/field
-members anyhow, there is currently no need for such a generalized event/field access.
+doesn't "know" its event/field/method children. Because events/fields/methods are the members of the generated skeleton
+and not the `impl::SkeletonBase`. But for various functionalities, we require the `impl::SkeletonBase` to have access to
+its children.
+This is solved by a mechanism, where the event/field/method members of the generated skeleton class register themselves
+at their parent skeleton, which they got by reference during their creation/`ctor` call. So in their `ctor` they are
+calling `impl::SkeletonBase::RegisterEvent()`, `impl::SkeletonBase::RegisterField()` or
+`impl::SkeletonBase::RegisterMethod()`, with their own `special reference` (see below) and name. So after creation of a
+generated skeleton, its base class (`impl::SkeletonBase`) has all the event/field/method members stored in `protected`
+members `events_`, `fields_` and `methods_`, so that in the future these could be even made `public`
+accessible to the generated (user facing) skeleton. Since these user facing skeletons have discrete event/field/method
+members anyhow, there is currently no need for such a generalized access.
 
-So while we have this relation/accessibility of events/fields from the "parent" skeleton on the binding **independent**
+So while we have this relation/accessibility of children from the "parent" skeleton on the binding **independent**
 level, we **don't** have a symmetric setup on the binding **dependent** level. The binding specific implementation of
 `SkeletonBinding`, where `impl::SkeletonBase` is dispatching to via the `pImpl` idiom doesn't "know" its corresponding
-binding specific events and fields, which would be represented **both** as `SkeletonEventBinding` (as our field is a
+binding specific events, fields, which would be represented **both** as `SkeletonEventBinding` (as our field is a
 composite, which dispatches to `impl::SkeletonEventBase`, which then &ndash; also via `pImpl` idiom &ndash; dispatches
-to the binding specific `SkeletonEventBinding` [see here](#../todo)).
+to the binding specific `SkeletonEventBinding` [see here](#../todo)). Nor does it know its binding specific methods,
+which would be represented as `SkeletonMethodBinding`.
 
 This symmetry isn't currently needed as we don't have any use case yet, where on the binding dependent level our
 `lola::Skeleton` (implementing `SkeletonBinding`) would need to call functionality on its events/fields!
@@ -122,6 +130,39 @@ currently solely on the binding independent level.
 implementation of `SkeletonBinding`, since we do not have (yet) a field specific class on binding level! To detect,
 whether we have to deal with a "pure" event or the "event part" of a field, we would resort to checking the related
 `ElementFqId`, which contains this differentiation.
+
+#### How we handle moving of skeletons and their events/fields
+
+In the previous section we have seen, that impl::SkeletonEvent, impl::SkeletonField and impl::SkeletonMethod register
+themselves at their parent `impl::SkeletonBase` during their construction with a reference to their parent.
+The special reference is obviously not a normal reference, but a `ReferenceToMoveable<SkeletonEventBase>::Reference` type
+(or `ReferenceToMoveable<SkeletonFieldBase>::Reference` resp. `ReferenceToMoveable<SkeletonMethodBase>::Reference`).
+Why is that? If we stored a normal reference to the event/field/method in the parent skeleton, we would have the
+following problem: whenever the event/field/method instances get moved (which happens, when the user moves his outer
+skeleton instance), the references within the `impl::SkeletonBase` need to be updated. To accomplish this, the
+event/field/method instances would also need a reference to their parent () to do the update! This again complicates
+things further! In case the `impl::SkeletonBase` moves (also happens, when the user moves his outer skeleton instance),
+then also the parent reference has to be updated within all the event/field/method instances.
+
+Our solution to this issue is the following:
+For each event/field/method instance, we store a `ReferenceToMoveable<T>::Reference` on the heap.
+`T` is in this case one of:
+
+- `SkeletonEventBase`
+- `SkeletonFieldBase`
+- `SkeletonMethodBase`
+
+This "special reference" is created during the construction of the event/field/method instance and is passed to the
+`impl::SkeletonBase` during the registration call by reference. But since the `ReferenceToMoveable<T>::Reference` is
+stored on the heap and is **neither** copyable nor moveable, it doesn't get moved when the event/field/method is moved!
+Instead, the `ReferenceToMoveable<T>::Reference` instance is updated with the new address of the moved event/field/method
+instance within the move constructor/move assign op of the event/field/method. So the `impl::SkeletonBase` always has a
+valid reference to the event/field/method instance, even if the user moves the outer skeleton instance as long as it
+uses the `ReferenceToMoveable<T>::Reference::Get()` API to access the event/field/method instance!
+
+The mechanism to provide such a "special reference" for  `impl::SkeletonEventBase`, `impl::SkeletonFieldBase` and
+`impl::SkeletonMethodBase` is realized by inheriting from `EnableReferenceToMoveableFromThis<T>`, where `T` is one of
+the above-mentioned types. making it a `CRTP` pattern!
 
 #### LoLa binding level Registration of skeleton events/fields at their parent skeleton
 
@@ -168,54 +209,32 @@ On `ProxyBase` level we have two types of methods:
   a generated proxy instance, to detect, whether the instance can be successfully returned from
   `static Result<generated proxy class> <generated proxy class>::Create()` or not.
 
-The implementation of the latter one contains some indirection &ndash; again due to our architectural constraints, which
-are the same at proxy and skeleton side and have been laid out
-[here on the skeleton side](#binding-independent-level-registration-of-skeleton-eventsfields-at-their-parent-skeleton).
-
-The indirection is that for `ProxyBase::AreBindingsValid()` to work, the binding independent `impl::ProxyEvent`s set
-the member of its semantic parent `ProxyBase::are_service_element_bindings_valid_` to `false` during their construction,
-if they detect, that they don't have a valid underlying `pImpl` member of type `ProxyEventBindingBase` to dispatch to.
-This is an indication, that the binding specific implementation of the `ProxyEvent` couldn't be successfully created by
-the proxy side factories.
-
-So, the binding independent `impl::ProxyBase` doesn't "know" its semantically aggregated `ProxyEvent`s.
-Although the `ProxyEvent`s get a reference to their parent `ProxyBase` during construction (and therefore "know" their
-parent in the context of their `ctor`), they don't store this reference (as it isn't really needed currently and
-would require additional logic to update this reference if the parent `impl::ProxyBase` gets moved).
-Instead, they only set once (see above) the `ProxyBase::are_service_element_bindings_valid_` member variable of their
-parent during construction as this is currently the only feedback needed between proxy and its proxy events on binding
-independent level.
+Similarly to the skeleton side, the `impl::ProxyBase` doesn't "know" its event/field/method children. Therefore,
+the `impl::ProxyEventBase` registers itself with the `impl::ProxyBase` in the same way as `impl::SkeletonEventBase`
+(as explained
+[here on the skeleton side](#binding-independent-level-registration-of-skeleton-eventsfields-at-their-parent-skeleton). 
+It will then call `impl::ProxyBase::GetConstructionResult()` and will return a valid proxy to the user if none of the 
+bindings received an error from the binding factory when trying to construct the binding.
 
 #### Binding level Registration of proxy events/fields at their parent proxy
 
-On the binding **specific** level things look different!
-I.e. the binding specific proxy needs to interact with its dependent/child proxy events of type `ProxyEventBindingBase`
+On the binding **specific** level things look similar:
+the binding specific proxy needs to interact with its dependent/child proxy events of type `ProxyEventBindingBase`
 (at least the `LoLa`/shared-memory specific does, so we introduced it on the `ProxyBinding` interface level) .
 
-Therefore, `impl::ProxyBinding` has a method `RegisterEventBinding` (and `UnregisterEventBinding`) and our `LoLa`
-binding specific proxy `lola::Proxy`, which implements `impl::ProxyBinding`, has a member `event_bindings_` (a map
-containing its child proxy events), which it populates in its implementation of `RegisterEventBinding` with its
-dependent proxy events.
-
-The call to `RegisterEventBinding` happens during creation of a binding independent `impl::ProxyEvent` via an `RAII`
-style member `event_binding_registration_guard_` of type `EventBindingRegistrationGuard`, which the `impl::ProxyEvent`
-owns.
-This `EventBindingRegistrationGuard` takes over two functionalities:
-
-- setting `ProxyBase::are_service_element_bindings_valid_` member of its parent ProxyBase instance (see previous chapter)
-- calling `RegisterEventBinding` on the underlying `ProxyBinding` of the given `ProxyBase` on construction of the
-  `EventBindingRegistrationGuard` and calling `UnregisterEventBinding` on destruction. Since
-  `event_binding_registration_guard_` is owned by the `impl::ProxyEvent`, the registration / unregistration is done on
-  construction / destruction of an `impl::ProxyEvent`.
+Therefore, when each `lola::ProxyEvent` gets created (as a member of the generated proxy class), it registers itself 
+at its parent `lola::Proxy` via `lola::Proxy::RegisterEvent()`. The `lola::Proxy` stores the reference to each 
+child `lola::ProxyEvent`s in a map which it can later use.
 
 So **after** construction of user facing generated proxy class instance (`DummyProxy`), we have the following structure
 in place:
 
 1. Only an instance of the generated proxy class gets returned from the call to `<DummyProxy>::Create()` in case its
    binding on proxy level (its `pImpl` target) implementing `ProxyBinding` could be constructed and also for **all** its
-   aggregated events/fields their related `ProxyEventBinding`s (`pImpl` targets) could be constructed.
+   aggregated events/fields their related `ProxyEventBinding`s (`pImpl` targets) could be constructed. If this is not 
+   the case, then an error will be returned from `<DummyProxy>::Create()`.
 2. The `ProxyBinding` (`ProxyBase::proxy_binding_`) has complete access to all its child events/fields as
-   `ProxyBinding::RegisterEventBinding` has been called for all contained events/fields.
+   `lola::Proxy::RegisterEvent()` has been called for all contained events/fields.
 
 
 #### Extract type agnostic code

@@ -40,6 +40,12 @@ class EventSlotStatus final
     /// \brief The value_type represents the underlying data type of this structure
     using value_type = std::uint64_t;
 
+    /// \brief Represents an invalid/absent timestamp. A slot with this value has never been written.
+    static constexpr EventTimeStamp INVALID_TIMESTAMP = 0U;
+
+    /// \brief The first timestamp written to a slot when an event is sent for the first time.
+    static constexpr EventTimeStamp FIRST_VALID_TIMESTAMP = 1U;
+
     /// \brief The highest possible value that EventTimeStamp can reach
     // Suppress "AUTOSAR C++14 A0-1-1", The rule states: "A project shall not contain instances of non-volatile
     // variables being given values that are not subsequently used"
@@ -48,7 +54,7 @@ class EventSlotStatus final
     static constexpr EventTimeStamp TIMESTAMP_MAX = std::numeric_limits<EventTimeStamp>::max();
 
     /// \brief If default constructed, SlotStatus is invalid
-    EventSlotStatus() noexcept = default;
+    EventSlotStatus() noexcept : EventSlotStatus{INVALID_TIMESTAMP} {}
     explicit EventSlotStatus(const value_type init_val) noexcept;
     EventSlotStatus(const EventTimeStamp timestamp, const SubscriberCount refcount) noexcept;
     EventSlotStatus(const EventSlotStatus&) noexcept = default;
@@ -86,6 +92,8 @@ class EventSlotStatus final
     value_type data_;
 };
 
+static_assert(sizeof(EventSlotStatus) <= sizeof(std::uint64_t),
+              "EventSlotStatus must fit inside a std::atomic which is currently 64 bit.");
 }  // namespace score::mw::com::impl::lola
 
 #endif  // SCORE_MW_COM_IMPL_BINDINGS_LOLA_EVENT_SLOT_STATUS_H

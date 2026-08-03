@@ -21,28 +21,20 @@ namespace score::mw::com::impl
 
 GenericProxyEvent::GenericProxyEvent(ProxyBase& base, const std::string_view event_name)
     : ProxyEventBase{event_name,
-                     ProxyBaseView{base}.GetBinding(),
-                     GenericProxyEventBindingFactory::Create(base, event_name)}
+                     GenericProxyEventBindingFactory::Create(base.GetHandle(),
+                                                             ProxyBaseView{base}.GetBinding(),
+                                                             event_name,
+                                                             ServiceElementType::EVENT)
+                         .and_then([](std::unique_ptr<GenericProxyEventBinding> binding) {
+                             return Result<std::unique_ptr<ProxyEventBindingBase>>{std::move(binding)};
+                         })}
 {
-    ProxyBaseView proxy_base_view{base};
-    if (!binding_base_)
-    {
-        proxy_base_view.MarkServiceElementBindingInvalid();
-        return;
-    }
 }
 
-GenericProxyEvent::GenericProxyEvent(ProxyBase& base,
-                                     const std::string_view event_name,
+GenericProxyEvent::GenericProxyEvent(const std::string_view event_name,
                                      std::unique_ptr<GenericProxyEventBinding> proxy_binding)
-    : ProxyEventBase{event_name, ProxyBaseView{base}.GetBinding(), std::move(proxy_binding)}
+    : ProxyEventBase{event_name, std::move(proxy_binding)}
 {
-    ProxyBaseView proxy_base_view{base};
-    if (!binding_base_)
-    {
-        proxy_base_view.MarkServiceElementBindingInvalid();
-        return;
-    }
 }
 
 std::size_t GenericProxyEvent::GetSampleSize() const noexcept

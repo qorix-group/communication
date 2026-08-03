@@ -81,7 +81,7 @@
                                             "eventId": {
                                                 "type": "integer",
                                                 "title": "Service Event Id",
-                                                "description": "Binding technology specific event id. LoLa supports 8 bit."
+                                                "description": "Binding technology specific event id. LoLa supports 16 bit values. The value needs to be unique across all events/fields/methods within the same binding, in case it is a SHM/LoLa binding."
                                             }
                                         }
                                     }
@@ -108,7 +108,7 @@
                                             "fieldId": {
                                                 "type": "integer",
                                                 "title": "Service Field Id",
-                                                "description": "Binding technology specific field id. LoLa supports 8 bit."
+                                                "description": "Binding technology specific field id. LoLa supports 16 bit values. The value needs to be unique across all events/fields/methods within the same binding, in case it is a SHM/LoLa binding."
                                             },
                                             "Get": {
                                                 "type": "boolean",
@@ -143,7 +143,7 @@
                                             },
                                             "methodId": {
                                                 "type": "integer",
-                                                "description": "Binding technology specific method id. LoLa supports 8 bit."
+                                                "description": "Binding technology specific method id. LoLa supports 16 bit values. The value needs to be unique across all events/fields/methods within the same binding, in case it is a SHM/LoLa binding."
                                             }
                                         }
                                     }
@@ -366,14 +366,14 @@
                                             "numberOfSampleSlots": {
                                                 "type": "integer",
                                                 "title": "Number of sample slots",
-                                                "description": "Mandatory LoLa specific provider/skeleton side setting, how many sample slots shall be allocated. Value needs to be between 1 and 65535!",
-                                                "minimum": 1,
+                                                "description": "Mandatory LoLa specific provider/skeleton side setting, how many sample slots shall be allocated. Value needs to be between 1 and 65535 when the field has Notifier enabled! For a field with Notifier disabled, this value denotes the number of SampleAllocateePtrs that can be held (from a call to Allocate() on the Skeleton Field) at one time while the maximum supported number of concurrent getter calls are being processed. A value of 0 can therefore be provided which means that Allocate() can not be called while the getter calls are being processed. A value of 1 is recommended for most use cases.",
+                                                "minimum": 0,
                                                 "maximum": 65535
                                             },
                                             "maxSubscribers": {
                                                 "type": "integer",
                                                 "title": "Maximum subscribers",
-                                                "description": "Mandatory LoLa specific provider/skeleton side setting, how many subscribers shall be supported at max."
+                                                "description": "Mandatory LoLa specific provider/skeleton side setting, how many subscribers shall be supported at max. For a field with Notifier disabled, this value is ignored."
                                             },
                                             "enforceMaxSamples": {
                                                 "type": "boolean",
@@ -392,13 +392,13 @@
                                                 "type": "boolean",
                                                 "title": "Use Field Getter If Available",
                                                 "description": "When true, the getter for this field will be used if the service type declares one in the C++ service interface. Applicable for proxy/consumer side.",
-                                                "default": false
+                                                "default": true
                                             },
                                             "useSetIfAvailable": {
                                                 "type": "boolean",
                                                 "title": "Use Field Setter If Available",
                                                 "description": "When true, the setter for this field will be used if the service type declares one in the C++ service interface. Applicable for proxy/consumer side.",
-                                                "default": false
+                                                "default": true
                                             }
                                         }
                                     }
