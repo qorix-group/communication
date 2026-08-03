@@ -13,14 +13,14 @@
 #ifndef SCORE_MW_COM_IMPL_PLUMBING_GENERIC_SKELETON_EVENT_BINDING_FACTORY_H
 #define SCORE_MW_COM_IMPL_PLUMBING_GENERIC_SKELETON_EVENT_BINDING_FACTORY_H
 
-#include "score/memory/data_type_size_info.h"
 #include "score/mw/com/impl/bindings/lola/generic_skeleton_event.h"
 #include "score/mw/com/impl/generic_skeleton_event_binding.h"
-#include "score/mw/com/impl/i_generic_skeleton_event_binding_factory.h"
+#include "score/mw/com/impl/plumbing/i_generic_skeleton_event_binding_factory.h"
 #include "score/mw/com/impl/plumbing/skeleton_service_element_binding_factory_impl.h"
 #include "score/mw/com/impl/service_element_type.h"
 #include "score/mw/com/impl/skeleton_base.h"
 
+#include "score/memory/data_type_size_info.h"
 #include "score/result/result.h"
 
 #include <memory>

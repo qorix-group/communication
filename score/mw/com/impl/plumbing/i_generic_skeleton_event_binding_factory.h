@@ -10,12 +10,14 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-#ifndef SCORE_MW_COM_IMPL_I_GENERIC_SKELETON_EVENT_BINDING_FACTORY_H
-#define SCORE_MW_COM_IMPL_I_GENERIC_SKELETON_EVENT_BINDING_FACTORY_H
+#ifndef SCORE_MW_COM_IMPL_PLUMBING_I_GENERIC_SKELETON_EVENT_BINDING_FACTORY_H
+#define SCORE_MW_COM_IMPL_PLUMBING_I_GENERIC_SKELETON_EVENT_BINDING_FACTORY_H
 
-#include "score/memory/data_type_size_info.h"
 #include "score/mw/com/impl/generic_skeleton_event_binding.h"
 #include "score/mw/com/impl/skeleton_base.h"
+
+#include "score/memory/data_type_size_info.h"
+
 #include <memory>
 #include <string_view>
 
@@ -33,4 +35,4 @@ class IGenericSkeletonEventBindingFactory
 
 }  // namespace score::mw::com::impl
 
-#endif  // SCORE_MW_COM_IMPL_I_GENERIC_SKELETON_EVENT_BINDING_FACTORY_H
+#endif  // SCORE_MW_COM_IMPL_PLUMBING_I_GENERIC_SKELETON_EVENT_BINDING_FACTORY_H

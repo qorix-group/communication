@@ -912,20 +912,6 @@ cc_library(
 )
 
 cc_library(
-    name = "i_generic_skeleton_event_binding_factory",
-    hdrs = ["i_generic_skeleton_event_binding_factory.h"],
-    features = COMPILER_WARNING_FEATURES,
-    tags = ["FFI"],
-    visibility = [
-        "//score/mw/com/impl:__subpackages__",
-    ],
-    deps = [
-        ":generic_skeleton_event_binding",
-        ":skeleton_base",
-    ],
-)
-
-cc_library(
     name = "event_receive_handler",
     srcs = ["event_receive_handler.cpp"],
     hdrs = ["event_receive_handler.h"],
