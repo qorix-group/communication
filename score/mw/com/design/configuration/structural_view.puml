@@ -201,8 +201,7 @@ class "score::mw::com::impl::Runtime" {
   - configuration : Configuration const&
   __
   - Runtime(std::pair<Configuration&&, std::optional<tracing::TracingFilterConfig>&&> configs)
-  {static} + Initialize() : void
-  {static} + Initialize(const score::cpp::span<const score::StringLiteral> arguments) : void
+  {static} + Initialize(const runtime::RuntimeConfiguration& runtime_configuration) : void
   {static} + getInstance() : Runtime&
   + resolve(const InstanceSpecifier&): score::mw::com::InstanceIdentifierContainer
   + GetBindingRuntime(const BindingType binding) const : IBindingRuntime*
