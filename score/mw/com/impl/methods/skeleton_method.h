@@ -39,7 +39,7 @@ namespace detail
 template <WithQuality WithQuality, typename Callable, typename... Ts>
 void InvokeWithOptionalQuality(const std::optional<QualityType> quality_type, Callable& callable, Ts&&... args)
 {
-    if constexpr (WithQuality == WithQuality::TRUE)
+    if constexpr (WithQuality == WithQuality::kYes)
     {
         SCORE_LANGUAGE_FUTURECPP_PRECONDITION_PRD_MESSAGE(
             quality_type.has_value(),
@@ -106,7 +106,7 @@ class SkeletonMethod<ReturnType(ArgTypes...)> final : public SkeletonMethodBase
                                                    method_type),
               method_type)
     {
-        AssertMethodSignatureDoesNotContainPointersOrReferences<FailureMode::COMPILE_TIME, ReturnType, ArgTypes...>();
+        AssertMethodSignatureDoesNotContainPointersOrReferences<FailureMode::kCompileTime, ReturnType, ArgTypes...>();
     }
 
     /// \brief Delegated constructor which registers the method with the parent skeleton.
@@ -128,7 +128,18 @@ class SkeletonMethod<ReturnType(ArgTypes...)> final : public SkeletonMethodBase
 
     /// \brief Register a handler with the binding, which will be executed by the binding when the Proxy calls this
     /// method.
-    /// \return score::cpp::blank on success and ComErrc code specified by the binding on failiure
+    ///
+    /// For a method signature of the form `ReturnType(ArgTypes...)`, the expected callable signature is:
+    /// - If `ReturnType` is not `void` and there are in arguments:
+    ///   `void(ReturnType&, const ArgTypes&...)`
+    /// - If `ReturnType` is not `void` and there are no in arguments:
+    ///   `void(ReturnType&)`
+    /// - If `ReturnType` is `void` and there are in arguments:
+    ///   `void(const ArgTypes&...)`
+    /// - If `ReturnType` is `void` and there are no in arguments:
+    ///   `void()`
+    ///
+    /// \return score::cpp::blank on success and ComErrc code specified by the binding on failure
     template <typename Callable>
     Result<void> RegisterHandler(Callable&& callback);
 
@@ -157,40 +168,40 @@ SkeletonMethod<ReturnType(ArgTypes...)>::SkeletonMethod(SkeletonBase& skeleton_b
 {
     SkeletonBaseView{skeleton_base}.RegisterMethod(method_name_, GetReferenceToMoveable());
 
-    AssertMethodSignatureDoesNotContainPointersOrReferences<FailureMode::COMPILE_TIME, ReturnType, ArgTypes...>();
+    AssertMethodSignatureDoesNotContainPointersOrReferences<FailureMode::kCompileTime, ReturnType, ArgTypes...>();
 }
 
 template <typename ReturnType, typename... ArgTypes>
 template <typename Callable>
 Result<void> SkeletonMethod<ReturnType(ArgTypes...)>::RegisterHandler(Callable&& user_callback)
 {
-    AssertMethodHandlerSupportsMethodSignature<FailureMode::COMPILE_TIME,
-                                               WithQuality::FALSE,
+    AssertMethodHandlerSupportsMethodSignature<FailureMode::kCompileTime,
+                                               WithQuality::kNo,
                                                Callable,
                                                ReturnType,
                                                ArgTypes...>();
 
-    return RegisterHandlerImpl<WithQuality::FALSE>(std::forward<Callable>(user_callback));
+    return RegisterHandlerImpl<WithQuality::kNo>(std::forward<Callable>(user_callback));
 }
 
 template <typename ReturnType, typename... ArgTypes>
 template <typename CallableWithQuality>
 Result<void> SkeletonMethod<ReturnType(ArgTypes...)>::RegisterHandlerWithQuality(CallableWithQuality&& user_callback)
 {
-    AssertMethodHandlerSupportsMethodSignature<FailureMode::COMPILE_TIME,
-                                               WithQuality::TRUE,
+    AssertMethodHandlerSupportsMethodSignature<FailureMode::kCompileTime,
+                                               WithQuality::kYes,
                                                CallableWithQuality,
                                                ReturnType,
                                                ArgTypes...>();
 
-    return RegisterHandlerImpl<WithQuality::TRUE>(std::forward<CallableWithQuality>(user_callback));
+    return RegisterHandlerImpl<WithQuality::kYes>(std::forward<CallableWithQuality>(user_callback));
 }
 
 template <typename ReturnType, typename... ArgTypes>
 template <WithQuality WithQuality, typename Callable>
 Result<void> SkeletonMethod<ReturnType(ArgTypes...)>::RegisterHandlerImpl(Callable&& user_callback)
 {
-    AssertMethodCallableIsNotStdBind<FailureMode::COMPILE_TIME, Callable>();
+    AssertMethodCallableIsNotStdBind<FailureMode::kCompileTime, Callable>();
 
     // Since user_callback can be an lvalue reference or an rvalue reference, we ideally would store it as a universal
     // reference in the type_erased_handler. However, in C++17, this is not supported. Instead, we create an callable
@@ -248,7 +259,7 @@ Result<void> SkeletonMethod<ReturnType(ArgTypes...)>::RegisterHandlerImpl(Callab
             [&user_callback](QualityType quality_type,
                              std::optional<score::cpp::span<std::byte>> type_erased_in_args,
                              std::optional<score::cpp::span<std::byte>> type_erased_return) mutable {
-                if constexpr (WithQuality == WithQuality::TRUE)
+                if constexpr (WithQuality == WithQuality::kYes)
                 {
                     return stateless_type_erased_handler(
                         user_callback, quality_type, type_erased_in_args, type_erased_return);
@@ -268,7 +279,7 @@ Result<void> SkeletonMethod<ReturnType(ArgTypes...)>::RegisterHandlerImpl(Callab
                 QualityType quality_type,
                 std::optional<score::cpp::span<std::byte>> type_erased_in_args,
                 std::optional<score::cpp::span<std::byte>> type_erased_return) mutable {
-                if constexpr (WithQuality == WithQuality::TRUE)
+                if constexpr (WithQuality == WithQuality::kYes)
                 {
                     return stateless_type_erased_handler(
                         user_callback, quality_type, type_erased_in_args, type_erased_return);
