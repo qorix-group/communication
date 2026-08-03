@@ -118,8 +118,6 @@ void run_notifier_consumer(const score::cpp::stop_token& stop_token)
     {
         FailTest("Consumer: Did not receive all expected samples in notifier scenario");
     }
-
-    proxy.notifier_only_enabled_field.Unsubscribe();
 }
 
 void run_set_and_notifier_consumer(const score::cpp::stop_token& stop_token)
@@ -155,10 +153,14 @@ void run_set_and_notifier_consumer(const score::cpp::stop_token& stop_token)
 
     // Step 4. Subscribe to field with enough buffer for all samples the provider will send
     std::cout << "\nConsumer: Step 4 - Subscribe to field" << std::endl;
-    std::ignore = proxy.set_and_notifier_enabled_field.Subscribe(kTotalNumValuesToSend);
+    const auto subscribe_result = proxy.set_and_notifier_enabled_field.Subscribe(kTotalNumValuesToSend);
+    if (!subscribe_result.has_value())
+    {
+        FailTest("Consumer: Subscribe failed in set_and_notifier scenario: ", subscribe_result.error());
+    }
 
     // Step 5. Wait for subscription
-    std::cout << "\nConsumer: Step 5 - Wait for subscription and verify initial value" << std::endl;
+    std::cout << "\nConsumer: Step 5 - Wait for subscription" << std::endl;
     if (!subscription_notifier.WaitForStateChange(stop_token, SubscriptionState::kSubscribed))
     {
         FailTest("Consumer: Subscription failed in set scenario");
@@ -166,12 +168,10 @@ void run_set_and_notifier_consumer(const score::cpp::stop_token& stop_token)
 
     // Step 6. Wait for all expected samples
     std::cout << "\nConsumer: Step 6 - Wait for all expected samples" << std::endl;
+    const std::vector<std::int32_t> first_values_to_receive = {kInitialValue, 20, 30, 35};
+    if (!field_receiver.WaitForSamples(stop_token, first_values_to_receive))
     {
-        const std::vector<std::int32_t> values_to_receive = {kInitialValue, 20, 30, 35};
-        if (!field_receiver.WaitForSamples(stop_token, values_to_receive))
-        {
-            FailTest("Consumer: Did not receive all expected samples in notifier scenario");
-        }
+        FailTest("Consumer: Did not receive all expected samples in notifier scenario");
     }
 
     // Step 7. Set new field value and verify accepted value matches expected transformed value
@@ -185,8 +185,8 @@ void run_set_and_notifier_consumer(const score::cpp::stop_token& stop_token)
 
     // Step 9. Wait for additional samples sent after the provider receives the set-complete signal
     std::cout << "\nConsumer: Step 9 - Wait for all expected samples" << std::endl;
-    const std::vector<std::int32_t> values_to_receive = {expected_accepted_set_value, 10, 100};
-    if (!field_receiver.WaitForSamples(stop_token, values_to_receive))
+    const std::vector<std::int32_t> second_values_to_receive = {expected_accepted_set_value, 10, 100};
+    if (!field_receiver.WaitForSamples(stop_token, second_values_to_receive))
     {
         FailTest("Consumer: Did not receive all expected samples in notifier scenario");
     }

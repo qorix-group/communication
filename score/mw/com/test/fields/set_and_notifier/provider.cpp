@@ -65,7 +65,7 @@ void run_notifier_provider(const score::cpp::stop_token& stop_token)
     skeleton_container.OfferService("notifier");
 
     // Step 5. Update field with updated value
-    std::cout << "\nProvider: Step 6 - Update field with updated value" << std::endl;
+    std::cout << "\nProvider: Step 5 - Update field with updated value" << std::endl;
     const std::vector<std::int32_t> values_to_send = {20, 30, 35};
     for (auto value_to_send : values_to_send)
     {
@@ -82,10 +82,6 @@ void run_notifier_provider(const score::cpp::stop_token& stop_token)
     {
         FailTest("Provider: WaitWithAbort (done) was stopped by stop_token instead of notification");
     }
-
-    // Step 7. Stop offering service
-    std::cout << "\nProvider: Step 7 - Stop offering service" << std::endl;
-    service.StopOfferService();
 }
 
 void run_set_and_notifier_provider(const score::cpp::stop_token& stop_token)
@@ -100,7 +96,7 @@ void run_set_and_notifier_provider(const score::cpp::stop_token& stop_token)
     auto set_done_synchronizer_result = ProcessSynchronizer::Create(kSetDoneShmPath);
     if (!set_done_synchronizer_result.has_value())
     {
-        FailTest("Consumer: Could not create set-done ProcessSynchronizer");
+        FailTest("Provider: Could not create set-done ProcessSynchronizer");
     }
 
     // Step 2. Create skeleton
