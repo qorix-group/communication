@@ -349,7 +349,7 @@ class ProxyFieldGetSetFixture : public ::testing::Test
         ON_CALL(get_method_binding_mock_, GetReturnValueBuffer(0))
             .WillByDefault(Return(score::Result<score::cpp::span<std::byte>>{score::cpp::span{
                 reinterpret_cast<std::byte*>(&getter_return_storage_), sizeof(getter_return_storage_)}}));
-        ON_CALL(get_method_binding_mock_, DoCall(0)).WillByDefault(Return(score::ResultBlank{}));
+        ON_CALL(get_method_binding_mock_, DoCall(0)).WillByDefault(Return(score::Result<void>{}));
 
         ON_CALL(set_method_binding_mock_, GetReturnValueBuffer(0))
             .WillByDefault(Return(score::Result<score::cpp::span<std::byte>>{score::cpp::span{
@@ -357,7 +357,7 @@ class ProxyFieldGetSetFixture : public ::testing::Test
         ON_CALL(set_method_binding_mock_, GetInArgsBuffer(0))
             .WillByDefault(Return(score::Result<score::cpp::span<std::byte>>{score::cpp::span{
                 reinterpret_cast<std::byte*>(&setter_in_arg_storage_), sizeof(setter_in_arg_storage_)}}));
-        ON_CALL(set_method_binding_mock_, DoCall(0)).WillByDefault(Return(score::ResultBlank{}));
+        ON_CALL(set_method_binding_mock_, DoCall(0)).WillByDefault(Return(score::Result<void>{}));
     }
 
     ProxyField<TestSampleType, WithGetter> CreateFieldWithGetOnly()
