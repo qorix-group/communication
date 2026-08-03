@@ -38,6 +38,39 @@ namespace score::mw::com::test
 namespace
 {
 
+template <typename ProxyFieldType>
+void CallGetAndCheckValue(ProxyFieldType& proxy_field, const std::int32_t expected_value)
+{
+    const auto get_result = proxy_field.Get();
+    if (!get_result.has_value())
+    {
+        FailTest("Consumer: Get() failed: ", get_result.error());
+    }
+    if (*(get_result.value()) != expected_value)
+    {
+        FailTest("Consumer: Get() returned ", *(get_result.value()), " but expected ", expected_value);
+    }
+    std::cout << "\nConsumer: Get() returned expected value " << expected_value << std::endl;
+}
+
+template <typename ProxyFieldType>
+void CallSetAndCheckReturnValue(ProxyFieldType& proxy_field,
+                                const std::int32_t set_request_value,
+                                const std::int32_t expected_accepted_value)
+{
+    const auto set_result = proxy_field.Set(set_request_value);
+    if (!set_result.has_value())
+    {
+        FailTest("Consumer: Set() failed: ", set_result.error());
+    }
+    const std::int32_t accepted_value = *(set_result.value());
+    if (accepted_value != expected_accepted_value)
+    {
+        FailTest("Consumer: Set() returned accepted value ", accepted_value, " but expected ", expected_accepted_value);
+    }
+    std::cout << "\nConsumer: Set() returned expected accepted value " << accepted_value << std::endl;
+}
+
 void run_notifier_consumer(const score::cpp::stop_token& stop_token)
 {
     auto done_synchronizer_result = ProcessSynchronizer::Create(kConsumerDoneShmPath);
@@ -143,21 +176,8 @@ void run_set_and_notifier_consumer(const score::cpp::stop_token& stop_token)
 
     // Step 7. Set new field value and verify accepted value matches expected transformed value
     std::cout << "\nConsumer: Step 7 - Set field value and verify accepted value" << std::endl;
-    const auto set_result = proxy.set_and_notifier_enabled_field.Set(kSetRequestValue);
-    if (!set_result.has_value())
-    {
-        FailTest("Consumer: Set call failed: ", set_result.error());
-    }
-    const std::int32_t accepted_value = *(set_result.value());
-
     const auto expected_accepted_set_value = (kSetRequestValue * 2) + 1;
-    if (accepted_value != expected_accepted_set_value)
-    {
-        FailTest("Consumer: Set accepted value mismatch. Expected ",
-                 (kSetRequestValue * 2) + 1,
-                 " but got ",
-                 accepted_value);
-    }
+    CallSetAndCheckReturnValue(proxy.set_and_notifier_enabled_field, kSetRequestValue, expected_accepted_set_value);
 
     // Step 8. Notify provider that Set() was called
     std::cout << "\nConsumer: Step 8 - Notify provider that Set() was verified" << std::endl;
