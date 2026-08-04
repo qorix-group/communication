@@ -83,7 +83,14 @@ def _find_compiled_pack_root():
             "in this target's `data`. Refusing to fall back to any other query "
             "source.")
     # anchor = <pack_root>/qlpack.yml
-    pack_root = os.path.dirname(anchor)
+    # Resolve symlinks: Bazel runfiles are a symlink farm where individual files
+    # are symlinked into the runfiles tree.  CodeQL's data-extension glob
+    # (qlpack.yml `dataExtensions:`) does NOT follow symlinks when matching
+    # .model.yml files, so using the runfiles path causes all extensible
+    # predicates (allocationFunctionModel, throwingFunctionModel, etc.) to come
+    # up as undefined.  realpath() jumps from the runfiles symlink to the actual
+    # Bazel external-repository directory, where the model files are real files.
+    pack_root = os.path.dirname(os.path.realpath(anchor))
 
     suite_path = os.path.join(pack_root, MISRA_DEFAULT_SUITE_NAME)
     if not os.path.exists(suite_path):
