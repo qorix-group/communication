@@ -999,7 +999,7 @@ auto SharedMemoryResource::acquireLockFile() const noexcept -> std::optional<Loc
         {
             const auto* const path = std::get_if<std::string>(&shared_memory_resource_identifier_);
             ::score::mw::log::LogFatal("shm")
-                << __func__ << __LINE__ << "Shared Memory Resource: " << (path != nullptr ? *path : "<unknown>")
+                << __func__ << __LINE__ << "Shared Memory Resource: " << ((path != nullptr) ? *path : "<unknown>")
                 << " Lock file still present after timeout. Cannot open shared memory. Terminating";
             std::terminate();
         }
