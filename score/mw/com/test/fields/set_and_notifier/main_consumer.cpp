@@ -20,9 +20,9 @@
 
 int main(int argc, const char** argv)
 {
-    const auto config = score::mw::com::test::ParseConsumerConfig(argc, argv);
+    const auto config = score::mw::com::test::ParseConfig(argc, argv);
 
-    score::mw::com::runtime::InitializeRuntime(score::mw::com::runtime::RuntimeConfiguration{config.manifest});
+    score::mw::com::runtime::InitializeRuntime(score::mw::com::runtime::RuntimeConfiguration{config.config_file_path});
 
     score::cpp::stop_source stop_source{};
     const bool sig_term_handler_setup_success = score::mw::com::SetupStopTokenSigTermHandler(stop_source);

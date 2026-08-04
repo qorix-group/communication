@@ -11,9 +11,12 @@
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
 
-from test_fixture import consumer, provider
+from test_fixture import consumer, provider, FieldScenario
 
-# TODO: Implement once get_and_notifier mode is supported by the provider and consumer binaries.
-# Scenarios to cover (same as notifier and get, verifying result of both GetNewSamples and getter):
-# 1. calling Update / send -> calling get returns value set with send
-# 2. calling Update / send -> calling GetNewSamples returns value set with send
+
+def test_field_set_and_notifier_value(target):
+    """Test field set exchange and accepted value propagation between provider and consumer."""
+    with provider(target, FieldScenario.SET_AND_NOTIFIER, "mw_com_config.json"):
+        with consumer(target, FieldScenario.SET_AND_NOTIFIER, "mw_com_config.json"):
+            pass
+

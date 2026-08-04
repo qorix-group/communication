@@ -11,8 +11,11 @@
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
 
-from test_fixture import consumer, provider
+from test_fixture import consumer, provider, FieldScenario
 
-# TODO: Implement once get mode is supported by the provider and consumer binaries.
-# Scenarios to cover:
-# 1. calling Update / send -> calling get returns value set with send
+
+def test_field_notifier_initial_value(target):
+    """Test field initial value exchange between provider and consumer."""
+    with provider(target, FieldScenario.NOTIFIER, "mw_com_config.json"):
+        with consumer(target, FieldScenario.NOTIFIER, "mw_com_config.json"):
+            pass

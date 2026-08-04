@@ -14,32 +14,14 @@
 #ifndef SCORE_MW_COM_TEST_FIELDS_SET_AND_NOTIFIER_CONSUMER_H
 #define SCORE_MW_COM_TEST_FIELDS_SET_AND_NOTIFIER_CONSUMER_H
 
-#include <score/stop_token.hpp>
+#include "score/mw/com/test/fields/set_and_notifier/common_resources.h"
 
-#include <optional>
-#include <string>
-#include <string_view>
+#include <score/stop_token.hpp>
 
 namespace score::mw::com::test
 {
 
-enum class ConsumerMode
-{
-    kNotifier,
-    kSetAndNotifier,
-};
-
-struct ConsumerConfig
-{
-    ConsumerMode mode;
-    std::string manifest;
-};
-
-std::optional<ConsumerMode> ParseConsumerMode(std::string_view mode);
-
-ConsumerConfig ParseConsumerConfig(int argc, const char** argv);
-
-void run_consumer(const score::cpp::stop_token& stop_token, ConsumerMode mode);
+void run_consumer(const score::cpp::stop_token& stop_token, TestMode mode);
 
 }  // namespace score::mw::com::test
 

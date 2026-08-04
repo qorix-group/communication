@@ -11,10 +11,10 @@
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
 
-from test_fixture import consumer, provider
+from test_fixture import consumer_and_provider, FieldScenario
 
-# TODO: Implement once set_get_and_notifier mode is supported by the provider and consumer binaries.
-# Scenarios to cover (same as set_and_notifier, but also verify result of getter):
-# 1. calling set with valid value -> calling get and GetNewSamples both return value set with setter
-# 2. calling set with invalid value (set handler clamps the value) -> calling get and GetNewSamples both return clamped value
-# 3. calling Update / send -> calling get and GetNewSamples both return value set with send
+
+def test_field_set_and_notifier_same_process(target):
+    """Test set-and-notifier field flow when consumer and provider run in the same process."""
+    with consumer_and_provider(target, FieldScenario.SET_AND_NOTIFIER, "mw_com_config.json"):
+        pass

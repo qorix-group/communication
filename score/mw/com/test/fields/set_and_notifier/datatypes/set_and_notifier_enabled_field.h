@@ -11,8 +11,8 @@
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
 
-#ifndef SCORE_MW_COM_TEST_FIELDS_SET_AND_NOTIFIER_SET_AND_NOTIFIER_ENABLED_FIELD_H
-#define SCORE_MW_COM_TEST_FIELDS_SET_AND_NOTIFIER_SET_AND_NOTIFIER_ENABLED_FIELD_H
+#ifndef SCORE_MW_COM_TEST_FIELDS_SET_AND_NOTIFIER_DATATYPES_SET_AND_NOTIFIER_ENABLED_FIELD_H
+#define SCORE_MW_COM_TEST_FIELDS_SET_AND_NOTIFIER_DATATYPES_SET_AND_NOTIFIER_ENABLED_FIELD_H
 
 #include "score/mw/com/types.h"
 #include <cstdint>
@@ -36,4 +36,4 @@ using SetAndNotifierEnabledSkeleton = score::mw::com::AsSkeleton<SetAndNotifierE
 
 }  // namespace score::mw::com::test
 
-#endif  // SCORE_MW_COM_TEST_FIELDS_SET_AND_NOTIFIER_SET_AND_NOTIFIER_ENABLED_FIELD_H
+#endif  // SCORE_MW_COM_TEST_FIELDS_SET_AND_NOTIFIER_DATATYPES_SET_AND_NOTIFIER_ENABLED_FIELD_H

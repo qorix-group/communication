@@ -1324,12 +1324,9 @@ cc_unit_test(
     name = "proxy_field_test",
     srcs = ["proxy_field_test.cpp"],
     deps = [
+        ":error",
         ":impl",
-        ":runtime_mock",
         "//score/mw/com/impl/bindings/mock_binding",
-        "//score/mw/com/impl/plumbing:proxy_field_binding_factory_mock",
-        "//score/mw/com/impl/test:binding_factory_resources",
-        "//score/mw/com/impl/test:proxy_resources",
         "//score/mw/com/impl/test:runtime_mock_guard",
     ],
 )

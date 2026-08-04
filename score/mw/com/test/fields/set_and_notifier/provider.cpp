@@ -16,15 +16,12 @@
 #include "score/mw/com/test/common_test_resources/fail_test.h"
 #include "score/mw/com/test/common_test_resources/process_synchronizer.h"
 #include "score/mw/com/test/common_test_resources/skeleton_container.h"
-#include "score/mw/com/test/fields/set_and_notifier/initial_only_field.h"
-#include "score/mw/com/test/fields/set_and_notifier/set_and_notifier_enabled_field.h"
+#include "score/mw/com/test/fields/set_and_notifier/datatypes/notifier_only_enabled_field.h"
+#include "score/mw/com/test/fields/set_and_notifier/datatypes/set_and_notifier_enabled_field.h"
 #include "score/mw/com/test/fields/set_and_notifier/test_constants.h"
 
-#include <chrono>
 #include <iostream>
 #include <optional>
-#include <string_view>
-#include <utility>
 
 namespace score::mw::com::test
 {
@@ -50,7 +47,7 @@ void run_notifier_provider(const score::cpp::stop_token& stop_token)
 
     // Step 2. Create skeleton
     std::cout << "\nProvider: Step 2 - Create skeleton" << std::endl;
-    SkeletonContainer<InitialOnlySkeleton> skeleton_container{};
+    SkeletonContainer<NotifierOnlyEnabledSkeleton> skeleton_container{};
     skeleton_container.CreateSkeleton(kInstanceSpecifier, "notifier");
 
     auto& service = skeleton_container.GetSkeleton();
@@ -58,7 +55,7 @@ void run_notifier_provider(const score::cpp::stop_token& stop_token)
     // Step 3. Update initial field value
     std::cout << "\nProvider: Step 3 - Update initial field value" << std::endl;
     {
-        const auto update_result = service.initial_only_field.Update(kInitialValue);
+        const auto update_result = service.notifier_only_enabled_field.Update(kInitialValue);
         if (!update_result.has_value())
         {
             FailTest("Provider: Unable to update initial field value: ", update_result.error());
@@ -71,8 +68,10 @@ void run_notifier_provider(const score::cpp::stop_token& stop_token)
 
     // Step 5. Update field with updated value
     std::cout << "\nProvider: Step 5 - Update field with updated value" << std::endl;
+    for (std::size_t i = 0; i < kTotalNumValuesToSend - 1U; ++i)
     {
-        const auto update_result = service.initial_only_field.Update(kUpdatedValue);
+        const auto update_result =
+            service.notifier_only_enabled_field.Update(kUpdatedValue + static_cast<std::int32_t>(i));
         if (!update_result.has_value())
         {
             FailTest("Provider: Unable to update field with updated value: ", update_result.error());
@@ -112,7 +111,7 @@ void run_set_and_notifier_provider(const score::cpp::stop_token& stop_token)
     std::cout << "\nProvider: Step 3 - Register set handler" << std::endl;
     const auto register_handler_result =
         service.set_and_notifier_enabled_field.RegisterSetHandler([](std::int32_t& value) noexcept {
-            value = value * 2 + 1;
+            value = (value * 2) + 1;
         });
     if (!register_handler_result.has_value())
     {
@@ -131,42 +130,40 @@ void run_set_and_notifier_provider(const score::cpp::stop_token& stop_token)
     std::cout << "\nProvider: Step 5 - Offer service" << std::endl;
     skeleton_container.OfferService("set_and_notifier");
 
-    // Step 6. Wait for consumer done notification
-    std::cout << "\nProvider: Step 6 - Wait for consumer done notification" << std::endl;
+    // Step 6. Update field with updated value
+    std::cout << "\nProvider: Step 6 - Update field with updated value" << std::endl;
+    for (std::size_t i = 0; i < kTotalNumValuesToSend - 1U; ++i)
+    {
+        const auto update_result =
+            service.set_and_notifier_enabled_field.Update(kUpdatedValue + static_cast<std::int32_t>(i));
+        if (!update_result.has_value())
+        {
+            FailTest("Provider: Unable to update field with updated value: ", update_result.error());
+        }
+    }
+
+    // Step 7. Wait for consumer done notification
+    std::cout << "\nProvider: Step 7 - Wait for consumer done notification" << std::endl;
     if (!process_synchronizer_result->WaitWithAbort(stop_token))
     {
         FailTest("Provider: WaitWithAbort was stopped by stop_token instead of notification");
     }
 
-    // Step 7. Stop offering service
-    std::cout << "\nProvider: Step 7 - Stop offering service" << std::endl;
+    // Step 8. Stop offering service
+    std::cout << "\nProvider: Step 8 - Stop offering service" << std::endl;
     service.StopOfferService();
 }
 
 }  // namespace
 
-std::optional<ProviderMode> ParseProviderMode(std::string_view mode)
-{
-    if (mode == "notifier")
-    {
-        return ProviderMode::kNotifier;
-    }
-    if (mode == "set_and_notifier")
-    {
-        return ProviderMode::kSetAndNotifier;
-    }
-    // TODO: Add "get" mode provider scenario coverage once getter-enabled field variant is introduced.
-    return std::nullopt;
-}
-
-void run_provider(const score::cpp::stop_token& stop_token, ProviderMode mode)
+void run_provider(const score::cpp::stop_token& stop_token, TestMode mode)
 {
     switch (mode)
     {
-        case ProviderMode::kNotifier:
+        case TestMode::kNotifier:
             run_notifier_provider(stop_token);
             return;
-        case ProviderMode::kSetAndNotifier:
+        case TestMode::kSetAndNotifier:
             run_set_and_notifier_provider(stop_token);
             return;
     }

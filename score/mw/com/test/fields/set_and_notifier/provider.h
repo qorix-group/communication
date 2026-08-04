@@ -14,26 +14,14 @@
 #ifndef SCORE_MW_COM_TEST_FIELDS_SET_AND_NOTIFIER_PROVIDER_H
 #define SCORE_MW_COM_TEST_FIELDS_SET_AND_NOTIFIER_PROVIDER_H
 
-#include <score/stop_token.hpp>
+#include "score/mw/com/test/fields/set_and_notifier/common_resources.h"
 
-#include <optional>
-#include <string_view>
+#include <score/stop_token.hpp>
 
 namespace score::mw::com::test
 {
 
-/// \brief Provider scenarios supported by this test application.
-enum class ProviderMode
-{
-    kNotifier,
-    kSetAndNotifier,
-};
-
-/// \brief Parses the mode string (as provided on the command line) into a ProviderMode.
-/// \return The corresponding ProviderMode, or std::nullopt if the string is not a recognized mode.
-std::optional<ProviderMode> ParseProviderMode(std::string_view mode);
-
-void run_provider(const score::cpp::stop_token& stop_token, ProviderMode mode);
+void run_provider(const score::cpp::stop_token& stop_token, TestMode mode);
 
 }  // namespace score::mw::com::test
 

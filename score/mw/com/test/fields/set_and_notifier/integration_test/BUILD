@@ -22,12 +22,19 @@ pkg_filegroup(
     ],
 )
 
+pkg_filegroup(
+    name = "same_process_filesystem",
+    srcs = [
+        "//score/mw/com/test/fields/set_and_notifier:consumer_and_provider-pkg",
+    ],
+)
+
 integration_test(
     name = "test_notifier",
     timeout = "moderate",
     srcs = [
         "test_fixture.py",
-        "test_notifier.py",
+        "test_notifier_different_process.py",
     ],
     filesystem = ":filesystem",
 )
@@ -37,7 +44,27 @@ integration_test(
     timeout = "moderate",
     srcs = [
         "test_fixture.py",
-        "test_set_and_notifier.py",
+        "test_set_and_notifier_different_process.py",
     ],
     filesystem = ":filesystem",
+)
+
+integration_test(
+    name = "test_notifier_same_process",
+    timeout = "moderate",
+    srcs = [
+        "test_fixture.py",
+        "test_notifier_same_process.py",
+    ],
+    filesystem = ":same_process_filesystem",
+)
+
+integration_test(
+    name = "test_set_and_notifier_same_process",
+    timeout = "moderate",
+    srcs = [
+        "test_fixture.py",
+        "test_set_and_notifier_same_process.py",
+    ],
+    filesystem = ":same_process_filesystem",
 )

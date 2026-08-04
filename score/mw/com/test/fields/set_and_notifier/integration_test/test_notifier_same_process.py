@@ -11,14 +11,10 @@
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
 
-from test_fixture import consumer, provider, FieldScenario
+from test_fixture import consumer_and_provider, FieldScenario
 
 
-def test_field_set_and_notifier_value(target):
-    """Test field set exchange and accepted value propagation between provider and consumer."""
-    with provider(target, FieldScenario.SET_AND_NOTIFIER, "mw_com_config.json"):
-        with consumer(target, FieldScenario.SET_AND_NOTIFIER, "mw_com_config.json"):
-            pass
-
-
-# TODO: Add a dedicated get scenario test once getter-enabled field mode is available.
+def test_field_notifier_same_process(target):
+    """Test notifier field flow when consumer and provider run in the same process."""
+    with consumer_and_provider(target, FieldScenario.NOTIFIER, "mw_com_config.json"):
+        pass

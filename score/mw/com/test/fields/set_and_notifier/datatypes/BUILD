@@ -11,11 +11,22 @@
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
 
-from test_fixture import consumer, provider, FieldScenario
+load("@rules_cc//cc:defs.bzl", "cc_library")
+load("@score_baselibs//score/language/safecpp:toolchain_features.bzl", "COMPILER_WARNING_FEATURES")
 
-
-def test_field_notifier_initial_value(target):
-    """Test field initial value exchange between provider and consumer."""
-    with provider(target, FieldScenario.NOTIFIER, "initial_only_field_mw_com_config.json"):
-        with consumer(target, FieldScenario.NOTIFIER, "initial_only_field_mw_com_config.json"):
-            pass
+cc_library(
+    name = "field_datatypes",
+    srcs = [
+        "notifier_only_enabled_field.cpp",
+        "set_and_notifier_enabled_field.cpp",
+    ],
+    hdrs = [
+        "notifier_only_enabled_field.h",
+        "set_and_notifier_enabled_field.h",
+    ],
+    features = COMPILER_WARNING_FEATURES,
+    visibility = ["//score/mw/com/test/fields/set_and_notifier:__pkg__"],
+    deps = [
+        "//score/mw/com",
+    ],
+)

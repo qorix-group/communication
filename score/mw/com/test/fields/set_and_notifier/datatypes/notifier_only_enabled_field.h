@@ -11,8 +11,8 @@
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
 
-#ifndef SCORE_MW_COM_TEST_FIELDS_SET_AND_NOTIFIER_INITIAL_ONLY_FIELD_H
-#define SCORE_MW_COM_TEST_FIELDS_SET_AND_NOTIFIER_INITIAL_ONLY_FIELD_H
+#ifndef SCORE_MW_COM_TEST_FIELDS_SET_AND_NOTIFIER_DATATYPES_NOTIFIER_ONLY_ENABLED_FIELD_H
+#define SCORE_MW_COM_TEST_FIELDS_SET_AND_NOTIFIER_DATATYPES_NOTIFIER_ONLY_ENABLED_FIELD_H
 
 #include "score/mw/com/types.h"
 #include <cstdint>
@@ -21,17 +21,18 @@ namespace score::mw::com::test
 {
 
 template <typename T>
-class InitialOnlyInterface : public T::Base
+class NotifierOnlyEnabledInterface : public T::Base
 {
   public:
     using T::Base::Base;
 
-    typename T::template Field<std::int32_t, WithNotifier> initial_only_field{*this, "initial_only_field"};
+    typename T::template Field<std::int32_t, WithNotifier> notifier_only_enabled_field{*this,
+                                                                                       "notifier_only_enabled_field"};
 };
 
-using InitialOnlyProxy = score::mw::com::AsProxy<InitialOnlyInterface>;
-using InitialOnlySkeleton = score::mw::com::AsSkeleton<InitialOnlyInterface>;
+using NotifierOnlyEnabledProxy = score::mw::com::AsProxy<NotifierOnlyEnabledInterface>;
+using NotifierOnlyEnabledSkeleton = score::mw::com::AsSkeleton<NotifierOnlyEnabledInterface>;
 
 }  // namespace score::mw::com::test
 
-#endif  // SCORE_MW_COM_TEST_FIELDS_SET_AND_NOTIFIER_INITIAL_ONLY_FIELD_H
+#endif  // SCORE_MW_COM_TEST_FIELDS_SET_AND_NOTIFIER_DATATYPES_NOTIFIER_ONLY_ENABLED_FIELD_H
