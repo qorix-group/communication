@@ -49,7 +49,7 @@ void UnixDomainServer::ServerConnection::AcceptConnection(UserData&& data,
     endpoint_.owner = &server_;
     endpoint_.fd = fd_;
     endpoint_.max_receive_size = server_.max_request_size_;
-    endpoint_.input = [this]() noexcept {
+    endpoint_.input = [this]() {
         if (!ProcessInput())
         {
             server_.engine_->UnregisterPosixEndpoint(endpoint_);

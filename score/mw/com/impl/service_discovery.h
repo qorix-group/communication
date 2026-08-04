@@ -84,7 +84,7 @@ class ServiceDiscovery final : public IServiceDiscovery
     /// This function is NOT threadsafe and should be called with container_mutex_ locked.
     void StoreInstanceIdentifier(const FindServiceHandle&, const EnrichedInstanceIdentifier&) noexcept;
 
-    IServiceDiscoveryClient& GetServiceDiscoveryClient(const InstanceIdentifier&) noexcept;
+    IServiceDiscoveryClient& GetServiceDiscoveryClient(const InstanceIdentifier&);
 
     /// \brief Call the binding specific StartFindService
     ///

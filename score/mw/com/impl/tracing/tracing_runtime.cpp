@@ -174,7 +174,7 @@ analysis::tracing::AraComMetaInfo CreateMetaInfo(
     const ServiceElementInstanceIdentifierView& service_element_instance_identifier,
     const TracingRuntime::TracePointType& trace_point_type,
     const std::optional<TracingRuntime::TracePointDataId> trace_point_data_id,
-    const IBindingTracingRuntime& binding_runtime) noexcept
+    const IBindingTracingRuntime& binding_runtime)
 {
     const analysis::tracing::TracePointType ext_trace_point_type = InternalToExternalTracePointType(trace_point_type);
     // Convert std::optional to score::cpp::optional for baselibs API compatibility

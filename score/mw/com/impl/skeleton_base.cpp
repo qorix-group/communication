@@ -148,7 +148,7 @@ score::Result<std::vector<utils::ScopeExit<>>> SkeletonBase::OfferServiceFields(
     return {std::move(offer_guards)};
 }
 
-auto SkeletonBase::OfferService() noexcept -> Result<void>
+auto SkeletonBase::OfferService() -> Result<void>
 {
     if (skeleton_mock_ != nullptr)
     {

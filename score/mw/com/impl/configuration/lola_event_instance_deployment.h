@@ -35,7 +35,7 @@ class LolaEventInstanceDeployment
                                          const bool enforce_max_samples,
                                          const TracingSlotSizeType number_of_tracing_slots) noexcept;
 
-    explicit LolaEventInstanceDeployment(const score::json::Object& json_object) noexcept;
+    explicit LolaEventInstanceDeployment(const score::json::Object& json_object);
 
     static LolaEventInstanceDeployment CreateFromJson(const score::json::Object& json_object);
 

@@ -47,7 +47,7 @@ LolaEventInstanceDeployment::LolaEventInstanceDeployment(std::optional<SampleSlo
 {
 }
 
-LolaEventInstanceDeployment::LolaEventInstanceDeployment(const score::json::Object& json_object) noexcept
+LolaEventInstanceDeployment::LolaEventInstanceDeployment(const score::json::Object& json_object)
     : LolaEventInstanceDeployment(LolaEventInstanceDeployment::CreateFromJson(json_object))
 {
 }

@@ -49,7 +49,7 @@ constexpr os::Stat::Mode ALL_PERMISSIONS{os::Stat::Mode::kReadWriteExecUser | os
 
 auto GetFlagFilePath(const EnrichedInstanceIdentifier& enriched_instance_identifier,
                      const FlagFile::Disambiguator disambiguator,
-                     const os::Unistd& unistd = os::internal::UnistdImpl{}) noexcept -> filesystem::Path
+                     const os::Unistd& unistd = os::internal::UnistdImpl{}) -> filesystem::Path
 {
     const auto pid = unistd.getpid();
 
@@ -60,7 +60,7 @@ auto GetFlagFilePath(const EnrichedInstanceIdentifier& enriched_instance_identif
     return GetSearchPathForIdentifier(enriched_instance_identifier) / file_name;
 }
 
-auto GetMatchingFlagFilePaths(const EnrichedInstanceIdentifier& enriched_instance_identifier) noexcept
+auto GetMatchingFlagFilePaths(const EnrichedInstanceIdentifier& enriched_instance_identifier)
     -> std::vector<filesystem::Path>
 {
     const auto search_path = GetSearchPathForIdentifier(enriched_instance_identifier);
@@ -181,7 +181,7 @@ FlagFile::~FlagFile()
 
 auto FlagFile::Make(EnrichedInstanceIdentifier enriched_instance_identifier,
                     Disambiguator offer_disambiguator,
-                    filesystem::Filesystem filesystem) noexcept -> score::Result<FlagFile>
+                    filesystem::Filesystem filesystem) -> score::Result<FlagFile>
 {
     const auto clearing_result = RemoveMatchingFlagFiles(enriched_instance_identifier, offer_disambiguator, filesystem);
     if (!clearing_result.has_value())

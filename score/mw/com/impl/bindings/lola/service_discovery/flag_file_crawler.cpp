@@ -40,7 +40,7 @@ namespace
 {
 
 QualityAwareContainer<KnownInstancesContainer> GetAlreadyExistingInstances(
-    std::vector<EnrichedInstanceIdentifier>& quality_unaware_identifiers_to_check) noexcept
+    std::vector<EnrichedInstanceIdentifier>& quality_unaware_identifiers_to_check)
 {
     QualityAwareContainer<KnownInstancesContainer> known_instances{};
     for (const auto& quality_unaware_identifier_to_check : quality_unaware_identifiers_to_check)
@@ -127,7 +127,7 @@ auto FlagFileCrawler::Crawl(const EnrichedInstanceIdentifier& enriched_instance_
     return std::get<1>(result.value());
 }
 
-auto FlagFileCrawler::CrawlAndWatch(const EnrichedInstanceIdentifier& enriched_instance_identifier) noexcept
+auto FlagFileCrawler::CrawlAndWatch(const EnrichedInstanceIdentifier& enriched_instance_identifier)
     -> score::Result<std::tuple<std::unordered_map<os::InotifyWatchDescriptor, EnrichedInstanceIdentifier>,
                                 QualityAwareContainer<KnownInstancesContainer>>>
 {

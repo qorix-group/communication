@@ -119,7 +119,7 @@ class InstanceIdentifier final
      * \param rhs The second instance to check for equality
      * \return true if other and *this equal, false otherwise
      */
-    friend bool operator==(const InstanceIdentifier& lhs, const InstanceIdentifier& rhs) noexcept;
+    friend bool operator==(const InstanceIdentifier& lhs, const InstanceIdentifier& rhs);
 
     /**
      * \api
@@ -129,7 +129,7 @@ class InstanceIdentifier final
      * \param rhs The second InstanceIdentifier instance to compare
      * \return true if *this is less then other, false otherwise
      */
-    friend bool operator<(const InstanceIdentifier& lhs, const InstanceIdentifier& rhs) noexcept;
+    friend bool operator<(const InstanceIdentifier& lhs, const InstanceIdentifier& rhs);
 
   private:
     const ServiceInstanceDeployment* instance_deployment_;
@@ -150,14 +150,14 @@ class InstanceIdentifier final
      * @param version version info
      * @param deployment deployment info
      */
-    explicit InstanceIdentifier(const ServiceInstanceDeployment&, const ServiceTypeDeployment&) noexcept;
+    explicit InstanceIdentifier(const ServiceInstanceDeployment&, const ServiceTypeDeployment&);
 
     static void SetConfiguration(Configuration* const configuration) noexcept
     {
         InstanceIdentifier::configuration_ = configuration;
     }
 
-    json::Object Serialize() const noexcept;
+    json::Object Serialize() const;
 
     /**
      * @brief serialized format of this InstanceIdentifier instance

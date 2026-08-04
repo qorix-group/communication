@@ -75,7 +75,7 @@ class ProxyFieldBase : public EnableReferenceToMoveableFromThis<ProxyFieldBase>
      */
     /// \{
   protected:
-    Result<void> Subscribe(const std::size_t max_sample_count) noexcept
+    Result<void> Subscribe(const std::size_t max_sample_count)
     {
         SCORE_LANGUAGE_FUTURECPP_PRECONDITION_PRD(proxy_event_base_dispatch_ != nullptr);
         return proxy_event_base_dispatch_->Subscribe(max_sample_count);

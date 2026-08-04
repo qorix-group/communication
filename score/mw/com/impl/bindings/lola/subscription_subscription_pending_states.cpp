@@ -54,7 +54,7 @@ Result<void> SubscriptionPendingState::SubscribeEvent(const std::size_t max_samp
     }
 }
 
-void SubscriptionPendingState::UnsubscribeEvent() noexcept
+void SubscriptionPendingState::UnsubscribeEvent()
 {
     // Unsubscribe functionality will be done in NotSubscribedState::OnEntry() which will be called synchronously by
     // TransitionToState. We do this to avoid code duplication between SubscriptionPendingState::UnsubscribeEvent() and

@@ -62,7 +62,7 @@ class GenericProxyEvent final : public GenericProxyEventBinding
 
     SubscriptionState GetSubscriptionState() const noexcept override;
     Result<std::size_t> GetNumNewSamplesAvailable() const noexcept override;
-    Result<std::size_t> GetNewSamples(Callback&& receiver, TrackerGuardFactory& tracker) noexcept override;
+    Result<std::size_t> GetNewSamples(Callback&& receiver, TrackerGuardFactory& tracker) override;
     std::size_t GetSampleSize() const noexcept override;
     bool HasSerializedFormat() const noexcept override;
 
@@ -82,7 +82,7 @@ class GenericProxyEvent final : public GenericProxyEventBinding
 
   private:
     Result<std::size_t> GetNewSamplesImpl(Callback&& receiver, TrackerGuardFactory& tracker);
-    Result<std::size_t> GetNumNewSamplesAvailableImpl() const noexcept;
+    Result<std::size_t> GetNumNewSamplesAvailableImpl() const;
 
     ProxyEventCommon proxy_event_common_;
     const EventMetaInfo& meta_info_;

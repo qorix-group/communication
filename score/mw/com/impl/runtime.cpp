@@ -126,7 +126,7 @@ void Runtime::Initialize(const runtime::RuntimeConfiguration& runtime_configurat
     score::cpp::ignore = initialization_config_.emplace(std::move(config));
 }
 
-auto Runtime::getInstance() noexcept -> IRuntime&
+auto Runtime::getInstance() -> IRuntime&
 {
     if (mock_ != nullptr)
     {

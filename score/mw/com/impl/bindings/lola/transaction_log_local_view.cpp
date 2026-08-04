@@ -173,7 +173,7 @@ void TransactionLogLocalView::DereferenceTransactionCommit(SlotIndexType slot_in
 }
 
 Result<void> TransactionLogLocalView::RollbackProxyElementLog(const DereferenceSlotCallback& dereference_slot_callback,
-                                                              const UnsubscribeCallback& unsubscribe_callback) noexcept
+                                                              const UnsubscribeCallback& unsubscribe_callback)
 {
     const bool was_no_subscribe_recorded{!subscribe_transactions_.get().GetTransactionBegin() &&
                                          !subscribe_transactions_.get().GetTransactionEnd()};

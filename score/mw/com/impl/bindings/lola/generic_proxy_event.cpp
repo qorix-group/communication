@@ -63,7 +63,7 @@ inline Result<std::size_t> GenericProxyEvent::GetNumNewSamplesAvailable() const 
     return GetNumNewSamplesAvailableImpl();
 }
 
-inline Result<std::size_t> GenericProxyEvent::GetNewSamples(Callback&& receiver, TrackerGuardFactory& tracker) noexcept
+inline Result<std::size_t> GenericProxyEvent::GetNewSamples(Callback&& receiver, TrackerGuardFactory& tracker)
 {
     /// In case of LoLa binding we can also dispatch to GetNewSamplesImpl() in case of kSubscriptionPending!
     /// Because a pre-condition to kSubscriptionPending is that we once had a successful subscription... and then we can
@@ -123,7 +123,7 @@ std::optional<std::uint16_t> GenericProxyEvent::GetMaxSampleCount() const noexce
     return proxy_event_common_.GetMaxSampleCount();
 }
 
-Result<std::size_t> GenericProxyEvent::GetNumNewSamplesAvailableImpl() const noexcept
+Result<std::size_t> GenericProxyEvent::GetNumNewSamplesAvailableImpl() const
 {
     return proxy_event_common_.GetNumNewSamplesAvailable();
 }

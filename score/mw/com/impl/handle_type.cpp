@@ -49,7 +49,7 @@ ServiceInstanceId ExtractInstanceId(std::optional<ServiceInstanceId> instance_id
 
 }  // namespace
 
-HandleType::HandleType(InstanceIdentifier identifier, std::optional<ServiceInstanceId> instance_id) noexcept
+HandleType::HandleType(InstanceIdentifier identifier, std::optional<ServiceInstanceId> instance_id)
     : identifier_{std::move(identifier)}, instance_id_{ExtractInstanceId(instance_id, identifier_)}
 {
 }
@@ -71,12 +71,12 @@ auto HandleType::GetServiceTypeDeployment() const noexcept -> const ServiceTypeD
     return instance_id.GetServiceTypeDeployment();
 }
 
-auto operator==(const HandleType& lhs, const HandleType& rhs) noexcept -> bool
+auto operator==(const HandleType& lhs, const HandleType& rhs) -> bool
 {
     return ((lhs.identifier_ == rhs.identifier_) && (lhs.instance_id_ == rhs.instance_id_));
 }
 
-auto operator<(const HandleType& lhs, const HandleType& rhs) noexcept -> bool
+auto operator<(const HandleType& lhs, const HandleType& rhs) -> bool
 {
     return std::tie(lhs.identifier_, lhs.instance_id_) < std::tie(rhs.identifier_, rhs.instance_id_);
 }

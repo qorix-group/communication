@@ -290,7 +290,7 @@ auto ServiceDiscovery::StoreInstanceIdentifier(const FindServiceHandle& find_ser
                                                       std::forward_as_tuple(enriched_instance_identifier));
 }
 
-auto ServiceDiscovery::GetServiceDiscoveryClient(const InstanceIdentifier& instance_identifier) noexcept
+auto ServiceDiscovery::GetServiceDiscoveryClient(const InstanceIdentifier& instance_identifier)
     -> IServiceDiscoveryClient&
 {
     InstanceIdentifierView instance_identifier_view{instance_identifier};
