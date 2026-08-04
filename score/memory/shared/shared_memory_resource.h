@@ -22,7 +22,6 @@
 #include "score/os/fcntl.h"
 #include "score/os/mman.h"
 #include "score/os/stat.h"
-#include "score/os/utils/interprocess/interprocess_mutex.h"
 
 #include <score/expected.hpp>
 #include <score/memory_resource.hpp>
