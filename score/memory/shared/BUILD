@@ -114,8 +114,6 @@ cc_library(
         "@score_baselibs//score/os:stat",
         "@score_baselibs//score/os:unistd",
         "@score_baselibs//score/os/utils/acl",
-        # TODO Hacky
-        "@score_baselibs//score/os/utils/interprocess:interprocess_notification",
     ],
 )
 
