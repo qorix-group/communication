@@ -1360,11 +1360,11 @@ TEST_P(SkeletonRegisterParamaterisedFixture, ValidEventMetaInfoExistAfterEventIs
     ASSERT_TRUE(event_foo_meta_info_ptr.has_value());
     ASSERT_TRUE(event_dumb_meta_info_ptr.has_value());
     // and they have the expected properties
-    ASSERT_EQ(event_foo_meta_info_ptr->data_type_info_.size, sizeof(std::uint8_t));
-    ASSERT_EQ(event_foo_meta_info_ptr->data_type_info_.alignment, alignof(std::uint8_t));
+    ASSERT_EQ(event_foo_meta_info_ptr->data_type_info_.Size(), sizeof(std::uint8_t));
+    ASSERT_EQ(event_foo_meta_info_ptr->data_type_info_.Alignment(), alignof(std::uint8_t));
 
-    ASSERT_EQ(event_dumb_meta_info_ptr->data_type_info_.size, sizeof(VeryComplexType));
-    ASSERT_EQ(event_dumb_meta_info_ptr->data_type_info_.alignment, alignof(VeryComplexType));
+    ASSERT_EQ(event_dumb_meta_info_ptr->data_type_info_.Size(), sizeof(VeryComplexType));
+    ASSERT_EQ(event_dumb_meta_info_ptr->data_type_info_.Alignment(), alignof(VeryComplexType));
 
     const auto GetEventSlotsArraySize = [](const std::size_t sample_size,
                                            const std::size_t sample_alignment,
@@ -1374,13 +1374,13 @@ TEST_P(SkeletonRegisterParamaterisedFixture, ValidEventMetaInfoExistAfterEventIs
         return aligned_size * number_of_sample_slots;
     };
 
-    const auto foo_event_slots_size = GetEventSlotsArraySize(event_foo_meta_info_ptr->data_type_info_.size,
-                                                             event_foo_meta_info_ptr->data_type_info_.alignment,
+    const auto foo_event_slots_size = GetEventSlotsArraySize(event_foo_meta_info_ptr->data_type_info_.Size(),
+                                                             event_foo_meta_info_ptr->data_type_info_.Alignment(),
                                                              test::kDefaultEventProperties.GetTotalNumberOfSlots());
     ASSERT_EQ(event_foo_meta_info_ptr->event_slots_raw_array_.get(foo_event_slots_size), foo_event_data_storage);
 
-    const auto dumb_event_slots_size = GetEventSlotsArraySize(event_foo_meta_info_ptr->data_type_info_.size,
-                                                              event_foo_meta_info_ptr->data_type_info_.alignment,
+    const auto dumb_event_slots_size = GetEventSlotsArraySize(event_foo_meta_info_ptr->data_type_info_.Size(),
+                                                              event_foo_meta_info_ptr->data_type_info_.Alignment(),
                                                               test::kDefaultEventProperties.GetTotalNumberOfSlots());
     ASSERT_EQ(event_dumb_meta_info_ptr->event_slots_raw_array_.get(dumb_event_slots_size), dumb_event_data_storage);
 

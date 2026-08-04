@@ -23,6 +23,7 @@
 #include "score/mw/com/impl/configuration/quality_type.h"
 #include "score/mw/com/impl/skeleton_binding.h"
 
+#include "score/memory/data_type_size_info.h"
 #include "score/memory/shared/polymorphic_offset_ptr_allocator.h"
 
 #include <score/assert.hpp>
@@ -206,7 +207,7 @@ class SkeletonMemoryManager final
                                                           const SkeletonEventProperties& element_properties);
 
     EventMetaInfo& EmplaceEventMetaInfo(const ElementFqId element_fq_id,
-                                        const DataTypeMetaInfo& sample_meta_info,
+                                        const memory::DataTypeSizeInfo& sample_meta_info,
                                         void* type_erased_event_data_storage);
 
     QualityType quality_type_;
@@ -243,7 +244,7 @@ auto SkeletonMemoryManager::CreateEventDataInCreatedSharedMemory(const ElementFq
 {
     auto& event_data_storage = EmplaceEventDataStorage<SampleType>(element_fq_id, element_properties);
 
-    constexpr DataTypeMetaInfo sample_meta_info{sizeof(SampleType), static_cast<std::uint8_t>(alignof(SampleType))};
+    constexpr memory::DataTypeSizeInfo sample_meta_info{sizeof(SampleType), alignof(SampleType)};
     auto* const event_data_raw_array = event_data_storage.data();
     score::cpp::ignore = EmplaceEventMetaInfo(element_fq_id, sample_meta_info, event_data_raw_array);
 

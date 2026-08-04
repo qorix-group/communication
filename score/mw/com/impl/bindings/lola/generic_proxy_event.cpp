@@ -79,7 +79,7 @@ inline Result<std::size_t> GenericProxyEvent::GetNewSamples(Callback&& receiver,
 
 std::size_t GenericProxyEvent::GetSampleSize() const noexcept
 {
-    return meta_info_.data_type_info_.size;
+    return meta_info_.data_type_info_.Size();
 }
 
 bool GenericProxyEvent::HasSerializedFormat() const noexcept
@@ -140,8 +140,8 @@ Result<std::size_t> GenericProxyEvent::GetNewSamplesImpl(Callback&& receiver, Tr
 
     auto& event_data_control_local = proxy_event_common_.GetConsumerEventDataControlLocal();
 
-    const std::size_t sample_size = meta_info_.data_type_info_.size;
-    const std::size_t sample_alignment = meta_info_.data_type_info_.alignment;
+    const std::size_t sample_size = meta_info_.data_type_info_.Size();
+    const std::size_t sample_alignment = meta_info_.data_type_info_.Alignment();
     const std::size_t aligned_size =
         memory::shared::CalculateAlignedSize(sample_size, static_cast<std::size_t>(sample_alignment));
 

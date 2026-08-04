@@ -241,7 +241,7 @@ cc_library(
     ],
     deps = [
         "//score/memory/shared",
-        "//score/mw/com/impl:data_type_meta_info",
+        "@score_baselibs//score/memory:data_type_size_info",
     ],
 )
 
