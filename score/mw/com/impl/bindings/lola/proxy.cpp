@@ -300,7 +300,7 @@ void AppendEnabledFieldIdsAndQueueSizes(
             {
                 continue;
             }
-            const bool is_enabled_in_deployment = method_type == MethodType::kGet
+            const bool is_enabled_in_deployment = (method_type == MethodType::kGet)
                                                       ? method_deployment.use_get_if_available_
                                                       : method_deployment.use_set_if_available_;
             if (!is_enabled_in_deployment)
