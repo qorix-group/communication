@@ -47,7 +47,7 @@ class FlagFile
     /// exist.
     static auto Make(EnrichedInstanceIdentifier enriched_instance_identifier,
                      Disambiguator offer_disambiguator,
-                     filesystem::Filesystem filesystem) noexcept -> score::Result<FlagFile>;
+                     filesystem::Filesystem filesystem) -> score::Result<FlagFile>;
 
     FlagFile(const FlagFile&) = delete;
     FlagFile(FlagFile&&) noexcept;
