@@ -14,19 +14,25 @@
 #ifndef SCORE_MW_COM_TEST_FIELDS_SET_AND_NOTIFIER_TEST_CONSTANTS_H
 #define SCORE_MW_COM_TEST_FIELDS_SET_AND_NOTIFIER_TEST_CONSTANTS_H
 
+#include "score/mw/com/types.h"
+
 #include <cstddef>
 #include <cstdint>
+#include <string>
 
 namespace score::mw::com::test
 {
 
 constexpr const char* const kInstanceSpecifierString = "/score/mw/com/test/fields/set_and_get_and_notifier_instance";
+const std::string kConsumerDoneShmPath{"/fields_notifier_consumer_done"};
+const std::string kSetDoneShmPath{"/fields_notifier_set_done"};
+const auto kInstanceSpecifier = InstanceSpecifier::Create(std::string{kInstanceSpecifierString}).value();
 
 constexpr std::int32_t kInitialValue = 18;
 constexpr std::int32_t kSetRequestValue = 1234;
 constexpr std::int32_t kUpdatedValue = 19;
 
-constexpr std::size_t kTotalNumValuesToSend = 3U;
+constexpr std::size_t kTotalNumValuesToSend = 4U;
 
 }  // namespace score::mw::com::test
 

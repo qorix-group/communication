@@ -38,18 +38,42 @@ namespace score::mw::com::test
 namespace
 {
 
-const std::string kNotifierConsumerDoneShmPath{"/fields_notifier_consumer_done"};
-const std::string kSetAndNotifierConsumerDoneShmPath{"/fields_set_and_notifier_consumer_done"};
+template <typename ProxyFieldType>
+void CallGetAndCheckValue(ProxyFieldType& proxy_field, const std::int32_t expected_value)
+{
+    const auto get_result = proxy_field.Get();
+    if (!get_result.has_value())
+    {
+        FailTest("Consumer: Get() failed: ", get_result.error());
+    }
+    if (*(get_result.value()) != expected_value)
+    {
+        FailTest("Consumer: Get() returned ", *(get_result.value()), " but expected ", expected_value);
+    }
+    std::cout << "\nConsumer: Get() returned expected value " << expected_value << std::endl;
+}
 
-// InstanceSpecifier::Create can only fail if the provided string is invalid.
-// Verified once here; all test functions reuse this constant.
-const InstanceSpecifier kInstanceSpecifier = InstanceSpecifier::Create(std::string{kInstanceSpecifierString}).value();
-
-}  // namespace
+template <typename ProxyFieldType>
+void CallSetAndCheckReturnValue(ProxyFieldType& proxy_field,
+                                const std::int32_t set_request_value,
+                                const std::int32_t expected_accepted_value)
+{
+    const auto set_result = proxy_field.Set(set_request_value);
+    if (!set_result.has_value())
+    {
+        FailTest("Consumer: Set() failed: ", set_result.error());
+    }
+    const std::int32_t accepted_value = *(set_result.value());
+    if (accepted_value != expected_accepted_value)
+    {
+        FailTest("Consumer: Set() returned accepted value ", accepted_value, " but expected ", expected_accepted_value);
+    }
+    std::cout << "\nConsumer: Set() returned expected accepted value " << accepted_value << std::endl;
+}
 
 void run_notifier_consumer(const score::cpp::stop_token& stop_token)
 {
-    auto done_synchronizer_result = ProcessSynchronizer::Create(kNotifierConsumerDoneShmPath);
+    auto done_synchronizer_result = ProcessSynchronizer::Create(kConsumerDoneShmPath);
     if (!done_synchronizer_result.has_value())
     {
         FailTest("Consumer: Could not create done ProcessSynchronizer");
@@ -89,39 +113,28 @@ void run_notifier_consumer(const score::cpp::stop_token& stop_token)
 
     // Step 6. Wait for all expected samples
     std::cout << "\nConsumer: Step 6 - Wait for all expected samples" << std::endl;
-    std::size_t sample_index{0U};
-    auto get_sent_samples_callback = [&sample_index](const auto& sample_ptr) noexcept {
-        const auto expected_value =
-            sample_index == 0U ? kInitialValue : kUpdatedValue + static_cast<std::int32_t>(sample_index - 1U);
-        const auto& received_value = *sample_ptr;
-        if (received_value != expected_value)
-        {
-            FailTest("Consumer: Received unexpected value. Expected: ",
-                     expected_value,
-                     ". Received: ",
-                     received_value,
-                     " for sample index: ",
-                     sample_index);
-        }
-        ++sample_index;
-    };
-    if (!field_receiver.WaitForSamples(stop_token, kTotalNumValuesToSend, std::move(get_sent_samples_callback)))
+    const std::vector<std::int32_t> values_to_receive = {kInitialValue, 20, 30, 35};
+    if (!field_receiver.WaitForSamples(stop_token, values_to_receive))
     {
         FailTest("Consumer: Did not receive all expected samples in notifier scenario");
     }
-
-    proxy.notifier_only_enabled_field.Unsubscribe();
 }
 
 void run_set_and_notifier_consumer(const score::cpp::stop_token& stop_token)
 {
-    auto process_synchronizer_result = ProcessSynchronizer::Create(kSetAndNotifierConsumerDoneShmPath);
+    auto process_synchronizer_result = ProcessSynchronizer::Create(kConsumerDoneShmPath);
     if (!process_synchronizer_result.has_value())
     {
         FailTest("Consumer: Could not create ProcessSynchronizer");
     }
-    ExitFunctionGuard process_synchronizer_guard{[&process_synchronizer_result]() {
+    auto set_done_synchronizer_result = ProcessSynchronizer::Create(kSetDoneShmPath);
+    if (!set_done_synchronizer_result.has_value())
+    {
+        FailTest("Consumer: Could not create set-done ProcessSynchronizer");
+    }
+    ExitFunctionGuard process_synchronizer_guard{[&process_synchronizer_result, &set_done_synchronizer_result]() {
         process_synchronizer_result->Notify();
+        set_done_synchronizer_result->Notify();
     }};
 
     // Step 1. Find service and create proxy
@@ -140,10 +153,14 @@ void run_set_and_notifier_consumer(const score::cpp::stop_token& stop_token)
 
     // Step 4. Subscribe to field with enough buffer for all samples the provider will send
     std::cout << "\nConsumer: Step 4 - Subscribe to field" << std::endl;
-    std::ignore = proxy.set_and_notifier_enabled_field.Subscribe(kTotalNumValuesToSend);
+    const auto subscribe_result = proxy.set_and_notifier_enabled_field.Subscribe(kTotalNumValuesToSend);
+    if (!subscribe_result.has_value())
+    {
+        FailTest("Consumer: Subscribe failed in set_and_notifier scenario: ", subscribe_result.error());
+    }
 
     // Step 5. Wait for subscription
-    std::cout << "\nConsumer: Step 5 - Wait for subscription and verify initial value" << std::endl;
+    std::cout << "\nConsumer: Step 5 - Wait for subscription" << std::endl;
     if (!subscription_notifier.WaitForStateChange(stop_token, SubscriptionState::kSubscribed))
     {
         FailTest("Consumer: Subscription failed in set scenario");
@@ -151,58 +168,33 @@ void run_set_and_notifier_consumer(const score::cpp::stop_token& stop_token)
 
     // Step 6. Wait for all expected samples
     std::cout << "\nConsumer: Step 6 - Wait for all expected samples" << std::endl;
-    std::size_t sample_index{0U};
-    auto get_sent_samples_callback = [&sample_index](const auto& sample_ptr) noexcept {
-        const auto expected_value =
-            sample_index == 0U ? kInitialValue : kUpdatedValue + static_cast<std::int32_t>(sample_index - 1U);
-        const auto& received_value = *sample_ptr;
-        if (received_value != expected_value)
-        {
-            FailTest("Consumer: Received unexpected value. Expected: ",
-                     expected_value,
-                     ". Received: ",
-                     received_value,
-                     " for sample index: ",
-                     sample_index);
-        }
-        ++sample_index;
-    };
-    if (!field_receiver.WaitForSamples(stop_token, kTotalNumValuesToSend, std::move(get_sent_samples_callback)))
+    const std::vector<std::int32_t> first_values_to_receive = {kInitialValue, 20, 30, 35};
+    if (!field_receiver.WaitForSamples(stop_token, first_values_to_receive))
     {
         FailTest("Consumer: Did not receive all expected samples in notifier scenario");
     }
 
     // Step 7. Set new field value and verify accepted value matches expected transformed value
     std::cout << "\nConsumer: Step 7 - Set field value and verify accepted value" << std::endl;
-    const auto set_result = proxy.set_and_notifier_enabled_field.Set(kSetRequestValue);
-    if (!set_result.has_value())
-    {
-        FailTest("Consumer: Set call failed: ", set_result.error());
-    }
-    const std::int32_t accepted_value = *(set_result.value());
+    const auto expected_accepted_set_value = (kSetRequestValue * 2) + 1;
+    CallSetAndCheckReturnValue(proxy.set_and_notifier_enabled_field, kSetRequestValue, expected_accepted_set_value);
 
-    if (accepted_value != (kSetRequestValue * 2) + 1)
+    // Step 8. Notify provider that Set() was called
+    std::cout << "\nConsumer: Step 8 - Notify provider that Set() was verified" << std::endl;
+    set_done_synchronizer_result->Notify();
+
+    // Step 9. Wait for additional samples sent after the provider receives the set-complete signal
+    std::cout << "\nConsumer: Step 9 - Wait for all expected samples" << std::endl;
+    const std::vector<std::int32_t> second_values_to_receive = {expected_accepted_set_value, 10, 100};
+    if (!field_receiver.WaitForSamples(stop_token, second_values_to_receive))
     {
-        FailTest("Consumer: Set accepted value mismatch. Expected ",
-                 (kSetRequestValue * 2) + 1,
-                 " but got ",
-                 accepted_value);
+        FailTest("Consumer: Did not receive all expected samples in notifier scenario");
     }
 
-    // Step 8. Verify transformed value received via field notification
-    std::cout << "\nConsumer: Step 8 - Verify transformed value via field notification" << std::endl;
-    auto get_set_sample_callback = [](const auto& sample_ptr) noexcept {
-        if (*sample_ptr != (kSetRequestValue * 2) + 1)
-        {
-            FailTest("Consumer: Did not receive transformed value ", (kSetRequestValue * 2) + 1, " after Set call");
-        }
-    };
-    if (!field_receiver.WaitForSamples(stop_token, 1U, std::move(get_set_sample_callback)))
-    {
-        FailTest("Consumer: Did not receive transformed value ", (kSetRequestValue * 2) + 1, " after Set call");
-    }
     proxy.set_and_notifier_enabled_field.Unsubscribe();
 }
+
+}  // namespace
 
 void run_consumer(const score::cpp::stop_token& stop_token, TestMode mode)
 {

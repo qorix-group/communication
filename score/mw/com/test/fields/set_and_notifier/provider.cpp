@@ -28,18 +28,16 @@ namespace score::mw::com::test
 namespace
 {
 
-const std::string kNotifierConsumerDoneShmPath{"/fields_notifier_consumer_done"};
-const std::string kSetAndNotifierConsumerDoneShmPath{"/fields_set_and_notifier_consumer_done"};
-
-// InstanceSpecifier::Create can only fail if the provided string is invalid.
-// Verified once here; all test functions reuse this constant.
-const InstanceSpecifier kInstanceSpecifier = InstanceSpecifier::Create(std::string{kInstanceSpecifierString}).value();
+void ValueTransformSetHandler(std::int32_t& value) noexcept
+{
+    value = (value * 2) + 1;
+}
 
 void run_notifier_provider(const score::cpp::stop_token& stop_token)
 {
     // Step 1. Create process synchronizer
     std::cout << "\nProvider: Step 1 - Create process synchronizer" << std::endl;
-    auto done_synchronizer_result = ProcessSynchronizer::Create(kNotifierConsumerDoneShmPath);
+    auto done_synchronizer_result = ProcessSynchronizer::Create(kConsumerDoneShmPath);
     if (!done_synchronizer_result.has_value())
     {
         FailTest("Provider: Could not create done ProcessSynchronizer");
@@ -68,10 +66,10 @@ void run_notifier_provider(const score::cpp::stop_token& stop_token)
 
     // Step 5. Update field with updated value
     std::cout << "\nProvider: Step 5 - Update field with updated value" << std::endl;
-    for (std::size_t i = 0; i < kTotalNumValuesToSend - 1U; ++i)
+    const std::vector<std::int32_t> values_to_send = {20, 30, 35};
+    for (auto value_to_send : values_to_send)
     {
-        const auto update_result =
-            service.notifier_only_enabled_field.Update(kUpdatedValue + static_cast<std::int32_t>(i));
+        const auto update_result = service.notifier_only_enabled_field.Update(value_to_send);
         if (!update_result.has_value())
         {
             FailTest("Provider: Unable to update field with updated value: ", update_result.error());
@@ -84,20 +82,21 @@ void run_notifier_provider(const score::cpp::stop_token& stop_token)
     {
         FailTest("Provider: WaitWithAbort (done) was stopped by stop_token instead of notification");
     }
-
-    // Step 7. Stop offering service
-    std::cout << "\nProvider: Step 7 - Stop offering service" << std::endl;
-    service.StopOfferService();
 }
 
 void run_set_and_notifier_provider(const score::cpp::stop_token& stop_token)
 {
     // Step 1. Create process synchronizer
     std::cout << "\nProvider: Step 1 - Create process synchronizer" << std::endl;
-    auto process_synchronizer_result = ProcessSynchronizer::Create(kSetAndNotifierConsumerDoneShmPath);
+    auto process_synchronizer_result = ProcessSynchronizer::Create(kConsumerDoneShmPath);
     if (!process_synchronizer_result.has_value())
     {
         FailTest("Provider: Could not create ProcessSynchronizer");
+    }
+    auto set_done_synchronizer_result = ProcessSynchronizer::Create(kSetDoneShmPath);
+    if (!set_done_synchronizer_result.has_value())
+    {
+        FailTest("Provider: Could not create set-done ProcessSynchronizer");
     }
 
     // Step 2. Create skeleton
@@ -111,7 +110,7 @@ void run_set_and_notifier_provider(const score::cpp::stop_token& stop_token)
     std::cout << "\nProvider: Step 3 - Register set handler" << std::endl;
     const auto register_handler_result =
         service.set_and_notifier_enabled_field.RegisterSetHandler([](std::int32_t& value) noexcept {
-            value = (value * 2) + 1;
+            ValueTransformSetHandler(value);
         });
     if (!register_handler_result.has_value())
     {
@@ -130,27 +129,50 @@ void run_set_and_notifier_provider(const score::cpp::stop_token& stop_token)
     std::cout << "\nProvider: Step 5 - Offer service" << std::endl;
     skeleton_container.OfferService("set_and_notifier");
 
-    // Step 6. Update field with updated value
+    // Step 6. Update field with updated values
     std::cout << "\nProvider: Step 6 - Update field with updated value" << std::endl;
-    for (std::size_t i = 0; i < kTotalNumValuesToSend - 1U; ++i)
     {
-        const auto update_result =
-            service.set_and_notifier_enabled_field.Update(kUpdatedValue + static_cast<std::int32_t>(i));
-        if (!update_result.has_value())
+        const std::vector<std::int32_t> values_to_send = {20, 30, 35};
+        for (auto value_to_send : values_to_send)
         {
-            FailTest("Provider: Unable to update field with updated value: ", update_result.error());
+            const auto update_result = service.set_and_notifier_enabled_field.Update(value_to_send);
+            if (!update_result.has_value())
+            {
+                FailTest("Provider: Unable to update field with updated value: ", update_result.error());
+            }
         }
     }
 
-    // Step 7. Wait for consumer done notification
-    std::cout << "\nProvider: Step 7 - Wait for consumer done notification" << std::endl;
+    // Step 7. Wait for consumer to finish Set() and verify the accepted value
+    std::cout << "\nProvider: Step 7 - Wait for consumer set completion" << std::endl;
+    if (!set_done_synchronizer_result->WaitWithAbort(stop_token))
+    {
+        FailTest("Provider: WaitWithAbort (set-done) was stopped by stop_token");
+    }
+
+    // Step 8. Update field with updated values
+    std::cout << "\nProvider: Step 8 - Update field with updated value" << std::endl;
+    {
+        const std::vector<std::int32_t> values_to_send = {10, 100};
+        for (auto value_to_send : values_to_send)
+        {
+            const auto update_result = service.set_and_notifier_enabled_field.Update(value_to_send);
+            if (!update_result.has_value())
+            {
+                FailTest("Provider: Unable to update field with updated value: ", update_result.error());
+            }
+        }
+    }
+
+    // Step 9. Wait for consumer done notification
+    std::cout << "\nProvider: Step 9 - Wait for consumer done notification" << std::endl;
     if (!process_synchronizer_result->WaitWithAbort(stop_token))
     {
         FailTest("Provider: WaitWithAbort was stopped by stop_token instead of notification");
     }
 
-    // Step 8. Stop offering service
-    std::cout << "\nProvider: Step 8 - Stop offering service" << std::endl;
+    // Step 10. Stop offering service
+    std::cout << "\nProvider: Step 10 - Stop offering service" << std::endl;
     service.StopOfferService();
 }
 
