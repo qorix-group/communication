@@ -5,7 +5,7 @@ an abstraction layer is introduced.
 ## Use Cases / Customer Functions
 There are no direct Customer Functions associated with this part of `ara::core`.
 This is caused by the fact that the shared memory abstraction represents an implementation detail,
-which is necessary to fulfill the [Basic Architectural thoughts](../../../../mw/com/design/README.md) of `ara::com`.
+which is necessary to fulfill the [Basic Architectural thoughts](../../../mw/com/design/README.md) of `ara::com`.
 
 In fact, the usage of shared memory or its allocators shall be fully transparent for a user of the `ara`-API.
 
