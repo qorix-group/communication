@@ -19,6 +19,7 @@
 #include "score/mw/com/test/common_test_resources/big_datatype.h"
 #include "score/mw/com/test/common_test_resources/stop_token_sig_term_handler.h"
 #include "score/mw/com/types.h"
+#include "score/string_manipulation/arguments/arguments.h"
 
 #include <score/jthread.hpp>
 #include <score/stop_token.hpp>
@@ -113,7 +114,7 @@ int main(int argc, const char** argv)
         return EXIT_FAILURE;
     }
 
-    score::mw::com::runtime::InitializeRuntime(argc, argv);
+    score::mw::com::runtime::InitializeRuntime(score::string_manipulation::GetArguments(argc, argv));
 
     const auto instance_specifier_result =
         score::mw::com::InstanceSpecifier::Create(std::string{"score/cp60/MapApiLanesStamped"});
