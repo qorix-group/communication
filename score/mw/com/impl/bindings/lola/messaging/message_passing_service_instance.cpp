@@ -46,6 +46,7 @@
 #include <cstring>
 #include <exception>
 #include <functional>
+#include <limits>
 #include <memory>
 #include <mutex>
 #include <set>
@@ -918,7 +919,17 @@ void MessagePassingServiceInstance::NotifyEventRemote(const ElementFqId event_id
             // previous condition will be true only if the distance between current node id and last node id in the map
             // is more than one. So, no way for overflow.
             // coverity[autosar_cpp14_a4_7_1_violation]
-            start_node_id = nodeIdentifiersTmp.back() + 1;
+            const pid_t last_node_id = nodeIdentifiersTmp.back();
+            if (last_node_id < std::numeric_limits<pid_t>::max())
+            {
+                start_node_id = last_node_id + 1;
+            }
+            else
+            {
+                // last_node_id already holds the maximum representable pid_t; no larger node id can exist, so
+                // there is nothing left to copy in a further iteration.
+                break;
+            }
         }
     } while (num_ids_copied.second == true);
 
