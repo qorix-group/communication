@@ -379,6 +379,11 @@ void ClientConnection::TryConnect() noexcept
         }
         std::int32_t retry_delay = connect_retry_ms_;
 
+        // kConnectRetryT is a positive compile-time constant, so it can never be 0 or -1; this guarantees the
+        // division below can never hit the undefined-behavior case of dividend == INT64_MIN with divisor == -1,
+        // nor divide by zero.
+        static_assert(kConnectRetryT > 0,
+                      "kConnectRetryT must be a positive divisor to avoid overflow/underflow in division.");
         const auto retry_increase_ms =
             (static_cast<std::int64_t>(connect_retry_ms_) + static_cast<std::int64_t>(kConnectRetryT) - 1) /
             static_cast<std::int64_t>(kConnectRetryT);
