@@ -394,9 +394,13 @@ void ClientConnection::TryConnect() noexcept
             const auto max_allowed_current_retry_ms = kConnectRetryMsMax - retry_increase_ms;
             if (connect_retry_ms_ <= max_allowed_current_retry_ms)
             {
-                // At this point checks guarantee no data loss
+                // At this point checks guarantee connect_retry_ms_ + retry_increase_ms <= kConnectRetryMsMax,
+                // which fits well within std::int32_t; compute the sum in std::int64_t and assign once instead
+                // of using operator+= on connect_retry_ms_, so the addition and the narrowing cast back to
+                // std::int32_t are both provably free of overflow/data loss.
                 // coverity[autosar_cpp14_a4_7_1_violation]
-                connect_retry_ms_ += static_cast<std::int32_t>(retry_increase_ms);
+                connect_retry_ms_ =
+                    static_cast<std::int32_t>(static_cast<std::int64_t>(connect_retry_ms_) + retry_increase_ms);
             }
         }
 
