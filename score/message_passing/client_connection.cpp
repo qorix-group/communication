@@ -387,12 +387,17 @@ void ClientConnection::TryConnect() noexcept
         const auto retry_increase_ms =
             (static_cast<std::int64_t>(connect_retry_ms_) + static_cast<std::int64_t>(kConnectRetryT) - 1) /
             static_cast<std::int64_t>(kConnectRetryT);
-        if ((retry_increase_ms <= kConnectRetryMsMax) &&
-            (connect_retry_ms_ <= (kConnectRetryMsMax - retry_increase_ms)))
+        if (retry_increase_ms <= kConnectRetryMsMax)
         {
-            // At this point checks guarantee no data loss
-            // coverity[autosar_cpp14_a4_7_1_violation]
-            connect_retry_ms_ += static_cast<std::int32_t>(retry_increase_ms);
+            // retry_increase_ms is now known to be <= kConnectRetryMsMax, so this subtraction (evaluated in
+            // std::int64_t) cannot underflow.
+            const auto max_allowed_current_retry_ms = kConnectRetryMsMax - retry_increase_ms;
+            if (connect_retry_ms_ <= max_allowed_current_retry_ms)
+            {
+                // At this point checks guarantee no data loss
+                // coverity[autosar_cpp14_a4_7_1_violation]
+                connect_retry_ms_ += static_cast<std::int32_t>(retry_increase_ms);
+            }
         }
 
         engine_->EnqueueCommand(
