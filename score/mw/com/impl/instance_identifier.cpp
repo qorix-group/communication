@@ -116,14 +116,14 @@ InstanceIdentifier::InstanceIdentifier(const json::Object& json_object, std::str
 // This adds more risk than doing the initialization of the members in each constructor.
 // coverity[autosar_cpp14_a12_1_5_violation : FALSE]
 InstanceIdentifier::InstanceIdentifier(const ServiceInstanceDeployment& deployment,
-                                       const ServiceTypeDeployment& type_deployment) noexcept
+                                       const ServiceTypeDeployment& type_deployment)
     : instance_deployment_{&deployment},
       type_deployment_{&type_deployment},
       serialized_string_{ToStringImpl(Serialize())}
 {
 }
 
-auto InstanceIdentifier::Serialize() const noexcept -> json::Object
+auto InstanceIdentifier::Serialize() const -> json::Object
 {
     json::Object json_object{};
     json_object[kSerializationVersionKey] = score::json::Any{serializationVersion};
@@ -139,13 +139,13 @@ auto InstanceIdentifier::ToString() const noexcept -> std::string_view
     return serialized_string_;
 }
 
-auto operator==(const InstanceIdentifier& lhs, const InstanceIdentifier& rhs) noexcept -> bool
+auto operator==(const InstanceIdentifier& lhs, const InstanceIdentifier& rhs) -> bool
 {
     return (((lhs.instance_deployment_->service_ == rhs.instance_deployment_->service_) &&
              (*lhs.instance_deployment_ == *rhs.instance_deployment_)));
 }
 
-auto operator<(const InstanceIdentifier& lhs, const InstanceIdentifier& rhs) noexcept -> bool
+auto operator<(const InstanceIdentifier& lhs, const InstanceIdentifier& rhs) -> bool
 {
     return std::tie(lhs.instance_deployment_->service_, *lhs.instance_deployment_) <
            std::tie(rhs.instance_deployment_->service_, *rhs.instance_deployment_);

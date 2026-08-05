@@ -157,7 +157,7 @@ class SharedMemoryResource : public ISharedMemoryResource, public std::enable_sh
 
     SharedMemoryResource(std::variant<std::string, std::uint64_t> identifier,
                          AccessControlListFactory acl_factory,
-                         std::shared_ptr<TypedMemory> typed_memory_ptr) noexcept;
+                         std::shared_ptr<TypedMemory> typed_memory_ptr);
 
   private:
     // Suppress "AUTOSAR C++14 A11-3-1" rule finding: "Friend declarations shall not be used.".
@@ -218,14 +218,14 @@ class SharedMemoryResource : public ISharedMemoryResource, public std::enable_sh
     /// acquired within the timeout, the process terminates. The caller must keep the returned LockFile alive for the
     /// duration of the critical section (e.g. shm_open + fstat + mmap) to ensure mutual exclusion with CreateImpl.
     /// \return The acquired LockFile. The function never returns std::nullopt; it either succeeds or terminates.
-    std::optional<LockFile> acquireLockFile() const noexcept;
+    std::optional<LockFile> acquireLockFile() const;
 
     /// \brief Acquires a lock file and then opens an existing shared-memory object.
     /// \details The lock file is held across the entire shm_open + fstat + mmap sequence to prevent a concurrent
     /// CreateImpl from initializing the same SHM region while this function is reading it.
     /// \return Empty result on success, score::os::Error on failure (e.g. shared-memory object does not exist).
     // coverity[autosar_cpp14_m7_3_1_violation] false-positive: class method (Ticket-234468)
-    score::cpp::expected_blank<score::os::Error> acquireLockAndOpenSharedMemory() noexcept;
+    score::cpp::expected_blank<score::os::Error> acquireLockAndOpenSharedMemory();
 
     void loadInternalsFromSharedMemory() noexcept;
     void initializeInternalsInSharedMemory() noexcept;
@@ -239,7 +239,7 @@ class SharedMemoryResource : public ISharedMemoryResource, public std::enable_sh
     // coverity[autosar_cpp14_a15_5_3_violation]
     // coverity[autosar_cpp14_m7_3_1_violation] false-positive: class method (Ticket-234468)
     // coverity[autosar_cpp14_a0_1_3_violation] false-positive: used in CreateImpl
-    std::shared_ptr<SharedMemoryResource> getSharedPtr() noexcept
+    std::shared_ptr<SharedMemoryResource> getSharedPtr()
     {
         return shared_from_this();
     }
@@ -343,7 +343,7 @@ class SharedMemoryResource : public ISharedMemoryResource, public std::enable_sh
     // coverity[autosar_cpp14_m7_3_1_violation] false-positive: class method (Ticket-234468)
     score::cpp::expected_blank<score::os::Error> CreateImpl(const std::size_t user_space_to_reserve,
                                                             const InitializeCallback initialize_callback,
-                                                            const UserPermissions& permissions) noexcept;
+                                                            const UserPermissions& permissions);
 
     /// \brief Called by SharedMemoryResource::CreateOrOpen() after calling the constructor.
     /// \return in case of error an score::os::Error is returned.
@@ -418,8 +418,7 @@ class SharedMemoryResource : public ISharedMemoryResource, public std::enable_sh
     bool do_is_equal(const memory_resource& other) const noexcept override;
 
     // coverity[autosar_cpp14_m7_3_1_violation] false-positive: class method (Ticket-234468)
-    score::cpp::expected_blank<score::os::Error> CreateLockFileForNamedSharedMemory(
-        std::optional<LockFile>& lock_file) noexcept;
+    score::cpp::expected_blank<score::os::Error> CreateLockFileForNamedSharedMemory(std::optional<LockFile>& lock_file);
     // coverity[autosar_cpp14_m7_3_1_violation] false-positive: class method (Ticket-234468)
     void AllocateInTypedMemory(const UserPermissions& permissions, os::Fcntl::Open& flags) noexcept;
 

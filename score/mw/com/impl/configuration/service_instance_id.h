@@ -33,7 +33,7 @@ class ServiceInstanceId
     using BindingInformation = std::variant<LolaServiceInstanceId, score::cpp::blank>;
 
     explicit ServiceInstanceId(const score::json::Object& json_object);
-    explicit ServiceInstanceId(BindingInformation binding_info) noexcept;
+    explicit ServiceInstanceId(BindingInformation binding_info);
 
     score::json::Object Serialize() const;
     std::string_view ToHashString() const noexcept;

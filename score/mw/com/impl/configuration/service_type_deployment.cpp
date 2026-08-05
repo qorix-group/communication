@@ -89,7 +89,7 @@ std::string ToHashStringImpl(const ServiceTypeDeployment::BindingInformation& bi
 // This rule states: Common class initialization for non-constant members shall be done by a delegating constructor.
 // Justification: This constructor is used by other constructors for delegation.
 // coverity[autosar_cpp14_a12_1_5_violation]
-ServiceTypeDeployment::ServiceTypeDeployment(const BindingInformation binding) noexcept
+ServiceTypeDeployment::ServiceTypeDeployment(const BindingInformation binding)
     : binding_info_{binding}, hash_string_{ToHashStringImpl(binding_info_)}
 {
 }

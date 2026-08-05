@@ -38,7 +38,7 @@ class SubscriptionPendingState final : public SubscriptionStateBase
     ~SubscriptionPendingState() noexcept override = default;
 
     Result<void> SubscribeEvent(const std::size_t max_sample_count) override;
-    void UnsubscribeEvent() noexcept override;
+    void UnsubscribeEvent() override;
     void StopOfferEvent() noexcept override;
     void ReOfferEvent(const pid_t new_event_source_pid) override;
 

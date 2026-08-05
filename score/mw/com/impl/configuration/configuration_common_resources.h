@@ -134,8 +134,7 @@ class DoConstructVariant<score::cpp::blank>
 
 /// ConstructVariant dispatches to DoConstructVariant in a template class to avoid function template specialization
 template <typename VariantHeldType>
-auto ConstructVariant(const score::json::Object& json_object, std::string_view json_variant_key) noexcept
-    -> VariantHeldType
+auto ConstructVariant(const score::json::Object& json_object, std::string_view json_variant_key) -> VariantHeldType
 {
     return DoConstructVariant<VariantHeldType>::Do(json_object, json_variant_key);
 }

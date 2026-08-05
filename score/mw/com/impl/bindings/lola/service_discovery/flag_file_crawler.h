@@ -39,7 +39,7 @@ class FlagFileCrawler
     auto Crawl(const EnrichedInstanceIdentifier& enriched_instance_identifier)
         -> score::Result<QualityAwareContainer<KnownInstancesContainer>>;
 
-    auto CrawlAndWatch(const EnrichedInstanceIdentifier& enriched_instance_identifier) noexcept
+    auto CrawlAndWatch(const EnrichedInstanceIdentifier& enriched_instance_identifier)
         -> score::Result<std::tuple<std::unordered_map<os::InotifyWatchDescriptor, EnrichedInstanceIdentifier>,
                                     QualityAwareContainer<KnownInstancesContainer>>>;
 

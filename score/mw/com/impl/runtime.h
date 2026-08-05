@@ -79,7 +79,7 @@ class Runtime final : public IRuntime
     /// \brief get singleton.
     /// \details Might return either reference to a real Runtime instance or to a mock.
     /// \return singleton ref.
-    static IRuntime& getInstance() noexcept;
+    static IRuntime& getInstance();
 
     /// \brief Inject a mock instance as the runtime singleton. Injecting a nullptr will withdraw the mock again.
     /// \details If a mock instance is injected, a call to getInstance() will just return the mock and no implicit call

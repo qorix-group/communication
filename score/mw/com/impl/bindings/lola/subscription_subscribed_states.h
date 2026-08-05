@@ -38,11 +38,11 @@ class SubscribedState final : public SubscriptionStateBase
     ~SubscribedState() noexcept override = default;
 
     Result<void> SubscribeEvent(const std::size_t) override;
-    void UnsubscribeEvent() noexcept override;
-    void StopOfferEvent() noexcept override;
-    void ReOfferEvent(const pid_t) noexcept override;
+    void UnsubscribeEvent() override;
+    void StopOfferEvent() override;
+    void ReOfferEvent(const pid_t) override;
 
-    void SetReceiveHandler(std::weak_ptr<ScopedEventReceiveHandler> handler) noexcept override;
+    void SetReceiveHandler(std::weak_ptr<ScopedEventReceiveHandler> handler) override;
     void UnsetReceiveHandler() noexcept override;
     std::optional<std::uint16_t> GetMaxSampleCount() const override;
     std::optional<SlotCollector>& GetSlotCollector() & noexcept override;

@@ -399,7 +399,7 @@ void TracingFilterConfig::AddTracePoint(std::string_view service_type,
 }
 
 /// @brief: Find the number of configured tracing slots for all trace points.
-std::uint16_t TracingFilterConfig::GetNumberOfTracingSlots(score::mw::com::impl::Configuration& config) const noexcept
+std::uint16_t TracingFilterConfig::GetNumberOfTracingSlots(score::mw::com::impl::Configuration& config) const
 {
     std::unordered_set<ServiceElementIdentifierView> service_element_identifier_view_set{};
     const std::array<std::size_t, 4U> number_trace_points_list{
