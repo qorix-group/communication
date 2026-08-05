@@ -18,6 +18,7 @@
 
 #include <score/assert.hpp>
 
+#include <cstdint>
 #include <functional>
 #include <tuple>
 #include <type_traits>
@@ -26,13 +27,13 @@ namespace score::mw::com::impl
 {
 
 /// \brief Enum to indicate whether a method handler callable is expected to have QualityType as its first argument.
-enum class WithQuality
+enum class WithQuality : std::uint8_t
 {
     kYes,
     kNo
 };
 
-enum class FailureMode
+enum class FailureMode : std::uint8_t
 {
     kCompileTime,
     kRuntime
