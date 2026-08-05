@@ -52,7 +52,7 @@ class UnixDomainServer final : public IServer
         void AcceptConnection(UserData&& data, score::cpp::pmr::unique_ptr<ServerConnection>&& self) noexcept;
         bool ProcessInput();
 
-        ~ServerConnection() noexcept(false);
+        ~ServerConnection() noexcept;
 
       private:
         UnixDomainServer& server_;

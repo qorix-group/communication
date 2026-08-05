@@ -134,15 +134,16 @@ bool UnixDomainServer::ServerConnection::ProcessInput()
     return true;
 }
 
-UnixDomainServer::ServerConnection::~ServerConnection() noexcept(false)
+UnixDomainServer::ServerConnection::~ServerConnection() noexcept
 {
     if (user_data_.has_value())
     {
         auto& user_data = *user_data_;
         using HandlerPointerT = score::cpp::pmr::unique_ptr<IConnectionHandler>;
-        if (std::holds_alternative<HandlerPointerT>(user_data))
+        auto* const handler = std::get_if<HandlerPointerT>(&user_data);
+        if (handler != nullptr)
         {
-            std::get<HandlerPointerT>(user_data)->OnDisconnect(*this);
+            (*handler)->OnDisconnect(*this);
         }
         else
         {
