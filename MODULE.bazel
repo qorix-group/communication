@@ -205,7 +205,7 @@ use_repo(imagefs, "score_qnx_aarch64_ifs_toolchain", "score_qnx_x86_64_ifs_toolc
 bazel_dep(name = "rules_distroless", version = "0.6.2", dev_dependency = True)
 git_override(
     module_name = "rules_distroless",
-    commit = "82366a91cdf1f5497373bf113ba1b70a3567cb99",
+    commit = "e1df344fde5adaef7397c34076b56f27771d08b8",
     remote = "https://github.com/LittleHuba/rules_distroless.git",
 )
 
@@ -235,6 +235,7 @@ apt.install(
     dependency_set = "ubuntu24_04_sysroot",
     mergedusr = True,
     packages = [
+        "base-files",  # mergedusr symlinks
         "libatomic1",  # Non-lock-free atomics support
         "libc6",  # Core C/POSIX
         "libc6-dev",  # Core C/POSIX
@@ -253,6 +254,7 @@ apt.install(
     dependency_set = "ubuntu24_04_integration_testing",
     mergedusr = True,
     packages = [
+        "base-files",  # mergedusr symlinks
         "bash",  # Required as default entrypoint of Docker
         "binutils",  # provides addr2line, required for backtraces in sanitizers
         "coreutils",  # for commands like `ls`
