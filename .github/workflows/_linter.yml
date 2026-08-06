@@ -122,49 +122,16 @@ jobs:
       - name: Collect SARIF reports
         if: always() && inputs.fetch-only != 'true'
         id: sarif
-        run: |
-          mkdir -p /tmp/sarif-reports
-
-          # Ask Bazel directly (via its Build Event Protocol JSON stream) which
-          # files were produced by the rules_lint_machine output group.
-          ALL_REPORTS=$(jq -r '
-            select(.id.namedSet != null)
-            | .namedSetOfFiles.files[]?
-            | select(.name | endswith(".report"))
-            | .uri
-          ' /tmp/bep.json 2>/dev/null | sed 's|^file://||' | sort -u)
-
-          # Reports for targets with no violations are declared but empty;
-          # skip those before merging.
-          REPORTS=""
-          for f in ${ALL_REPORTS}; do
-            [[ -s "${f}" ]] && REPORTS+="${f}"$'\n'
-          done
-          REPORTS=$(echo "${REPORTS}" | sed '/^$/d')
-
-          if [[ -z "${REPORTS}" ]]; then
-            echo "No non-empty SARIF reports found; nothing to merge/upload."
-            echo "found=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          # Merge all per-file SARIF reports (one per linted source file) into a
-          # single SARIF document with one combined "runs[0].results" array,
-          # since they all share the same tool driver for a given linter.
-          echo "${REPORTS}" | xargs jq -s '{
-            "$schema": .[0]["$schema"],
-            version: .[0].version,
-            runs: [ (.[0].runs[0] * { results: (map(.runs[0].results) | add) }) ]
-          }' > "/tmp/sarif-reports/${{ matrix.id }}.sarif"
-
-          echo "found=true" >> "$GITHUB_OUTPUT"
-          echo "Merged $(echo "${REPORTS}" | wc -l) report(s) into /tmp/sarif-reports/${{ matrix.id }}.sarif"
+        uses: ./.github/actions/00_infrastructure/merge_sarif_reports
+        with:
+          bep-json: /tmp/bep.json
+          output-file: ${{ matrix.id }}.sarif
 
       - name: Upload SARIF reports to GitHub Code Scanning
-        if: always() && inputs.fetch-only != 'true' && steps.sarif.outputs.found == 'true'
+        if: always() && inputs.fetch-only != 'true'
         uses: github/codeql-action/upload-sarif@v4
         with:
-          sarif_file: /tmp/sarif-reports/${{ matrix.id }}.sarif
+          sarif_file: ${{ matrix.id }}.sarif
           category: ${{ matrix.id }}
           # Block this step until GitHub has finished processing the
           # uploaded SARIF (default, made explicit here) so that any
@@ -179,6 +146,6 @@ jobs:
           name: ${{ matrix.id }}-findings
           path: |
             ${{ matrix.id }}_raw.log
-            /tmp/sarif-reports/${{ matrix.id }}.sarif
+            ${{ matrix.id }}.sarif
           if-no-files-found: ignore
           retention-days: 7

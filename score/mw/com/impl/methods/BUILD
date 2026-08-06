@@ -46,6 +46,7 @@ cc_library(
 
 cc_library(
     name = "callable_traits",
+    srcs = ["callable_traits.cpp"],
     hdrs = [
         "callable_traits.h",
         "callable_traits_impl.h",
