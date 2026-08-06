@@ -19,7 +19,7 @@ However, because we do not want to introduce more false positives than needed, w
 | RULE-0-2-3 | `-Wunused-local-typedefs` | | `clang-diagnostic-unused-local-typedef` | `UnusedTypeWithLimitedVisibility.ql` |
 | RULE-0-2-4 | `-Wunused-function` | `-Wunused-function` <br/> `-Wunused-member-function` <br/> `-Wunused-template` | | `UnusedLimitedVisibilityFunction.ql` |
 | DIR-0-3-1 | | | | `PossibleMisuseOfInfiniteFloatingPointValue.ql`<br/> `PossibleMisuseOfNaNFloatingPointValue.ql` |
-| DIR-0-3-2 | | | | |
+| DIR-0-3-2 | See note [1] | See note [1] | | |
 | RULE-4-1-1 | | | | `CompilerLanguageExtensionsUsed.ql` |
 | RULE-4-1-2 | | | | `RedeclarationOfStaticConstexprDataMember.ql`<br/> `ImplicitDeclarationOfCopyConstructor.ql`<br/> `ImplicitDeclarationOfCopyConstructorAudit.ql`<br/> `NoexceptSpecifierThrow.ql`<br/> `UseOfDeprecatedCHeaders.ql`<br/> `UseOfDeprecatedStrStreamClass.ql`<br/> `UseOfUncaughtException.ql`<br/> `UseOfDeprecatedFunctionBinderTypedefMember.ql`<br/> `UseOfDeprecatedUnaryOrBinaryNegate.ql`<br/> `UseOfDeprecatedAllocatorVoid.ql`<br/> `UseOfDeprecatedStdAllocatorMember.ql`<br/> `UseOfDeprecatedRawStorageIterator.ql`<br/> `UseOfDeprecatedTemporaryBuffers.ql`<br/> `UseOfDeprecatedIsLiteralTypeTraits.ql`<br/> `UseOfDeprecatedStdIteratorBaseClass.ql`<br/> `UseOfDeprecatedSharedPtrUnique.ql` |
 | RULE-4-1-3 | | | | `PossibleDataRaceBetweenThreads.ql`<br/> `ArrayDeletedThroughPointerOfIncorrectType.ql`<br/> `SignedIntegerOverflow.ql`<br/> `DivisionByZeroUndefinedBehavior.ql`<br/> `DeallocationTypeMismatch.ql`<br/> `StringLiteralPossiblyModifiedAudit.ql`<br/> `OutOfRangeEnumCastCriticalUnspecifiedBehavior.ql`<br/> `NullPointerToMemberAccessUndefinedBehavior.ql`<br/> `UninitializedStaticPointerToMemberUndefinedBehavior.ql`<br/> `NonExistentMemberAccessUndefinedBehavior.ql` |
@@ -189,3 +189,5 @@ However, because we do not want to introduce more false positives than needed, w
 | RULE-28-6-4 | | | | `PotentiallyErroneousContainerUsage.ql` |
 | RULE-30-0-1 | | | | `CstdioFunctionsShallNotBeUsed.ql`<br/> `CstdioMacrosShallNotBeUsed.ql`<br/> `CstdioTypesShallNotBeUsed.ql` |
 | RULE-30-0-2 | | | | `ReadsAndWritesOnStreamNotSeparatedByPositioning.ql` |
+
+[1] This rule cannot be enfoced with clang, gcc, clang-tidy, or CodeQL. However, both [libc++](https://libcxx.llvm.org/Hardening.html) and [libstd++](https://gcc.gnu.org/onlinedocs/libstdc++/manual/debug_mode.html), provide a version of the C++ standard library in hardned mode. Such hardened mode allow to detect the violations of some of the preconditions of the C++ standard library. Our plan to follow DIR-0-3-2 is to follow a multi tool approach. Make use of the hardened mode in both standard libraries as well as the use of UB sanitizers. Additionally, for test making use of `SCORE_LANGUAGE_FUTURECPP_PRECONDITION_*` that run only in debug mode, the plan is to run our unit and integration tests making sure that such preconditions get evaluated.
