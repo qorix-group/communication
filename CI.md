@@ -148,10 +148,13 @@ If the tool used for sanitizers is ever changed, this decision could be revisite
 
 #### Run integration tests (x86-64 linux)
 
+#### Run integration tests (ARM64 QNX)
+
+Note: Not yet implemented, it will be done with https://github.com/eclipse-score/communication/issues/863.
+
 #### Run integration tests (x86-64 QNX)
 
-We run integration tests in an x86-64 and not in ARM64 due to lack of ARM64 machines. If we would want to run them in ARM64, we would have to run them in simulated HW with the deficits that this implies.
-This is not considered an issue because our code is mainly architecture independent. We expect to find the issues regarding different type signess or different type sizes with our static analysis jobs configured for ARM64.
+Running integration tests on x86-64 QNX in addition to ARM64 QNX reduces the risk that the QNX only code that we have in our codebase, behaves different in an x86-64 architecture compared to an ARM64 architecture.
 
 #### Run all C++ tests with the hardned standard library (libstdc++) (x86-64 linux)
 
