@@ -19,6 +19,7 @@
 #include "score/mw/com/test/common_test_resources/general_resources.h"
 #include "score/mw/com/test/partial_restart/test_datatype.h"
 #include "score/mw/com/types.h"
+#include "score/string_manipulation/arguments/arguments.h"
 
 #include <chrono>
 #include <cstddef>
@@ -55,7 +56,7 @@ ConsumerActions::ConsumerActions(CheckPointControl& check_point_control,
         std::cerr
             << "Consumer: Initializing LoLa/mw::com runtime from cmd-line args handed over by parent/controller ..."
             << std::endl;
-        mw::com::runtime::InitializeRuntime(argc, argv);
+        score::mw::com::runtime::InitializeRuntime(score::string_manipulation::GetArguments(argc, argv));
         std::cerr << "Consumer: Initializing LoLa/mw::com runtime done." << std::endl;
     }
 }
