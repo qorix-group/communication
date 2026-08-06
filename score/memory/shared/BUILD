@@ -471,6 +471,7 @@ cc_library(
 
 cc_library(
     name = "user_permission",
+    srcs = ["user_permission.cpp"],
     hdrs = ["user_permission.h"],
     features = COMPILER_WARNING_FEATURES,
     tags = ["FFI"],

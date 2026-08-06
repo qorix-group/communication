@@ -195,6 +195,7 @@ cc_library(
 cc_library(
     name = "runtime_mock",
     testonly = True,
+    srcs = ["runtime_mock.cpp"],
     hdrs = ["runtime_mock.h"],
     features = COMPILER_WARNING_FEATURES,
     visibility = ["//score/mw/com/impl:__subpackages__"],

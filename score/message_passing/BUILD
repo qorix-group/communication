@@ -51,6 +51,7 @@ test_suite(
 
 cc_library(
     name = "message_passing",
+    srcs = ["message_passing.cpp"],
     hdrs = [
         "client_factory.h",
         "engine.h",

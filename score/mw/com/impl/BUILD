@@ -211,6 +211,7 @@ cc_library(
 
 cc_library(
     name = "generic_skeleton_event_binding",
+    srcs = ["generic_skeleton_event_binding.cpp"],
     hdrs = [
         "generic_skeleton_event_binding.h",
     ],
@@ -900,6 +901,7 @@ cc_library(
 cc_library(
     name = "runtime_mock",
     testonly = True,
+    srcs = ["runtime_mock.cpp"],
     hdrs = ["runtime_mock.h"],
     features = COMPILER_WARNING_FEATURES,
     visibility = [

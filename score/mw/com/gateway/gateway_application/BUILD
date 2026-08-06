@@ -48,6 +48,7 @@ cc_library(
 
 cc_library(
     name = "gateway_core",
+    srcs = ["gateway_core.cpp"],
     hdrs = ["gateway_core.h"],
     features = COMPILER_WARNING_FEATURES,
     visibility = [
@@ -119,6 +120,7 @@ cc_unit_test(
 
 cc_library(
     name = "gateway_core_mock",
+    srcs = ["gateway_core_mock.cpp"],
     hdrs = ["gateway_core_mock.h"],
     features = COMPILER_WARNING_FEATURES,
     visibility = [
