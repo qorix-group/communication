@@ -92,7 +92,6 @@ Checks: >
   bugprone-copy-constructor-init,
   bugprone-dangling-handle,
   bugprone-suspicious-stringview-data-usage,
-  misc-include-cleaner,
   misc-use-anonymous-namespace,
   misc-use-internal-linkage,
   modernize-avoid-bind,
