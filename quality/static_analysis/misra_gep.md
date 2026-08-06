@@ -1,5 +1,13 @@
 # MISRA C++:2023 Guideline Enforcement Plan (GEP)
 
+This is the guideline enforcement plan for S-CORE communication for MISRA C++:2023.
+The main tool choosen to enforce MISRA C++:2023 is CodeQL. Whenever available, a rule is checked with CodeQL.
+
+Additionally, we use compiler warnings (from gcc and clang) and clang-tidy for the following reasons:
+(i) compiler warnings allow us to check or partially check some rules in a very early stage of the development workflow,
+(ii) even though there are no plans to qualify clang-tidy, it adds a level of redundancy that could compensate some CodeQL bugs.
+However, because we do not want to introduce more false positives than needed, we only list clang-tidy checks in the enforcement plan if we know that cover cases that are not covered by the listed compiler warnings.
+
 | Rule | gcc | clang | clang-tidy | CodeQL |
 | ----- | -------- | ---- | ---- | ---- |
 | RULE-0-0-1 | | `-Wunreachable-code` <br/> `-Wunreachable-code-return` | | `UnreachableStatement.ql` |
