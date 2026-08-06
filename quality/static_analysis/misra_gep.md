@@ -2,14 +2,14 @@
 
 | Rule | gcc | clang | clang-tidy | CodeQL |
 | ----- | -------- | ---- | ---- | ---- |
-| RULE-0-0-1 | | | | `UnreachableStatement.ql` |
-| RULE-0-0-2 | | | | `InvariantCondition.ql` |
-| RULE-0-1-1 | | | | `UnnecessaryWriteToLocalObject.ql` |
-| RULE-0-1-2 | | | | `UnusedReturnValueMisraCpp.ql` |
-| RULE-0-2-1 | | | | `UnusedLimitedVisibilityVariable.ql` |
-| RULE-0-2-2 | | | | `UnusedParameterMisraCpp.ql` |
-| RULE-0-2-3 | | | | `UnusedTypeWithLimitedVisibility.ql` |
-| RULE-0-2-4 | | | | `UnusedLimitedVisibilityFunction.ql` |
+| RULE-0-0-1 | | `-Wunreachable-code` <br/> `-Wunreachable-code-return` | | `UnreachableStatement.ql` |
+| RULE-0-0-2 | `-Wtype-limits` | `-Wtautological-unsigned-zero-compare` <br/> `-Wtautological-type-limit-compare` | `misc-redundant-expression` | `InvariantCondition.ql` |
+| RULE-0-1-1 | | `-Wunused-variable` | `clang-analyzer-deadcode.DeadStores` | `UnnecessaryWriteToLocalObject.ql` |
+| RULE-0-1-2 | | | `bugprone-unused-return-value` | `UnusedReturnValueMisraCpp.ql` |
+| RULE-0-2-1 | `-Wunused-variable` | `-Wunused-variable` | `clang-diagnostic-unused-const-variable` <br/> `clang-diagnostic-unused-template` <br/> `clang-diagnostic-unused-variable` | `UnusedLimitedVisibilityVariable.ql` |
+| RULE-0-2-2 | | `-Wunused-exception-parameter` <br/> `-Wunused-lambda-capture` <br/> `-Wunused-parameter` | | `UnusedParameterMisraCpp.ql` |
+| RULE-0-2-3 | `-Wunused-local-typedefs` | | `clang-diagnostic-unused-local-typedef` | `UnusedTypeWithLimitedVisibility.ql` |
+| RULE-0-2-4 | `-Wunused-function` | `-Wunused-function` <br/> `-Wunused-member-function` <br/> `-Wunused-template` | | `UnusedLimitedVisibilityFunction.ql` |
 | DIR-0-3-1 | | | | `PossibleMisuseOfInfiniteFloatingPointValue.ql`<br/> `PossibleMisuseOfNaNFloatingPointValue.ql` |
 | DIR-0-3-2 | | | | |
 | RULE-4-1-1 | | | | `CompilerLanguageExtensionsUsed.ql` |
