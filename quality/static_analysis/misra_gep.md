@@ -24,12 +24,12 @@ However, because we do not want to introduce more false positives than needed, w
 | RULE-4-1-2 | | `-Wdeprecated` | | `RedeclarationOfStaticConstexprDataMember.ql`<br/> `ImplicitDeclarationOfCopyConstructor.ql`<br/> `ImplicitDeclarationOfCopyConstructorAudit.ql`<br/> `NoexceptSpecifierThrow.ql`<br/> `UseOfDeprecatedCHeaders.ql`<br/> `UseOfDeprecatedStrStreamClass.ql`<br/> `UseOfUncaughtException.ql`<br/> `UseOfDeprecatedFunctionBinderTypedefMember.ql`<br/> `UseOfDeprecatedUnaryOrBinaryNegate.ql`<br/> `UseOfDeprecatedAllocatorVoid.ql`<br/> `UseOfDeprecatedStdAllocatorMember.ql`<br/> `UseOfDeprecatedRawStorageIterator.ql`<br/> `UseOfDeprecatedTemporaryBuffers.ql`<br/> `UseOfDeprecatedIsLiteralTypeTraits.ql`<br/> `UseOfDeprecatedStdIteratorBaseClass.ql`<br/> `UseOfDeprecatedSharedPtrUnique.ql` |
 | RULE-4-1-3 | See note [2] | See note [2] | | `PossibleDataRaceBetweenThreads.ql`<br/> `ArrayDeletedThroughPointerOfIncorrectType.ql`<br/> `SignedIntegerOverflow.ql`<br/> `DivisionByZeroUndefinedBehavior.ql`<br/> `DeallocationTypeMismatch.ql`<br/> `StringLiteralPossiblyModifiedAudit.ql`<br/> `OutOfRangeEnumCastCriticalUnspecifiedBehavior.ql`<br/> `NullPointerToMemberAccessUndefinedBehavior.ql`<br/> `UninitializedStaticPointerToMemberUndefinedBehavior.ql`<br/> `NonExistentMemberAccessUndefinedBehavior.ql` |
 | RULE-4-6-1 | See note [3] | `-Wsequence-point` <br/> `-Wunsequenced` <br/> See note [3] | | `MemoryUsageNotSequenced.ql` |
-| RULE-5-0-1 | | | | `TrigraphLikeSequencesShouldNotBeUsed.ql` |
-| RULE-5-7-1 | | | | `CharacterSequenceUsedWithinACStyleComment.ql` |
+| RULE-5-0-1 | `-Wtrigraphs` | `-Wtrigraphs` | | `TrigraphLikeSequencesShouldNotBeUsed.ql` |
+| RULE-5-7-1 | `-Wcomment` | `-Wcomment` | | `CharacterSequenceUsedWithinACStyleComment.ql` |
 | DIR-5-7-2 | | | | `SectionsOfCodeShouldNotBeCommentedOut.ql` |
-| RULE-5-7-3 | | | | `LineSplicingUsedInComments.ql` |
-| RULE-5-10-1 | | | | `PoorlyFormedIdentifier.ql` |
-| RULE-5-13-1 | | | | `BackslashCharacterMisuse.ql` |
+| RULE-5-7-3 | `-Wcomment` | `-Wcomment` | | `LineSplicingUsedInComments.ql` |
+| RULE-5-10-1 | | `-Wuser-defined-literals` | | `PoorlyFormedIdentifier.ql` |
+| RULE-5-13-1 | | `-Wunknown-escape-sequence` | | `BackslashCharacterMisuse.ql` |
 | RULE-5-13-2 | | | | `NonTerminatedEscapeSequences.ql` |
 | RULE-5-13-3 | | | | `OctalConstantsUsed.ql` |
 | RULE-5-13-4 | | | | `UnsignedIntegerLiteralsNotAppropriatelySuffixed.ql` |
