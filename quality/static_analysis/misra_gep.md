@@ -35,7 +35,7 @@ However, because we do not want to introduce more false positives than needed, w
 | RULE-5-13-4 | | | | `UnsignedIntegerLiteralsNotAppropriatelySuffixed.ql` |
 | RULE-5-13-5 | | | | `LowercaseLStartsInLiteralSuffix.ql` |
 | RULE-5-13-6 | | | | `LongLongLiteralWithSingleLSuffix.ql` |
-| RULE-5-13-7 | | | | |
+| RULE-5-13-7 | | | | See notes [4] |
 | RULE-6-0-1 | | | | `BlockScopeFunctionAmbiguous.ql` |
 | RULE-6-0-2 | | | | `ExternalLinkageArrayWithoutExplicitSizeMisra.ql` |
 | RULE-6-0-3 | | | | `GlobalNamespaceDeclarations.ql` |
@@ -145,12 +145,12 @@ However, because we do not want to introduce more false positives than needed, w
 | RULE-18-4-1 | | | | `ExceptionUnfriendlyFunctionMustBeNoexcept.ql` |
 | RULE-18-5-1 | | | | `NoexceptFunctionShouldNotPropagateToTheCaller.ql` |
 | RULE-18-5-2 | | | | `AvoidProgramTerminatingFunctions.ql` |
-| RULE-19-0-1 | | | | |
+| RULE-19-0-1 | | | | See notes [4] |
 | RULE-19-0-2 | | | | `FunctionLikeMacrosDefined.ql` |
 | RULE-19-0-3 | | | | `IncludeDirectivesPrecededByPreprocessorDirectives.ql` |
 | RULE-19-0-4 | | | | `UndefOfMacroNotDefinedInFile.ql` |
 | RULE-19-1-1 | | | | `InvalidTokenInDefinedOperator.ql`<br/> `DefinedOperatorExpandedInIfDirective.ql` |
-| RULE-19-1-2 | | | | |
+| RULE-19-1-2 | | | | See notes [4] |
 | RULE-19-1-3 | | | | `IdentifiersUsedInTheControllingExpressionOf.ql` |
 | RULE-19-2-1 | | | | `NoValidIfdefGuardInHeader.ql`<br/> `IncludeOutsideGuard.ql` |
 | RULE-19-2-2 | | | | `InvalidIncludeDirective.ql` |
@@ -195,3 +195,5 @@ However, because we do not want to introduce more false positives than needed, w
 [2] Apart from using CodeQL, our plan is to also use undefined behavior sanitizers to mitigate the risk of some findings not being found by CodeQL. For the unspecified behavior, it is also mitigated by the use of multiple compilers.
 
 [3] Apart from using CodeQL, our plan is to also use memory sanitizers to mitigate the risk of some findings not being found by CodeQL.
+
+[4] The plan is to rely on the compiler for the enforcement of this rule. The CodeQL user manual mentions "The rules `5.13.7`, `19.0.1` and `19.1.2` are not planned to be implemented by CodeQL as they are compiler checked in all supported compilers.".
