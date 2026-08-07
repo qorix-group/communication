@@ -36,27 +36,27 @@ However, because we do not want to introduce more false positives than needed, w
 | RULE-5-13-5 | | | | `LowercaseLStartsInLiteralSuffix.ql` |
 | RULE-5-13-6 | | | | `LongLongLiteralWithSingleLSuffix.ql` |
 | RULE-5-13-7 | | | | See notes [4] |
-| RULE-6-0-1 | | | | `BlockScopeFunctionAmbiguous.ql` |
+| RULE-6-0-1 | `-Wparentheses` | `-Wredundant-parens` <br/> `-Wvexing-parse` | | `BlockScopeFunctionAmbiguous.ql` |
 | RULE-6-0-2 | | | | `ExternalLinkageArrayWithoutExplicitSizeMisra.ql` |
 | RULE-6-0-3 | | | | `GlobalNamespaceDeclarations.ql` |
 | RULE-6-0-4 | | | | `NonGlobalFunctionMain.ql` |
 | RULE-6-2-1 | | | | `OneDefinitionRuleViolated.ql` |
 | RULE-6-2-2 | | | | `IncompatibleObjectDeclarationsCpp.ql`<br/> `IncompatibleFunctionDeclarationsCpp.ql` |
 | RULE-6-2-3 | | | | `DuplicateInlineFunctionDefinitions.ql`<br/> `TemplateSpecializationWrongLocation.ql`<br/> `DuplicateTypeDefinitions.ql` |
-| RULE-6-2-4 | | | | `ViolationsOfOneDefinitionRuleMisra.ql` |
-| RULE-6-4-1 | | | | `VariableDeclaredInInnerScopeHidesOuterScope.ql` |
+| RULE-6-2-4 | | | `misc-definitions-in-headers` | `ViolationsOfOneDefinitionRuleMisra.ql` |
+| RULE-6-4-1 | `-Wshadow` | `-Wshadow-all` | | `VariableDeclaredInInnerScopeHidesOuterScope.ql` |
 | RULE-6-4-2 | | | | `InheritedNonOverridableMemberFunction.ql`<br/> `InheritedOverridableMemberFunction.ql`<br/> `DefinitionShallBeConsideredForUnqualifiedLookup.ql` |
 | RULE-6-4-3 | | | | `NameShallBeReferredUsingAQualifiedIdOrThis.ql`<br/> `NameShallBeReferredUsingAQualifiedIdOrThisAudit.ql` |
-| RULE-6-5-1 | | | | `ExternalLinkageNotDeclaredInHeaderFileMisra.ql` |
+| RULE-6-5-1 | | | `misc-use-internal-linkage` | `ExternalLinkageNotDeclaredInHeaderFileMisra.ql` |
 | RULE-6-5-2 | | | | `InternalLinkageSpecifiedAppropriately.ql` |
 | RULE-6-7-1 | | | | `LocalVariableStaticStorageDuration.ql` |
-| RULE-6-7-2 | | | | `GlobalVariableUsed.ql` |
-| RULE-6-8-1 | | | | `ObjectAccessedBeforeLifetimeMisra.ql`<br/> `ObjectAccessedAfterLifetimeMisra.ql` |
-| RULE-6-8-2 | | | | `ReturnReferenceOrPointerToAutomaticLocalVariable.ql` |
+| RULE-6-7-2 | | | `misc-use-internal-linkage` | `GlobalVariableUsed.ql` |
+| RULE-6-8-1 | See note [5] | See note [5] | `bugprone-return-const-ref-from-parameter` <br/> `clang-analyzer-cplusplus.NewDelete` | `ObjectAccessedBeforeLifetimeMisra.ql`<br/> `ObjectAccessedAfterLifetimeMisra.ql` |
+| RULE-6-8-2 | `-Wreturn-local-addr` | `-Wreturn-stack-address` | | `ReturnReferenceOrPointerToAutomaticLocalVariable.ql` |
 | RULE-6-8-3 | | | | `AutomaticStorageAssignedToObjectGreaterLifetime.ql` |
 | RULE-6-8-4 | | | | `MemberFunctionsRefqualified.ql` |
 | RULE-6-9-1 | | | | `TypeAliasesDeclaration.ql` |
-| RULE-6-9-2 | | | | `AvoidStandardIntegerTypeNames.ql` |
+| RULE-6-9-2 | | | `google-runtime-int` | `AvoidStandardIntegerTypeNames.ql` |
 | RULE-7-0-1 | | | | `NoConversionFromBool.ql` |
 | RULE-7-0-2 | | | | `NoImplicitBoolConversion.ql` |
 | RULE-7-0-3 | | | | `NoCharacterNumericalValue.ql` |
@@ -197,3 +197,5 @@ However, because we do not want to introduce more false positives than needed, w
 [3] Apart from using CodeQL, our plan is to also use memory sanitizers to mitigate the risk of some findings not being found by CodeQL.
 
 [4] The plan is to rely on the compiler for the enforcement of this rule. The CodeQL user manual mentions "The rules `5.13.7`, `19.0.1` and `19.1.2` are not planned to be implemented by CodeQL as they are compiler checked in all supported compilers.".
+
+[5] Apart from using CodeQL, our plan is to also use address sanitizers to mitigate the risk of some findings not being found by CodeQL.
