@@ -104,13 +104,13 @@ Note: According to MISRA Compliance:2020 document, every guideline within "The G
 | RULE-9-6-4 | | `-Winvalid-noreturn` | | `FunctionDeclaredWithTheNoreturnAttributeReturn.ql` |
 | RULE-9-6-5 | `-Wreturn-type` | `-Wreturn-type` | | `NonVoidFunctionShallReturnAValueOnAllPaths.ql` |
 | RULE-10-0-1 | | | | `UseSingleLocalDeclarators.ql`<br/> `UseSingleGlobalOrMemberDeclarators.ql` |
-| RULE-10-1-1 | | | | `PointerOrRefParamNotConst.ql` |
-| RULE-10-1-2 | | | | `VolatileQualifierNotUsedAppropriately.ql` |
+| RULE-10-1-1 | | | `readability-non-const-parameter` | `PointerOrRefParamNotConst.ql` |
+| RULE-10-1-2 | `-Wignored-qualifiers` | `-Wignored-qualifiers` | | `VolatileQualifierNotUsedAppropriately.ql` |
 | RULE-10-2-1 | | | | `EnumerationNotDefinedWithAnExplicitUnderlyingType.ql` |
-| RULE-10-2-2 | | | | `UnscopedEnumerationsShouldNotBeDeclared.ql` |
-| RULE-10-2-3 | | | | `UnscopedEnumWithoutFixedUnderlyingTypeUsed.ql` |
-| RULE-10-3-1 | | | | `UnnamedNamespacesInHeaderFiles.ql` |
-| RULE-10-4-1 | | | | `AsmDeclarationShallNotBeUsed.ql` |
+| RULE-10-2-2 | | `-Wshadow` | | `UnscopedEnumerationsShouldNotBeDeclared.ql` |
+| RULE-10-2-3 | `-Wenum-compare` | `-Wenum-compare` | | `UnscopedEnumWithoutFixedUnderlyingTypeUsed.ql` |
+| RULE-10-3-1 | | | `google-build-namespaces` | `UnnamedNamespacesInHeaderFiles.ql` |
+| RULE-10-4-1 | | | `hicpp-no-assembler` | `AsmDeclarationShallNotBeUsed.ql` |
 | RULE-11-3-1 | | | | `VariableDeclaredArrayType.ql` |
 | RULE-11-3-2 | | | | `DeclarationOfAnObjectIndirectionsLevel.ql` |
 | RULE-11-6-1 | | | | `UninitializedVariable.ql` |
