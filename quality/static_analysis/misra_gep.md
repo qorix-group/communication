@@ -68,30 +68,30 @@ Note: According to MISRA Compliance:2020 document, every guideline within "The G
 | RULE-7-11-1 | | `-Wzero-as-null-pointer-constant` | | `NullptrNotTheOnlyFormOfTheNullPointerConstant.ql` |
 | RULE-7-11-2 | | | `cppcoreguidelines-pro-bounds-array-to-pointer-decay` | `ArrayPassedAsFunctionArgumentDecayToAPointer.ql` |
 | RULE-7-11-3 | `-Waddress` | `-Wtautological-pointer-compare` | | `FunctionPointerConversionContext.ql` |
-| RULE-8-0-1 | | | | `MissingPrecedenceClarifyingParenthesis.ql`<br/> `MissingSizeofOperatorParenthesis.ql` |
+| RULE-8-0-1 | `-Wparentheses` | `-Wparentheses` | | `MissingPrecedenceClarifyingParenthesis.ql`<br/> `MissingSizeofOperatorParenthesis.ql` |
 | RULE-8-1-1 | | | | `NonTransientLambdaImplicitlyCapturesThis.ql` |
 | RULE-8-1-2 | | | | `ImplicitCapturesDisallowedInNonTransientLambda.ql` |
-| RULE-8-2-1 | | | | `VirtualBaseClassCastToDerived.ql` |
-| RULE-8-2-2 | | | | `NoCStyleOrFunctionalCasts.ql` |
-| RULE-8-2-3 | | | | `CastRemovesConstOrVolatileFromPointerOrReference.ql` |
-| RULE-8-2-4 | | | | `CastsBetweenAPointerToFunctionAndAnyOtherType.ql` |
-| RULE-8-2-5 | | | | `ReinterpretCastShallNotBeUsed.ql` |
-| RULE-8-2-6 | | | | `IntToPointerCastProhibited.ql` |
-| RULE-8-2-7 | | | | `NoPointerToIntegralCast.ql` |
-| RULE-8-2-8 | | | | `PointerToIntegralCast.ql` |
+| RULE-8-2-1 | | `-Wreinterpret-base-class` | | `VirtualBaseClassCastToDerived.ql` |
+| RULE-8-2-2 | | `-Wold-style-cast` | | `NoCStyleOrFunctionalCasts.ql` |
+| RULE-8-2-3 | | `-Wcast-qual` | | `CastRemovesConstOrVolatileFromPointerOrReference.ql` |
+| RULE-8-2-4 | `-Wcast-function-type` | | | `CastsBetweenAPointerToFunctionAndAnyOtherType.ql` |
+| RULE-8-2-5 | | | `cppcoreguidelines-pro-type-reinterpret-cast` | `ReinterpretCastShallNotBeUsed.ql` |
+| RULE-8-2-6 | | | `performance-no-int-to-ptr` | `IntToPointerCastProhibited.ql` |
+| RULE-8-2-7 | | `-Wpointer-to-int-cast` | | `NoPointerToIntegralCast.ql` |
+| RULE-8-2-8 | | `-Wpointer-to-int-cast` | | `PointerToIntegralCast.ql` |
 | RULE-8-2-9 | | | | `PolymorphicClassTypeExpressionInTypeid.ql` |
-| RULE-8-2-10 | | | | `FunctionsCallThemselvesEitherDirectlyOrIndirectly.ql` |
+| RULE-8-2-10 | | `-Winfinite-recursion` | `misc-no-recursion` | `FunctionsCallThemselvesEitherDirectlyOrIndirectly.ql` |
 | RULE-8-2-11 | | | | `InappropriateArgumentTypePassedViaEllipsis.ql` |
 | RULE-8-3-1 | | | | `BuiltInUnaryOperatorAppliedToUnsignedExpression.ql` |
 | RULE-8-3-2 | | | | `BuiltInUnaryPlusOperatorShouldNotBeUsed.ql` |
-| RULE-8-7-1 | | | | `PointerArithmeticFormsAnInvalidPointer.ql`<br/> `PointerArgumentToCstringFunctionIsInvalid.ql` |
+| RULE-8-7-1 | | `-Warray-bounds` <br/> `-Warray-bounds-pointer-arithmetic` | `cppcoreguidelines-pro-bounds-pointer-arithmetic` | `PointerArithmeticFormsAnInvalidPointer.ql`<br/> `PointerArgumentToCstringFunctionIsInvalid.ql` |
 | RULE-8-7-2 | | | | `PointerDifferenceTakenBetweenDifferentArrays.ql` |
 | RULE-8-9-1 | | | | `PointerComparedBetweenDifferentArrays.ql` |
 | RULE-8-14-1 | | | | `ShortCircuitedPersistentSideEffect.ql` |
 | RULE-8-18-1 | | | | `ObjectAssignedToAnOverlappingObjectMisraCpp.ql`<br/> `ObjectCopiedToAnOverlappingObjectMisraCpp.ql` |
-| RULE-8-18-2 | | | | `ResultOfAnAssignmentOperatorShouldNotBeUsed.ql` |
-| RULE-8-19-1 | | | | `CommaOperatorShouldNotBeUsed.ql` |
-| RULE-8-20-1 | | | | `UnsignedOperationWithConstantOperandsWraps.ql` |
+| RULE-8-18-2 | `-Wparentheses` | `-Wparentheses` | | `ResultOfAnAssignmentOperatorShouldNotBeUsed.ql` |
+| RULE-8-19-1 | | `-Wcomma` | | `CommaOperatorShouldNotBeUsed.ql` |
+| RULE-8-20-1 | | `-Wconstant-conversion` | | `UnsignedOperationWithConstantOperandsWraps.ql` |
 | RULE-9-2-1 | | | | `NoStandaloneTypeCastExpression.ql` |
 | RULE-9-3-1 | | | | `SwitchBodyCompoundCondition.ql`<br/> `LoopBodyCompoundCondition.ql` |
 | RULE-9-4-1 | | | | `IfElseIfEndCondition.ql` |
