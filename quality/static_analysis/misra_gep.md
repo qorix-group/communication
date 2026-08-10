@@ -8,6 +8,8 @@ Additionally, we use compiler warnings (from gcc and clang) and clang-tidy for t
 (ii) even though there are no plans to qualify clang-tidy, it adds a level of redundancy that could compensate some CodeQL bugs.
 However, because we do not want to introduce more false positives than needed, we only list clang-tidy checks in the enforcement plan if we know that cover cases that are not covered by the listed compiler warnings.
 
+Note: According to MISRA Compliance:2020 document, every guideline within "The Guidelines" shall appear in the GEP. However, some of the guidelines here, are later disapplied in the guideline re-categorization plan (GRP).
+
 | Rule | gcc | clang | clang-tidy | CodeQL |
 | ----- | -------- | ---- | ---- | ---- |
 | RULE-0-0-1 | | `-Wunreachable-code` <br/> `-Wunreachable-code-return` | | `UnreachableStatement.ql` |
