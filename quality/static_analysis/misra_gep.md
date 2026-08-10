@@ -111,11 +111,11 @@ Note: According to MISRA Compliance:2020 document, every guideline within "The G
 | RULE-10-2-3 | `-Wenum-compare` | `-Wenum-compare` | | `UnscopedEnumWithoutFixedUnderlyingTypeUsed.ql` |
 | RULE-10-3-1 | | | `google-build-namespaces` | `UnnamedNamespacesInHeaderFiles.ql` |
 | RULE-10-4-1 | | | `hicpp-no-assembler` | `AsmDeclarationShallNotBeUsed.ql` |
-| RULE-11-3-1 | | | | `VariableDeclaredArrayType.ql` |
+| RULE-11-3-1 | | | `modernize-avoid-c-arrays` | `VariableDeclaredArrayType.ql` |
 | RULE-11-3-2 | | | | `DeclarationOfAnObjectIndirectionsLevel.ql` |
-| RULE-11-6-1 | | | | `UninitializedVariable.ql` |
-| RULE-11-6-2 | | | | `ValueOfAnObjectMustNotBeReadBeforeItHasBeenSet.ql` |
-| RULE-11-6-3 | | | | `NonUniqueEnumerationConstant.ql` |
+| RULE-11-6-1 | | | `cppcoreguidelines-init-variables` | `UninitializedVariable.ql` |
+| RULE-11-6-2 | `-Wuninitialized` | `-Wuninitialized` | `cppcoreguidelines-pro-type-member-init` | `ValueOfAnObjectMustNotBeReadBeforeItHasBeenSet.ql` |
+| RULE-11-6-3 | | `-Wduplicate-enum` | | `NonUniqueEnumerationConstant.ql` |
 | RULE-12-2-1 | | | | `BitFieldsShouldNotBeDeclaredMisraCpp.ql` |
 | RULE-12-2-2 | | | | `BitFieldShallHaveAnAppropriateType.ql` |
 | RULE-12-2-3 | | | | `SignedIntegerNamedBitFieldHaveALengthOfOneBit.ql` |
