@@ -74,6 +74,8 @@ Any job in check and merge queue must be robust against flakiness. That is cruci
 CI. At the same time, we do not want to have unstable software, however, this is not the task of the check and merge.
 Preventing flakiness is achieved with the periodic pipelines.
 
+Note: Not yet implemented, it will be done with https://github.com/eclipse-score/communication/issues/887.
+
 Additionally, check and merge jobs must be relatively fast, otherwise the feedback cycle becomes too long. For that reason,
 no job running on check and merge should take longer than 20 minutes (daily average).
 
