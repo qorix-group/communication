@@ -120,32 +120,32 @@ Note: According to MISRA Compliance:2020 document, every guideline within "The G
 | RULE-12-2-2 | | | | `BitFieldShallHaveAnAppropriateType.ql` |
 | RULE-12-2-3 | | | | `SignedIntegerNamedBitFieldHaveALengthOfOneBit.ql` |
 | RULE-12-3-1 | | | | `UnionKeywordUsed.ql` |
-| RULE-13-1-1 | | | | `VirtualInheritanceNotAllowed.ql` |
+| RULE-13-1-1 | | | `fuchsia-virtual-inheritance` | `VirtualInheritanceNotAllowed.ql` |
 | RULE-13-1-2 | | | | `VirtualAndNonVirtualClassInTheHierarchy.ql` |
-| RULE-13-3-1 | | | | `MemberSpecifiersNotUsedAppropriately.ql` |
+| RULE-13-3-1 | | `-Winconsistent-missing-destructor-override` <br/> `-Winconsistent-missing-override` | `modernize-use-override` | `MemberSpecifiersNotUsedAppropriately.ql` |
 | RULE-13-3-2 | | | | `OverridingShallSpecifyDifferentDefaultArguments.ql` |
 | RULE-13-3-3 | | | | `DeclarationsOfAFunctionSameParameterName.ql` |
 | RULE-13-3-4 | | | | `PotentiallyVirtualPointerOnlyComparesToNullptr.ql` |
 | RULE-14-1-1 | | | | `PrivateAndPublicDataMembersMixed.ql` |
-| RULE-15-0-1 | | | | `ImproperlyProvidedSpecialMemberFunctions.ql`<br/> `ImproperlyProvidedSpecialMemberFunctionsAudit.ql` |
-| RULE-15-0-2 | | | | `InvalidSignatureForSpecialMemberFunction.ql` |
-| RULE-15-1-1 | | | | `ObjectsDynamicTypeUsedFromConstructorOrDestructor.ql` |
+| RULE-15-0-1 | | `-Wextra-semi-stmt` | `cppcoreguidelines-slicing` <br/> `cppcoreguidelines-special-member-functions` <br/> `cppcoreguidelines-virtual-class-destructor` <br/> `modernize-use-equals-default` | `ImproperlyProvidedSpecialMemberFunctions.ql`<br/> `ImproperlyProvidedSpecialMemberFunctionsAudit.ql` |
+| RULE-15-0-2 | | | `misc-unconventional-assign-operator` | `InvalidSignatureForSpecialMemberFunction.ql` |
+| RULE-15-1-1 | | `-Wcall-to-pure-virtual-from-ctor-dtor` | | `ObjectsDynamicTypeUsedFromConstructorOrDestructor.ql` |
 | RULE-15-1-2 | | | | `InitializeAllVirtualBaseClasses.ql` |
-| RULE-15-1-3 | | | | `NonExplicitConversionMember.ql` |
-| RULE-15-1-4 | | | | `NonStaticMemberNotInitBeforeUse.ql` |
+| RULE-15-1-3 | | | `google-explicit-constructor` | `NonExplicitConversionMember.ql` |
+| RULE-15-1-4 | | | `cppcoreguidelines-pro-type-member-init` | `NonStaticMemberNotInitBeforeUse.ql` |
 | RULE-15-1-5 | | | | `InitializerListConstructorIsTheOnlyConstructor.ql` |
-| DIR-15-8-1 | | | | `CopyAndMoveAssignmentsShallHandleSelfAssignment.ql` |
-| RULE-16-5-1 | | | | `LogicalAndAndLogicalOrOperatorsOverloaded.ql` |
-| RULE-16-5-2 | | | | `AddressOfOperatorOverloaded.ql` |
+| DIR-15-8-1 | | | `bugprone-unhandled-self-assignment` | `CopyAndMoveAssignmentsShallHandleSelfAssignment.ql` |
+| RULE-16-5-1 | | | `fuchsia-overloaded-operator` | `LogicalAndAndLogicalOrOperatorsOverloaded.ql` |
+| RULE-16-5-2 | | | `google-runtime-operator` | `AddressOfOperatorOverloaded.ql` |
 | RULE-16-6-1 | | | | `InvalidOperatorOverloadedAsMemberFunction.ql` |
 | RULE-17-8-1 | | | | `FunctionTemplatesExplicitlySpecialized.ql` |
 | RULE-18-1-1 | | | | `ExceptionObjectHavePointerType.ql` |
 | RULE-18-1-2 | | | | `EmptyThrowOnlyWithinACatchHandler.ql` |
 | RULE-18-3-1 | | | | `MissingCatchAllExceptionHandlerInMain.ql` |
-| RULE-18-3-2 | | | | `ClassExceptionCaughtByValue.ql` |
-| RULE-18-3-3 | | | | `HandlersReferToNonStaticMembersFromTheirClass.ql` |
+| RULE-18-3-2 | | | `misc-throw-by-value-catch-by-reference` | `ClassExceptionCaughtByValue.ql` |
+| RULE-18-3-3 | | `-Wexceptions` | | `HandlersReferToNonStaticMembersFromTheirClass.ql` |
 | RULE-18-4-1 | | | | `ExceptionUnfriendlyFunctionMustBeNoexcept.ql` |
-| RULE-18-5-1 | | | | `NoexceptFunctionShouldNotPropagateToTheCaller.ql` |
+| RULE-18-5-1 | `-Wterminate` | `-Wexceptions` | | `NoexceptFunctionShouldNotPropagateToTheCaller.ql` |
 | RULE-18-5-2 | | | | `AvoidProgramTerminatingFunctions.ql` |
 | RULE-19-0-1 | | | | See notes [4] |
 | RULE-19-0-2 | | | | `FunctionLikeMacrosDefined.ql` |
