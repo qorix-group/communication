@@ -57,15 +57,15 @@ However, because we do not want to introduce more false positives than needed, w
 | RULE-6-8-4 | | | | `MemberFunctionsRefqualified.ql` |
 | RULE-6-9-1 | | | | `TypeAliasesDeclaration.ql` |
 | RULE-6-9-2 | | | `google-runtime-int` | `AvoidStandardIntegerTypeNames.ql` |
-| RULE-7-0-1 | | | | `NoConversionFromBool.ql` |
-| RULE-7-0-2 | | | | `NoImplicitBoolConversion.ql` |
-| RULE-7-0-3 | | | | `NoCharacterNumericalValue.ql` |
-| RULE-7-0-4 | | | | `InappropriateBitwiseOrShiftOperands.ql` |
-| RULE-7-0-5 | | | | `NoSignednessChangeFromPromotion.ql` |
-| RULE-7-0-6 | | | | `NumericAssignmentTypeMismatch.ql` |
-| RULE-7-11-1 | | | | `NullptrNotTheOnlyFormOfTheNullPointerConstant.ql` |
-| RULE-7-11-2 | | | | `ArrayPassedAsFunctionArgumentDecayToAPointer.ql` |
-| RULE-7-11-3 | | | | `FunctionPointerConversionContext.ql` |
+| RULE-7-0-1 | `-Wswitch-bool` | `-Wswitch-bool` | | `NoConversionFromBool.ql` |
+| RULE-7-0-2 | | | `modernize-use-bool-literals` <br/> `readability-implicit-bool-conversion` | `NoImplicitBoolConversion.ql` |
+| RULE-7-0-3 | | `-Wconstant-conversion` <br/> `-Wimplicit-int-conversion` | `bugprone-narrowing-conversions` <br/> `readability-implicit-bool-conversion` | `NoCharacterNumericalValue.ql` |
+| RULE-7-0-4 | | `-Wshift-sign-overflow` | `hicpp-signed-bitwise` | `InappropriateBitwiseOrShiftOperands.ql` |
+| RULE-7-0-5 | `-Wsign-compare` <br/> `-Wconversion` | `-Wsign-compare` | | `NoSignednessChangeFromPromotion.ql` |
+| RULE-7-0-6 | `-Wconversion` <br/> `-Wfloat-conversion` | `-Wc++11-narrowing` <br/> `-Wimplicit-int-conversion` <br/> `-Wsign-conversion` | `bugprone-narrowing-conversions` | `NumericAssignmentTypeMismatch.ql` |
+| RULE-7-11-1 | | `-Wzero-as-null-pointer-constant` | | `NullptrNotTheOnlyFormOfTheNullPointerConstant.ql` |
+| RULE-7-11-2 | | | `cppcoreguidelines-pro-bounds-array-to-pointer-decay` | `ArrayPassedAsFunctionArgumentDecayToAPointer.ql` |
+| RULE-7-11-3 | `-Waddress` | `-Wtautological-pointer-compare` | | `FunctionPointerConversionContext.ql` |
 | RULE-8-0-1 | | | | `MissingPrecedenceClarifyingParenthesis.ql`<br/> `MissingSizeofOperatorParenthesis.ql` |
 | RULE-8-1-1 | | | | `NonTransientLambdaImplicitlyCapturesThis.ql` |
 | RULE-8-1-2 | | | | `ImplicitCapturesDisallowedInNonTransientLambda.ql` |
