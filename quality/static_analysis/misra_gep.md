@@ -92,17 +92,17 @@ Note: According to MISRA Compliance:2020 document, every guideline within "The G
 | RULE-8-18-2 | `-Wparentheses` | `-Wparentheses` | | `ResultOfAnAssignmentOperatorShouldNotBeUsed.ql` |
 | RULE-8-19-1 | | `-Wcomma` | | `CommaOperatorShouldNotBeUsed.ql` |
 | RULE-8-20-1 | | `-Wconstant-conversion` | | `UnsignedOperationWithConstantOperandsWraps.ql` |
-| RULE-9-2-1 | | | | `NoStandaloneTypeCastExpression.ql` |
-| RULE-9-3-1 | | | | `SwitchBodyCompoundCondition.ql`<br/> `LoopBodyCompoundCondition.ql` |
+| RULE-9-2-1 | | `-Wunused-value` | `bugprone-unused-raii` | `NoStandaloneTypeCastExpression.ql` |
+| RULE-9-3-1 | `-Wdangling-else` <br/> `-Wmisleading-indentation` | `-Wdangling-else` <br/> `-Wmisleading-indentation` <br/> `-Wempty-body` | `readability-braces-around-statements` | `SwitchBodyCompoundCondition.ql`<br/> `LoopBodyCompoundCondition.ql` |
 | RULE-9-4-1 | | | | `IfElseIfEndCondition.ql` |
-| RULE-9-4-2 | | | | `AppropriateStructureOfSwitchStatement.ql` |
-| RULE-9-5-1 | | | | `LegacyForStatementsShouldBeSimple.ql` |
-| RULE-9-5-2 | | | | `ForRangeInitializerAtMostOneFunctionCall.ql` |
-| RULE-9-6-1 | | | | `GotoStatementShouldNotBeUsed.ql` |
+| RULE-9-4-2 | | `-Wimplicit-fallthrough` <br/> `-Wswitch` <br/> `-Wswitch-default` <br/> `-Wswitch-enum` | `hicpp-multiway-paths-covered` | `AppropriateStructureOfSwitchStatement.ql` |
+| RULE-9-5-1 | | | `bugprone-too-small-loop-variable` | `LegacyForStatementsShouldBeSimple.ql` |
+| RULE-9-5-2 | | `-Wdangling-gsl` | | `ForRangeInitializerAtMostOneFunctionCall.ql` |
+| RULE-9-6-1 | | | `cppcoreguidelines-avoid-goto` | `GotoStatementShouldNotBeUsed.ql` |
 | RULE-9-6-2 | | | | `GotoReferenceALabelInSurroundingBlock.ql` |
 | RULE-9-6-3 | | | | `GotoShallJumpToLabelDeclaredLaterInTheFunction.ql` |
-| RULE-9-6-4 | | | | `FunctionDeclaredWithTheNoreturnAttributeReturn.ql` |
-| RULE-9-6-5 | | | | `NonVoidFunctionShallReturnAValueOnAllPaths.ql` |
+| RULE-9-6-4 | | `-Winvalid-noreturn` | | `FunctionDeclaredWithTheNoreturnAttributeReturn.ql` |
+| RULE-9-6-5 | `-Wreturn-type` | `-Wreturn-type` | | `NonVoidFunctionShallReturnAValueOnAllPaths.ql` |
 | RULE-10-0-1 | | | | `UseSingleLocalDeclarators.ql`<br/> `UseSingleGlobalOrMemberDeclarators.ql` |
 | RULE-10-1-1 | | | | `PointerOrRefParamNotConst.ql` |
 | RULE-10-1-2 | | | | `VolatileQualifierNotUsedAppropriately.ql` |
