@@ -148,38 +148,38 @@ Note: According to MISRA Compliance:2020 document, every guideline within "The G
 | RULE-18-5-1 | `-Wterminate` | `-Wexceptions` | | `NoexceptFunctionShouldNotPropagateToTheCaller.ql` |
 | RULE-18-5-2 | | | | `AvoidProgramTerminatingFunctions.ql` |
 | RULE-19-0-1 | | | | See notes [4] |
-| RULE-19-0-2 | | | | `FunctionLikeMacrosDefined.ql` |
+| RULE-19-0-2 | | | `cppcoreguidelines-macro-usage` | `FunctionLikeMacrosDefined.ql` |
 | RULE-19-0-3 | | | | `IncludeDirectivesPrecededByPreprocessorDirectives.ql` |
 | RULE-19-0-4 | | | | `UndefOfMacroNotDefinedInFile.ql` |
-| RULE-19-1-1 | | | | `InvalidTokenInDefinedOperator.ql`<br/> `DefinedOperatorExpandedInIfDirective.ql` |
+| RULE-19-1-1 | `-Wexpansion-to-defined` | `-Wexpansion-to-defined` | | `InvalidTokenInDefinedOperator.ql`<br/> `DefinedOperatorExpandedInIfDirective.ql` |
 | RULE-19-1-2 | | | | See notes [4] |
-| RULE-19-1-3 | | | | `IdentifiersUsedInTheControllingExpressionOf.ql` |
+| RULE-19-1-3 | | `-Wundef` | | `IdentifiersUsedInTheControllingExpressionOf.ql` |
 | RULE-19-2-1 | | | | `NoValidIfdefGuardInHeader.ql`<br/> `IncludeOutsideGuard.ql` |
-| RULE-19-2-2 | | | | `InvalidIncludeDirective.ql` |
+| RULE-19-2-2 | | `-Wendif-labels` <br/> `-Wextra-tokens` | | `InvalidIncludeDirective.ql` |
 | RULE-19-2-3 | | | | `CharsThatShouldNotOccurInHeaderFileName.ql` |
 | RULE-19-3-1 | | | | `AndPreprocessorOperatorsShouldNotBeUsed.ql` |
 | RULE-19-3-2 | | | | `MacroParameterFollowingHash.ql` |
 | RULE-19-3-3 | | | | `AMixedUseMacroArgumentSubjectToExpansion.ql` |
-| RULE-19-3-4 | | | | `UnparenthesizedMacroArgument.ql` |
-| RULE-19-3-5 | | | | `TokensThatLookLikeDirectivesInAMacroArgument.ql` |
-| RULE-19-6-1 | | | | `DisallowedUseOfPragma.ql` |
+| RULE-19-3-4 | | | `readability-math-missing-parentheses` | `UnparenthesizedMacroArgument.ql` |
+| RULE-19-3-5 | | `-Wembedded-directive` | | `TokensThatLookLikeDirectivesInAMacroArgument.ql` |
+| RULE-19-6-1 | | `-Wpragma-once-outside-header` | | `DisallowedUseOfPragma.ql` |
 | RULE-21-2-1 | | | | `AtofAtoiAtolAndAtollUsed.ql` |
 | RULE-21-2-2 | | | | `UnsafeStringHandlingFunctions.ql` |
 | RULE-21-2-3 | | | | `BannedSystemFunction.ql` |
 | RULE-21-2-4 | | | | `MacroOffsetofShallNotBeUsed.ql` |
-| RULE-21-6-1 | | | | `DynamicMemoryShouldNotBeUsed.ql` |
-| RULE-21-6-2 | | | | `DynamicMemoryManagedManually.ql` |
-| RULE-21-6-3 | | | | `AdvancedMemoryManagementUsed.ql` |
+| RULE-21-6-1 | | | `cppcoreguidelines-no-malloc` | `DynamicMemoryShouldNotBeUsed.ql` |
+| RULE-21-6-2 | | | `cppcoreguidelines-no-malloc` | `DynamicMemoryManagedManually.ql` |
+| RULE-21-6-3 | | | `fuchsia-overloaded-operator` | `AdvancedMemoryManagementUsed.ql` |
 | RULE-21-6-4 | | | | `GlobalSizedOperatorDeleteShallBeDefined.ql`<br/> `GlobalUnsizedOperatorDeleteShallBeDefined.ql` |
-| RULE-21-6-5 | | | | `PointerToAnIncompleteClassTypeDeleted.ql` |
-| RULE-21-10-1 | | | | `NoVariadicFunctionMacros.ql` |
+| RULE-21-6-5 | `-Wdelete-incomplete` | `-Wdelete-incomplete` | | `PointerToAnIncompleteClassTypeDeleted.ql` |
+| RULE-21-10-1 | | | `cppcoreguidelines-pro-type-vararg` | `NoVariadicFunctionMacros.ql` |
 | RULE-21-10-2 | | | | `NoCsetjmpHeader.ql` |
 | RULE-21-10-3 | | | | `CsignalFacilitiesUsed.ql`<br/> `CsignalTypesShallNotBeUsed.ql` |
 | RULE-22-3-1 | | | | `AssertMacroUsedWithAConstantExpression.ql` |
 | RULE-22-4-1 | | | | `InvalidAssignmentToErrno.ql` |
-| RULE-23-11-1 | | | | `UseSmartPtrFactoryFunctions.ql` |
+| RULE-23-11-1 | | | `modernize-make-shared` | `UseSmartPtrFactoryFunctions.ql` |
 | RULE-24-5-1 | | | | `CharacterHandlingFunctionRestrictions.ql` |
-| RULE-24-5-2 | | | | `NoMemoryFunctionsFromCString.ql` |
+| RULE-24-5-2 | | | `bugprone-suspicious-memory-comparison` | `NoMemoryFunctionsFromCString.ql` |
 | RULE-25-5-1 | | | | `LocaleGlobalFunctionNotAllowed.ql` |
 | RULE-25-5-2 | | | | `PointersReturnedByLocaleFunctionsMustBeUsedAsConst.ql` |
 | RULE-25-5-3 | | | | `CallToSetlocaleInvalidatesOldPointersMisra.ql`<br/> `CallToSetlocaleInvalidatesOldPointersWarnMisra.ql` |
@@ -187,9 +187,9 @@ Note: According to MISRA Compliance:2020 document, every guideline within "The G
 | RULE-28-3-1 | | | | `PredicateWithPersistentSideEffects.ql`<br/> `NonConstPredicateFunctionObject.ql` |
 | RULE-28-6-1 | | | | `StdMoveWithNonConstLvalue.ql` |
 | RULE-28-6-2 | | | | `ForwardingReferencesAndForwardNotUsedTogether.ql` |
-| RULE-28-6-3 | | | | `ObjectUsedWhileInPotentiallyMovedFromState.ql` |
-| RULE-28-6-4 | | | | `PotentiallyErroneousContainerUsage.ql` |
-| RULE-30-0-1 | | | | `CstdioFunctionsShallNotBeUsed.ql`<br/> `CstdioMacrosShallNotBeUsed.ql`<br/> `CstdioTypesShallNotBeUsed.ql` |
+| RULE-28-6-3 | | | `bugprone-use-after-move` | `ObjectUsedWhileInPotentiallyMovedFromState.ql` |
+| RULE-28-6-4 | | | `bugprone-unused-return-value` | `PotentiallyErroneousContainerUsage.ql` |
+| RULE-30-0-1 | | | `modernize-deprecated-headers` | `CstdioFunctionsShallNotBeUsed.ql`<br/> `CstdioMacrosShallNotBeUsed.ql`<br/> `CstdioTypesShallNotBeUsed.ql` |
 | RULE-30-0-2 | | | | `ReadsAndWritesOnStreamNotSeparatedByPositioning.ql` |
 
 [1] This rule cannot be enfoced with clang, gcc, clang-tidy, or CodeQL. However, both [libc++](https://libcxx.llvm.org/Hardening.html) and [libstd++](https://gcc.gnu.org/onlinedocs/libstdc++/manual/debug_mode.html), provide a version of the C++ standard library in hardned mode. Such hardened mode allow to detect the violations of some of the preconditions of the C++ standard library. Our plan to follow DIR-0-3-2 is to follow a multi tool approach. Make use of the hardened mode in both standard libraries as well as the use of UB sanitizers. Additionally, for test making use of `SCORE_LANGUAGE_FUTURECPP_PRECONDITION_*` that run only in debug mode, the plan is to run our unit and integration tests making sure that such preconditions get evaluated.
