@@ -116,6 +116,9 @@ test --sandbox_tmpfs_path=/tmp
 # Tests require to be run in a sandbox. Otherwise some will be flaky.
 test --nosandbox_default_allow_network
 
+# Since we will always have some kind of flakiness, we run the identified ones multiple times, to reduce friction.
+test --flaky_test_attempts=5
+
 # Bzlmod
 common --registry=https://raw.githubusercontent.com/eclipse-score/bazel_registry/refs/heads/main/
 common --registry=https://bcr.bazel.build
