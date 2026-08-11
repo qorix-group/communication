@@ -17,9 +17,7 @@
 #include <future>
 #include <tuple>
 
-namespace score
-{
-namespace message_passing
+namespace score::message_passing
 {
 
 UnixDomainEngine::UnixDomainEngine(score::cpp::pmr::memory_resource* memory_resource, LoggingCallback logger) noexcept
@@ -354,5 +352,4 @@ std::int32_t UnixDomainEngine::ProcessTimerQueue() noexcept
     return static_cast<std::int32_t>(distance_ms + 1);
 }
 
-}  // namespace message_passing
-}  // namespace score
+}  // namespace score::message_passing

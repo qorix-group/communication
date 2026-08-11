@@ -23,11 +23,7 @@
 
 #include <optional>
 
-namespace score
-{
-namespace message_passing
-{
-namespace detail
+namespace score::message_passing::detail
 {
 
 class UnixDomainServer final : public IServer
@@ -97,8 +93,6 @@ class UnixDomainServer final : public IServer
     ISharedResourceEngine::PosixEndpointEntry listener_endpoint_;
 };
 
-}  // namespace detail
-}  // namespace message_passing
-}  // namespace score
+}  // namespace score::message_passing::detail
 
 #endif  // SCORE_LIB_MESSAGE_PASSING_UNIX_DOMAIN_UNIX_DOMAIN_SERVER_H
