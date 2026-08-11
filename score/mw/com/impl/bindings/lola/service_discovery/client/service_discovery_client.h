@@ -58,13 +58,13 @@ class ServiceDiscoveryClient final : public IServiceDiscoveryClient
 
     [[nodiscard]] Result<void> StopOfferService(
         const InstanceIdentifier instance_identifier,
-        const IServiceDiscovery::QualityTypeSelector quality_type_selector) noexcept override;
+        const IServiceDiscovery::QualityTypeSelector quality_type_selector) override;
 
     [[nodiscard]] Result<void> StartFindService(const FindServiceHandle find_service_handle,
                                                 FindServiceHandler<HandleType> handler,
                                                 const EnrichedInstanceIdentifier enriched_instance_identifier) override;
 
-    [[nodiscard]] Result<void> StopFindService(const FindServiceHandle find_service_handle) noexcept override;
+    [[nodiscard]] Result<void> StopFindService(const FindServiceHandle find_service_handle) override;
     [[nodiscard]] Result<ServiceHandleContainer<HandleType>> FindService(
         const EnrichedInstanceIdentifier enriched_instance_identifier) override;
 
@@ -152,8 +152,8 @@ class ServiceDiscoveryClient final : public IServiceDiscoveryClient
     void OnInstanceFlagFileRemoved(const WatchesContainer::iterator& watch_iterator, std::string_view name);
 
     void TransferSearchRequests() noexcept;
-    SearchRequestsContainer::value_type& TransferNewSearchRequest(NewSearchRequest search_request) noexcept;
-    void TransferObsoleteSearchRequests() noexcept;
+    SearchRequestsContainer::value_type& TransferNewSearchRequest(NewSearchRequest search_request);
+    void TransferObsoleteSearchRequests();
 
     void TransferObsoleteSearchRequest(const FindServiceHandle& find_service_handle);
 

@@ -74,10 +74,10 @@ class GenericSkeleton : public SkeletonBase
 
     /// \brief Offers the service instance.
     /// \return A blank result, or an error if offering fails.
-    [[nodiscard]] Result<void> OfferService() noexcept;
+    [[nodiscard]] Result<void> OfferService();
 
     /// \brief Stops offering the service instance.
-    void StopOfferService() noexcept;
+    void StopOfferService();
 
   private:
     // Private constructor, only callable by static Create methods.

@@ -181,7 +181,7 @@ SubscriptionState ProxyEventBase::GetSubscriptionState() const noexcept
     return binding_base_->GetSubscriptionState();
 }
 
-Result<std::size_t> ProxyEventBase::GetNumNewSamplesAvailable() const noexcept
+Result<std::size_t> ProxyEventBase::GetNumNewSamplesAvailable() const
 {
     if (proxy_event_base_mock_ != nullptr)
     {

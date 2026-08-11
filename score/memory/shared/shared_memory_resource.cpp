@@ -356,7 +356,7 @@ score::cpp::expected<std::shared_ptr<SharedMemoryResource>, score::os::Error> Sh
     InitializeCallback initialize_callback,
     const UserPermissions& permissions,
     AccessControlListFactory acl_factory,
-    std::shared_ptr<score::memory::shared::TypedMemory> typed_memory_ptr) noexcept
+    std::shared_ptr<score::memory::shared::TypedMemory> typed_memory_ptr)
 {
     auto resource = CreateInstance(std::move(input_path), std::move(acl_factory), typed_memory_ptr);
     const auto result = resource->CreateImpl(user_space_to_reserve, std::move(initialize_callback), permissions);
@@ -377,7 +377,7 @@ score::cpp::expected<std::shared_ptr<SharedMemoryResource>, score::os::Error> Sh
     InitializeCallback initialize_callback,
     const UserPermissions& permissions,
     AccessControlListFactory acl_factory,
-    std::shared_ptr<score::memory::shared::TypedMemory> typed_memory_ptr) noexcept
+    std::shared_ptr<score::memory::shared::TypedMemory> typed_memory_ptr)
 {
     auto resource = CreateInstance(shared_memory_resource_id, std::move(acl_factory), typed_memory_ptr);
     const auto result = resource->CreateImpl(user_space_to_reserve, std::move(initialize_callback), permissions);
@@ -402,7 +402,7 @@ score::cpp::expected<std::shared_ptr<SharedMemoryResource>, score::os::Error> Sh
     InitializeCallback initialize_callback,
     const UserPermissions& permissions,
     AccessControlListFactory acl_factory,
-    std::shared_ptr<score::memory::shared::TypedMemory> typed_memory_ptr) noexcept
+    std::shared_ptr<score::memory::shared::TypedMemory> typed_memory_ptr)
 {
     auto resource = CreateInstance(std::move(input_path), std::move(acl_factory), typed_memory_ptr);
     const auto result = resource->CreateOrOpenImpl(user_space_to_reserve, std::move(initialize_callback), permissions);
@@ -437,7 +437,7 @@ score::cpp::expected<std::shared_ptr<SharedMemoryResource>, score::os::Error> Sh
 
 SharedMemoryResource::SharedMemoryResource(std::string input_path,
                                            AccessControlListFactory acl_factory,
-                                           std::shared_ptr<TypedMemory> typed_memory_ptr) noexcept
+                                           std::shared_ptr<TypedMemory> typed_memory_ptr)
     : SharedMemoryResource(std::variant<std::string, std::uint64_t>{std::move(input_path)},
                            std::move(acl_factory),
                            std::move(typed_memory_ptr))
@@ -446,7 +446,7 @@ SharedMemoryResource::SharedMemoryResource(std::string input_path,
 
 SharedMemoryResource::SharedMemoryResource(std::uint64_t shared_memory_resource_id,
                                            AccessControlListFactory acl_factory,
-                                           std::shared_ptr<TypedMemory> typed_memory_ptr) noexcept
+                                           std::shared_ptr<TypedMemory> typed_memory_ptr)
     : SharedMemoryResource(std::variant<std::string, std::uint64_t>{shared_memory_resource_id},
                            std::move(acl_factory),
                            std::move(typed_memory_ptr))
@@ -551,7 +551,7 @@ score::cpp::expected_blank<Error> SharedMemoryResource::CreateImpl(const std::si
 
 score::cpp::expected_blank<Error> SharedMemoryResource::CreateOrOpenImpl(const std::size_t user_space_to_reserve,
                                                                          InitializeCallback initialize_callback,
-                                                                         const UserPermissions& permissions) noexcept
+                                                                         const UserPermissions& permissions)
 {
     const auto* const path = std::get_if<std::string>(&shared_memory_resource_identifier_);
     SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(path != nullptr, "shm-object file path is not set.");
@@ -598,7 +598,7 @@ score::cpp::expected_blank<Error> SharedMemoryResource::CreateOrOpenImpl(const s
     return {};
 }
 
-score::cpp::expected_blank<Error> SharedMemoryResource::OpenImpl(const bool is_read_write) noexcept
+score::cpp::expected_blank<Error> SharedMemoryResource::OpenImpl(const bool is_read_write)
 {
     if (is_read_write)
     {

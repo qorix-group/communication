@@ -78,7 +78,7 @@ void SubscribedState::SetReceiveHandler(std::weak_ptr<ScopedEventReceiveHandler>
     state_machine_.event_receive_handler_manager_.Register(std::move(handler));
 }
 
-void SubscribedState::UnsetReceiveHandler() noexcept
+void SubscribedState::UnsetReceiveHandler()
 {
     state_machine_.event_receive_handler_manager_.Unregister();
 }

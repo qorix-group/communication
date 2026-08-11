@@ -222,9 +222,9 @@ auto ServiceDiscoveryClient::OfferService(const InstanceIdentifier instance_iden
     return {};
 }
 
-auto ServiceDiscoveryClient::StopOfferService(
-    const InstanceIdentifier instance_identifier,
-    const IServiceDiscovery::QualityTypeSelector quality_type_selector) noexcept -> Result<void>
+auto ServiceDiscoveryClient::StopOfferService(const InstanceIdentifier instance_identifier,
+                                              const IServiceDiscovery::QualityTypeSelector quality_type_selector)
+    -> Result<void>
 {
     const EnrichedInstanceIdentifier enriched_instance_identifier{instance_identifier};
     SCORE_LANGUAGE_FUTURECPP_PRECONDITION_PRD_MESSAGE(
@@ -264,7 +264,7 @@ auto ServiceDiscoveryClient::StopOfferService(
     return {};
 }
 
-auto ServiceDiscoveryClient::StopFindService(const FindServiceHandle find_service_handle) noexcept -> Result<void>
+auto ServiceDiscoveryClient::StopFindService(const FindServiceHandle find_service_handle) -> Result<void>
 {
     {
         // Suppress Autosar C++14 A8-5-3 states that auto variables shall not be initialized using braced
@@ -286,7 +286,7 @@ auto ServiceDiscoveryClient::TransferSearchRequests() noexcept -> void
     TransferObsoleteSearchRequests();
 }
 
-auto ServiceDiscoveryClient::TransferNewSearchRequest(NewSearchRequest search_request) noexcept
+auto ServiceDiscoveryClient::TransferNewSearchRequest(NewSearchRequest search_request)
     -> SearchRequestsContainer::value_type&
 {
     auto& [find_service_handle,
@@ -319,7 +319,7 @@ auto ServiceDiscoveryClient::TransferNewSearchRequest(NewSearchRequest search_re
     return *(added_search_request.first);
 }
 
-auto ServiceDiscoveryClient::TransferObsoleteSearchRequests() noexcept -> void
+auto ServiceDiscoveryClient::TransferObsoleteSearchRequests() -> void
 {
     for (const auto& obsolete_search_request : obsolete_search_requests_)
     {

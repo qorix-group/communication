@@ -38,7 +38,7 @@ class HandleType;
  * this value will be used instead of the value in the configuration, referenced from identifier.
  * \return A constructed InstanceIdentifier
  */
-HandleType make_HandleType(InstanceIdentifier identifier, std::optional<ServiceInstanceId> instance_id = {}) noexcept;
+HandleType make_HandleType(InstanceIdentifier identifier, std::optional<ServiceInstanceId> instance_id = {});
 
 /**
  * \brief It types the handle for a specific service
@@ -113,7 +113,7 @@ class HandleType
     // Design decision: Friend class required to access private constructor.
     // This way more implementation details can be hidden from the user.
     // coverity[autosar_cpp14_a11_3_1_violation]
-    friend HandleType make_HandleType(InstanceIdentifier, std::optional<ServiceInstanceId> instance_id) noexcept;
+    friend HandleType make_HandleType(InstanceIdentifier, std::optional<ServiceInstanceId> instance_id);
 };
 
 }  // namespace score::mw::com::impl

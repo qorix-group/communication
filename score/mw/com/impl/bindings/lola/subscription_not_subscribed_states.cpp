@@ -128,7 +128,7 @@ void NotSubscribedState::SetReceiveHandler(std::weak_ptr<ScopedEventReceiveHandl
     state_machine_.event_receiver_handler_ = std::move(handler);
 }
 
-void NotSubscribedState::UnsetReceiveHandler() noexcept
+void NotSubscribedState::UnsetReceiveHandler()
 {
     state_machine_.event_receiver_handler_ = std::nullopt;
 }

@@ -233,13 +233,13 @@
       "name": "FindService",
       "qualified_name": "score::mw::com::GenericProxy::FindService",
       "kind": "method",
-      "signature": "static FindService : Result<ServiceHandleContainer<HandleType>> (InstanceSpecifier) noexcept"
+      "signature": "static FindService : Result<ServiceHandleContainer<HandleType>> (InstanceSpecifier)"
     },
     {
       "name": "FindService",
       "qualified_name": "score::mw::com::GenericProxy::FindService",
       "kind": "method",
-      "signature": "static FindService : Result<ServiceHandleContainer<HandleType>> (InstanceIdentifier) noexcept"
+      "signature": "static FindService : Result<ServiceHandleContainer<HandleType>> (InstanceIdentifier)"
     },
     {
       "name": "GetEvents",
@@ -257,19 +257,19 @@
       "name": "StartFindService",
       "qualified_name": "score::mw::com::GenericProxy::StartFindService",
       "kind": "method",
-      "signature": "static StartFindService : Result<FindServiceHandle> (FindServiceHandler<HandleType>, InstanceIdentifier) noexcept"
+      "signature": "static StartFindService : Result<FindServiceHandle> (FindServiceHandler<HandleType>, InstanceIdentifier)"
     },
     {
       "name": "StartFindService",
       "qualified_name": "score::mw::com::GenericProxy::StartFindService",
       "kind": "method",
-      "signature": "static StartFindService : Result<FindServiceHandle> (FindServiceHandler<HandleType>, InstanceSpecifier) noexcept"
+      "signature": "static StartFindService : Result<FindServiceHandle> (FindServiceHandler<HandleType>, InstanceSpecifier)"
     },
     {
       "name": "StopFindService",
       "qualified_name": "score::mw::com::GenericProxy::StopFindService",
       "kind": "method",
-      "signature": "static StopFindService : score::Result<void> (const FindServiceHandle) noexcept"
+      "signature": "static StopFindService : score::Result<void> (const FindServiceHandle)"
     },
     {
       "name": "GetFreeSampleCount",
@@ -281,7 +281,7 @@
       "name": "GetNumNewSamplesAvailable",
       "qualified_name": "score::mw::com::GenericProxyEvent::GetNumNewSamplesAvailable",
       "kind": "method",
-      "signature": "GetNumNewSamplesAvailable : Result<std::size_t> () const noexcept"
+      "signature": "GetNumNewSamplesAvailable : Result<std::size_t> () const"
     },
     {
       "name": "GetSubscriptionState",
@@ -883,7 +883,7 @@
       "name": "OfferService",
       "qualified_name": "score::mw::com::GenericSkeleton::OfferService",
       "kind": "method",
-      "signature": "OfferService : Result<void> () noexcept [[nodiscard]]"
+      "signature": "OfferService : Result<void> () [[nodiscard]]"
     },
     {
       "name": "SkeletonBase",
@@ -895,7 +895,7 @@
       "name": "StopOfferService",
       "qualified_name": "score::mw::com::GenericSkeleton::StopOfferService",
       "kind": "method",
-      "signature": "StopOfferService : void () noexcept"
+      "signature": "StopOfferService : void ()"
     },
     {
       "name": "~SkeletonBase",

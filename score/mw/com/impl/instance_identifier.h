@@ -187,7 +187,7 @@ class InstanceIdentifier final
     // This way more implementation details can be hidden from the user.
     // coverity[autosar_cpp14_a11_3_1_violation]
     friend InstanceIdentifier make_InstanceIdentifier(const ServiceInstanceDeployment& instance_deployment,
-                                                      const ServiceTypeDeployment& type_deployment) noexcept;
+                                                      const ServiceTypeDeployment& type_deployment);
 
     // Suppress "AUTOSAR C++14 A11-3-1", The rule states: "Friend declarations shall not be used".
     // Design decision. This class provides a view to the private members of this class.
@@ -218,7 +218,7 @@ class InstanceIdentifier final
  * \return A constructed InstanceIdentifier
  */
 inline InstanceIdentifier make_InstanceIdentifier(const ServiceInstanceDeployment& instance_deployment,
-                                                  const ServiceTypeDeployment& type_deployment) noexcept
+                                                  const ServiceTypeDeployment& type_deployment)
 {
     return InstanceIdentifier{instance_deployment, type_deployment};
 }
@@ -236,7 +236,7 @@ class InstanceIdentifierView final
   public:
     explicit InstanceIdentifierView(const InstanceIdentifier&);
 
-    json::Object Serialize() const noexcept
+    json::Object Serialize() const
     {
         return identifier_.Serialize();
     };

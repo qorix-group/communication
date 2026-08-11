@@ -104,7 +104,7 @@ class SubscriptionStateMachine : public std::enable_shared_from_this<Subscriptio
     // State Machine Methods. These are not modeled by the state machine UML and do not cause transitions between
     // states.
     void SetReceiveHandler(std::weak_ptr<ScopedEventReceiveHandler> handler) noexcept;
-    void UnsetReceiveHandler() noexcept;
+    void UnsetReceiveHandler();
     void SetSubscriptionStateChangeHandler(SubscriptionStateChangeHandler handler) noexcept;
     void UnsetSubscriptionStateChangeHandler() noexcept;
 
