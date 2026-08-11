@@ -14,5 +14,5 @@
 filegroup(
     name = "review_checklists_config",
     srcs = ["review_checklists.yml"],
-    visibility = ["//visibility:public"],
+    visibility = ["//tools/review-checklists:__subpackages__"],
 )

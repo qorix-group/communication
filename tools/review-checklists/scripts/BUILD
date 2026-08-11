@@ -53,7 +53,6 @@ py_binary(
     name = "post_checklists",
     srcs = ["post_checklists.py"],
     main = "post_checklists.py",
-    visibility = ["//visibility:public"],
     deps = [":helpers"],
 )
 
@@ -61,7 +60,6 @@ py_binary(
     name = "check_acknowledgements",
     srcs = ["check_acknowledgements.py"],
     main = "check_acknowledgements.py",
-    visibility = ["//visibility:public"],
     deps = [":helpers"],
 )
 
@@ -69,7 +67,6 @@ py_binary(
     name = "dismiss_and_invalidate",
     srcs = ["dismiss_and_invalidate.py"],
     main = "dismiss_and_invalidate.py",
-    visibility = ["//visibility:public"],
     deps = [":helpers"],
 )
 
