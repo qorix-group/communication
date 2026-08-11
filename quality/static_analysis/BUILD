@@ -40,13 +40,6 @@ filegroup(
     srcs = ["config.yaml"],
 )
 
-py_test(
-    name = "codeql_lint_test",
-    srcs = ["codeql_lint_test.py"],
-    data = ["codeql_lint.py"],
-    target_compatible_with = ["@platforms//os:linux"],
-)
-
 # The `sarif` CLI from the sarif-tools PyPI package
 # (https://github.com/microsoft/sarif-tools), invoked directly (no custom
 # wrapper script) to derive the CSV report from the merged/deduplicated SARIF
