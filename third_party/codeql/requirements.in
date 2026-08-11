@@ -12,6 +12,6 @@
 # *******************************************************************************
 pyyaml
 jsonpatch
-jsonpath-ng
+jsonpath-ng==1.7.0
 jsonpointer
 jsonschema
