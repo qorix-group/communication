@@ -23,11 +23,7 @@
 #include <cstdint>
 #include <thread>
 
-namespace score
-{
-namespace message_passing
-{
-namespace detail
+namespace score::message_passing::detail
 {
 
 namespace
@@ -666,6 +662,4 @@ void ClientConnection::ProcessStateChange(const State state) noexcept
     }
 }
 
-}  // namespace detail
-}  // namespace message_passing
-}  // namespace score
+}  // namespace score::message_passing::detail

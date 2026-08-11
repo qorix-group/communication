@@ -19,11 +19,7 @@
 #include <score/utility.hpp>
 #include <tuple>
 
-namespace score
-{
-namespace message_passing
-{
-namespace detail
+namespace score::message_passing::detail
 {
 
 namespace
@@ -274,6 +270,4 @@ void UnixDomainServer::ProcessConnect() noexcept
     connection->AcceptConnection(std::move(data_expected.value()), std::move(connection));
 }
 
-}  // namespace detail
-}  // namespace message_passing
-}  // namespace score
+}  // namespace score::message_passing::detail

@@ -21,11 +21,7 @@
 #include <string>
 #include <string_view>
 
-namespace score
-{
-namespace mw
-{
-namespace service
+namespace score::mw::service
 {
 
 class ProvidedServicesBase
@@ -243,8 +239,6 @@ class ProvidedServiceContainer
     std::unique_ptr<ProvidedServicesBase> services_;
 };
 
-}  // namespace service
-}  // namespace mw
-}  // namespace score
+}  // namespace score::mw::service
 
 #endif  // SCORE_MW_SERVICE_PROVIDED_SERVICE_CONTAINER_H
