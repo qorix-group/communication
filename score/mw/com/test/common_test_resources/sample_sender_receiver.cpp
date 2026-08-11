@@ -12,16 +12,12 @@
  *******************************************************************************/
 
 #include "score/mw/com/test/common_test_resources/sample_sender_receiver.h"
-#include "score/mw/com/impl/bindings/lola/proxy_event.h"
-#include "score/mw/com/impl/generic_proxy.h"
-#include "score/mw/com/impl/generic_proxy_event.h"
-#include "score/mw/com/impl/handle_type.h"
 
 #include "score/concurrency/notification.h"
 #include "score/memory/shared/vector.h"
+#include "score/mw/com/types.h"
 #include "score/os/mman.h"
 
-#include "score/mw/com/impl/proxy_event.h"
 #include <score/assert.hpp>
 #include <score/hash.hpp>
 #include <optional>
@@ -301,8 +297,7 @@ std::optional<std::reference_wrapper<impl::ProxyEvent<MapApiLanesStamped>>> GetM
     return proxy.map_api_lanes_stamped_;
 }
 
-std::optional<std::reference_wrapper<impl::GenericProxyEvent>> GetMapApiLanesStampedProxyEvent(
-    GenericProxy& generic_proxy)
+std::optional<std::reference_wrapper<GenericProxyEvent>> GetMapApiLanesStampedProxyEvent(GenericProxy& generic_proxy)
 {
     const std::string event_name{"map_api_lanes_stamped"};
     auto event_it = generic_proxy.GetEvents().find(event_name);
@@ -363,11 +358,11 @@ void ModifySampleValue(const SamplePtr<void>& sample)
 }
 
 template <typename ProxyType = BigDataProxy>
-score::Result<impl::HandleType> GetHandleFromSpecifier(const InstanceSpecifier& instance_specifier,
-                                                       const score::cpp::stop_token& stop_token)
+score::Result<HandleType> GetHandleFromSpecifier(const InstanceSpecifier& instance_specifier,
+                                                 const score::cpp::stop_token& stop_token)
 {
     std::cout << ToString(instance_specifier, ": Running as proxy, looking for services\n");
-    ServiceHandleContainer<impl::HandleType> handles{};
+    ServiceHandleContainer<HandleType> handles{};
     do
     {
         if (stop_token.stop_requested())
@@ -377,7 +372,7 @@ score::Result<impl::HandleType> GetHandleFromSpecifier(const InstanceSpecifier& 
         auto handles_result = ProxyType::FindService(instance_specifier);
         if (!handles_result.has_value())
         {
-            return MakeUnexpected<impl::HandleType>(std::move(handles_result.error()));
+            return MakeUnexpected<HandleType>(std::move(handles_result.error()));
         }
         handles = std::move(handles_result).value();
         if (handles.size() == 0)
@@ -1099,7 +1094,7 @@ template int EventSenderReceiver::RunAsProxy<BigDataProxy, impl::ProxyEvent<MapA
     const std::size_t,
     const score::cpp::stop_token&,
     bool try_writing_to_data_segment);
-template int EventSenderReceiver::RunAsProxy<impl::GenericProxy, impl::GenericProxyEvent>(
+template int EventSenderReceiver::RunAsProxy<GenericProxy, GenericProxyEvent>(
     const score::mw::com::InstanceSpecifier&,
     const std::optional<std::chrono::milliseconds>,
     const std::size_t,
