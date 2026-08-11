@@ -85,7 +85,7 @@ int run_provider(score::cpp::stop_token stop_token)
         score::mw::log::LogFatal("GenericSkeletonProvider") << "Failed to find event in skeleton.";
         return 1;
     }
-    auto& generic_event = const_cast<score::mw::com::GenericSkeletonEvent&>(it->second);
+    auto& generic_event = it->second;
 
     // Wait for the consumer to start and subscribe BEFORE sending data
     score::mw::log::LogInfo("GenericSkeletonProvider")

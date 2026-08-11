@@ -87,7 +87,7 @@ int run_provider(score::cpp::stop_token stop_token)
     std::cout << "[PROVIDER] Event reference obtained." << std::endl;
 
     // Get reference to the GenericSkeletonEvent
-    auto& generic_event = const_cast<score::mw::com::GenericSkeletonEvent&>(it->second);
+    auto& generic_event = it->second;
 
     std::cout << "[PROVIDER] Generic-Generic " << PAYLOAD_SIZE << "-byte - Waiting 5s for consumer to subscribe..."
               << std::endl;
