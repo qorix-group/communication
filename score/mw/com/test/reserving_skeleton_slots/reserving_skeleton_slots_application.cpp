@@ -14,7 +14,6 @@
 #include "score/mw/com/test/reserving_skeleton_slots/reserving_skeleton_slots_application.h"
 
 #include "score/mw/com/impl/configuration/config_parser.h"
-#include "score/mw/com/impl/instance_specifier.h"
 #include "score/mw/com/test/common_test_resources/sample_sender_receiver.h"
 #include "score/mw/com/test/common_test_resources/sctf_test_runner.h"
 
@@ -26,7 +25,7 @@
 namespace
 {
 
-using InstanceSpecifier = score::mw::com::impl::InstanceSpecifier;
+using InstanceSpecifier = score::mw::com::InstanceSpecifier;
 
 std::uint16_t GetNumSkeletonSlotsFromConfig(const std::string& service_instance_manifest_path,
                                             const InstanceSpecifier instance_specifier)
