@@ -13,6 +13,7 @@
 
 bazel-runfiles==1.8.4
 gql[requests]>=3.5.0
+pathspec>=0.12.1
 PyGithub>=2.1.1
 PyYAML>=6.0.1
 pytest==8.4.1

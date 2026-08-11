@@ -216,6 +216,42 @@ class TestMatchChecklists:
         assert len(result) == 1
         assert result[0]["id"] == "build-review"
 
+    def test_build_glob_matches_root_level_too(self):
+        # "**/BUILD" (gitignore semantics) also matches a root-level file,
+        # unlike a plain fnmatch translation of "**/BUILD".
+        files = ["BUILD"]
+        result = match_checklists(SAMPLE_CHECKLISTS, files)
+        assert len(result) == 1
+        assert result[0]["id"] == "build-review"
+
+    def test_unanchored_pattern_matches_root_and_nested(self):
+        cl = [
+            {
+                "id": "md-anywhere",
+                "name": "Markdown anywhere",
+                "include": ["*.md"],
+                "checklist": "- [ ] Reviewed",
+            }
+        ]
+        files = ["NOTE.md", "docs/NOTE.md", "docs/deep/NOTE.md"]
+        result = match_checklists(cl, files)
+        assert len(result) == 1
+        assert set(result[0]["matched_files"]) == set(files)
+
+    def test_anchored_pattern_matches_root_only(self):
+        cl = [
+            {
+                "id": "md-root-only",
+                "name": "Markdown at root",
+                "include": ["/*.md"],
+                "checklist": "- [ ] Reviewed",
+            }
+        ]
+        files = ["NOTE.md", "docs/NOTE.md"]
+        result = match_checklists(cl, files)
+        assert len(result) == 1
+        assert result[0]["matched_files"] == ["NOTE.md"]
+
     def test_multiple_files_same_checklist(self):
         files = ["src/api/a.py", "src/api/b.h"]
         result = match_checklists(SAMPLE_CHECKLISTS, files)

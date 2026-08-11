@@ -15,10 +15,10 @@
 
 from __future__ import annotations
 
-import fnmatch
 import os
 from typing import Any
 
+import pathspec
 import yaml
 from github import Github
 from github.PullRequest import PullRequest
@@ -108,8 +108,22 @@ def get_changed_files(pr: PullRequest) -> list[str]:
 
 
 def _file_matches_patterns(filepath: str, patterns: list[str]) -> bool:
-    """Return True if filepath matches any of the given glob patterns."""
-    return any(fnmatch.fnmatch(filepath, p) for p in patterns)
+    """Return True if filepath matches any of the given glob patterns.
+
+    Patterns use ``.gitignore``-style ("gitwildmatch") syntax via the
+    ``pathspec`` library, not plain ``fnmatch``:
+      - A pattern without a leading ``/`` matches at any depth
+        (``"*.md"`` matches both ``NOTE.md`` and ``docs/NOTE.md``).
+      - A pattern with a leading ``/`` is anchored to the repo root
+        (``"/*.md"`` matches only root-level ``.md`` files).
+      - ``**`` explicitly matches zero or more path segments
+        (``"docs/**"`` matches everything under ``docs/``;
+        ``"**/BUILD"`` matches ``BUILD`` at any depth, including the root).
+    """
+    if not patterns:
+        return False
+    spec = pathspec.PathSpec.from_lines("gitwildmatch", patterns)
+    return spec.match_file(filepath)
 
 
 def match_checklists(checklists: list[dict], changed_files: list[str]) -> list[dict]:

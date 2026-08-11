@@ -22,6 +22,7 @@ py_library(
     deps = [
         requirement("bazel-runfiles"),
         requirement("gql"),
+        requirement("pathspec"),
         requirement("pygithub"),
         requirement("pyyaml"),
     ],

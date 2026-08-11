@@ -200,6 +200,18 @@ Notes:
 - Changing a checklist's `checklist:` body text does not retroactively
   invalidate prior acknowledgements of that checklist — only new pushes
   touching its `include` paths do (see `dismiss_and_invalidate.py`).
+- **`include`/`exclude` patterns use `.gitignore`-style syntax** (via the
+  [`pathspec`](https://pypi.org/project/pathspec/) library's `gitwildmatch`
+  pattern style), the same syntax used in `.gitignore` files:
+  - A pattern without a leading `/` matches at any depth: `"*.md"` matches
+    both `NOTE.md` and `docs/deep/NOTE.md`.
+  - A pattern with a leading `/` is anchored to the repo root: `"/*.md"`
+    matches only root-level `.md` files, not `docs/NOTE.md`.
+  - `**` explicitly matches zero or more path segments: `"docs/**"` matches
+    everything under `docs/`; `"**/BUILD"` matches a `BUILD` file at any
+    depth, including the repo root.
+  - `"**"` on its own matches everything (used by the example checklist
+    above).
 
 ## Composite action inputs (`action.yml`)
 
