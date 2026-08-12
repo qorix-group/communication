@@ -27,6 +27,8 @@ component_requirements(
         "component_requirements_ipc_generic_proxy.trlc",
         "component_requirements_ipc_generic_skeleton.trlc",
         "component_requirements_ipc_methods.trlc",
+        "component_requirements_ipc_proxy.trlc",
+        "component_requirements_ipc_skeleton.trlc",
     ],
     target_compatible_with = ["@platforms//os:linux"],
     visibility = ["//score/mw/com/dependability:__subpackages__"],
