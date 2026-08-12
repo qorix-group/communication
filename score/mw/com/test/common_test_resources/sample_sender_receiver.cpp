@@ -90,7 +90,7 @@ class MmanMock : public os::Mman
     {
         // mmap calls are uninteresting and are forwarded directly
         return reinterpret_cast<os::internal::MmanImpl&>(
-                   os::StaticDestructionGuard<os::internal::MmanImpl>::GetStorage())
+                   utils::StaticDestructionGuard<os::internal::MmanImpl>::GetStorage())
             .mmap(addr, length, protection, flags, fd, offset);
     };
 
@@ -98,7 +98,7 @@ class MmanMock : public os::Mman
     {
         // munmap calls are uninteresting and are forwarded directly
         return reinterpret_cast<os::internal::MmanImpl&>(
-                   os::StaticDestructionGuard<os::internal::MmanImpl>::GetStorage())
+                   utils::StaticDestructionGuard<os::internal::MmanImpl>::GetStorage())
             .munmap(addr, length);
     };
 
@@ -110,7 +110,7 @@ class MmanMock : public os::Mman
         std::strcpy(last_shm_open_path_, pathname);
         shm_open_callcount_++;
         return reinterpret_cast<os::internal::MmanImpl&>(
-                   os::StaticDestructionGuard<os::internal::MmanImpl>::GetStorage())
+                   utils::StaticDestructionGuard<os::internal::MmanImpl>::GetStorage())
             .shm_open(pathname, oflag, mode);
     };
 
@@ -118,7 +118,7 @@ class MmanMock : public os::Mman
     {
         // shm_unlink calls are uninteresting and are forwarded directly
         return reinterpret_cast<os::internal::MmanImpl&>(
-                   os::StaticDestructionGuard<os::internal::MmanImpl>::GetStorage())
+                   utils::StaticDestructionGuard<os::internal::MmanImpl>::GetStorage())
             .shm_unlink(pathname);
     };
 
@@ -129,7 +129,7 @@ class MmanMock : public os::Mman
         const os::Mman::PosixTypedMem tflag) const noexcept override
     {
         return reinterpret_cast<os::internal::MmanImpl&>(
-                   os::StaticDestructionGuard<os::internal::MmanImpl>::GetStorage())
+                   utils::StaticDestructionGuard<os::internal::MmanImpl>::GetStorage())
             .posix_typed_mem_open(name, oflag, tflag);
     }
 
@@ -138,7 +138,7 @@ class MmanMock : public os::Mman
         struct posix_typed_mem_info* info) const noexcept override
     {
         return reinterpret_cast<os::internal::MmanImpl&>(
-                   os::StaticDestructionGuard<os::internal::MmanImpl>::GetStorage())
+                   utils::StaticDestructionGuard<os::internal::MmanImpl>::GetStorage())
             .posix_typed_mem_get_info(fd, info);
     }
 
