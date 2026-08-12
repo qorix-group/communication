@@ -528,6 +528,10 @@ auto OffsetPtr<PointedType>::CopyFrom(const OffsetPtr<OtherPointedType>& source_
         {
             memory_bounds = source_offset_ptr.memory_bounds_;
         }
+        else
+        {
+            // We are either copying stack-to-stack or shm-to-shm. In both cases, no action is required.
+        }
     }
 
     auto* const other_pointed_to_object =
@@ -677,6 +681,10 @@ auto OffsetPtr<PointedType>::operator+=(difference_type offset) -> OffsetPtr&
     else if (offset < 0)
     {
         DecrementOffset(static_cast<std::size_t>(AbsoluteValue(offset)));
+    }
+    else
+    {
+        // No offset change is required when offset is zero.
     }
     return *this;
 }
