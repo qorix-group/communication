@@ -24,6 +24,8 @@ component_requirements(
     name = "component_requirements_ipc",
     srcs = [
         "component_requirements_ipc.trlc",
+        "component_requirements_ipc_generic_proxy.trlc",
+        "component_requirements_ipc_generic_skeleton.trlc",
         "component_requirements_ipc_methods.trlc",
     ],
     target_compatible_with = ["@platforms//os:linux"],
