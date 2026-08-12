@@ -27,6 +27,7 @@ component_requirements(
         "component_requirements_ipc_generic_proxy.trlc",
         "component_requirements_ipc_generic_skeleton.trlc",
         "component_requirements_ipc_methods.trlc",
+        "component_requirements_ipc_partial_restart.trlc",
         "component_requirements_ipc_proxy.trlc",
         "component_requirements_ipc_skeleton.trlc",
         "component_requirements_ipc_tracing.trlc",
