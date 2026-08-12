@@ -49,7 +49,7 @@ SubscriptionState GenericProxyEvent::GetSubscriptionState() const noexcept
     return proxy_event_common_.GetSubscriptionState();
 }
 
-inline Result<std::size_t> GenericProxyEvent::GetNumNewSamplesAvailable() const noexcept
+inline Result<std::size_t> GenericProxyEvent::GetNumNewSamplesAvailable() const
 {
     /// In case of LoLa binding we can also dispatch to GetNumNewSamplesAvailableImpl() in case of kSubscriptionPending!
     /// Because a pre-condition to kSubscriptionPending is that we once had a successful subscription... and then we can

@@ -139,7 +139,7 @@ class ProxyEventBase : public EnableReferenceToMoveableFromThis<ProxyEventBase>
      *         actual new samples. I.e. an implementation is allowed to report a lower number than actual new samples,
      *         which would be provided by a call to GetNewSamples().
      */
-    Result<std::size_t> GetNumNewSamplesAvailable() const noexcept;
+    Result<std::size_t> GetNumNewSamplesAvailable() const;
 
     /**
      * \api

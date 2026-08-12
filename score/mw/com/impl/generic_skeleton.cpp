@@ -142,12 +142,12 @@ ServiceElementMapView<GenericSkeletonEvent> GenericSkeleton::GetEvents() const n
     return ServiceElementMapViewFactory<GenericSkeletonEvent>::Create(*events_);
 }
 
-Result<void> GenericSkeleton::OfferService() noexcept
+Result<void> GenericSkeleton::OfferService()
 {
     return SkeletonBase::OfferService();
 }
 
-void GenericSkeleton::StopOfferService() noexcept
+void GenericSkeleton::StopOfferService()
 {
     SkeletonBase::StopOfferService();
 }

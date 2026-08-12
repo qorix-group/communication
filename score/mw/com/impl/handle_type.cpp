@@ -81,7 +81,7 @@ auto operator<(const HandleType& lhs, const HandleType& rhs) -> bool
     return std::tie(lhs.identifier_, lhs.instance_id_) < std::tie(rhs.identifier_, rhs.instance_id_);
 }
 
-auto make_HandleType(InstanceIdentifier identifier, std::optional<ServiceInstanceId> instance_id) noexcept -> HandleType
+auto make_HandleType(InstanceIdentifier identifier, std::optional<ServiceInstanceId> instance_id) -> HandleType
 {
     return HandleType(std::move(identifier), instance_id);
 }

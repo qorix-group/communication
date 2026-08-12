@@ -104,7 +104,7 @@ void SubscriptionStateMachine::SetReceiveHandler(std::weak_ptr<ScopedEventReceiv
     GetCurrentEventState().SetReceiveHandler(std::move(handler));
 }
 
-void SubscriptionStateMachine::UnsetReceiveHandler() noexcept
+void SubscriptionStateMachine::UnsetReceiveHandler()
 {
     std::lock_guard<std::mutex> lock{state_mutex_};
     GetCurrentEventState().UnsetReceiveHandler();

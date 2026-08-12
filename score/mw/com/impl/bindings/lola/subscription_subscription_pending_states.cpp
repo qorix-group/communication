@@ -85,7 +85,7 @@ void SubscriptionPendingState::SetReceiveHandler(std::weak_ptr<ScopedEventReceiv
     state_machine_.event_receiver_handler_ = std::move(handler);
 }
 
-void SubscriptionPendingState::UnsetReceiveHandler() noexcept
+void SubscriptionPendingState::UnsetReceiveHandler()
 {
     state_machine_.event_receiver_handler_ = std::nullopt;
 }

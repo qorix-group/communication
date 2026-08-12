@@ -96,7 +96,7 @@ class ProxyEvent final : public ProxyEventBinding<SampleType>
     {
         return proxy_event_common_.GetSubscriptionState();
     }
-    Result<std::size_t> GetNumNewSamplesAvailable() const noexcept override;
+    Result<std::size_t> GetNumNewSamplesAvailable() const override;
     Result<std::size_t> GetNewSamples(Callback&& receiver, TrackerGuardFactory& tracker) noexcept override;
 
     Result<void> SetReceiveHandler(std::weak_ptr<ScopedEventReceiveHandler> handler) noexcept override
@@ -165,7 +165,7 @@ inline const std::uint8_t* ProxyEvent<SampleType>::InitialiseEventSlotsRawArray(
 }
 
 template <typename SampleType>
-inline Result<std::size_t> ProxyEvent<SampleType>::GetNumNewSamplesAvailable() const noexcept
+inline Result<std::size_t> ProxyEvent<SampleType>::GetNumNewSamplesAvailable() const
 {
     /// In case of LoLa binding we can also dispatch to GetNumNewSamplesAvailableImpl() in case of kSubscriptionPending!
     /// Because a pre-condition to kSubscriptionPending is that we once had a successful subscription... and then we can

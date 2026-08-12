@@ -43,7 +43,7 @@ class SubscribedState final : public SubscriptionStateBase
     void ReOfferEvent(const pid_t) override;
 
     void SetReceiveHandler(std::weak_ptr<ScopedEventReceiveHandler> handler) override;
-    void UnsetReceiveHandler() noexcept override;
+    void UnsetReceiveHandler() override;
     std::optional<std::uint16_t> GetMaxSampleCount() const override;
     std::optional<SlotCollector>& GetSlotCollector() & noexcept override;
     const std::optional<SlotCollector>& GetSlotCollector() const& noexcept override;

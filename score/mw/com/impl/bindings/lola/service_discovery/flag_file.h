@@ -38,7 +38,7 @@ class FlagFile
   public:
     using Disambiguator = std::uint64_t;
 
-    ~FlagFile();
+    ~FlagFile() noexcept(false);
 
     /// \brief Creates a flag file for the provided InstanceIdentifier which is read/writable by the creating user and
     /// only readable by everyone else.
@@ -59,7 +59,7 @@ class FlagFile
     /// The service discovery path is: `<sd>/mw_com_lola/<service_id>/<instance_id>. Since flag files are always created
     /// in the instance directory, this function will always return false if the InstanceIdentifier does not contain an
     /// Instance ID.
-    static auto Exists(const EnrichedInstanceIdentifier& enriched_instance_identifier) noexcept -> bool;
+    static auto Exists(const EnrichedInstanceIdentifier& enriched_instance_identifier) -> bool;
 
     /// \brief Creates each directory in the search path (found using GetSearchPathForIdentifier()) for an
     /// InstanceIdentifier in the filesystem.
