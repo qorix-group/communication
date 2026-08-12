@@ -30,15 +30,6 @@ git_override(
     remote = "https://github.com/bmw-software-engineering/lobster.git",
 )
 
-# Pin to the pushed joho_rework_rules_distroless branch to validate
-# score_tooling's rules_distroless-fork-free rework before it's released.
-bazel_dep(name = "score_tooling", version = "2.0.0")
-git_override(
-    module_name = "score_tooling",
-    commit = "ba0b2d970f6e8ea5be6c2045e13de2d4f5c73569",
-    remote = "https://github.com/eclipse-score/tooling.git",
-)
-
 # Only required to build the example, shall be replaceable with nearly every other C++ Toolchain setup
 bazel_dep(name = "score_bazel_platforms", version = "1.0.0", dev_dependency = True)
 bazel_dep(name = "score_bazel_cpp_toolchains", version = "0.5.4", dev_dependency = True)
