@@ -90,7 +90,7 @@ std::string GetShmFilePath(const std::string& input_path) noexcept
 
 using SharedMemoryFactoryTest = SharedMemoryResourceTest;
 
-INSTANTIATE_TEST_CASE_P(SharedMemoryFactoryTests, SharedMemoryFactoryTest, ::testing::Values(true, false));
+INSTANTIATE_TEST_SUITE_P(SharedMemoryFactoryTests, SharedMemoryFactoryTest, ::testing::Values(true, false));
 
 TEST_P(SharedMemoryFactoryTest, ReturnExistingResourceOnReopening)
 {
@@ -1132,7 +1132,7 @@ TEST_F(SharedMemoryFactoryTest, CreatingAnonymousSharedMemoryInSystemMemory)
 
 using SharedMemoryFactoryDeathTest = SharedMemoryFactoryTest;
 
-INSTANTIATE_TEST_CASE_P(SharedMemoryFactoryDeathTests, SharedMemoryFactoryDeathTest, ::testing::Values(true, false));
+INSTANTIATE_TEST_SUITE_P(SharedMemoryFactoryDeathTests, SharedMemoryFactoryDeathTest, ::testing::Values(true, false));
 
 TEST_P(SharedMemoryFactoryDeathTest, CreatingSharedMemoryTerminate)
 {
