@@ -152,15 +152,15 @@ jobs:
           path: /tmp/codeql-results/qnx/codeql-nightly-qnx.sarif
           retention-days: 1
 
-  # All merging/deduplication happens on the SARIF documents; the CSV is
-  # generated once, at the end, directly from the resulting deduplicated
-  # union SARIF. Both tools are invoked directly (no custom wrapper
-  # script): the official Microsoft SARIF SDK CLI (@sarif_multitool, the
-  # same tool used by .github/actions/00_infrastructure/merge_sarif_reports
-  # for rules_lint) merges/dedups the SARIF, then the `sarif` CLI from
-  # sarif-tools (https://github.com/microsoft/sarif-tools) derives the
-  # CSV. This job always runs (even Linux-only, i.e. when codeql-qnx was
-  # skipped) since it is now the only place that produces the published CSV.
+  # All merging/deduplication happens on the SARIF documents. The Microsoft
+  # SARIF SDK CLI (@sarif_multitool, the same tool used by
+  # .github/actions/00_infrastructure/merge_sarif_reports for rules_lint)
+  # merges/dedups the SARIF; the resulting deduplicated union SARIF is
+  # published directly (no CSV export) and consumed straight by the
+  # quality dashboard, the same way clang-tidy/clippy SARIF already is.
+  # This job always runs (even Linux-only, i.e. when codeql-qnx was
+  # skipped) since it is now the only place that produces the published
+  # SARIF.
   merge:
     name: Merge & deduplicate findings (Linux ∪ QNX union)
     needs: [determine-qnx, codeql-linux, codeql-qnx]
@@ -207,11 +207,7 @@ jobs:
             merge "${sarif_inputs[@]}" --merge-empty-logs \
             --output-file /tmp/codeql-results/publish/codeql-nightly.sarif
 
-          bazel run //quality/static_analysis:sarif_cli -- \
-            csv /tmp/codeql-results/publish/codeql-nightly.sarif \
-            --output /tmp/codeql-results/publish/codeql-nightly.csv
-
-      # Single canonical published SARIF/CSV: the deduplicated union of Linux
+      # Single canonical published SARIF: the deduplicated union of Linux
       # and QNX findings (or just the deduplicated Linux findings when QNX was
       # not run).
       - name: Upload SARIF to GitHub Code Scanning
@@ -222,10 +218,10 @@ jobs:
           sarif_file: /tmp/codeql-results/publish/codeql-nightly.sarif
           category: codeql-nightly
 
-      - name: Upload CSV results
+      - name: Upload SARIF results
         if: always() && steps.merge-codeql.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: codeql-csv-results
-          path: /tmp/codeql-results/publish/codeql-nightly.csv
+          name: codeql-sarif-results
+          path: /tmp/codeql-results/publish/codeql-nightly.sarif
           retention-days: 30

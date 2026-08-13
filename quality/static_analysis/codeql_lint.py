@@ -203,11 +203,10 @@ def analyze_database(
     query_arg = f" {query_target}"
     sarif_path = f"{output_base}/{output_prefix}.sarif"
 
-    # Run CodeQL analysis, producing SARIF only. The CSV is no longer generated
-    # here: it is derived later, once, from the final (merged/deduplicated)
-    # SARIF via @sarif_multitool//:sarif_multitool_cli (merge) and
-    # //quality/static_analysis:sarif_cli (csv, from sarif-tools), so no
-    # intermediate CSV is ever created or mutated.
+    # Run CodeQL analysis, producing SARIF only. The merged/deduplicated
+    # union SARIF (see @sarif_multitool//:sarif_multitool_cli in
+    # _codeql.yml) is published and consumed directly by the quality
+    # dashboard afterward; no CSV is ever generated.
     print("\n Running CodeQL analysis...")
     subprocess.run(
         f"{code_ql_path} database analyze -j=0 {database_path}{query_arg} "

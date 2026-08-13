@@ -21,14 +21,16 @@ Usage (CI, called from nightly_quality.yml):
         --lcov           /tmp/coverage_zip/extracted/artifacts/coverage_report.dat \
         --clang-tidy     /tmp/clang_tidy/clang-tidy.sarif \
         --clippy         /tmp/clippy/clippy.sarif \
+        --codeql         /tmp/codeql/codeql-nightly.sarif \
         --html           _quality/index.html \
         --github-summary
 
-The linter inputs accept SARIF reports and fall back to the previous plain-text findings format.
+The linter inputs accept SARIF reports and fall back to the previous plain-text findings
+format. --codeql expects the merged (deduplicated Linux ∪ QNX union) CodeQL SARIF produced
+by the `merge` job in .github/workflows/_codeql.yml.
 """
 
 import argparse
-import csv
 import json
 import os
 import pathlib
@@ -173,9 +175,14 @@ def _load_linter_sarif(path: pathlib.Path) -> dict | None:
         for result in run.get("results") or []:
             if not isinstance(result, dict):
                 continue
-            level = _normalise_linter_level(
-                result.get("level") or rule_levels.get(result.get("ruleId") or "", "")
-            )
+            # A result may carry a top-level "ruleId" string, or (e.g. after
+            # Sarif.Multitool merge legally rewrites it per SARIF §3.27.5) only a
+            # nested "rule": {"id": ...} object. Resolve once and reuse for both
+            # the severity lookup and the finding's display name, so merged
+            # CodeQL SARIF classifies correctly instead of silently falling back
+            # to "note" for every finding.
+            rule_id = result.get("ruleId") or (result.get("rule") or {}).get("id") or ""
+            level = _normalise_linter_level(result.get("level") or rule_levels.get(rule_id, ""))
             if level == "error":
                 errors += 1
             elif level == "warning":
@@ -190,7 +197,7 @@ def _load_linter_sarif(path: pathlib.Path) -> dict | None:
             message = result.get("message") or {}
             findings.append({
                 "severity": level,
-                "name": result.get("ruleId") or result.get("rule", {}).get("id") or "",
+                "name": rule_id,
                 "message": message.get("text") or message.get("markdown") or "",
                 "path": artifact_location.get("uri") or "",
                 "line": region.get("startLine") or "",
@@ -224,64 +231,28 @@ def load_linter_findings(path: pathlib.Path) -> dict | None:
     return _load_linter_text(path)
 
 
-def load_codeql_csv(path: pathlib.Path) -> dict | None:
-    """Return {errors, warnings, recommendations, total, findings} from a CodeQL CSV results file."""
-    if not path or not path.is_file():
+def load_codeql_sarif(path: pathlib.Path) -> dict | None:
+    """Return {errors, warnings, recommendations, total, findings} from the merged
+    (deduplicated Linux ∪ QNX union) CodeQL SARIF.
+
+    Reuses the generic SARIF loader already used for clang-tidy/clippy
+    (`_load_linter_sarif`), which tolerates results that only carry a nested
+    "rule": {"id": ...} instead of a top-level "ruleId" (e.g. after
+    Sarif.Multitool merge legally rewrites it). The third severity bucket is
+    renamed "notes" -> "recommendations" here (CodeQL-specific naming) so
+    render_dashboard()/write_github_summary()/dashboard.html.j2 and the KPI
+    history JSON schema (codeql_recommendations) don't need to change.
+    """
+    sarif = _load_linter_sarif(path)
+    if sarif is None:
         return None
-    errors = warnings = recommendations = 0
-    findings = []
-    severity_counts = {}  # For debugging
-    try:
-        with path.open(encoding="utf-8", errors="replace", newline="") as fh:
-            reader = csv.DictReader(fh)
-            if reader.fieldnames:
-                print(f"CodeQL CSV columns: {reader.fieldnames}", file=sys.stderr)
-            for row in reader:
-                # Try multiple severity column name variations
-                severity = (row.get("severity") or row.get("Severity") or row.get("level") or row.get("Level") or "").lower().strip()
-
-                # Track severity values for debugging
-                raw_severity = severity
-                severity_counts[raw_severity] = severity_counts.get(raw_severity, 0) + 1
-
-                # Categorize
-                if severity == "error" or severity == "fail":
-                    errors += 1
-                    severity = "error"
-                elif severity == "warning" or severity == "warn":
-                    warnings += 1
-                    severity = "warning"
-                else:
-                    # Treat everything else as recommendation (including empty or unknown)
-                    recommendations += 1
-                    severity = "recommendation"
-
-                findings.append({
-                    "severity": severity,
-                    # "Code"/"Location" are sarif-tools' own CSV column names, used
-                    # since the CSV is now generated by
-                    # //quality/static_analysis:sarif_cli (sarif-tools' own CLI)
-                    # from the deduplicated Linux ∪ QNX union SARIF.
-                    "name": row.get("name") or row.get("Name") or row.get("rule_id") or row.get("Rule") or row.get("Code") or "",
-                    "message": row.get("message") or row.get("Message") or row.get("description") or row.get("Description") or "",
-                    "path": row.get("path") or row.get("Path") or row.get("file") or row.get("File") or row.get("Location") or "",
-                    "line": row.get("start:line") or row.get("Line") or row.get("line_number") or "",
-                })
-    except (OSError, csv.Error) as e:
-        print(f"Error parsing CodeQL CSV: {e}", file=sys.stderr)
-        return None
-
-    # Debug: show what severity values we found
-    if severity_counts:
-        print(f"CodeQL severity distribution: {dict(sorted(severity_counts.items(), key=lambda x: x[1], reverse=True))}", file=sys.stderr)
-
     return {
         "loaded": True,
-        "errors": errors,
-        "warnings": warnings,
-        "recommendations": recommendations,
-        "total": errors + warnings + recommendations,
-        "findings": findings,
+        "errors": sarif["errors"],
+        "warnings": sarif["warnings"],
+        "recommendations": sarif["notes"],
+        "total": sarif["total"],
+        "findings": sarif["findings"],
     }
 
 def load_history(path: pathlib.Path) -> list[dict]:
@@ -431,9 +402,9 @@ def main() -> int:
         help="Path to clippy SARIF report (or legacy findings text file)",
     )
     parser.add_argument(
-        "--codeql-csv", default="",
-        dest="codeql_csv",
-        help="Path to CodeQL CSV results file",
+        "--codeql", default="",
+        dest="codeql",
+        help="Path to the merged (deduplicated Linux ∪ QNX union) CodeQL SARIF file",
     )
     parser.add_argument(
         "--html", default="dashboard.html",
@@ -452,7 +423,7 @@ def main() -> int:
     lcov_path      = pathlib.Path(args.lcov)       if args.lcov       else pathlib.Path("")
     ct_path        = pathlib.Path(args.clang_tidy) if args.clang_tidy else pathlib.Path("")
     clippy_path    = pathlib.Path(args.clippy)     if args.clippy     else pathlib.Path("")
-    codeql_path    = pathlib.Path(args.codeql_csv) if args.codeql_csv else pathlib.Path("")
+    codeql_path    = pathlib.Path(args.codeql)     if args.codeql     else pathlib.Path("")
     html_path      = pathlib.Path(args.html)
     hist_path      = pathlib.Path(args.history)    if args.history    else None
 
@@ -461,7 +432,7 @@ def main() -> int:
     cov_summary, cov_files = load_lcov(lcov_path)
     clang_tidy = load_linter_findings(ct_path)
     clippy = load_linter_findings(clippy_path)
-    codeql = load_codeql_csv(codeql_path)
+    codeql = load_codeql_sarif(codeql_path)
     timestamp = datetime.now(tz=timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
     history = load_history(hist_path) if hist_path else []
