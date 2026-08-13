@@ -270,8 +270,19 @@ def get_approving_reviewers(pr: PullRequest) -> list[str]:
         if review.state == "APPROVED":
             approvers.add(review.user.login)
         elif review.state in ("CHANGES_REQUESTED", "DISMISSED"):
+            # get_reviews() returns every review a user has ever submitted on
+            # this PR, in submission order — not just their latest state. A
+            # user can approve and later request changes (or have an
+            # approval dismissed) in a subsequent review, so this discard is
+            # what removes a since-superseded approval from an earlier
+            # iteration of this loop; it is not a no-op.
             approvers.discard(review.user.login)
     return sorted(approvers)
+
+
+# GitHub's commit-status API silently truncates/rejects descriptions longer
+# than this; keep our own text within the limit explicitly.
+COMMIT_STATUS_DESCRIPTION_MAX_LENGTH = 140
 
 
 def set_commit_status(
