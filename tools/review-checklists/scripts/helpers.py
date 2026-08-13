@@ -293,7 +293,7 @@ def set_commit_status(
     context: str = "review-checklists",
 ) -> None:
     """Set a commit status on the given SHA."""
-    desc = description[:140]
+    desc = description[:COMMIT_STATUS_DESCRIPTION_MAX_LENGTH]
     print(
         f"Setting commit status: context='{context}', state='{state}', "
         f"sha='{sha}', description='{desc}'"
