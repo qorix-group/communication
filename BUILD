@@ -44,10 +44,10 @@ copyright_checker(
     name = "copyright",
     srcs = [
         ".github",
-        "actions",
         "quality",
         "score",
         "third_party",
+        "tools",
         "//:BUILD",
         "//:MODULE.bazel",
     ],
