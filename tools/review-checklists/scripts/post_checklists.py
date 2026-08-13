@@ -60,9 +60,9 @@ def main() -> None:
 
     checklists = load_checklists(args.config_path)
     changed_files = get_changed_files(pr)
-    relevant = match_checklists(checklists, changed_files)
+    relevant_checklists = match_checklists(checklists, changed_files)
 
-    if not relevant:
+    if not relevant_checklists:
         print("No checklists are relevant for this PR.")
         set_commit_status(
             repo,
@@ -74,7 +74,7 @@ def main() -> None:
 
     existing = find_existing_checklist_comments(pr)
 
-    for checklist in relevant:
+    for checklist in relevant_checklists:
         body = make_checklist_comment_body(checklist)
         if checklist["id"] in existing:
             comment = existing[checklist["id"]]
@@ -103,11 +103,13 @@ def main() -> None:
 
     # Collect current acknowledgements and update evidence in PR description
     posted_relevant_ids = [
-        checklist["id"] for checklist in relevant if checklist["id"] in existing
+        checklist["id"]
+        for checklist in relevant_checklists
+        if checklist["id"] in existing
     ]
     if posted_relevant_ids:
         ack_details = collect_acknowledgement_details(pr, existing, posted_relevant_ids)
-        evidence_block = build_evidence_block(relevant, ack_details)
+        evidence_block = build_evidence_block(relevant_checklists, ack_details)
         update_pr_description_with_evidence(pr, evidence_block)
 
     if is_pr_in_merge_queue(pr):
@@ -119,10 +121,10 @@ def main() -> None:
         repo,
         pr.head.sha,
         "pending",
-        f"{len(relevant)} checklist(s) require reviewer acknowledgement",
+        f"{len(relevant_checklists)} checklist(s) require reviewer acknowledgement",
     )
 
-    print(f"Posted/updated {len(relevant)} checklist finding(s).")
+    print(f"Posted/updated {len(relevant_checklists)} checklist finding(s).")
 
 
 if __name__ == "__main__":

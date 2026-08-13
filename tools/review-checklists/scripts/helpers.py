@@ -136,7 +136,7 @@ def match_checklists(checklists: list[dict], changed_files: list[str]) -> list[d
     Each returned checklist dict is augmented with a ``matched_files`` key
     containing the list of changed files that triggered the match.
     """
-    relevant = []
+    relevant_checklists = []
     for checklist in checklists:
         include_patterns: list[str] = checklist.get("include", [])
         exclude_patterns: list[str] = checklist.get("exclude", [])
@@ -150,8 +150,8 @@ def match_checklists(checklists: list[dict], changed_files: list[str]) -> list[d
         if matched:
             checklist_copy = dict(checklist)
             checklist_copy["matched_files"] = sorted(matched)
-            relevant.append(checklist_copy)
-    return relevant
+            relevant_checklists.append(checklist_copy)
+    return relevant_checklists
 
 
 def make_checklist_comment_body(checklist: dict) -> str:
@@ -360,7 +360,7 @@ def remove_evidence_block(description: str) -> str:
 
 
 def build_evidence_block(
-    relevant: list[dict],
+    relevant_checklists: list[dict],
     ack_details: dict[str, list[dict[str, str]]],
 ) -> str:
     """Build the evidence block for the PR description."""
@@ -377,7 +377,7 @@ def build_evidence_block(
         "",
     ]
 
-    for checklist in relevant:
+    for checklist in relevant_checklists:
         checklist_id = checklist["id"]
         lines.append(f"### {checklist['name']} (`{checklist_id}`)")
         lines.append("")

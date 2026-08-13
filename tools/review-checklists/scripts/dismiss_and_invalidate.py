@@ -103,15 +103,17 @@ def handle_synchronize(pr: Any, repo: Any, config_path: str) -> None:
     """
     checklists = load_checklists(config_path)
     new_files = _get_files_in_latest_push(pr, repo)
-    affected = match_checklists(checklists, new_files)
+    affected_checklists = match_checklists(checklists, new_files)
 
-    if not affected:
+    if not affected_checklists:
         print("No checklist-relevant files changed in latest push.")
         return
 
     existing = find_existing_checklist_comments(pr)
     posted_affected_ids = [
-        checklist["id"] for checklist in affected if checklist["id"] in existing
+        checklist["id"]
+        for checklist in affected_checklists
+        if checklist["id"] in existing
     ]
     ok_replies = find_ok_replies_for_checklists(pr, existing, posted_affected_ids)
 

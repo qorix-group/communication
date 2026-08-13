@@ -131,17 +131,19 @@ def _validate_checklist_evidence(pr: Any, checklists: list[dict]) -> tuple[str, 
     point.
     """
     changed_files = get_changed_files(pr)
-    relevant = match_checklists(checklists, changed_files)
+    relevant_checklists = match_checklists(checklists, changed_files)
 
-    if not relevant:
+    if not relevant_checklists:
         return "success", "No checklists applicable"
 
     existing = find_existing_checklist_comments(pr)
     posted_relevant_ids = [
-        checklist["id"] for checklist in relevant if checklist["id"] in existing
+        checklist["id"]
+        for checklist in relevant_checklists
+        if checklist["id"] in existing
     ]
 
-    if len(posted_relevant_ids) < len(relevant):
+    if len(posted_relevant_ids) < len(relevant_checklists):
         # At least one relevant checklist has no posted comment yet — do not
         # silently drop it from consideration (that could let the status go
         # to "success" while a checklist was never even posted); stay
@@ -213,18 +215,20 @@ def main() -> None:
 
     checklists = load_checklists(args.config_path)
     changed_files = get_changed_files(pr)
-    relevant = match_checklists(checklists, changed_files)
+    relevant_checklists = match_checklists(checklists, changed_files)
 
-    if not relevant:
+    if not relevant_checklists:
         set_commit_status(repo, pr.head.sha, "success", "No checklists applicable")
         return
 
     existing = find_existing_checklist_comments(pr)
     posted_relevant_ids = [
-        checklist["id"] for checklist in relevant if checklist["id"] in existing
+        checklist["id"]
+        for checklist in relevant_checklists
+        if checklist["id"] in existing
     ]
 
-    if len(posted_relevant_ids) < len(relevant):
+    if len(posted_relevant_ids) < len(relevant_checklists):
         # At least one relevant checklist has no posted comment yet — keep
         # pending rather than silently dropping it from consideration (see
         # _validate_checklist_evidence for the same rationale).
@@ -240,7 +244,7 @@ def main() -> None:
 
     # Refresh evidence block in PR description based on current acknowledgements.
     ack_details = collect_acknowledgement_details(pr, existing, posted_relevant_ids)
-    evidence_block = build_evidence_block(relevant, ack_details)
+    evidence_block = build_evidence_block(relevant_checklists, ack_details)
     update_pr_description_with_evidence(pr, evidence_block)
 
     approvers = get_approving_reviewers(pr)
