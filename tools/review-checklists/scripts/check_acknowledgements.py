@@ -195,6 +195,13 @@ def main() -> None:
 
     repo, pr = get_repo_and_pr(gh)
 
+    # Note this is intentionally separate from the `merge_group` branch
+    # above (which already implies the PR is in the queue and instead
+    # re-validates evidence and returns/exits). This check instead covers
+    # the case where a *different*, non-merge_group event (e.g. a review
+    # comment posted on a PR that happens to still be enqueued) fires while
+    # the PR is enqueued, so we can (re-)post the advisory merge-queue
+    # notice for it.
     if is_pr_in_merge_queue(pr):
         ensure_merge_queue_notice_comment(pr)
         ensure_merge_queue_notice_description(pr)
