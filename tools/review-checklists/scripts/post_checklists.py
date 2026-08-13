@@ -102,11 +102,11 @@ def main() -> None:
             print(f"Created checklist finding for '{checklist['id']}'")
 
     # Collect current acknowledgements and update evidence in PR description
-    relevant_ids = [
+    posted_relevant_ids = [
         checklist["id"] for checklist in relevant if checklist["id"] in existing
     ]
-    if relevant_ids:
-        ack_details = collect_acknowledgement_details(pr, existing, relevant_ids)
+    if posted_relevant_ids:
+        ack_details = collect_acknowledgement_details(pr, existing, posted_relevant_ids)
         evidence_block = build_evidence_block(relevant, ack_details)
         update_pr_description_with_evidence(pr, evidence_block)
 

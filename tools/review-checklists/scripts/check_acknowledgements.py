@@ -70,7 +70,7 @@ from helpers import (
 
 
 def _collect_ok_acknowledgements(
-    pr: Any, existing_comments: dict[str, Any], relevant_ids: list[str]
+    pr: Any, existing_comments: dict[str, Any], posted_relevant_ids: list[str]
 ) -> dict[str, set[str]]:
     """Return a mapping of checklist_id → set of usernames who acknowledged.
 
@@ -80,7 +80,7 @@ def _collect_ok_acknowledgements(
 
     The conversation thread itself associates the reply with the checklist.
     """
-    replies = find_ok_replies_for_checklists(pr, existing_comments, relevant_ids)
+    replies = find_ok_replies_for_checklists(pr, existing_comments, posted_relevant_ids)
     return {
         checklist_id: {comment.user.login for comment in comments}
         for checklist_id, comments in replies.items()
@@ -89,7 +89,7 @@ def _collect_ok_acknowledgements(
 
 def _acknowledgement_status(
     approvers: list[str],
-    relevant_ids: list[str],
+    posted_relevant_ids: list[str],
     acks: dict[str, set[str]],
 ) -> tuple[str, str]:
     """Compute the (state, description) commit-status pair from ack data.
@@ -102,7 +102,7 @@ def _acknowledgement_status(
         return "pending", "Awaiting at least one approving review"
 
     missing: dict[str, list[str]] = {}
-    for checklist_id in relevant_ids:
+    for checklist_id in posted_relevant_ids:
         not_acked = [
             username for username in approvers if username not in acks[checklist_id]
         ]
@@ -137,20 +137,20 @@ def _validate_checklist_evidence(pr: Any, checklists: list[dict]) -> tuple[str, 
         return "success", "No checklists applicable"
 
     existing = find_existing_checklist_comments(pr)
-    relevant_ids = [
+    posted_relevant_ids = [
         checklist["id"] for checklist in relevant if checklist["id"] in existing
     ]
 
-    if len(relevant_ids) < len(relevant):
+    if len(posted_relevant_ids) < len(relevant):
         # At least one relevant checklist has no posted comment yet — do not
         # silently drop it from consideration (that could let the status go
         # to "success" while a checklist was never even posted); stay
         # pending until every relevant checklist has been posted.
         return "pending", "Checklist comments not yet posted"
 
-    acks = _collect_ok_acknowledgements(pr, existing, relevant_ids)
+    acks = _collect_ok_acknowledgements(pr, existing, posted_relevant_ids)
     approvers = get_approving_reviewers(pr)
-    return _acknowledgement_status(approvers, relevant_ids, acks)
+    return _acknowledgement_status(approvers, posted_relevant_ids, acks)
 
 
 def main() -> None:
@@ -220,11 +220,11 @@ def main() -> None:
         return
 
     existing = find_existing_checklist_comments(pr)
-    relevant_ids = [
+    posted_relevant_ids = [
         checklist["id"] for checklist in relevant if checklist["id"] in existing
     ]
 
-    if len(relevant_ids) < len(relevant):
+    if len(posted_relevant_ids) < len(relevant):
         # At least one relevant checklist has no posted comment yet — keep
         # pending rather than silently dropping it from consideration (see
         # _validate_checklist_evidence for the same rationale).
@@ -236,15 +236,15 @@ def main() -> None:
         )
         return
 
-    acks = _collect_ok_acknowledgements(pr, existing, relevant_ids)
+    acks = _collect_ok_acknowledgements(pr, existing, posted_relevant_ids)
 
     # Refresh evidence block in PR description based on current acknowledgements.
-    ack_details = collect_acknowledgement_details(pr, existing, relevant_ids)
+    ack_details = collect_acknowledgement_details(pr, existing, posted_relevant_ids)
     evidence_block = build_evidence_block(relevant, ack_details)
     update_pr_description_with_evidence(pr, evidence_block)
 
     approvers = get_approving_reviewers(pr)
-    state, description = _acknowledgement_status(approvers, relevant_ids, acks)
+    state, description = _acknowledgement_status(approvers, posted_relevant_ids, acks)
     set_commit_status(repo, pr.head.sha, state, description)
     print(f"Acknowledgement status: {state} — {description}")
 
