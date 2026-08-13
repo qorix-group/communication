@@ -10,3 +10,10 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
+
+# Ubuntu base packages baked into the integration-testing OCI image, resolved
+# by the `apt.install(name = "ubuntu24_04_integration_testing", ...)` tag in
+# //MODULE.bazel. Consumed directly as
+# @ubuntu24_04_integration_testing//:ubuntu24_04_integration_testing.
+
+exports_files(["manifest.yaml"])

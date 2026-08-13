@@ -55,17 +55,7 @@ download_archive(
     urls = ["https://github.com/python-jsonschema/jsonschema/archive/refs/tags/v4.23.0.tar.gz"],
 )
 
-bazel_dep(name = "score_tooling", version = "1.3.1")
-
-# Patch only required locally when this module is the root module.
-# We have rules_distroless as a dev-dependency and use a newer version with a different API.
-# This triggers errors in score_tooling where the old incompatible API is still used.
-single_version_override(
-    module_name = "score_tooling",
-    patch_strip = 1,
-    patches = ["//third_party/score_tooling:bump_rules_distroless_api.patch"],
-    version = "1.3.1",
-)
+bazel_dep(name = "score_tooling", version = "2.0.1")
 
 # Dependencies required for development that will not get propagated to our users as transitive dependencies
 bazel_dep(name = "gcc_toolchain", version = "0.10.0", dev_dependency = True)
@@ -202,84 +192,52 @@ imagefs.toolchain(
 )
 use_repo(imagefs, "score_qnx_aarch64_ifs_toolchain", "score_qnx_x86_64_ifs_toolchain")
 
-bazel_dep(name = "rules_distroless", version = "0.6.2", dev_dependency = True)
-git_override(
-    module_name = "rules_distroless",
-    commit = "e1df344fde5adaef7397c34076b56f27771d08b8",
-    remote = "https://github.com/LittleHuba/rules_distroless.git",
-)
+# rules_distroless is only used via its plain, BCR-published apt.install()
+# API (see @score_tooling//bazel/rules/sysroot_from_lock:sysroot_from_lock.bzl
+# for how the amd64/arm64 sysroots are derived from the resulting lockfiles
+# without needing a fork's fork-only apt.sysroot() extension), so no override
+# is needed.
+bazel_dep(name = "rules_distroless", version = "0.8.0", dev_dependency = True)
 
 apt = use_extension(
     "@rules_distroless//apt:extensions.bzl",
     "apt",
     dev_dependency = True,
 )
-apt.sources_list(
-    architectures = [
-        "amd64",
-        "arm64",
-    ],
-    components = [
-        "main",
-        "universe",
-    ],
-    suites = [
-        "noble",
-        "noble-security",
-        "noble-updates",
-    ],
-    types = ["deb"],
-    uris = ["https://snapshot.ubuntu.com/ubuntu/20260401T104001Z"],
+apt.install(
+    name = "ubuntu24_04_sysroot",
+    manifest = "//third_party/ubuntu24_04_sysroot:manifest.yaml",
+    mergedusr = True,
+    nolock = True,
 )
 apt.install(
-    dependency_set = "ubuntu24_04_sysroot",
+    name = "ubuntu24_04_integration_testing",
+    manifest = "//third_party/ubuntu24_04_integration_testing:manifest.yaml",
     mergedusr = True,
-    packages = [
-        "base-files",  # mergedusr symlinks
-        "libatomic1",  # Non-lock-free atomics support
-        "libc6",  # Core C/POSIX
-        "libc6-dev",  # Core C/POSIX
-        "libgcc-s1",  # Exception unwinding
-        "libstdc++-13-dev",  # C++ standard library headers
-        "libstdc++6",  # C++ standard library runtime
-        "linux-libc-dev",  # Core C/POSIX
-    ],
-    suites = [
-        "noble",
-        "noble-security",
-        "noble-updates",
-    ],
+    nolock = True,
 )
-apt.install(
-    dependency_set = "ubuntu24_04_integration_testing",
-    mergedusr = True,
-    packages = [
-        "base-files",  # mergedusr symlinks
-        "bash",  # Required as default entrypoint of Docker
-        "binutils",  # provides addr2line, required for backtraces in sanitizers
-        "coreutils",  # for commands like `ls`
-        "dash",  # Framework expects /bin/sh, which on Ubuntu is provided by dash
-        "libatomic1",  # Dynamically linked at runtime to test executables
-        "libstdc++6",  # Dynamically linked at runtime to test executables
-    ],
-    suites = [
-        "noble",
-        "noble-security",
-        "noble-updates",
-    ],
+use_repo(apt, "ubuntu24_04_integration_testing", "ubuntu24_04_sysroot", "ubuntu24_04_sysroot_resolve")
+
+# See @score_tooling//bazel/rules/sysroot_from_lock:sysroot_from_lock.bzl for
+# attribution.
+sysroot_from_lock = use_repo_rule(
+    "@score_tooling//bazel/rules/sysroot_from_lock:sysroot_from_lock.bzl",
+    "sysroot_from_lock",
 )
-apt.sysroot(
+
+sysroot_from_lock(
     name = "ubuntu24_04_sysroot_amd64",
     architecture = "amd64",
-    dependency_set = "ubuntu24_04_sysroot",
+    dev_dependency = True,
+    lock = "@ubuntu24_04_sysroot_resolve//:lock.json",
 )
-apt.sysroot(
+
+sysroot_from_lock(
     name = "ubuntu24_04_sysroot_arm64",
     architecture = "arm64",
-    dependency_set = "ubuntu24_04_sysroot",
+    dev_dependency = True,
+    lock = "@ubuntu24_04_sysroot_resolve//:lock.json",
 )
-apt.lock(into = ":rules_distroless.lock.json")
-use_repo(apt, "ubuntu24_04_integration_testing", "ubuntu24_04_sysroot_amd64", "ubuntu24_04_sysroot_arm64")
 
 # FIXME: remove git_override once score_cpp_policies is released to BCR.
 bazel_dep(name = "score_cpp_policies", version = "0.0.0", dev_dependency = True)
@@ -446,7 +404,7 @@ pip.parse(
 use_repo(pip, "codeql_coding_standards_pip_hub")
 
 # TRLC dependency for requirements traceability
-bazel_dep(name = "trlc", version = "3.0.0", dev_dependency = True)
+bazel_dep(name = "trlc", version = "3.0.1", dev_dependency = True)
 
 # Lobster dependency for requirements traceability
 bazel_dep(name = "lobster", version = "1.0.6", dev_dependency = True)

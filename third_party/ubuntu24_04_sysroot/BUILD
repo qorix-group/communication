@@ -11,22 +11,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
 
-load(
-    "@score_tooling//bazel/rules/rules_score:rules_score.bzl",
-    "architectural_design",
-)
+# Hermetic C/C++ toolchain sysroot packages (amd64 and arm64), resolved by the
+# `apt.install(name = "ubuntu24_04_sysroot", ...)` tag in //MODULE.bazel and
+# unpacked via //bazel/rules/sysroot_from_lock into
+# @ubuntu24_04_sysroot_amd64//sysroot and @ubuntu24_04_sysroot_arm64//sysroot.
 
-architectural_design(
-    name = "message_passing_architectural_design",
-    maturity = "development",
-    public_api = [
-        "public_api.puml",
-    ],
-    static = [
-        "static_design.puml",
-        "client-server.md",
-        "private_api.puml",
-    ],
-    target_compatible_with = ["@platforms//os:linux"],
-    visibility = ["//score/message_passing/dependability:__subpackages__"],
-)
+exports_files(["manifest.yaml"])
