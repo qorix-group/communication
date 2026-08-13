@@ -326,14 +326,6 @@ ScoreReq.AoU CorrectlyConfiguredEventsFieldsPerServiceType {
     mitigates = "MapContainingNonexistentEvents, IncompleteMapOfEvents"
 }
 
-/* broken_link_c/issue/23012160 */
-ScoreReq.AoU EnsureTheIntegrityAndReliabilityOfCommunication {
-    description = "The Safety-Related Application Software and Safety-Related Platform Software shall ensure the integrity and reliability of communication by managing the following potential failure modes in the delivery of information: • Loss or delay of periodic or aperiodic events. • Loss or delayed delivery of a method call. • Loss or delayed delivery of a method response. • Loss or delay of field updates."
-    safety = ScoreReq.Asil.B
-    version = 1
-    mitigates = ""
-}
-
 /* added for method FMEA */
 
 ScoreReq.AoU NoGuaranteesForTimelyMethodCallExecution {
