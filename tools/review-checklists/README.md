@@ -133,7 +133,12 @@ each repository that wants to use it.**
    directly on the PR. Instead, configure your branch protection rule /
    ruleset to require the commit status context **`review-checklists`**
    (the one this action sets via `set_commit_status`). Requiring the
-   workflow job itself will not gate merges correctly.
+   workflow job itself will not gate merges correctly. If you manage
+   branch protection with [Otterdog](https://otterdog.readthedocs.io/en/latest/reference/organization/repository/status-check/),
+   a plain commit status (as opposed to a status reported by a GitHub
+   Actions workflow job or a GitHub App) must be referenced with the
+   `any:` prefix, i.e. `any:review-checklists` — plain `review-checklists`
+   will not be recognized.
 5. **Require at least one approving review** in branch protection. The
    check only evaluates *approving* reviewers against acknowledgements —
    with zero approvals, the commit status stays `pending` forever by
