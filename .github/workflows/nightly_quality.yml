@@ -175,23 +175,23 @@ jobs:
           fi
 
       # ------------------------------------------------------------------
-      # Download CodeQL CSV artifact
+      # Download CodeQL SARIF artifact
       # ------------------------------------------------------------------
-      - name: Download CodeQL CSV artifact
+      - name: Download CodeQL SARIF artifact
         if: always()
         continue-on-error: true
         uses: actions/download-artifact@v4
         with:
-          name: codeql-csv-results
+          name: codeql-sarif-results
           path: /tmp/codeql
 
-      - name: Copy CodeQL CSV into quality output
+      - name: Copy CodeQL SARIF into quality output
         if: always()
         run: |
           mkdir -p "${GITHUB_WORKSPACE}/_quality"
-          if [[ -f /tmp/codeql/codeql-nightly.csv ]]; then
-            cp /tmp/codeql/codeql-nightly.csv \
-               "${GITHUB_WORKSPACE}/_quality/codeql_findings.txt"
+          if [[ -f /tmp/codeql/codeql-nightly.sarif ]]; then
+            cp /tmp/codeql/codeql-nightly.sarif \
+               "${GITHUB_WORKSPACE}/_quality/codeql_findings.sarif"
           fi
 
       # ------------------------------------------------------------------
@@ -223,7 +223,7 @@ jobs:
             --lcov     /tmp/coverage_zip/extracted/artifacts/coverage_report.dat \
             --clang-tidy /tmp/clang_tidy/clang-tidy.sarif \
             --clippy /tmp/clippy/clippy.sarif \
-            --codeql-csv "${GITHUB_WORKSPACE}/_quality/codeql_findings.txt" \
+            --codeql "${GITHUB_WORKSPACE}/_quality/codeql_findings.sarif" \
             --html     "${GITHUB_WORKSPACE}/_quality/index.html" \
             --github-summary
 

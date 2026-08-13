@@ -99,13 +99,89 @@ class GenerateDashboardTest(unittest.TestCase):
         self.assertEqual(findings["findings"][0]["name"], "")
         self.assertEqual(findings["findings"][1]["line"], 12)
 
+    def test_load_codeql_sarif_resolves_merged_rule_id_and_severity(self) -> None:
+        """Regression test: after Sarif.Multitool merge, CodeQL results carry a
+        nested "rule": {"id", "index"} instead of a top-level "ruleId" string,
+        and have no top-level "level" (severity comes from the rule's
+        defaultConfiguration.level). load_codeql_sarif must still resolve the
+        rule name and classify severity correctly instead of miscounting
+        everything as a "recommendation"."""
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            sarif_path = pathlib.Path(tmp_dir) / "codeql-nightly.sarif"
+            sarif_path.write_text(
+                json.dumps(
+                    {
+                        "version": "2.1.0",
+                        "runs": [
+                            {
+                                "tool": {
+                                    "driver": {
+                                        "name": "CodeQL",
+                                        "rules": [
+                                            {
+                                                "id": "cpp/misra/no-c-style-or-functional-casts",
+                                                "defaultConfiguration": {"level": "error"},
+                                            },
+                                            {
+                                                "id": "cpp/misra/empty-loop-body",
+                                                "defaultConfiguration": {"level": "warning"},
+                                            },
+                                        ],
+                                    },
+                                },
+                                "results": [
+                                    {
+                                        "ruleIndex": 0,
+                                        "rule": {"id": "cpp/misra/no-c-style-or-functional-casts", "index": 0},
+                                        "message": {"text": "avoid C-style casts"},
+                                        "locations": [
+                                            {
+                                                "physicalLocation": {
+                                                    "artifactLocation": {"uri": "score/example/src/main.cc"},
+                                                    "region": {"startLine": 42},
+                                                },
+                                            },
+                                        ],
+                                    },
+                                    {
+                                        "ruleIndex": 1,
+                                        "rule": {"id": "cpp/misra/empty-loop-body", "index": 1},
+                                        "message": {"text": "empty loop body"},
+                                        "locations": [
+                                            {
+                                                "physicalLocation": {
+                                                    "artifactLocation": {"uri": "score/example/src/main.cc"},
+                                                    "region": {"startLine": 55},
+                                                },
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            codeql = generate_dashboard.load_codeql_sarif(sarif_path)
+
+        self.assertIsNotNone(codeql)
+        self.assertEqual(codeql["errors"], 1)
+        self.assertEqual(codeql["warnings"], 1)
+        self.assertEqual(codeql["recommendations"], 0)
+        self.assertEqual(codeql["total"], 2)
+        self.assertEqual(codeql["findings"][0]["name"], "cpp/misra/no-c-style-or-functional-casts")
+        self.assertEqual(codeql["findings"][0]["severity"], "error")
+        self.assertEqual(codeql["findings"][1]["severity"], "warning")
+
     def test_main_generates_dashboard_from_clang_tidy_and_clippy_sarif(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_path = pathlib.Path(tmp_dir)
             lcov_path = tmp_path / "coverage.dat"
             clang_tidy_path = tmp_path / "clang-tidy.sarif"
             clippy_path = tmp_path / "clippy.sarif"
-            codeql_path = tmp_path / "codeql.csv"
+            codeql_path = tmp_path / "codeql.sarif"
             html_path = tmp_path / "index.html"
             history_path = tmp_path / "history.json"
             summary_path = tmp_path / "summary.md"
@@ -254,8 +330,41 @@ class GenerateDashboardTest(unittest.TestCase):
                 encoding="utf-8",
             )
             codeql_path.write_text(
-                "Tool,Severity,Code,Description,Location,Line\n"
-                "CodeQL,warning,Rule,Example finding,src/demo.cc,9\n",
+                json.dumps(
+                    {
+                        "version": "2.1.0",
+                        "runs": [
+                            {
+                                "tool": {
+                                    "driver": {
+                                        "name": "CodeQL",
+                                        "rules": [
+                                            {
+                                                "id": "cpp/misra/rule",
+                                                "defaultConfiguration": {"level": "warning"},
+                                            },
+                                        ],
+                                    },
+                                },
+                                "results": [
+                                    {
+                                        "ruleIndex": 0,
+                                        "rule": {"id": "cpp/misra/rule", "index": 0},
+                                        "message": {"text": "Example finding"},
+                                        "locations": [
+                                            {
+                                                "physicalLocation": {
+                                                    "artifactLocation": {"uri": "src/demo.cc"},
+                                                    "region": {"startLine": 9},
+                                                },
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                        ],
+                    }
+                ),
                 encoding="utf-8",
             )
 
@@ -269,7 +378,7 @@ class GenerateDashboardTest(unittest.TestCase):
                 str(clang_tidy_path),
                 "--clippy",
                 str(clippy_path),
-                "--codeql-csv",
+                "--codeql",
                 str(codeql_path),
                 "--html",
                 str(html_path),
