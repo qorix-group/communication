@@ -69,9 +69,9 @@ def _find_checklists_config(
     try:
         from runfiles import Runfiles  # type: ignore[import-untyped]
 
-        r = Runfiles.Create()
-        if r:
-            candidate = r.Rlocation(f"score_communication/{config_relpath}")
+        runfiles = Runfiles.Create()
+        if runfiles:
+            candidate = runfiles.Rlocation(f"score_communication/{config_relpath}")
             if candidate and os.path.isfile(candidate):
                 return candidate
     except (ImportError, Exception):

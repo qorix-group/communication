@@ -80,7 +80,7 @@ def _get_files_in_latest_push(pr: Any, repo: Any) -> list[str]:
             runs = list(
                 workflow.get_runs(branch=head_branch, event=TRIGGER_EVENT_NAME)
             )
-            run_ids = [r.id for r in runs]
+            run_ids = [run.id for run in runs]
             idx = run_ids.index(run_id)
             before_sha = runs[idx + 1].head_sha
             comparison = repo.compare(before_sha, pr.head.sha)
@@ -118,7 +118,7 @@ def handle_synchronize(pr: Any, repo: Any, config_path: str) -> None:
     any_invalidated = False
 
     for checklist_id in affected_ids:
-        review = existing[checklist_id]
+        finding_comment = existing[checklist_id]
 
         for ok_comment in ok_replies[checklist_id]:
             user = ok_comment.user.login
@@ -127,7 +127,7 @@ def handle_synchronize(pr: Any, repo: Any, config_path: str) -> None:
                 ok_comment.delete()
                 print(
                     f"Deleted OK comment {ok_comment.id} from {user} "
-                    f"for checklist '{review.id}'"
+                    f"for checklist '{finding_comment.id}'"
                 )
             except Exception as e:
                 print(f"Warning: could not delete comment {ok_comment.id}: {e}")

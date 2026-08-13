@@ -103,7 +103,9 @@ def _acknowledgement_status(
 
     missing: dict[str, list[str]] = {}
     for checklist_id in relevant_ids:
-        not_acked = [u for u in approvers if u not in acks[checklist_id]]
+        not_acked = [
+            username for username in approvers if username not in acks[checklist_id]
+        ]
         if not_acked:
             missing[checklist_id] = not_acked
 
