@@ -417,7 +417,18 @@ def update_pr_description_with_evidence(
 
 
 def is_pr_in_merge_queue(pr: Any) -> bool:
-    """Return whether the PR is currently in GitHub merge queue via GraphQL."""
+    """Return whether the PR is currently in GitHub merge queue via GraphQL.
+
+    This is intentionally fail-closed (returns False) on any lookup error
+    rather than raising: its only callers use the result to decide whether
+    to post an advisory merge-queue notice on the PR, and a false negative
+    here at worst delays that notice until the next checklist-relevant
+    event — it never affects merge gating. The actual merge-queue gating
+    decision is made independently in check_acknowledgements.py's
+    ``merge_group`` handling, which resolves and validates the underlying
+    PR itself and fails the commit status (does not default to success)
+    if that resolution or validation fails.
+    """
     repo_name = getattr(
         getattr(getattr(pr, "base", None), "repo", None), "full_name", ""
     )
