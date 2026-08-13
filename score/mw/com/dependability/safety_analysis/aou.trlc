@@ -131,15 +131,6 @@ ScoreReq.AoU NoNotificationOnTerminationOfProducer {
     mitigates = "ServiceOfferingNotStopped, WrongStartfindserviceIsStopped"
 }
 
-/* broken_link_c/issue/5835257 */
-ScoreReq.AoU SystemRestartOnLoLaProcessCrash {
-    description = "Expectation: Crash of a LoLa enabled process (producer or consumer) doesn't violate a safety goal. It shall be ensured that upon an unexpected termination of a producer or consumer, the whole system is restarted. I.e. NO selective restart of single processes, but a restart of the entire system."
-    safety = ScoreReq.Asil.B
-    note = "It cannot be distinguished on LoLa side if a user crashed and restarted or if a faulty process tries to re-offer another service. In order to avoid masquerading we thus only allow one process to open a shared memory region as read-write. If a producer crashed, he will not close the Shared-Memory region and thus, he will not be able to re-open it. A system restart will clear all Shared Memory regions and thus resolve the situation. Note_1: On the JC ADAPTIVE platform this requirement is already satisfied by design as in case of an app that crashed the [ITEM:5906108] will always first trigger the [system safe state|ISSUE:8455468] before any crash dumping operation is started. In consequence, the external safety controller then needs to perform a hard power-on-reset on the performance SoC."
-    version = 1
-    mitigates = ""
-}
-
 /* broken_link_c/issue/5835311 */
 ScoreReq.AoU CheckForNullptrOnAllocate {
     description = "It shall be checked if Allocate() on an event will return a nullptr. If a nullptr is returned, the system shall transition to safe state."
