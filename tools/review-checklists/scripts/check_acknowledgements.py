@@ -136,7 +136,11 @@ def _validate_checklist_evidence(pr: Any, checklists: list[dict]) -> tuple[str, 
     existing = find_existing_checklist_comments(pr)
     relevant_ids = [cl["id"] for cl in relevant if cl["id"] in existing]
 
-    if not relevant_ids:
+    if len(relevant_ids) < len(relevant):
+        # At least one relevant checklist has no posted comment yet — do not
+        # silently drop it from consideration (that could let the status go
+        # to "success" while a checklist was never even posted); stay
+        # pending until every relevant checklist has been posted.
         return "pending", "Checklist comments not yet posted"
 
     acks = _collect_ok_acknowledgements(pr, existing, relevant_ids)
@@ -206,8 +210,10 @@ def main() -> None:
     existing = find_existing_checklist_comments(pr)
     relevant_ids = [cl["id"] for cl in relevant if cl["id"] in existing]
 
-    if not relevant_ids:
-        # Checklists haven't been posted yet — keep pending.
+    if len(relevant_ids) < len(relevant):
+        # At least one relevant checklist has no posted comment yet — keep
+        # pending rather than silently dropping it from consideration (see
+        # _validate_checklist_evidence for the same rationale).
         set_commit_status(
             repo,
             pr.head.sha,

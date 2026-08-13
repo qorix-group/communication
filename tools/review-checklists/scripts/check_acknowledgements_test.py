@@ -23,7 +23,11 @@ from unittest.mock import MagicMock, patch
 import pytest
 import sys
 
-from check_acknowledgements import _collect_ok_acknowledgements, main
+from check_acknowledgements import (
+    _collect_ok_acknowledgements,
+    _validate_checklist_evidence,
+    main,
+)
 
 
 def _make_comment(comment_id, body, user_login="reviewer", created_at=None):
@@ -53,6 +57,21 @@ SAMPLE_CHECKLISTS = [
         "id": "api-review",
         "name": "API Review",
         "include": ["src/api/*.py"],
+        "checklist": "- [ ] Reviewed",
+    },
+]
+
+TWO_SAMPLE_CHECKLISTS = [
+    {
+        "id": "api-review",
+        "name": "API Review",
+        "include": ["src/api/*.py"],
+        "checklist": "- [ ] Reviewed",
+    },
+    {
+        "id": "doc-review",
+        "name": "Doc Review",
+        "include": ["docs/*.md"],
         "checklist": "- [ ] Reviewed",
     },
 ]
@@ -158,6 +177,79 @@ class TestCollectOkAcknowledgements:
 
 
 # ---------------------------------------------------------------------------
+# _validate_checklist_evidence
+# ---------------------------------------------------------------------------
+
+
+class TestValidateChecklistEvidence:
+    def test_pending_when_not_all_relevant_checklists_posted(self):
+        """Regression test for 631b5ff6.
+
+        With two relevant checklists but only one posted comment, the old
+        code derived 'relevant_ids' as only the posted subset and treated
+        a *non-empty* relevant_ids as "all posted", so it went on to
+        evaluate acknowledgements for just that posted subset and could
+        reach "success" while doc-review was never even posted. It must
+        stay pending until every relevant checklist has a posted comment.
+        """
+        pr = MagicMock()
+        pr.get_files.return_value = [
+            _make_file("src/api/foo.py"),
+            _make_file("docs/readme.md"),
+        ]
+
+        api_review_comment = MagicMock(id=100)
+        api_review_comment.body = "<!-- review-checklist:api-review -->"
+
+        with patch(
+            "check_acknowledgements.find_existing_checklist_comments",
+            # Only api-review has been posted; doc-review has not.
+            return_value={"api-review": api_review_comment},
+        ):
+            state, description = _validate_checklist_evidence(
+                pr, TWO_SAMPLE_CHECKLISTS
+            )
+
+        assert state == "pending"
+        assert description == "Checklist comments not yet posted"
+
+    def test_success_when_all_relevant_checklists_posted(self):
+        """Sanity check: once every relevant checklist has been posted and
+        acknowledged, evidence validation is not blocked."""
+        pr = MagicMock()
+        pr.get_files.return_value = [_make_file("src/api/foo.py")]
+
+        api_review_comment = MagicMock(id=100)
+        api_review_comment.body = "<!-- review-checklist:api-review -->"
+
+        ok_reply = _make_comment(
+            101,
+            "OK",
+            "alice",
+            datetime(2026, 1, 1, 0, 1, tzinfo=timezone.utc),
+        )
+        ok_reply.in_reply_to_id = 100
+        pr.get_review_comments.return_value = [ok_reply]
+
+        with (
+            patch(
+                "check_acknowledgements.find_existing_checklist_comments",
+                return_value={"api-review": api_review_comment},
+            ),
+            patch(
+                "check_acknowledgements.get_approving_reviewers",
+                return_value=["alice"],
+            ),
+        ):
+            state, description = _validate_checklist_evidence(
+                pr, SAMPLE_CHECKLISTS
+            )
+
+        assert state == "success"
+        assert description == "All checklists acknowledged by all approving reviewers"
+
+
+# ---------------------------------------------------------------------------
 # main()
 # ---------------------------------------------------------------------------
 
@@ -209,6 +301,52 @@ class TestCheckAcknowledgementsMain:
 
         # Ensure the argument parser doesn't see pytest's CLI arguments.
         with patch.object(sys, "argv", ["check_acknowledgements"]):
+            main()
+
+        mock_status.assert_called_once_with(
+            repo, "abc", "pending", "Checklist comments not yet posted"
+        )
+
+    @patch("check_acknowledgements.is_pr_in_merge_queue", return_value=False)
+    @patch("check_acknowledgements.set_commit_status")
+    @patch(
+        "check_acknowledgements.load_checklists",
+        return_value=TWO_SAMPLE_CHECKLISTS,
+    )
+    @patch("check_acknowledgements.get_repo_and_pr")
+    @patch("check_acknowledgements.get_github_client")
+    def test_some_but_not_all_relevant_checklists_posted_sets_pending(
+        self, mock_gh, mock_repo_pr, mock_load, mock_status, mock_in_queue
+    ):
+        """Regression test for 631b5ff6 (main()'s live-PR flow).
+
+        Both api-review and doc-review are relevant, but only api-review
+        has a posted finding comment. The old code derived 'relevant_ids'
+        as just the posted subset and treated it as non-empty, silently
+        dropping doc-review from consideration entirely instead of
+        staying pending until it too is posted.
+        """
+        repo = MagicMock()
+        pr = MagicMock()
+        pr.head.sha = "abc"
+        pr.get_files.return_value = [
+            _make_file("src/api/foo.py"),
+            _make_file("docs/readme.md"),
+        ]
+        mock_repo_pr.return_value = (repo, pr)
+
+        api_review_comment = MagicMock(id=100)
+        api_review_comment.body = "<!-- review-checklist:api-review -->"
+
+        with (
+            patch(
+                "check_acknowledgements.find_existing_checklist_comments",
+                # Only api-review has been posted; doc-review has not.
+                return_value={"api-review": api_review_comment},
+            ),
+            # Ensure the argument parser doesn't see pytest's CLI arguments.
+            patch.object(sys, "argv", ["check_acknowledgements"]),
+        ):
             main()
 
         mock_status.assert_called_once_with(
