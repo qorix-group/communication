@@ -110,15 +110,17 @@ def handle_synchronize(pr: Any, repo: Any, config_path: str) -> None:
         return
 
     existing = find_existing_checklist_comments(pr)
-    affected_ids = [cl["id"] for cl in affected if cl["id"] in existing]
+    affected_ids = [
+        checklist["id"] for checklist in affected if checklist["id"] in existing
+    ]
     ok_replies = find_ok_replies_for_checklists(pr, existing, affected_ids)
 
     any_invalidated = False
 
-    for cid in affected_ids:
-        review = existing[cid]
+    for checklist_id in affected_ids:
+        review = existing[checklist_id]
 
-        for ok_comment in ok_replies[cid]:
+        for ok_comment in ok_replies[checklist_id]:
             user = ok_comment.user.login
             any_invalidated = True
             try:

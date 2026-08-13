@@ -82,8 +82,8 @@ def _collect_ok_acknowledgements(
     """
     replies = find_ok_replies_for_checklists(pr, existing_comments, relevant_ids)
     return {
-        cid: {comment.user.login for comment in comments}
-        for cid, comments in replies.items()
+        checklist_id: {comment.user.login for comment in comments}
+        for checklist_id, comments in replies.items()
     }
 
 
@@ -102,14 +102,15 @@ def _acknowledgement_status(
         return "pending", "Awaiting at least one approving review"
 
     missing: dict[str, list[str]] = {}
-    for cid in relevant_ids:
-        not_acked = [u for u in approvers if u not in acks[cid]]
+    for checklist_id in relevant_ids:
+        not_acked = [u for u in approvers if u not in acks[checklist_id]]
         if not_acked:
-            missing[cid] = not_acked
+            missing[checklist_id] = not_acked
 
     if missing:
         summary_parts = [
-            f"{cid}: awaiting {', '.join(users)}" for cid, users in missing.items()
+            f"{checklist_id}: awaiting {', '.join(users)}"
+            for checklist_id, users in missing.items()
         ]
         return "pending", "; ".join(summary_parts)
 
@@ -134,7 +135,9 @@ def _validate_checklist_evidence(pr: Any, checklists: list[dict]) -> tuple[str, 
         return "success", "No checklists applicable"
 
     existing = find_existing_checklist_comments(pr)
-    relevant_ids = [cl["id"] for cl in relevant if cl["id"] in existing]
+    relevant_ids = [
+        checklist["id"] for checklist in relevant if checklist["id"] in existing
+    ]
 
     if len(relevant_ids) < len(relevant):
         # At least one relevant checklist has no posted comment yet — do not
@@ -215,7 +218,9 @@ def main() -> None:
         return
 
     existing = find_existing_checklist_comments(pr)
-    relevant_ids = [cl["id"] for cl in relevant if cl["id"] in existing]
+    relevant_ids = [
+        checklist["id"] for checklist in relevant if checklist["id"] in existing
+    ]
 
     if len(relevant_ids) < len(relevant):
         # At least one relevant checklist has no posted comment yet — keep
@@ -242,7 +247,7 @@ def main() -> None:
     print(f"Acknowledgement status: {state} — {description}")
 
     # Write acknowledgement data for downstream use (merge evidence).
-    ack_data = {cid: sorted(users) for cid, users in acks.items()}
+    ack_data = {checklist_id: sorted(users) for checklist_id, users in acks.items()}
     runner_temp = os.environ.get("RUNNER_TEMP", "./")
     output_path = os.environ.get(
         "ACK_OUTPUT_PATH", runner_temp + "/checklist_acks.json"

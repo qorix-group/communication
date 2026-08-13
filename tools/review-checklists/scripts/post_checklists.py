@@ -74,16 +74,16 @@ def main() -> None:
 
     existing = find_existing_checklist_comments(pr)
 
-    for cl in relevant:
-        body = make_checklist_comment_body(cl)
-        if cl["id"] in existing:
-            comment = existing[cl["id"]]
+    for checklist in relevant:
+        body = make_checklist_comment_body(checklist)
+        if checklist["id"] in existing:
+            comment = existing[checklist["id"]]
             # Only update if the body actually changed (avoids notification spam).
             if (comment.body or "").strip() != body.strip():
                 comment.edit(body=body)
-                print(f"Updated checklist finding for '{cl['id']}'")
+                print(f"Updated checklist finding for '{checklist['id']}'")
             else:
-                print(f"Checklist finding for '{cl['id']}' is already up to date")
+                print(f"Checklist finding for '{checklist['id']}' is already up to date")
         else:
             # Post a file-level review comment (subject_type="file") anchored
             # to the first matched file. Unlike diff-position-anchored
@@ -92,17 +92,19 @@ def main() -> None:
             # files GitHub doesn't render a diff for. It still creates a
             # PullRequestComment that supports threaded replies where
             # reviewers can acknowledge with OK.
-            anchor_file = cl["matched_files"][0]
+            anchor_file = checklist["matched_files"][0]
             pr.create_review_comment(
                 body=body,
                 commit=pr.head.sha,
                 path=anchor_file,
                 subject_type="file",
             )
-            print(f"Created checklist finding for '{cl['id']}'")
+            print(f"Created checklist finding for '{checklist['id']}'")
 
     # Collect current acknowledgements and update evidence in PR description
-    relevant_ids = [cl["id"] for cl in relevant if cl["id"] in existing]
+    relevant_ids = [
+        checklist["id"] for checklist in relevant if checklist["id"] in existing
+    ]
     if relevant_ids:
         ack_details = collect_acknowledgement_details(pr, existing, relevant_ids)
         evidence_block = build_evidence_block(relevant, ack_details)

@@ -137,9 +137,9 @@ def match_checklists(checklists: list[dict], changed_files: list[str]) -> list[d
     containing the list of changed files that triggered the match.
     """
     relevant = []
-    for cl in checklists:
-        include_patterns: list[str] = cl.get("include", [])
-        exclude_patterns: list[str] = cl.get("exclude", [])
+    for checklist in checklists:
+        include_patterns: list[str] = checklist.get("include", [])
+        exclude_patterns: list[str] = checklist.get("exclude", [])
 
         matched = set()
         for filepath in changed_files:
@@ -148,9 +148,9 @@ def match_checklists(checklists: list[dict], changed_files: list[str]) -> list[d
                     matched.add(filepath)
 
         if matched:
-            cl_copy = dict(cl)
-            cl_copy["matched_files"] = sorted(matched)
-            relevant.append(cl_copy)
+            checklist_copy = dict(checklist)
+            checklist_copy["matched_files"] = sorted(matched)
+            relevant.append(checklist_copy)
     return relevant
 
 
@@ -202,10 +202,10 @@ def find_existing_checklist_comments(pr: PullRequest) -> dict[str, Any]:
                 # truncated by a user) — skip rather than crash on the
                 # malformed comment.
                 continue
-            cid = body[start:end]
+            checklist_id = body[start:end]
             # Only keep top-level checklist comments (not replies).
             if not getattr(comment, "in_reply_to_id", None):
-                result[cid] = comment
+                result[checklist_id] = comment
     return result
 
 
@@ -228,20 +228,20 @@ def find_ok_replies_for_checklists(
     they actually need (usernames, (reviewer, timestamp) pairs, raw
     comment objects to delete, ...).
     """
-    replies: dict[str, list[Any]] = {cid: [] for cid in checklist_ids}
-    comment_id_to_cid: dict[int, str] = {
-        comment.id: cid
-        for cid, comment in existing_comments.items()
-        if cid in checklist_ids
+    replies: dict[str, list[Any]] = {checklist_id: [] for checklist_id in checklist_ids}
+    comment_id_to_checklist_id: dict[int, str] = {
+        comment.id: checklist_id
+        for checklist_id, comment in existing_comments.items()
+        if checklist_id in checklist_ids
     }
 
     for comment in pr.get_review_comments():
         reply_to = getattr(comment, "in_reply_to_id", None)
-        if not isinstance(reply_to, int) or reply_to not in comment_id_to_cid:
+        if not isinstance(reply_to, int) or reply_to not in comment_id_to_checklist_id:
             continue
         if (comment.body or "").strip().upper() != OK_KEYWORD:
             continue
-        replies[comment_id_to_cid[reply_to]].append(comment)
+        replies[comment_id_to_checklist_id[reply_to]].append(comment)
 
     return replies
 
@@ -252,14 +252,14 @@ def collect_acknowledgement_details(
     """Return acknowledgement details for relevant checklist review threads."""
     replies = find_ok_replies_for_checklists(pr, existing_comments, checklist_ids)
     return {
-        cid: [
+        checklist_id: [
             {
                 "reviewer": comment.user.login,
                 "acknowledged_at": comment.created_at.isoformat(),
             }
             for comment in comments
         ]
-        for cid, comments in replies.items()
+        for checklist_id, comments in replies.items()
     }
 
 
@@ -377,12 +377,12 @@ def build_evidence_block(
         "",
     ]
 
-    for cl in relevant:
-        cid = cl["id"]
-        lines.append(f"### {cl['name']} (`{cid}`)")
+    for checklist in relevant:
+        checklist_id = checklist["id"]
+        lines.append(f"### {checklist['name']} (`{checklist_id}`)")
         lines.append("")
 
-        acks = ack_details.get(cid, [])
+        acks = ack_details.get(checklist_id, [])
         if acks:
             lines.append("**Acknowledged by:**")
             for ack in acks:

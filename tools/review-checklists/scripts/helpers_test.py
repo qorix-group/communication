@@ -225,7 +225,7 @@ class TestMatchChecklists:
         assert result[0]["id"] == "build-review"
 
     def test_unanchored_pattern_matches_root_and_nested(self):
-        cl = [
+        checklist = [
             {
                 "id": "md-anywhere",
                 "name": "Markdown anywhere",
@@ -234,12 +234,12 @@ class TestMatchChecklists:
             }
         ]
         files = ["NOTE.md", "docs/NOTE.md", "docs/deep/NOTE.md"]
-        result = match_checklists(cl, files)
+        result = match_checklists(checklist, files)
         assert len(result) == 1
         assert set(result[0]["matched_files"]) == set(files)
 
     def test_anchored_pattern_matches_root_only(self):
-        cl = [
+        checklist = [
             {
                 "id": "md-root-only",
                 "name": "Markdown at root",
@@ -248,7 +248,7 @@ class TestMatchChecklists:
             }
         ]
         files = ["NOTE.md", "docs/NOTE.md"]
-        result = match_checklists(cl, files)
+        result = match_checklists(checklist, files)
         assert len(result) == 1
         assert result[0]["matched_files"] == ["NOTE.md"]
 
@@ -299,41 +299,41 @@ class TestMatchChecklists:
 
 class TestMakeChecklistCommentBody:
     def test_contains_marker(self):
-        cl = SAMPLE_CHECKLISTS[0]
-        body = make_checklist_comment_body(cl)
+        checklist = SAMPLE_CHECKLISTS[0]
+        body = make_checklist_comment_body(checklist)
         expected_marker = CHECKLIST_MARKER.format(checklist_id="api-review")
         assert expected_marker in body
 
     def test_contains_name(self):
-        cl = SAMPLE_CHECKLISTS[0]
-        body = make_checklist_comment_body(cl)
-        assert cl["name"] in body
+        checklist = SAMPLE_CHECKLISTS[0]
+        body = make_checklist_comment_body(checklist)
+        assert checklist["name"] in body
 
     def test_contains_checklist_content(self):
-        cl = SAMPLE_CHECKLISTS[0]
-        body = make_checklist_comment_body(cl)
+        checklist = SAMPLE_CHECKLISTS[0]
+        body = make_checklist_comment_body(checklist)
         assert "APIs documented" in body
 
     def test_contains_ok_instruction(self):
-        cl = SAMPLE_CHECKLISTS[0]
-        body = make_checklist_comment_body(cl)
+        checklist = SAMPLE_CHECKLISTS[0]
+        body = make_checklist_comment_body(checklist)
         assert OK_KEYWORD in body
 
     def test_contains_paths(self):
-        cl = SAMPLE_CHECKLISTS[0]
-        body = make_checklist_comment_body(cl)
-        for p in cl["include"]:
+        checklist = SAMPLE_CHECKLISTS[0]
+        body = make_checklist_comment_body(checklist)
+        for p in checklist["include"]:
             assert p in body
 
     def test_contains_exclude_when_present(self):
-        cl = SAMPLE_CHECKLISTS[3]  # com-review, has exclude
-        body = make_checklist_comment_body(cl)
-        for p in cl["exclude"]:
+        checklist = SAMPLE_CHECKLISTS[3]  # com-review, has exclude
+        body = make_checklist_comment_body(checklist)
+        for p in checklist["exclude"]:
             assert p in body
 
     def test_no_exclude_line_when_absent(self):
-        cl = SAMPLE_CHECKLISTS[0]  # api-review, no exclude
-        body = make_checklist_comment_body(cl)
+        checklist = SAMPLE_CHECKLISTS[0]  # api-review, no exclude
+        body = make_checklist_comment_body(checklist)
         assert "Excluding" not in body
 
 
