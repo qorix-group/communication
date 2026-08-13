@@ -246,6 +246,24 @@ cc_library(
 )
 
 cc_library(
+    name = "linear_search_map",
+    srcs = ["linear_search_map.cpp"],
+    hdrs = [
+        "linear_search_map.h",
+    ],
+    features = COMPILER_WARNING_FEATURES,
+    tags = ["FFI"],
+    visibility = [
+        "//score/mw/com/impl/bindings/lola:__pkg__",
+        "//score/mw/com/impl/bindings/lola/test_doubles:__pkg__",
+    ],
+    deps = [
+        "//score/memory/shared",
+        "@score_baselibs//score/containers:non_relocatable_vector",
+    ],
+)
+
+cc_library(
     name = "service_data_storage",
     srcs = ["service_data_storage.cpp"],
     hdrs = ["service_data_storage.h"],
@@ -1327,6 +1345,19 @@ cc_unit_test(
         "//score/mw/com/impl/test:runtime_mock_guard",
         "@score_baselibs//score/os:object_seam",
         "@score_baselibs//score/os/mocklib:unistd_mock",
+    ],
+)
+
+cc_unit_test(
+    name = "linear_search_map_test",
+    srcs = [
+        "linear_search_map_test.cpp",
+    ],
+    features = COMPILER_WARNING_FEATURES,
+    deps = [
+        ":linear_search_map",
+        "//score/memory/shared:new_delete_delegate_resource",
+        "@score_baselibs//score/mw/log",
     ],
 )
 
