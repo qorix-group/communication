@@ -137,6 +137,7 @@ jobs:
           fi
 
           ARGS+=(
+            "--config=ci"
             "--build_tests_only"
             "--keep_going"
             "--runs_per_test=${{ inputs.runs-per-test }}"
@@ -159,7 +160,7 @@ jobs:
         if: always()
         run: |
           REPORT_DIR="${RUNNER_TEMP}/nightly-flaky/${{ inputs.config-name }}"
-          bazel run //quality/scripts:collect_flaky_tests -- \
+          bazel run --config=ci //quality/scripts:collect_flaky_tests -- \
             --config-name "${{ inputs.config-name }}" \
             --bep-json "${RUNNER_TEMP}/bep_${{ inputs.config-name }}.json" \
             --raw-log "${RUNNER_TEMP}/bazel_${{ inputs.config-name }}.log" \

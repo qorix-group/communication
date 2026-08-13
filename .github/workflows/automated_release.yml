@@ -316,7 +316,7 @@ jobs:
 
       - name: Generate quality dashboard
         run: |
-          bazel run //quality/dashboard:generate_dashboard -- \
+          bazel run --config=ci //quality/dashboard:generate_dashboard -- \
             --lcov     /tmp/coverage_zip/extracted/artifacts/coverage_report.dat \
             --clang-tidy /tmp/clang_tidy/clang_tidy_findings.txt \
             --codeql "${GITHUB_WORKSPACE}/_quality/codeql_findings.sarif" \
