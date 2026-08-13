@@ -82,6 +82,11 @@ permissions:
 concurrency:
   group: >-
     review-checklists-apply-${{ github.event.workflow_run.head_sha || github.event.workflow_run.id }}
+  # Multiple trigger-stage runs for the same head SHA can complete in quick
+  # succession (e.g. several review comments posted back-to-back), so let a
+  # newer run cancel an older, now-superseded one. Safe because this job only
+  # recomputes idempotent PR state (comments/statuses) from scratch each time.
+  cancel-in-progress: true
 
 jobs:
   review-checklists:
