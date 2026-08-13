@@ -318,7 +318,13 @@ void BidirectionalTransport::HandleIncomingMessage(std::unique_ptr<TransportMess
 
     if (RequiresResponse(message->GetType()))
     {
-        SendAck(message->GetSequenceNumber());
+        const auto send_ack_result = SendAck(message->GetSequenceNumber());
+        if (!send_ack_result.has_value())
+        {
+            ::score::mw::log::LogWarn() << "BidirectionalTransport: Could not send acknowledgement. Message type: "
+                                        << static_cast<int>(message->GetType()) << "," << message->GetSequenceNumber();
+            return;
+        }
     }
 
     // Post to dispatch queue rather than calling the handler inline.

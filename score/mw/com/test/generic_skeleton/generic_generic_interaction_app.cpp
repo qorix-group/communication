@@ -109,7 +109,12 @@ int run_provider(score::cpp::stop_token stop_token)
         typed_sample->counter = i;
 
         std::cout << "[PROVIDER] Sending sample: " << i << std::endl;
-        generic_event.Send(std::move(sample_res.value()));
+        const auto send_result = generic_event.Send(std::move(sample_res.value()));
+        if (!send_result.has_value())
+        {
+            std::cerr << "[PROVIDER] Send failed for sample: " << i << std::endl;
+            return 1;
+        }
         std::cout << "[PROVIDER] " << PAYLOAD_SIZE << "-byte Event Sent sample: " << i << std::endl;
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
         i++;
@@ -136,20 +141,34 @@ int run_consumer()
         retries++;
     }
     if (!handles_res.has_value() || handles_res.value().empty())
+    {
+        std::cerr << "[CONSUMER] Failed to get handle." << std::endl;
         return 1;
+    }
 
     auto proxy_res = score::mw::com::GenericProxy::Create(handles_res.value()[0]);
     if (!proxy_res.has_value())
+    {
+        std::cerr << "[CONSUMER] Failed to create." << std::endl;
         return 1;
+    }
     auto& proxy = proxy_res.value();
 
     auto event_it = proxy.GetEvents().find(kEventName);
     if (event_it == proxy.GetEvents().cend())
+    {
+        std::cerr << "[CONSUMER] Failed to get events." << std::endl;
         return 1;
+    }
 
     // Get reference to the GenericProxyEvent
     auto& generic_event = event_it->second;
-    generic_event.Subscribe(kSamplesToSubscribe);
+    const auto subscribe_result = generic_event.Subscribe(kSamplesToSubscribe);
+    if (!subscribe_result.has_value())
+    {
+        std::cerr << "[CONSUMER] Failed to subscribe." << std::endl;
+        return 1;
+    }
 
     std::uint64_t expected{0};
     std::uint64_t received{0};
@@ -159,7 +178,7 @@ int run_consumer()
     while (received < kSamplesToProcess)
     {
         // The receiver callback operates on type-erased memory (SamplePtr<const void>)
-        generic_event.GetNewSamples(
+        const auto get_new_samples_result = generic_event.GetNewSamples(
             [&](auto sample) {
                 auto* typed_sample = static_cast<const MyEventData*>(sample.get());
 
@@ -184,6 +203,11 @@ int run_consumer()
                 received++;
             },
             kSamplesToSubscribe);
+        if (!get_new_samples_result.has_value())
+        {
+            std::cerr << "[CONSUMER] Failed to get new samples." << std::endl;
+            return 1;
+        }
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
     if (data_mismatches > 0)

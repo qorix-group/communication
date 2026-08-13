@@ -39,12 +39,16 @@ class ProxyEventReceiver
             std::cout << "ProxyEventReceiver: Received event notification" << std::endl;
             received_sample_notification.notify();
         };
-        proxy_event_or_field_.SetReceiveHandler(receive_handler);
+        const auto result = proxy_event_or_field_.SetReceiveHandler(receive_handler);
+        if (!result.has_value())
+        {
+            std::cerr << "ProxyEventReceiver: Failed to set up receive handler!" << std::endl;
+        }
     }
 
     ~ProxyEventReceiver()
     {
-        proxy_event_or_field_.UnsetReceiveHandler();
+        std::ignore = proxy_event_or_field_.UnsetReceiveHandler();
     }
 
     ProxyEventReceiver(const ProxyEventReceiver&) = delete;

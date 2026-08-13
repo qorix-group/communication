@@ -103,7 +103,12 @@ int run_provider(score::cpp::stop_token stop_token)
         }
         auto* typed_sample = static_cast<MyEventData*>(sample_res.value().Get());
         typed_sample->counter = i;
-        generic_event.Send(std::move(sample_res.value()));
+        const auto send_result = generic_event.Send(std::move(sample_res.value()));
+        if (!send_result.has_value())
+        {
+            score::mw::log::LogFatal("GenericSkeletonProvider") << "Failed to send sample.";
+            return 1;
+        }
 
         score::mw::log::LogInfo("GenericSkeletonProvider") << PAYLOAD_SIZE << "-byte Event Sent sample: " << i;
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -158,11 +163,16 @@ int run_consumer()
     std::uint64_t expected{0};
     int data_mismatches{0};
     bool is_first_sample{true};
-    proxy.event_.Subscribe(kSamplesToSubscribe);
+    const auto subscribe_result = proxy.event_.Subscribe(kSamplesToSubscribe);
+    if (!subscribe_result.has_value())
+    {
+        score::mw::log::LogFatal("TypedProxyConsumer") << "Failed to subscribe.";
+        return 1;
+    }
 
     while (received < kSamplesToProcess)
     {
-        proxy.event_.GetNewSamples(
+        const auto get_new_samples_result = proxy.event_.GetNewSamples(
             [&](score::mw::com::SamplePtr<MyEventData> sample) {
                 if (is_first_sample)
                 {
@@ -185,6 +195,11 @@ int run_consumer()
                 received++;
             },
             kSamplesToSubscribe);
+        if (!get_new_samples_result.has_value())
+        {
+            score::mw::log::LogFatal("TypedProxyConsumer") << "Failed to get new samples.";
+            return 1;
+        }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
