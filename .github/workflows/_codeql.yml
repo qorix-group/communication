@@ -76,7 +76,7 @@ jobs:
 
       - name: Fetch dependencies (--nobuild)
         if: inputs.fetch-only == 'true'
-        run: bazel build --nobuild //...
+        run: bazel build --config=ci --nobuild //...
 
       - name: Run CodeQL analysis (Linux)
         if: inputs.fetch-only != 'true'
@@ -84,7 +84,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          bazel run //quality/static_analysis:codeql_lint -- \
+          bazel run --config=ci //quality/static_analysis:codeql_lint -- \
             --output-dir /tmp/codeql-results/linux \
             --output-prefix codeql-nightly \
             --target //score/message_passing //score/mw/com
@@ -138,7 +138,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          bazel run //quality/static_analysis:codeql_lint -- \
+          bazel run --config=ci //quality/static_analysis:codeql_lint -- \
             --build-config qnx \
             --output-dir /tmp/codeql-results/qnx \
             --output-prefix codeql-nightly-qnx \
@@ -203,7 +203,7 @@ jobs:
           fi
 
           mkdir -p /tmp/codeql-results/publish
-          bazel run @sarif_multitool//:sarif_multitool_cli -- \
+          bazel run --config=ci @sarif_multitool//:sarif_multitool_cli -- \
             merge "${sarif_inputs[@]}" --merge-empty-logs \
             --output-file /tmp/codeql-results/publish/codeql-nightly.sarif
 

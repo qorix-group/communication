@@ -107,7 +107,7 @@ jobs:
       - name: Assemble publish tree
         if: github.event_name != 'pull_request'
         run: |
-          bazel run //docs/sphinx/utils:assemble_publish_tree -- \
+          bazel run --config=ci //docs/sphinx/utils:assemble_publish_tree -- \
             --version     "${{ steps.version.outputs.version }}" \
             --is-tag      "${{ steps.version.outputs.is_tag }}" \
             --docs-output docs_output \

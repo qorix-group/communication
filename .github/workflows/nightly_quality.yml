@@ -219,7 +219,7 @@ jobs:
         run: |
           # Pass LCOV data and SARIF findings; generate_dashboard handles
           # absent files gracefully (shows N/A for that metric).
-          bazel run //quality/dashboard:generate_dashboard -- \
+          bazel run --config=ci //quality/dashboard:generate_dashboard -- \
             --lcov     /tmp/coverage_zip/extracted/artifacts/coverage_report.dat \
             --clang-tidy /tmp/clang_tidy/clang-tidy.sarif \
             --clippy /tmp/clippy/clippy.sarif \

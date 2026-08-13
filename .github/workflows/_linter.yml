@@ -70,7 +70,7 @@ jobs:
 
       - name: Fetch dependencies (--nobuild)
         if: inputs.fetch-only == 'true'
-        run: bazel build --nobuild --config=${{ matrix.bazel-config }} //...
+        run: bazel build --nobuild --config=ci --config=${{ matrix.bazel-config }} //...
 
       - name: Run ${{ matrix.id }} via aspect lint
         if: inputs.fetch-only != 'true'
@@ -109,6 +109,7 @@ jobs:
 
           set -o pipefail
           aspect lint \
+            --bazel-flag=--config=ci \
             --bazel-flag=--config=${{ matrix.bazel-config }} \
             --bazel-flag=--@aspect_rules_lint//lint:fail_on_violation=false \
             --bazel-flag=--build_event_json_file=/tmp/bep.json \
