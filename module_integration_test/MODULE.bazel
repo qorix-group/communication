@@ -16,13 +16,6 @@ git_override(
     remote = "https://github.com/eclipse-score/baselibs.git",
 )
 
-bazel_dep(name = "lobster", version = "1.0.6")
-git_override(
-    module_name = "lobster",
-    commit = "0069786d1261d59817fc97cb6e7b359b522e14d5",
-    remote = "https://github.com/bmw-software-engineering/lobster.git",
-)
-
 # Only required to build the example, shall be replaceable with nearly every other C++ Toolchain setup
 bazel_dep(name = "score_bazel_platforms", version = "1.0.0", dev_dependency = True)
 bazel_dep(name = "score_bazel_cpp_toolchains", version = "0.5.4", dev_dependency = True)

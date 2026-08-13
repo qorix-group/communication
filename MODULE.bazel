@@ -400,15 +400,6 @@ use_repo(pip, "codeql_coding_standards_pip_hub")
 
 # TRLC dependency for requirements traceability
 bazel_dep(name = "trlc", version = "3.0.1", dev_dependency = True)
-
-# Lobster dependency for requirements traceability
-bazel_dep(name = "lobster", version = "1.0.6", dev_dependency = True)
-git_override(
-    module_name = "lobster",
-    commit = "0069786d1261d59817fc97cb6e7b359b522e14d5",
-    remote = "https://github.com/bmw-software-engineering/lobster.git",
-)
-
 bazel_dep(name = "rules_oci", version = "2.2.7", dev_dependency = True)
 bazel_dep(name = "rules_pkg", version = "1.2.0", dev_dependency = True)
 
