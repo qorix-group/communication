@@ -63,6 +63,11 @@ class GenericSkeletonEvent : public GenericSkeletonEventBinding
         return size_info_.Size();
     }
 
+    std::size_t GetAlignment() const noexcept override
+    {
+        return size_info_.Alignment();
+    }
+
     /// \brief Set callback, to get notified, when either the 1st event-notification has been registered or the last
     /// event-notification has been unregistered.
     /// \detail This extension has been added to GenericSkeletonEvent only (not "typed" SkeletonEvent),
