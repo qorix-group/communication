@@ -51,12 +51,12 @@ import sys
 from typing import Any
 
 from helpers import (
-    _collect_acknowledgement_details,
-    OK_KEYWORD,
     build_evidence_block,
+    collect_acknowledgement_details,
     ensure_merge_queue_notice_comment,
     ensure_merge_queue_notice_description,
     find_existing_checklist_comments,
+    find_ok_replies_for_checklists,
     get_approving_reviewers,
     get_changed_files,
     get_github_client,
@@ -74,35 +74,17 @@ def _collect_ok_acknowledgements(
 ) -> dict[str, set[str]]:
     """Return a mapping of checklist_id → set of usernames who acknowledged.
 
-    We inspect PR review comment replies (threaded conversations).  A reply
-    counts as an OK for a checklist if:
+    A reply counts as an OK for a checklist if:
       - Its ``in_reply_to_id`` matches the checklist finding comment id, AND
       - Its body (stripped, case-insensitive) equals the ``OK`` keyword.
 
     The conversation thread itself associates the reply with the checklist.
     """
-    acks: dict[str, set[str]] = {cid: set() for cid in relevant_ids}
-
-    # Build a mapping of checklist comment id → checklist id.
-    cl_comment_ids: dict[int, str] = {}
-    for cid, comment in existing_comments.items():
-        if cid in relevant_ids:
-            cl_comment_ids[comment.id] = cid
-
-    # Walk all review comments looking for replies to checklist findings.
-    for comment in pr.get_review_comments():
-        reply_to = getattr(comment, "in_reply_to_id", None)
-        if reply_to is None or reply_to not in cl_comment_ids:
-            continue
-
-        cid = cl_comment_ids[reply_to]  # type: ignore[index]
-        body = (comment.body or "").strip()
-        user = comment.user.login
-
-        if body.upper() == OK_KEYWORD:
-            acks[cid].add(user)
-
-    return acks
+    replies = find_ok_replies_for_checklists(pr, existing_comments, relevant_ids)
+    return {
+        cid: {comment.user.login for comment in comments}
+        for cid, comments in replies.items()
+    }
 
 
 def _acknowledgement_status(
@@ -237,7 +219,7 @@ def main() -> None:
     acks = _collect_ok_acknowledgements(pr, existing, relevant_ids)
 
     # Refresh evidence block in PR description based on current acknowledgements.
-    ack_details = _collect_acknowledgement_details(pr, existing, relevant_ids)
+    ack_details = collect_acknowledgement_details(pr, existing, relevant_ids)
     evidence_block = build_evidence_block(relevant, ack_details)
     update_pr_description_with_evidence(pr, evidence_block)
 

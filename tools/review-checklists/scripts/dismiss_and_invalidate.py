@@ -48,8 +48,8 @@ import os
 from typing import Any
 
 from helpers import (
-    OK_KEYWORD,
     find_existing_checklist_comments,
+    find_ok_replies_for_checklists,
     get_changed_files,
     get_github_client,
     get_repo_and_pr,
@@ -94,27 +94,6 @@ def _get_files_in_latest_push(pr: Any, repo: Any) -> list[str]:
     return get_changed_files(pr)
 
 
-def _find_ok_comments_for_checklist(pr: Any, checklist_comment_id: int) -> list[Any]:
-    """Find all OK reply comments for a given checklist.
-
-    Checklist findings are posted as file-level PR review comments; OK
-    replies are threaded review comment replies whose ``in_reply_to_id``
-    matches the checklist comment id and whose body equals the OK keyword.
-    """
-    ok_comments = []
-
-    for comment in pr.get_review_comments():
-        reply_to = getattr(comment, "in_reply_to_id", None)
-        if reply_to != checklist_comment_id:
-            continue
-        body = (comment.body or "").strip()
-
-        if body.upper() == OK_KEYWORD:
-            ok_comments.append(comment)
-
-    return ok_comments
-
-
 def handle_synchronize(pr: Any, repo: Any, config_path: str) -> None:
     """Handle new commits pushed to the PR.
 
@@ -131,18 +110,15 @@ def handle_synchronize(pr: Any, repo: Any, config_path: str) -> None:
         return
 
     existing = find_existing_checklist_comments(pr)
+    affected_ids = [cl["id"] for cl in affected if cl["id"] in existing]
+    ok_replies = find_ok_replies_for_checklists(pr, existing, affected_ids)
 
     any_invalidated = False
 
-    for cl in affected:
-        cid = cl["id"]
-        if cid not in existing:
-            continue
-
+    for cid in affected_ids:
         review = existing[cid]
-        ok_comments = _find_ok_comments_for_checklist(pr, review.id)
 
-        for ok_comment in ok_comments:
+        for ok_comment in ok_replies[cid]:
             user = ok_comment.user.login
             any_invalidated = True
             try:

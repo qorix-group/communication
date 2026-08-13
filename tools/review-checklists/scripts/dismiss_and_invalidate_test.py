@@ -22,7 +22,6 @@ import pytest
 import sys
 
 from dismiss_and_invalidate import (
-    _find_ok_comments_for_checklist,
     _get_files_in_latest_push,
     handle_synchronize,
 )
@@ -66,70 +65,6 @@ SAMPLE_CHECKLISTS = [
         "checklist": "- [ ] Reviewed",
     },
 ]
-
-
-# ---------------------------------------------------------------------------
-# _find_ok_comments_for_checklist
-# ---------------------------------------------------------------------------
-
-
-class TestFindOkCommentsForChecklist:
-    def test_finds_marker_ok_reply(self):
-        ok = _make_comment(
-            101,
-            "OK",
-            "alice",
-            datetime(2026, 1, 1, 0, 1, tzinfo=timezone.utc),
-        )
-        ok.in_reply_to_id = 100
-        pr = MagicMock()
-        pr.get_review_comments.return_value = [ok]
-
-        result = _find_ok_comments_for_checklist(pr, 100)
-        assert len(result) == 1
-        assert result[0].id == 101
-
-    def test_finds_bare_ok_reply(self):
-        ok = _make_comment(
-            101,
-            "OK",
-            "alice",
-            datetime(2026, 1, 1, 0, 1, tzinfo=timezone.utc),
-        )
-        ok.in_reply_to_id = 100
-        pr = MagicMock()
-        pr.get_review_comments.return_value = [ok]
-
-        result = _find_ok_comments_for_checklist(pr, 100)
-        assert len(result) == 1
-
-    def test_ignores_reply_to_different_comment(self):
-        ok = _make_comment(
-            101,
-            "OK",
-            "alice",
-            datetime(2026, 1, 1, 0, 1, tzinfo=timezone.utc),
-        )
-        ok.in_reply_to_id = 999  # different checklist
-        pr = MagicMock()
-        pr.get_review_comments.return_value = [ok]
-
-        result = _find_ok_comments_for_checklist(pr, 100)
-        assert len(result) == 0
-
-    def test_ignores_unrelated_reply(self):
-        normal = _make_comment(
-            101,
-            "looks good",
-            "alice",
-            datetime(2026, 1, 1, 0, 1, tzinfo=timezone.utc),
-        )
-        normal.in_reply_to_id = 100
-        pr = MagicMock()
-        pr.get_review_comments.return_value = [normal]
-
-        result = _find_ok_comments_for_checklist(pr, 100)
-        assert len(result) == 0
 
 
 # ---------------------------------------------------------------------------

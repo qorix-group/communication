@@ -27,8 +27,8 @@ from __future__ import annotations
 import argparse
 
 from helpers import (
-    _collect_acknowledgement_details,
     build_evidence_block,
+    collect_acknowledgement_details,
     ensure_merge_queue_notice_comment,
     ensure_merge_queue_notice_description,
     find_existing_checklist_comments,
@@ -104,7 +104,7 @@ def main() -> None:
     # Collect current acknowledgements and update evidence in PR description
     relevant_ids = [cl["id"] for cl in relevant if cl["id"] in existing]
     if relevant_ids:
-        ack_details = _collect_acknowledgement_details(pr, existing, relevant_ids)
+        ack_details = collect_acknowledgement_details(pr, existing, relevant_ids)
         evidence_block = build_evidence_block(relevant, ack_details)
         update_pr_description_with_evidence(pr, evidence_block)
 

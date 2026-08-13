@@ -196,7 +196,12 @@ def find_existing_checklist_comments(pr: PullRequest) -> dict[str, Any]:
         prefix = "<!-- review-checklist:"
         if prefix in body:
             start = body.index(prefix) + len(prefix)
-            end = body.index(" -->", start)
+            end = body.find(" -->", start)
+            if end == -1:
+                # Marker was opened but never closed (e.g. comment edited/
+                # truncated by a user) — skip rather than crash on the
+                # malformed comment.
+                continue
             cid = body[start:end]
             # Only keep top-level checklist comments (not replies).
             if not getattr(comment, "in_reply_to_id", None):
@@ -204,56 +209,58 @@ def find_existing_checklist_comments(pr: PullRequest) -> dict[str, Any]:
     return result
 
 
-def find_ok_replies(
-    pr: PullRequest, checklist_comment_id: int, checklist_id: str
-) -> list[Any]:
-    """Find valid OK reply comments for a given checklist review comment.
+def find_ok_replies_for_checklists(
+    pr: PullRequest,
+    existing_comments: dict[str, Any],
+    checklist_ids: list[str],
+) -> dict[str, list[Any]]:
+    """Return a mapping of checklist_id -> its OK-reply comment objects.
 
-    We look at PR review comment replies (threaded conversation) where
-    ``in_reply_to_id`` matches the checklist comment id.  A reply counts
-    as an OK if its body (stripped, case-insensitive) equals the OK keyword.
-    The conversation thread itself associates the reply with the checklist.
+    Single-pass helper over ``pr.get_review_comments()`` that consolidates
+    what used to be three separate re-implementations of the same OK-reply
+    lookup (``collect_acknowledgement_details`` here,
+    ``check_acknowledgements._collect_ok_acknowledgements``, and
+    ``dismiss_and_invalidate._find_ok_comments_for_checklist``): a reply
+    counts as an OK for a checklist if its ``in_reply_to_id`` matches that
+    checklist's finding comment id and its body (stripped,
+    case-insensitive) equals the OK keyword. Callers project this
+    "superset" of full comment objects down to whatever narrower shape
+    they actually need (usernames, (reviewer, timestamp) pairs, raw
+    comment objects to delete, ...).
     """
-    ok_replies = []
+    replies: dict[str, list[Any]] = {cid: [] for cid in checklist_ids}
+    comment_id_to_cid: dict[int, str] = {
+        comment.id: cid
+        for cid, comment in existing_comments.items()
+        if cid in checklist_ids
+    }
+
     for comment in pr.get_review_comments():
         reply_to = getattr(comment, "in_reply_to_id", None)
-        if reply_to != checklist_comment_id:
+        if not isinstance(reply_to, int) or reply_to not in comment_id_to_cid:
             continue
-        body = (comment.body or "").strip()
-        if body.upper() == OK_KEYWORD:
-            ok_replies.append(comment)
-    return ok_replies
+        if (comment.body or "").strip().upper() != OK_KEYWORD:
+            continue
+        replies[comment_id_to_cid[reply_to]].append(comment)
+
+    return replies
 
 
-def _collect_acknowledgement_details(
-    pr: PullRequest, existing_comments: dict[str, Any], relevant_ids: list[str]
+def collect_acknowledgement_details(
+    pr: PullRequest, existing_comments: dict[str, Any], checklist_ids: list[str]
 ) -> dict[str, list[dict[str, str]]]:
     """Return acknowledgement details for relevant checklist review threads."""
-    details: dict[str, list[dict[str, str]]] = {cid: [] for cid in relevant_ids}
-
-    cl_comment_ids: dict[int, str] = {}
-    for cid, comment in existing_comments.items():
-        if cid in relevant_ids:
-            cl_comment_ids[comment.id] = cid
-
-    for comment in pr.get_review_comments():
-        reply_to = getattr(comment, "in_reply_to_id", None)
-        if not isinstance(reply_to, int) or reply_to not in cl_comment_ids:
-            continue
-
-        cid = cl_comment_ids[reply_to]
-        body = (comment.body or "").strip()
-        user = comment.user.login
-
-        if body.upper() == OK_KEYWORD:
-            details[cid].append(
-                {
-                    "reviewer": user,
-                    "acknowledged_at": comment.created_at.isoformat(),
-                }
-            )
-
-    return details
+    replies = find_ok_replies_for_checklists(pr, existing_comments, checklist_ids)
+    return {
+        cid: [
+            {
+                "reviewer": comment.user.login,
+                "acknowledged_at": comment.created_at.isoformat(),
+            }
+            for comment in comments
+        ]
+        for cid, comments in replies.items()
+    }
 
 
 def get_approving_reviewers(pr: PullRequest) -> list[str]:

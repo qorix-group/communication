@@ -31,12 +31,12 @@ from helpers import (
     MERGE_QUEUE_NOTICE_END,
     MERGE_QUEUE_NOTICE_START,
     OK_KEYWORD,
-    _collect_acknowledgement_details,
     _find_checklists_config,
+    collect_acknowledgement_details,
     ensure_merge_queue_notice_comment,
     ensure_merge_queue_notice_description,
     find_existing_checklist_comments,
-    find_ok_replies,
+    find_ok_replies_for_checklists,
     get_approving_reviewers,
     get_changed_files,
     get_github_client,
@@ -380,11 +380,11 @@ class TestFindExistingChecklistComments:
 
 
 # ---------------------------------------------------------------------------
-# find_ok_replies
+# find_ok_replies_for_checklists
 # ---------------------------------------------------------------------------
 
 
-class TestFindOkReplies:
+class TestFindOkRepliesForChecklists:
     def test_finds_ok_reply(self):
         c1 = _make_comment(10, "checklist body", "bot")
         c1.in_reply_to_id = None
@@ -393,9 +393,8 @@ class TestFindOkReplies:
         pr = MagicMock()
         pr.get_review_comments.return_value = [c1, c2]
 
-        result = find_ok_replies(pr, 10, "api-review")
-        assert len(result) == 1
-        assert result[0].id == 11
+        result = find_ok_replies_for_checklists(pr, {"api-review": c1}, ["api-review"])
+        assert [c.id for c in result["api-review"]] == [11]
 
     def test_finds_case_insensitive_ok(self):
         for ok in ["OK", "ok", "oK", "Ok"]:
@@ -406,30 +405,36 @@ class TestFindOkReplies:
             pr = MagicMock()
             pr.get_review_comments.return_value = [c1, c2]
 
-            result = find_ok_replies(pr, 10, "api-review")
-            assert len(result) == 1
+            result = find_ok_replies_for_checklists(
+                pr, {"api-review": c1}, ["api-review"]
+            )
+            assert len(result["api-review"]) == 1
 
     def test_ignores_reply_to_different_comment(self):
-        c1 = _make_comment(11, "OK", "reviewer1")
-        c1.in_reply_to_id = 99  # different checklist
+        c1 = _make_comment(10, "checklist body", "bot")
+        c1.in_reply_to_id = None
+        c2 = _make_comment(11, "OK", "reviewer1")
+        c2.in_reply_to_id = 99  # different checklist
         pr = MagicMock()
-        pr.get_review_comments.return_value = [c1]
+        pr.get_review_comments.return_value = [c1, c2]
 
-        result = find_ok_replies(pr, 10, "api-review")
-        assert len(result) == 0
+        result = find_ok_replies_for_checklists(pr, {"api-review": c1}, ["api-review"])
+        assert result["api-review"] == []
 
     def test_ignores_unrelated_reply(self):
-        c1 = _make_comment(11, "looks good but not OK keyword", "reviewer1")
-        c1.in_reply_to_id = 10
+        c1 = _make_comment(10, "checklist body", "bot")
+        c1.in_reply_to_id = None
+        c2 = _make_comment(11, "looks good but not OK keyword", "reviewer1")
+        c2.in_reply_to_id = 10
         pr = MagicMock()
-        pr.get_review_comments.return_value = [c1]
+        pr.get_review_comments.return_value = [c1, c2]
 
-        result = find_ok_replies(pr, 10, "api-review")
-        assert len(result) == 0
+        result = find_ok_replies_for_checklists(pr, {"api-review": c1}, ["api-review"])
+        assert result["api-review"] == []
 
 
 # ---------------------------------------------------------------------------
-# _collect_acknowledgement_details
+# collect_acknowledgement_details
 # ---------------------------------------------------------------------------
 
 
@@ -445,7 +450,7 @@ class TestCollectAcknowledgementDetails:
         pr = MagicMock()
         pr.get_review_comments.return_value = [ok_reply, other_reply, unrelated_reply]
 
-        result = _collect_acknowledgement_details(
+        result = collect_acknowledgement_details(
             pr,
             {"api-review": checklist_comment},
             ["api-review", "docs-review"],
