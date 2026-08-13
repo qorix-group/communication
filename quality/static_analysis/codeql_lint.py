@@ -219,6 +219,7 @@ def analyze_database(
         coding_standards_config_path,
         sarif_path,
     )
+    normalize_sarif_rule_order(sarif_path)
 
     # Generate reports using CodeQL analysis_report tool
     if analysis_report_path and os.path.exists(analysis_report_path):
@@ -291,6 +292,77 @@ def recategorize_sarif(recategorize_path, coding_standards_config_path, sarif_pa
     )
     os.replace(recategorized_sarif_path, sarif_path)
     return sarif_path
+
+
+def normalize_sarif_rule_order(sarif_path):
+    with open(sarif_path, "r", encoding="utf-8") as sarif_file:
+        sarif = json.load(sarif_file)
+
+    runs = sarif.get("runs", [])
+    if not runs:
+        return sarif_path
+
+    for run in runs:
+        _normalize_sarif_run(run)
+
+    normalized_sarif_path = f"{sarif_path}.normalized"
+    with open(normalized_sarif_path, "w", encoding="utf-8") as sarif_file:
+        json.dump(sarif, sarif_file, indent=2)
+        sarif_file.write("\n")
+    os.replace(normalized_sarif_path, sarif_path)
+    return sarif_path
+
+
+def _normalize_sarif_run(run):
+    driver = run.get("tool", {}).get("driver", {})
+    rules = driver.get("rules", [])
+    ordered_rules = sorted(
+        enumerate(rules),
+        key=lambda indexed_rule: indexed_rule[1].get("id", ""),
+    )
+    index_map = {
+        old_index: new_index
+        for new_index, (old_index, _) in enumerate(ordered_rules)
+    }
+    driver["rules"] = [rule for _, rule in ordered_rules]
+
+    artifacts = run.get("artifacts", [])
+    ordered_artifacts = sorted(
+        enumerate(artifacts),
+        key=lambda indexed_artifact: indexed_artifact[1].get(
+            "location", {}).get("uri", ""),
+    )
+    artifact_index_map = {
+        old_index: new_index
+        for new_index, (old_index, _) in enumerate(ordered_artifacts)
+    }
+    run["artifacts"] = [artifact for _, artifact in ordered_artifacts]
+
+    for result in run.get("results", []):
+        if "ruleIndex" in result:
+            result["ruleIndex"] = index_map[result["ruleIndex"]]
+        result_rule = result.get("rule")
+        if result_rule is not None and "index" in result_rule:
+            result_rule["index"] = index_map[result_rule["index"]]
+
+    for key, value in run.items():
+        if key != "artifacts":
+            _remap_artifact_indices(value, artifact_index_map)
+
+
+def _remap_artifact_indices(value, artifact_index_map):
+    if isinstance(value, dict):
+        artifact_location = value.get("artifactLocation")
+        if isinstance(artifact_location, dict) and "index" in artifact_location:
+            if artifact_location.get("uri"):
+                del artifact_location["index"]
+            else:
+                artifact_location["index"] = artifact_index_map[artifact_location["index"]]
+        for child in value.values():
+            _remap_artifact_indices(child, artifact_index_map)
+    elif isinstance(value, list):
+        for child in value:
+            _remap_artifact_indices(child, artifact_index_map)
 
 
 def _find_recategorization_schema_paths():
