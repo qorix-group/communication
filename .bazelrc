@@ -119,6 +119,9 @@ test --nosandbox_default_allow_network
 # As explained in the CI design (https://github.com/eclipse-score/communication/blob/main/CI.md#check-and-merge-queue), we do not want to fail
 # because of a flaky test
 common:ci --flaky_test_attempts=5
+# We do not want in the CI a high frequency showing progress messages otherwise the log file will blow up
+# Still we do not want to disable it to be able to see if a job is directly hanging or even just know the current progress
+common:ci --show_progress_rate_limit=10
 
 # Bzlmod
 common --registry=https://raw.githubusercontent.com/eclipse-score/bazel_registry/refs/heads/main/
