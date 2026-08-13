@@ -72,6 +72,13 @@ inputs:
 runs:
   using: composite
   steps:
+    # Deliberately installed with plain pip rather than invoked via Bazel:
+    # this action only needs to run a couple of standalone Python scripts
+    # against a locked requirements.txt, and doing that with pip is fast and
+    # has no dependency on the runner having a full Bazel setup or checkout
+    # of this monorepo's build graph. requirements.txt itself is still
+    # generated/locked via Bazel (see BUILD and README.md) so the pinned
+    # versions stay consistent with the rest of the repo's tooling.
     - name: Install review_checklists requirements
       shell: bash
       run: python3 -m pip install -r "$GITHUB_ACTION_PATH/requirements.txt"
