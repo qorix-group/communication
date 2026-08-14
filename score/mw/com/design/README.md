@@ -184,7 +184,7 @@ that we need, we find that in spirit it does not contradict the guideline, and w
 
 ## Assumptions of Use (AoUs)
 
-A full list of AoUs can be seen [here](broken_link_c/issue/6221478). The following presents only a
+A full list of AoUs can be seen [in the safety analysis folder](../dependability/safety_analysis/aou.trlc). The following presents only a
 small selection.
 
 ## Use of `std::terminate` in `LoLa`
