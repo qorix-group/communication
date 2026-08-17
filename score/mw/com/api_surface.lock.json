@@ -206,6 +206,18 @@
       "signature": "using WithGetter = impl::WithGetter"
     },
     {
+      "name": "WithSetter",
+      "qualified_name": "score::mw::com::WithSetter",
+      "kind": "type_alias",
+      "signature": "using WithSetter = impl::WithSetter"
+    },
+    {
+      "name": "WithNotifier",
+      "qualified_name": "score::mw::com::WithNotifier",
+      "kind": "type_alias",
+      "signature": "using WithNotifier = impl::WithNotifier"
+    },
+    {
       "name": "AsProxy",
       "qualified_name": "score::mw::com::AsProxy",
       "kind": "template_type_alias",
@@ -270,6 +282,12 @@
       "qualified_name": "score::mw::com::GenericProxy::StopFindService",
       "kind": "method",
       "signature": "static StopFindService : score::Result<void> (const FindServiceHandle)"
+    },
+    {
+      "name": "GenericProxyEvent",
+      "qualified_name": "score::mw::com::GenericProxyEvent",
+      "kind": "type_alias",
+      "signature": "using GenericProxyEvent = impl::GenericProxyEvent"
     },
     {
       "name": "GetFreeSampleCount",
@@ -718,18 +736,6 @@
       "signature": "~SampleAllocateePtr<SampleType> : void () noexcept"
     },
     {
-      "name": "WithSetter",
-      "qualified_name": "score::mw::com::WithSetter",
-      "kind": "type_alias",
-      "signature": "using WithSetter = impl::WithSetter"
-    },
-    {
-      "name": "WithNotifier",
-      "qualified_name": "score::mw::com::WithNotifier",
-      "kind": "type_alias",
-      "signature": "using WithNotifier = impl::WithNotifier"
-    },
-    {
       "name": "GenericProxy",
       "qualified_name": "score::mw::com::GenericProxy::GenericProxy",
       "kind": "constructor",
@@ -758,12 +764,6 @@
       "qualified_name": "score::mw::com::GenericProxy::~ProxyBase",
       "kind": "destructor",
       "signature": "~ProxyBase : void () noexcept"
-    },
-    {
-      "name": "GenericProxyEvent",
-      "qualified_name": "score::mw::com::GenericProxyEvent",
-      "kind": "type_alias",
-      "signature": "using GenericProxyEvent = impl::GenericProxyEvent"
     },
     {
       "name": "EnableReferenceToMoveableFromThis<T>",
