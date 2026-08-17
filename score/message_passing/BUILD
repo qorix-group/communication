@@ -20,8 +20,7 @@ test_suite(
     name = "unit_tests",
     tests = [
         ":client_connection_test",
-        # Enable once the dependable_element can deal with QNX only unit tests
-        #":qnx_dispatch_test",
+        ":qnx_dispatch_test",
         ":qnx_resource_path_test",
         ":timed_command_queue_test",
         ":unix_domain_test",
