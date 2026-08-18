@@ -17,7 +17,7 @@ load("@rules_python//sphinxdocs:sphinx_docs_library.bzl", "sphinx_docs_library")
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("@score_tooling//cr_checker:cr_checker.bzl", "copyright_checker")
 load("@score_tooling//skills_sync:sync_skills.bzl", "sync_skills")
-load("//tools/lint:linters.bzl", "use_clang_tidy_targets")
+load("//tools/lint:linters.bzl", "use_clang_tidy_targets", "use_ruff_targets")
 
 exports_files(["MODULE.bazel"])
 
@@ -78,6 +78,8 @@ format_test(
 
 use_clang_tidy_targets()
 
+use_ruff_targets()
+
 sh_binary(
     name = "clang-tidy.fix",
     srcs = [":clang-tidy.fix_script"],
@@ -87,5 +89,17 @@ sh_binary(
 sh_binary(
     name = "clang-tidy.check",
     srcs = [":clang-tidy.check_script"],
+    target_compatible_with = ["@platforms//os:linux"],
+)
+
+sh_binary(
+    name = "ruff.fix",
+    srcs = [":ruff.fix_script"],
+    target_compatible_with = ["@platforms//os:linux"],
+)
+
+sh_binary(
+    name = "ruff.check",
+    srcs = [":ruff.check_script"],
     target_compatible_with = ["@platforms//os:linux"],
 )
