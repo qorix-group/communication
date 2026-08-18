@@ -81,7 +81,9 @@ def _get_public_load_visibility_targets(repo_root):
 
             # Strip comment lines before matching to avoid false positives.
             non_comment_content = "\n".join(
-                line for line in content.splitlines() if not line.lstrip().startswith("#")
+                line
+                for line in content.splitlines()
+                if not line.lstrip().startswith("#")
             )
             visibility_match = _BZL_VISIBILITY_CALL_RE.search(non_comment_content)
             if visibility_match:

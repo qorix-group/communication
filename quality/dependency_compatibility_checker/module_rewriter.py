@@ -79,7 +79,9 @@ def _block_end(lines, start: int) -> int:
 
 def _remove_override_blocks(lines, module_name: str):
     """Remove every override block whose module_name matches (non-comment lines only)."""
-    name_re = re.compile(r"""\bmodule_name\s*=\s*['"]""" + re.escape(module_name) + r"""['"]""")
+    name_re = re.compile(
+        r"""\bmodule_name\s*=\s*['"]""" + re.escape(module_name) + r"""['"]"""
+    )
     starts_re = re.compile(r"^\s*(?:%s)\s*\(" % "|".join(_OVERRIDE_FUNCS))
     i = 0
     out = []
@@ -87,7 +89,7 @@ def _remove_override_blocks(lines, module_name: str):
         line = lines[i]
         if not _is_comment(line) and starts_re.match(line):
             end = _block_end(lines, i)
-            body = [ln for ln in lines[i:end + 1] if not _is_comment(ln)]
+            body = [ln for ln in lines[i : end + 1] if not _is_comment(ln)]
             if any(name_re.search(ln) for ln in body):
                 i = end + 1
                 # drop a single trailing blank line left by the removal

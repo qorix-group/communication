@@ -16,5 +16,7 @@ from test_fixture import consumer_and_provider, FieldScenario
 
 def test_field_set_and_notifier_same_process(target):
     """Test set-and-notifier field flow when consumer and provider run in the same process."""
-    with consumer_and_provider(target, FieldScenario.SET_AND_NOTIFIER, "mw_com_config.json"):
+    with consumer_and_provider(
+        target, FieldScenario.SET_AND_NOTIFIER, "mw_com_config.json"
+    ):
         pass

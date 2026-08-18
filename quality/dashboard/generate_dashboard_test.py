@@ -120,11 +120,15 @@ class GenerateDashboardTest(unittest.TestCase):
                                         "rules": [
                                             {
                                                 "id": "cpp/misra/no-c-style-or-functional-casts",
-                                                "defaultConfiguration": {"level": "error"},
+                                                "defaultConfiguration": {
+                                                    "level": "error"
+                                                },
                                             },
                                             {
                                                 "id": "cpp/misra/empty-loop-body",
-                                                "defaultConfiguration": {"level": "warning"},
+                                                "defaultConfiguration": {
+                                                    "level": "warning"
+                                                },
                                             },
                                         ],
                                     },
@@ -132,12 +136,17 @@ class GenerateDashboardTest(unittest.TestCase):
                                 "results": [
                                     {
                                         "ruleIndex": 0,
-                                        "rule": {"id": "cpp/misra/no-c-style-or-functional-casts", "index": 0},
+                                        "rule": {
+                                            "id": "cpp/misra/no-c-style-or-functional-casts",
+                                            "index": 0,
+                                        },
                                         "message": {"text": "avoid C-style casts"},
                                         "locations": [
                                             {
                                                 "physicalLocation": {
-                                                    "artifactLocation": {"uri": "score/example/src/main.cc"},
+                                                    "artifactLocation": {
+                                                        "uri": "score/example/src/main.cc"
+                                                    },
                                                     "region": {"startLine": 42},
                                                 },
                                             },
@@ -145,12 +154,17 @@ class GenerateDashboardTest(unittest.TestCase):
                                     },
                                     {
                                         "ruleIndex": 1,
-                                        "rule": {"id": "cpp/misra/empty-loop-body", "index": 1},
+                                        "rule": {
+                                            "id": "cpp/misra/empty-loop-body",
+                                            "index": 1,
+                                        },
                                         "message": {"text": "empty loop body"},
                                         "locations": [
                                             {
                                                 "physicalLocation": {
-                                                    "artifactLocation": {"uri": "score/example/src/main.cc"},
+                                                    "artifactLocation": {
+                                                        "uri": "score/example/src/main.cc"
+                                                    },
                                                     "region": {"startLine": 55},
                                                 },
                                             },
@@ -171,7 +185,9 @@ class GenerateDashboardTest(unittest.TestCase):
         self.assertEqual(codeql["warnings"], 1)
         self.assertEqual(codeql["recommendations"], 0)
         self.assertEqual(codeql["total"], 2)
-        self.assertEqual(codeql["findings"][0]["name"], "cpp/misra/no-c-style-or-functional-casts")
+        self.assertEqual(
+            codeql["findings"][0]["name"], "cpp/misra/no-c-style-or-functional-casts"
+        )
         self.assertEqual(codeql["findings"][0]["severity"], "error")
         self.assertEqual(codeql["findings"][1]["severity"], "warning")
 
@@ -214,24 +230,40 @@ class GenerateDashboardTest(unittest.TestCase):
                                 "results": [
                                     {
                                         "level": "warning",
-                                        "message": {"text": "use nullptr [modernize-use-nullptr]"},
+                                        "message": {
+                                            "text": "use nullptr [modernize-use-nullptr]"
+                                        },
                                         "locations": [
                                             {
                                                 "physicalLocation": {
-                                                    "artifactLocation": {"uri": "./src/demo.cc", "uriBaseId": "%SRCROOT%"},
-                                                    "region": {"startLine": 4, "startColumn": 2},
+                                                    "artifactLocation": {
+                                                        "uri": "./src/demo.cc",
+                                                        "uriBaseId": "%SRCROOT%",
+                                                    },
+                                                    "region": {
+                                                        "startLine": 4,
+                                                        "startColumn": 2,
+                                                    },
                                                 },
                                             },
                                         ],
                                     },
                                     {
                                         "level": "error",
-                                        "message": {"text": "analyzer error [clang-analyzer-core.CallAndMessage]"},
+                                        "message": {
+                                            "text": "analyzer error [clang-analyzer-core.CallAndMessage]"
+                                        },
                                         "locations": [
                                             {
                                                 "physicalLocation": {
-                                                    "artifactLocation": {"uri": "./src/demo.cc", "uriBaseId": "%SRCROOT%"},
-                                                    "region": {"startLine": 11, "startColumn": 6},
+                                                    "artifactLocation": {
+                                                        "uri": "./src/demo.cc",
+                                                        "uriBaseId": "%SRCROOT%",
+                                                    },
+                                                    "region": {
+                                                        "startLine": 11,
+                                                        "startColumn": 6,
+                                                    },
                                                 },
                                             },
                                         ],
@@ -341,7 +373,9 @@ class GenerateDashboardTest(unittest.TestCase):
                                         "rules": [
                                             {
                                                 "id": "cpp/misra/rule",
-                                                "defaultConfiguration": {"level": "warning"},
+                                                "defaultConfiguration": {
+                                                    "level": "warning"
+                                                },
                                             },
                                         ],
                                     },
@@ -354,7 +388,9 @@ class GenerateDashboardTest(unittest.TestCase):
                                         "locations": [
                                             {
                                                 "physicalLocation": {
-                                                    "artifactLocation": {"uri": "src/demo.cc"},
+                                                    "artifactLocation": {
+                                                        "uri": "src/demo.cc"
+                                                    },
                                                     "region": {"startLine": 9},
                                                 },
                                             },
@@ -415,6 +451,3 @@ class GenerateDashboardTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
-
-

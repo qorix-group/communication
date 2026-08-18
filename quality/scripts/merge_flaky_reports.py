@@ -124,7 +124,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     output_md = Path(args.output_md)
     output_json.parent.mkdir(parents=True, exist_ok=True)
     output_md.parent.mkdir(parents=True, exist_ok=True)
-    output_json.write_text(json.dumps(merged, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    output_json.write_text(
+        json.dumps(merged, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     output_md.write_text(
         _build_markdown(summaries, flaky_targets, total_failed),
         encoding="utf-8",

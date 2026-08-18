@@ -42,7 +42,11 @@ class CollectFlakyTest(unittest.TestCase):
                     json.dumps(
                         {
                             "id": {"testSummary": {"label": "//pkg:flaky_low"}},
-                            "testSummary": {"overallStatus": "FLAKY", "failed": [{}] * 5, "passed": [{}] * 995},
+                            "testSummary": {
+                                "overallStatus": "FLAKY",
+                                "failed": [{}] * 5,
+                                "passed": [{}] * 995,
+                            },
                         }
                     )
                     + "\n"
@@ -51,7 +55,11 @@ class CollectFlakyTest(unittest.TestCase):
                     json.dumps(
                         {
                             "id": {"testSummary": {"label": "//pkg:flaky_high"}},
-                            "testSummary": {"overallStatus": "FLAKY", "failed": [{}] * 11, "passed": [{}] * 989},
+                            "testSummary": {
+                                "overallStatus": "FLAKY",
+                                "failed": [{}] * 11,
+                                "passed": [{}] * 989,
+                            },
                         }
                     )
                     + "\n"
@@ -60,7 +68,11 @@ class CollectFlakyTest(unittest.TestCase):
                     json.dumps(
                         {
                             "id": {"testSummary": {"label": "//pkg:failed"}},
-                            "testSummary": {"overallStatus": "FAILED", "failed": [{}], "passed": []},
+                            "testSummary": {
+                                "overallStatus": "FAILED",
+                                "failed": [{}],
+                                "passed": [],
+                            },
                         }
                     )
                     + "\n"
@@ -88,12 +100,16 @@ class CollectFlakyTest(unittest.TestCase):
             )
             self.assertEqual(exit_code, 0)
 
-            with open(os.path.join(out_dir, "summary.json"), encoding="utf-8") as stream:
+            with open(
+                os.path.join(out_dir, "summary.json"), encoding="utf-8"
+            ) as stream:
                 summary = json.load(stream)
             self.assertEqual(summary["flaky_count"], 2)
             self.assertEqual(summary["failed_count"], 1)
             self.assertEqual(summary["passed_count"], 1)
-            self.assertEqual(summary["flaky_tests"], ["//pkg:flaky_high", "//pkg:flaky_low"])
+            self.assertEqual(
+                summary["flaky_tests"], ["//pkg:flaky_high", "//pkg:flaky_low"]
+            )
             self.assertEqual(summary["failed_tests"], ["//pkg:failed"])
             self.assertNotIn("accepted_flaky_tests", summary)
             self.assertNotIn("non_acceptable_flaky_count", summary)
@@ -115,13 +131,20 @@ class MergeFlakyTest(unittest.TestCase):
             out_md = os.path.join(tmp, "merged", "summary.md")
             gh_out = os.path.join(tmp, "gh.out")
 
-            with open(os.path.join(reports_root, "a", "summary.json"), "w", encoding="utf-8") as stream:
+            with open(
+                os.path.join(reports_root, "a", "summary.json"), "w", encoding="utf-8"
+            ) as stream:
                 json.dump(
                     {
                         "config_name": "tsan",
                         "flaky_count": 1,
                         "flaky_test_details": [
-                            {"target": "//pkg:shared", "failed_runs": 7, "total_runs": 300, "failures_per_thousand": 23.3}
+                            {
+                                "target": "//pkg:shared",
+                                "failed_runs": 7,
+                                "total_runs": 300,
+                                "failures_per_thousand": 23.3,
+                            }
                         ],
                         "failed_count": 0,
                         "passed_count": 10,
@@ -129,13 +152,20 @@ class MergeFlakyTest(unittest.TestCase):
                     },
                     stream,
                 )
-            with open(os.path.join(reports_root, "b", "summary.json"), "w", encoding="utf-8") as stream:
+            with open(
+                os.path.join(reports_root, "b", "summary.json"), "w", encoding="utf-8"
+            ) as stream:
                 json.dump(
                     {
                         "config_name": "asan",
                         "flaky_count": 1,
                         "flaky_test_details": [
-                            {"target": "//pkg:shared", "failed_runs": 5, "total_runs": 300, "failures_per_thousand": 16.6}
+                            {
+                                "target": "//pkg:shared",
+                                "failed_runs": 5,
+                                "total_runs": 300,
+                                "failures_per_thousand": 16.6,
+                            }
                         ],
                         "failed_count": 2,
                         "passed_count": 5,
@@ -226,18 +256,27 @@ class FakeGitHubClient:
 def _summary(target, failed, total, configs):
     return {
         "flaky_targets": [
-            {"target": target, "failed_runs": failed, "total_runs": total, "configs": configs}
+            {
+                "target": target,
+                "failed_runs": failed,
+                "total_runs": total,
+                "configs": configs,
+            }
         ]
     }
 
 
 class SyncFlakyIssuesTest(unittest.TestCase):
     def _ctx(self, run_id="100"):
-        return RunContext(run_id=run_id, run_url=f"https://ci/{run_id}", date="2026-07-27")
+        return RunContext(
+            run_id=run_id, run_url=f"https://ci/{run_id}", date="2026-07-27"
+        )
 
     def test_new_target_creates_issue_with_single_comment(self):
         client = FakeGitHubClient()
-        summary = _summary("//pkg:a", 7, 300, {"tsan": {"failed_runs": 7, "total_runs": 300}})
+        summary = _summary(
+            "//pkg:a", 7, 300, {"tsan": {"failed_runs": 7, "total_runs": 300}}
+        )
         actions = sync(summary, client, self._ctx())
 
         self.assertEqual(actions[0]["action"], "created")
@@ -289,7 +328,9 @@ class SyncFlakyIssuesTest(unittest.TestCase):
         cfg = {"tsan": {"failed_runs": 7, "total_runs": 300}}
         sync(_summary("//pkg:a", 7, 300, cfg), client, self._ctx("100"))
         # A human corrupts the managed region but keeps the identity marker.
-        client.issues[1].body = "<!-- flaky-test-target: //pkg:a -->\nhuman notes, block deleted"
+        client.issues[
+            1
+        ].body = "<!-- flaky-test-target: //pkg:a -->\nhuman notes, block deleted"
 
         sync(_summary("//pkg:a", 4, 300, cfg), client, self._ctx("101"))
 
@@ -300,7 +341,9 @@ class SyncFlakyIssuesTest(unittest.TestCase):
 
 class SyncPureFunctionsTest(unittest.TestCase):
     def test_parse_run_records_ignores_malformed(self):
-        good = RunRecord("1", "2026-07-27", 3, 300, {"tsan": {"failed_runs": 3, "total_runs": 300}}).to_marker()
+        good = RunRecord(
+            "1", "2026-07-27", 3, 300, {"tsan": {"failed_runs": 3, "total_runs": 300}}
+        ).to_marker()
         bodies = [good, "just a human comment", "<!-- flaky-run: {not json} -->"]
         records = parse_run_records(bodies)
         self.assertEqual(len(records), 1)
@@ -308,8 +351,20 @@ class SyncPureFunctionsTest(unittest.TestCase):
 
     def test_aggregate_sums_across_configs(self):
         records = [
-            RunRecord("1", "2026-07-20", 3, 300, {"tsan": {"failed_runs": 3, "total_runs": 300}}),
-            RunRecord("2", "2026-07-27", 5, 300, {"asan": {"failed_runs": 5, "total_runs": 300}}),
+            RunRecord(
+                "1",
+                "2026-07-20",
+                3,
+                300,
+                {"tsan": {"failed_runs": 3, "total_runs": 300}},
+            ),
+            RunRecord(
+                "2",
+                "2026-07-27",
+                5,
+                300,
+                {"asan": {"failed_runs": 5, "total_runs": 300}},
+            ),
         ]
         stats = aggregate("//pkg:a", records)
         self.assertEqual(stats.cumulative_failed_runs, 8)
@@ -325,7 +380,10 @@ class SyncPureFunctionsTest(unittest.TestCase):
         # New stats after a second run.
         stats2 = aggregate(
             "//pkg:a",
-            [RunRecord("1", "2026-07-27", 1, 10, {}), RunRecord("2", "2026-07-28", 2, 10, {})],
+            [
+                RunRecord("1", "2026-07-27", 1, 10, {}),
+                RunRecord("2", "2026-07-28", 2, 10, {}),
+            ],
         )
         merged = merge_body(existing, render_body(stats2))
         self.assertIn("Human triage notes.", merged)

@@ -16,7 +16,9 @@
 
 def inotify(target, **kwargs):
     args = []
-    return target.wrap_exec("bin/inotify_test", args, cwd="/opt/InotifyTestApp", wait_on_exit=True, **kwargs)
+    return target.wrap_exec(
+        "bin/inotify_test", args, cwd="/opt/InotifyTestApp", wait_on_exit=True, **kwargs
+    )
 
 
 def test_inotify(target):

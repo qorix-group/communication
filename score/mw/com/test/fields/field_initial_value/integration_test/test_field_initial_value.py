@@ -14,7 +14,9 @@
 
 def client(target, **kwargs):
     args = ["--num-retries", "20", "--backoff-time", "50"]
-    return target.wrap_exec("bin/client", args, cwd="/opt/ClientApp", wait_on_exit=True, **kwargs)
+    return target.wrap_exec(
+        "bin/client", args, cwd="/opt/ClientApp", wait_on_exit=True, **kwargs
+    )
 
 
 def service(target, **kwargs):

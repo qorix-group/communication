@@ -18,6 +18,7 @@ import difflib
 
 from quality.visibility_guard.parser import get_all_public_targets
 
+
 def find_repo_root():
     """Find the repository root directory."""
     # BUILD_WORKSPACE_DIRECTORY is set by `bazel run`

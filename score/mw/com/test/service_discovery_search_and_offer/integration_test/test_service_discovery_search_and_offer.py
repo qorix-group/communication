@@ -16,7 +16,9 @@
 
 def client(target, **kwargs):
     args = []
-    return target.wrap_exec("bin/client", args, cwd="/opt/ClientApp", wait_on_exit=True, **kwargs)
+    return target.wrap_exec(
+        "bin/client", args, cwd="/opt/ClientApp", wait_on_exit=True, **kwargs
+    )
 
 
 def service(target, **kwargs):

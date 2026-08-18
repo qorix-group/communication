@@ -17,5 +17,7 @@ from test_fixture import consumer, provider, FieldScenario
 def test_field_set_get_and_notifier_value(target):
     """Test field set, get and notifier exchange between provider and consumer."""
     with provider(target, FieldScenario.SET_AND_GET_AND_NOTIFIER, "mw_com_config.json"):
-        with consumer(target, FieldScenario.SET_AND_GET_AND_NOTIFIER, "mw_com_config.json"):
+        with consumer(
+            target, FieldScenario.SET_AND_GET_AND_NOTIFIER, "mw_com_config.json"
+        ):
             pass

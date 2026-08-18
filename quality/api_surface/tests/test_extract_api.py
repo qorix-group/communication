@@ -109,28 +109,37 @@ def run_extract_api(headers: list[str], target_files: list[str]) -> dict:
     try:
         cmd = [
             clang,
-            "-Xclang", "-ast-dump=json",
+            "-Xclang",
+            "-ast-dump=json",
             "-fsyntax-only",
-            "-x", "c++",
+            "-x",
+            "c++",
             "-std=c++17",
             "-fparse-all-comments",
             "-w",
-            "-I", workspace_root,
+            "-I",
+            workspace_root,
             combined_path,
         ]
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
         if not result.stdout:
-            raise RuntimeError(f"clang produced no output. stderr: {result.stderr[:500]}")
+            raise RuntimeError(
+                f"clang produced no output. stderr: {result.stderr[:500]}"
+            )
         ast = json.loads(result.stdout)
     finally:
         os.unlink(combined_path)
 
     # Run extraction
     cmd = [
-        sys.executable, extract_script,
-        "--ast-json", "/dev/stdin",
-        "--target-headers", ",".join(target_files),
-        "--target-label", "//test:target",
+        sys.executable,
+        extract_script,
+        "--ast-json",
+        "/dev/stdin",
+        "--target-headers",
+        ",".join(target_files),
+        "--target-label",
+        "//test:target",
     ]
     result = subprocess.run(
         cmd, input=json.dumps(ast), capture_output=True, text=True, timeout=30
@@ -462,7 +471,9 @@ class TestLockFileFormat(unittest.TestCase):
 
     def test_no_file_metadata(self):
         """Symbols do NOT have file/line/doc metadata."""
-        for sym in self.result.get("symbols", []) + self.result.get("undocumented_symbols", []):
+        for sym in self.result.get("symbols", []) + self.result.get(
+            "undocumented_symbols", []
+        ):
             self.assertNotIn("file", sym)
             self.assertNotIn("line", sym)
             self.assertNotIn("has_api_marker", sym)
@@ -486,16 +497,21 @@ class TestCliModes(unittest.TestCase):
         test_dir = os.path.dirname(os.path.abspath(__file__))
         extract_script = os.path.join(os.path.dirname(test_dir), "extract_api.py")
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".h", delete=False, prefix="test_api_") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".h", delete=False, prefix="test_api_"
+        ) as f:
             f.write("// header for CLI mode test\n")
             header_path = f.name
 
         try:
             result = subprocess.run(
                 [
-                    sys.executable, extract_script,
-                    "--clang", "/definitely/not/a/clang/binary",
-                    "--headers", header_path,
+                    sys.executable,
+                    extract_script,
+                    "--clang",
+                    "/definitely/not/a/clang/binary",
+                    "--headers",
+                    header_path,
                 ],
                 capture_output=True,
                 text=True,
@@ -507,7 +523,6 @@ class TestCliModes(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertIn("unrecognized arguments", result.stderr)
         self.assertIn("--clang", result.stderr)
-
 
 
 class TestMultiInheritance(unittest.TestCase):
@@ -552,12 +567,19 @@ class TestRefQualifiers(unittest.TestCase):
         self.assertIn("test::Buffer", qualified_names(self.symbols))
 
     def test_both_data_overloads_present(self):
-        sigs = [s["signature"] for s in self.symbols
-                if s["qualified_name"] == "test::Buffer::data"]
+        sigs = [
+            s["signature"]
+            for s in self.symbols
+            if s["qualified_name"] == "test::Buffer::data"
+        ]
         self.assertEqual(len(sigs), 2)
         self.assertTrue(any(sig.rstrip().endswith("&&") for sig in sigs))
-        self.assertTrue(any(sig.rstrip().endswith("&") and not sig.rstrip().endswith("&&")
-                            for sig in sigs))
+        self.assertTrue(
+            any(
+                sig.rstrip().endswith("&") and not sig.rstrip().endswith("&&")
+                for sig in sigs
+            )
+        )
 
     def test_const_lvalue_qualifier(self):
         sym = find_symbol(self.symbols, "test::Buffer::size")

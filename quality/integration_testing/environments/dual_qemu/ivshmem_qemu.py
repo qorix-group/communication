@@ -15,6 +15,7 @@
 Subclasses the upstream :class:`Qemu` and overrides :meth:`_extra_qemu_args` to inject
 the ivshmem, inter-VM NIC, and per-VM MAC arguments.
 """
+
 import logging
 
 from score.itf.plugins.qemu.qemu import Qemu
@@ -58,7 +59,11 @@ class IvshmemQemu(Qemu):
 
     def _extra_qemu_args(self):
         """Inject ivshmem, per-VM-MAC port forwarding, and inter-VM NIC arguments."""
-        return self._ivshmem_args() + self._port_forwarding_with_mac_args() + self._intervm_args()
+        return (
+            self._ivshmem_args()
+            + self._port_forwarding_with_mac_args()
+            + self._intervm_args()
+        )
 
     def _ivshmem_args(self):
         if not self._ivshmem_path:

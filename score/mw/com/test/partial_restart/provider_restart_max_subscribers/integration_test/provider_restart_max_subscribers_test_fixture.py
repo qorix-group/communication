@@ -12,7 +12,9 @@
 # *******************************************************************************
 
 
-def provider_restart_max_subscribers(target, is_proxy_connected_during_restart, **kwargs):
+def provider_restart_max_subscribers(
+    target, is_proxy_connected_during_restart, **kwargs
+):
     args = [
         "--is-proxy-connected-during-restart",
         f"{is_proxy_connected_during_restart}",

@@ -246,7 +246,9 @@ def scan_file_for_markers(
 
 def collect_source_files(source_root: Path, file_filter: str) -> List[Path]:
     """Collect source files to scan for markers."""
-    extensions = file_filter.split(",") if file_filter else ["cpp", "h", "hpp", "cc", "rs"]
+    extensions = (
+        file_filter.split(",") if file_filter else ["cpp", "h", "hpp", "cc", "rs"]
+    )
     files = []
     for ext in extensions:
         for path in source_root.rglob(f"*.{ext.strip()}"):
@@ -283,7 +285,9 @@ def validate_yaml(data: Dict[str, Any]) -> None:
         if "version" not in data:
             errors.append("Missing 'version' field")
         elif not isinstance(data["version"], int):
-            errors.append(f"'version' must be an integer, got {type(data['version']).__name__}")
+            errors.append(
+                f"'version' must be an integer, got {type(data['version']).__name__}"
+            )
 
         if "justifications" not in data:
             errors.append("Missing 'justifications' field")
@@ -304,7 +308,9 @@ def validate_yaml(data: Dict[str, Any]) -> None:
             prefix = f"justifications[{i}]"
 
             if not isinstance(entry, dict):
-                errors.append(f"{prefix}: must be a mapping, got {type(entry).__name__}")
+                errors.append(
+                    f"{prefix}: must be a mapping, got {type(entry).__name__}"
+                )
                 continue
 
             if "id" not in entry:
@@ -313,7 +319,9 @@ def validate_yaml(data: Dict[str, Any]) -> None:
 
             jid = entry["id"]
             if not isinstance(jid, str):
-                errors.append(f"{prefix}: 'id' must be a string, got {type(jid).__name__}")
+                errors.append(
+                    f"{prefix}: 'id' must be a string, got {type(jid).__name__}"
+                )
                 continue
 
             if jid in seen_ids:
@@ -418,9 +426,7 @@ def validate_yaml(data: Dict[str, Any]) -> None:
 
 def parse_args() -> argparse.Namespace:
     """Parse command-line arguments."""
-    parser = argparse.ArgumentParser(
-        description="Coverage justification processor"
-    )
+    parser = argparse.ArgumentParser(description="Coverage justification processor")
     parser.add_argument(
         "--yaml",
         type=Path,

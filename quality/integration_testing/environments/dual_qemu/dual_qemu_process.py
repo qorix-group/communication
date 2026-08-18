@@ -18,6 +18,7 @@ Subclasses ``QemuProcess`` and replaces its internal ``_qemu`` with an
 The ``start()`` method is self-healing: it waits for stable SSH, runs ``pre_tests_phase``,
 and restarts the QEMU process up to ``max_boot_attempts`` times if sshd never comes up.
 """
+
 import logging
 import time
 
@@ -30,7 +31,9 @@ from .ivshmem_qemu import IvshmemQemu
 logger = logging.getLogger(__name__)
 
 
-def _wait_for_ssh(target, total_timeout: int = 180, interval: int = 3, stable_successes: int = 3):
+def _wait_for_ssh(
+    target, total_timeout: int = 180, interval: int = 3, stable_successes: int = 3
+):
     """Wait until the VM *stably* serves SSH.
 
     Early-boot sshd is briefly unstable, so require several consecutive successes to
@@ -53,7 +56,9 @@ def _wait_for_ssh(target, total_timeout: int = 180, interval: int = 3, stable_su
             last_error = ex
             consecutive = 0
         time.sleep(interval)
-    raise TimeoutError(f"VM never became stably reachable via SSH within {total_timeout}s: {last_error}")
+    raise TimeoutError(
+        f"VM never became stably reachable via SSH within {total_timeout}s: {last_error}"
+    )
 
 
 class DualQemuProcess(QemuProcess):
@@ -80,7 +85,12 @@ class DualQemuProcess(QemuProcess):
         max_boot_attempts=3,
         boot_timeout=100,
     ):
-        super().__init__(path_to_qemu_image, available_ram, available_cores, port_forwarding=port_forwarding)
+        super().__init__(
+            path_to_qemu_image,
+            available_ram,
+            available_cores,
+            port_forwarding=port_forwarding,
+        )
         # Replace the base's default Qemu with our ivshmem-capable subclass.
         self._qemu = IvshmemQemu(
             path_to_qemu_image,
@@ -126,7 +136,9 @@ class DualQemuProcess(QemuProcess):
     def ensure_responsive(self, timeout: int = 30, stable_successes: int = 2):
         """Re-verify the VM is still reachable; restart in place if not."""
         try:
-            _wait_for_ssh(self._target, total_timeout=timeout, stable_successes=stable_successes)
+            _wait_for_ssh(
+                self._target, total_timeout=timeout, stable_successes=stable_successes
+            )
         except Exception as ex:  # pylint: disable=broad-except
             logger.warning("VM went unresponsive (%s); restarting", ex)
             self.restart()

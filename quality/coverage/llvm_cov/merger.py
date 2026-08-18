@@ -42,7 +42,10 @@ def main() -> None:
     # Get object files from the manifest.
     object_files = get_object_files_from_manifest(args.source_file_manifest)
     if not object_files:
-        print("INFO: No instrumented object files found, skipping coverage.", file=sys.stderr)
+        print(
+            "INFO: No instrumented object files found, skipping coverage.",
+            file=sys.stderr,
+        )
         cleanup_dangling_symlinks(args.coverage_dir)
         sys.exit(0)
 
@@ -60,11 +63,16 @@ def main() -> None:
     profdata_dir.mkdir(exist_ok=True)
     profdata_file = profdata_dir / "target.profdata"
 
-    run_command([
-        llvm_profdata, "merge",
-        "--sparse",
-        "--output", str(profdata_file),
-    ] + [str(f) for f in profraw_files])
+    run_command(
+        [
+            llvm_profdata,
+            "merge",
+            "--sparse",
+            "--output",
+            str(profdata_file),
+        ]
+        + [str(f) for f in profraw_files]
+    )
 
     # Create meta.json with object files for the reporter.
     meta_dir = args.coverage_dir / "meta"
@@ -106,7 +114,9 @@ def find_llvm_profdata() -> str:
     rust = os.environ.get("RUST_LLVM_PROFDATA")
     if rust:
         exec_root = Path(os.environ.get("ROOT", "."))
-        runfiles_dir = Path(os.environ.get("RUNFILES_DIR", "")) / os.environ.get("TEST_WORKSPACE", "_main")
+        runfiles_dir = Path(os.environ.get("RUNFILES_DIR", "")) / os.environ.get(
+            "TEST_WORKSPACE", "_main"
+        )
         for candidate in [Path(rust), exec_root / rust, runfiles_dir / rust]:
             if candidate.exists():
                 return str(candidate)
@@ -144,7 +154,9 @@ def cleanup_dangling_symlinks(directory: Path) -> None:
 
 def get_object_files_from_manifest(source_file_manifest: Path) -> Set[str]:
     """Parse the coverage manifest to find instrumented object files."""
-    runfiles_dir = Path(os.environ.get("RUNFILES_DIR", "")) / os.environ.get("TEST_WORKSPACE", "_main")
+    runfiles_dir = Path(os.environ.get("RUNFILES_DIR", "")) / os.environ.get(
+        "TEST_WORKSPACE", "_main"
+    )
     exec_root = Path(os.environ.get("ROOT"))
 
     object_files = set()
@@ -173,7 +185,11 @@ def get_object_files_from_manifest(source_file_manifest: Path) -> Set[str]:
             # files, and those are not instrumented objects.
             if manifest.startswith("external/") or "/external/" in manifest:
                 continue
-            for candidate in [runfiles_dir / manifest, exec_root / manifest, Path(manifest)]:
+            for candidate in [
+                runfiles_dir / manifest,
+                exec_root / manifest,
+                Path(manifest),
+            ]:
                 if candidate.is_file() and is_elf(candidate):
                     object_files.add(str(candidate))
                     break

@@ -12,7 +12,9 @@
 # *******************************************************************************
 
 
-def partial_restart_provider(target, number_restart_cycles, create_proxy, kill_provider, **kwargs):
+def partial_restart_provider(
+    target, number_restart_cycles, create_proxy, kill_provider, **kwargs
+):
     args = [
         "--kill",
         f"{kill_provider}",
