@@ -44,6 +44,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace score::mw::com::gateway
@@ -255,7 +256,7 @@ TEST(GatewayApplicationSetupTest, SetupWithoutInjectedTransportCallsTransportFac
 
     // When Setup() is called without a pre-injected transport
     // Then TransportFactory::Create is invoked and the process terminates
-    EXPECT_DEATH(app.Setup(), ".*");
+    EXPECT_DEATH(std::ignore = app.Setup(), ".*");
 }
 
 // ---------------------------------------------------------------------------

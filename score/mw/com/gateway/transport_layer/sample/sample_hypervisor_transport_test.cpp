@@ -23,6 +23,7 @@
 
 #include <gtest/gtest.h>
 #include <iostream>
+#include <utility>
 
 namespace score::mw::com::gateway
 {
@@ -202,7 +203,7 @@ TEST_F(SampleHyperVisorTransportTest, OfferServiceRequestWithCorrectType)
                 SendRequest(::testing::Property(&TransportMessage::GetType, MessageType::kOfferServiceRequest)))
         .WillOnce(::testing::Return(score::Result<void>{}));
     // when calling OfferService on SampleHyperVisorTransport
-    transport_->OfferService(specifier);
+    std::ignore = transport_->OfferService(specifier);
 }
 
 TEST_F(SampleHyperVisorTransportTest, StopOfferServiceRequestWithCorrectType)
@@ -216,7 +217,7 @@ TEST_F(SampleHyperVisorTransportTest, StopOfferServiceRequestWithCorrectType)
                 SendRequest(::testing::Property(&TransportMessage::GetType, MessageType::kStopOfferServiceRequest)))
         .WillOnce(::testing::Return(score::Result<void>{}));
     // when calling StopOfferService on SampleHyperVisorTransport
-    transport_->StopOfferService(specifier);
+    std::ignore = transport_->StopOfferService(specifier);
 }
 
 TEST_F(SampleHyperVisorTransportTest, NotifyUpdateWithCorrectType)
@@ -230,7 +231,7 @@ TEST_F(SampleHyperVisorTransportTest, NotifyUpdateWithCorrectType)
                 SendNotification(::testing::Property(&TransportMessage::GetType, MessageType::kUpdateNotification)))
         .WillOnce(::testing::Return(score::Result<void>{}));
     // when calling NotifyUpdate on SampleHyperVisorTransport
-    transport_->NotifyUpdate(specifier, impl::ServiceElementType::EVENT, "SpeedEvent");
+    std::ignore = transport_->NotifyUpdate(specifier, impl::ServiceElementType::EVENT, "SpeedEvent");
 }
 
 TEST_F(SampleHyperVisorTransportTest, RegisterUpdateNotificationWithCorrectType)
@@ -244,7 +245,7 @@ TEST_F(SampleHyperVisorTransportTest, RegisterUpdateNotificationWithCorrectType)
                 SendRequest(::testing::Property(&TransportMessage::GetType, MessageType::kRegisterNotificationRequest)))
         .WillOnce(::testing::Return(score::Result<void>{}));
     // when calling RegisterUpdateNotification on SampleHyperVisorTransport
-    transport_->RegisterUpdateNotification(specifier, impl::ServiceElementType::EVENT, "SpeedEvent");
+    std::ignore = transport_->RegisterUpdateNotification(specifier, impl::ServiceElementType::EVENT, "SpeedEvent");
 }
 
 TEST_F(SampleHyperVisorTransportTest, UnregisterUpdateNotificationWithCorrectType)
@@ -259,7 +260,7 @@ TEST_F(SampleHyperVisorTransportTest, UnregisterUpdateNotificationWithCorrectTyp
         SendRequest(::testing::Property(&TransportMessage::GetType, MessageType::kUnregisterNotificationRequest)))
         .WillOnce(::testing::Return(score::Result<void>{}));
     // when calling UnregisterUpdateNotification on SampleHyperVisorTransport
-    transport_->UnregisterUpdateNotification(specifier, impl::ServiceElementType::EVENT, "SpeedEvent");
+    std::ignore = transport_->UnregisterUpdateNotification(specifier, impl::ServiceElementType::EVENT, "SpeedEvent");
 }
 
 TEST_F(SampleHyperVisorTransportTest, ResolveShmPathReturnsEmptyObjectIfSpecifierCanNotBeResolved)
@@ -622,7 +623,8 @@ TEST_F(SampleHyperVisorTransportTest, ProvideServiceDeathTest)
     // When calling ProvideService with a valid instance specifier, then it is expected to terminate.
     // TODO This test needs to be adapted when implementing ResolveShmPaths() and GetShmSizes() based on the actual
     // HyperVisor SHM technology.
-    EXPECT_DEATH(transport_->ProvideService(CreateValidInstanceSpecifier(), std::vector<impl::EventInfo>{}), ".*");
+    EXPECT_DEATH(
+        std::ignore = transport_->ProvideService(CreateValidInstanceSpecifier(), std::vector<impl::EventInfo>{}), ".*");
 }
 
 }  // namespace
