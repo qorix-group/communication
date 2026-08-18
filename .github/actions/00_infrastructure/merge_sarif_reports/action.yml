@@ -108,6 +108,9 @@ runs:
         # `xargs jq -s ...`, which split into multiple invocations once the
         # report list exceeded xargs' default ~128KiB argument limit, each
         # appending a separate SARIF document to the same output file).
+        # `Sarif.Multitool` expands this glob itself (via .NET's
+        # Directory.EnumerateFiles filter matching), so it must stay quoted
+        # here to survive as one argv entry.
         i=0
         while IFS= read -r f; do
           i=$((i + 1))
@@ -120,8 +123,18 @@ runs:
         # (deduplicating identical results), which is required since GitHub
         # Code Scanning (as of 2025-07-22) rejects SARIF uploads containing
         # multiple runs that share the same tool/category.
+        #
+        # `--merge-empty-logs` is required: by default, `merge` silently
+        # *drops* any run whose `results` array is empty (i.e. a genuinely
+        # clean lint pass for that file) instead of including it with zero
+        # results. When every input report happens to be clean, that
+        # default produces a `{"runs": []}` document with *no* runs at all,
+        # which GitHub's SARIF upload API then rejects outright with
+        # "Invalid request. 1 item required; only 0 were supplied." rather
+        # than accepting it as "zero findings".
         npx --yes "@microsoft/sarif-multitool@${{ inputs.sarif-multitool-version }}" \
           merge "${STAGE_DIR}/*" \
+          --merge-empty-logs \
           --output-directory "$(dirname "${{ inputs.output-file }}")" \
           --output-file "$(basename "${{ inputs.output-file }}")"
 
