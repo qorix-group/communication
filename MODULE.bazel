@@ -52,6 +52,21 @@ download_archive(
 
 bazel_dep(name = "score_tooling", version = "2.0.1")
 
+# TEMPORARY: score_tooling 2.0.1's DEFAULT_EXCLUDE_PATTERNS ("**/*_design")
+# silently drops this repo's architectural_design docs (Message Passing and
+# mw::com architecture pages) from the Sphinx build; a second, previously
+# masked bug then breaks the same-directory `.. uml::` diagram reference once
+# that exclusion is lifted. Both are fixed upstream in
+# https://github.com/eclipse-score/tooling/pull/428, merged to main as
+# commit 8eb4166. Pin to that commit until it is included in a released
+# score_tooling version, then remove this override and restore the plain
+# bazel_dep pin above.
+git_override(
+    module_name = "score_tooling",
+    commit = "8eb41667929f75748ade3c3f9186186ea22a06a0",
+    remote = "https://github.com/eclipse-score/tooling.git",
+)
+
 # Dependencies required for development that will not get propagated to our users as transitive dependencies
 bazel_dep(name = "gcc_toolchain", version = "0.10.0", dev_dependency = True)
 
