@@ -218,8 +218,8 @@ def _load_linter_text(path: pathlib.Path) -> dict | None:
     if not path or not path.is_file():
         return None
     text = path.read_text(encoding="utf-8", errors="replace")
-    errors   = len([l for l in text.splitlines() if "error:"   in l])
-    warnings = len([l for l in text.splitlines() if "warning:" in l])
+    errors   = len([line for line in text.splitlines() if "error:"   in line])
+    warnings = len([line for line in text.splitlines() if "warning:" in line])
     return {"errors": errors, "warnings": warnings, "notes": 0, "total": errors + warnings}
 
 
