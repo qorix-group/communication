@@ -42,6 +42,7 @@ extensions = [
     "sphinx_design",
     "myst_parser",
     "sphinxcontrib.plantuml",
+    "clickable_plantuml",
     "breathe",
     "trlc",
 ]
