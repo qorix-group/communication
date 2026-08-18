@@ -81,7 +81,7 @@ def get_clang_binary():
         if candidate and os.path.isfile(candidate):
             return candidate
         # Try to find in PATH
-        if candidate and not os.path.sep in candidate:
+        if candidate and os.path.sep not in candidate:
             found = shutil.which(candidate)
             if found:
                 return found
