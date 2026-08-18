@@ -14,9 +14,7 @@
 """Integration test for data_slots_read_only."""
 
 
-def data_slots_read_only(
-    target, mode, should_modify_data_segment, cycle_time=None, num_cycles=None, **kwargs
-):
+def data_slots_read_only(target, mode, should_modify_data_segment, cycle_time=None, num_cycles=None, **kwargs):
     args = [
         "--mode",
         mode,

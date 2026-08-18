@@ -16,9 +16,7 @@ import pytest
 logger = logging.getLogger(__name__)
 
 
-def run_interaction_app(
-    target, app_bin, mode, config_path, cwd, wait_on_exit=False, **kwargs
-):
+def run_interaction_app(target, app_bin, mode, config_path, cwd, wait_on_exit=False, **kwargs):
     """Helper to run an application using the framework's native wrap_exec method."""
     args = ["--mode", mode, "--service_instance_manifest", config_path]
     return target.wrap_exec(app_bin, args, cwd=cwd, wait_on_exit=wait_on_exit, **kwargs)

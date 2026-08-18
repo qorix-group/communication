@@ -16,10 +16,14 @@
 
 def inotify_stress_test(target, **kwargs):
     args = [
-        "--num-processes", "10",
-        "--cycles", "300",
-        "--base-uid", "2000",
-        "--base-gid", "2000",
+        "--num-processes",
+        "10",
+        "--cycles",
+        "300",
+        "--base-uid",
+        "2000",
+        "--base-gid",
+        "2000",
     ]
     return target.wrap_exec(
         "bin/inotify_stress_test",

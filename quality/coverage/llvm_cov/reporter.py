@@ -71,17 +71,13 @@ def main() -> None:
     )
 
     # Load baseline objects (production library archives) for zero-coverage baseline.
-    baseline_objects = load_baseline_objects(
-        r, args.baseline_objects, args.workspace_root
-    )
+    baseline_objects = load_baseline_objects(r, args.baseline_objects, args.workspace_root)
 
     # Rust rlib archives (exposed as .a symlinks by rules_rust) start with a
     # lib.rmeta member, which makes llvm-cov reject the whole archive with
     # "no coverage data found" even though the .o members carry the covmap.
     # Expand such archives into their object members.
-    baseline_objects = expand_rlib_archives(
-        baseline_objects, Path.cwd() / "rlib_baseline_objects"
-    )
+    baseline_objects = expand_rlib_archives(baseline_objects, Path.cwd() / "rlib_baseline_objects")
 
     # Determine filter regexes: prefer allowlist-based filtering, fall back to manual regexes.
     workspace_root = args.workspace_root
@@ -100,9 +96,7 @@ def main() -> None:
             allowlist_set = set(allowlist_files)
 
             # Get files covered by test binaries.
-            test_covered_files = get_covered_files(
-                llvm_bin_path, sorted_objects, str(merged_profdata), workspace_root
-            )
+            test_covered_files = get_covered_files(llvm_bin_path, sorted_objects, str(merged_profdata), workspace_root)
             print(
                 f"INFO: Test binaries cover {len(test_covered_files)} files.",
                 file=sys.stderr,
@@ -115,9 +109,7 @@ def main() -> None:
             # data"), so we iteratively remove bad ones.
             baseline_files = set()
             if baseline_objects:
-                baseline_files = get_covered_files(
-                    llvm_bin_path, baseline_objects, None, workspace_root
-                )
+                baseline_files = get_covered_files(llvm_bin_path, baseline_objects, None, workspace_root)
                 print(
                     f"INFO: Baseline archives contain {len(baseline_files)} files.",
                     file=sys.stderr,
@@ -175,8 +167,7 @@ def main() -> None:
         except SystemExit:
             # Some baseline archives caused llvm-cov show to fail; retry with test binaries only.
             print(
-                "WARNING: HTML generation with baseline archives failed; "
-                "falling back to test-only HTML.",
+                "WARNING: HTML generation with baseline archives failed; falling back to test-only HTML.",
                 file=sys.stderr,
             )
             run_llvm_cov_show(
@@ -466,9 +457,7 @@ def extract_reports(reports: List[str]) -> Tuple[Set[str], Set[str]]:
                         valid_object_files.add(os.path.realpath(obj))
 
         except (zipfile.BadZipFile, KeyError, json.JSONDecodeError) as e:
-            print(
-                f"WARNING: Skipping invalid report {report_path}: {e}", file=sys.stderr
-            )
+            print(f"WARNING: Skipping invalid report {report_path}: {e}", file=sys.stderr)
             continue
 
     return valid_profdata_files, valid_object_files
@@ -583,11 +572,7 @@ def load_coverage_allowlist(runfiles: Runfiles, rlocation_path: str) -> List[str
         return []
 
     lines = Path(path).read_text(encoding="utf-8").splitlines()
-    return [
-        line.strip()
-        for line in lines
-        if line.strip() and not line.strip().startswith("#")
-    ]
+    return [line.strip() for line in lines if line.strip() and not line.strip().startswith("#")]
 
 
 def load_baseline_objects(
@@ -645,9 +630,7 @@ def run_command(cmd: List[str]) -> subprocess.CompletedProcess:
         )
     except subprocess.CalledProcessError as e:
         print(f"ERROR: Command failed with code {e.returncode}:", file=sys.stderr)
-        print(
-            f"  {' '.join(cmd[:10])}{'...' if len(cmd) > 10 else ''}", file=sys.stderr
-        )
+        print(f"  {' '.join(cmd[:10])}{'...' if len(cmd) > 10 else ''}", file=sys.stderr)
         if e.stdout:
             print(e.stdout, file=sys.stderr)
         sys.exit(1)

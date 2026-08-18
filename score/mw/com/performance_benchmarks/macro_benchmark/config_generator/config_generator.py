@@ -75,14 +75,10 @@ def create_client_benchmark_config(joined_config_json: dict, max_samples: int):
 
     client_config: dict = joined_config_json["client_config"]
     client_benchmark_config = dict()
-    client_benchmark_config["number_of_clients"] = joined_config_json["common"][
-        "number_of_clients"
-    ]
+    client_benchmark_config["number_of_clients"] = joined_config_json["common"]["number_of_clients"]
     client_benchmark_config["read_cycle_time_ms"] = client_config["read_cycle_time_ms"]
     client_benchmark_config["max_num_samples"] = max_samples
-    client_benchmark_config["service_finder_mode"] = client_config[
-        "service_finder_mode"
-    ]
+    client_benchmark_config["service_finder_mode"] = client_config["service_finder_mode"]
 
     run_time_limit = client_config.get("run_time_limit")
     if run_time_limit is not None:
@@ -120,18 +116,12 @@ def create_service_benchmark_config(joined_config_json: dict):
                 service benchmark config in form of a dict suitable to generate the expected json file from.
     """
     service_benchmark_config = dict()
-    service_benchmark_config["number_of_clients"] = joined_config_json["common"][
-        "number_of_clients"
-    ]
-    service_benchmark_config["send_cycle_time_ms"] = joined_config_json[
-        "service_config"
-    ]["send_cycle_time_ms"]
+    service_benchmark_config["number_of_clients"] = joined_config_json["common"]["number_of_clients"]
+    service_benchmark_config["send_cycle_time_ms"] = joined_config_json["service_config"]["send_cycle_time_ms"]
     return service_benchmark_config
 
 
-def create_service_mw_com_config(
-    base_mw_com_config_json: dict, asil_level: str, number_of_sample_slots: int
-):
+def create_service_mw_com_config(base_mw_com_config_json: dict, asil_level: str, number_of_sample_slots: int):
     """
     Creates service benchmark app specific mw_com configuration out of the base mw_com_configuration.json
     and the given asil_level and number_of_sample_slots
@@ -148,9 +138,7 @@ def create_service_mw_com_config(
     result = dict(base_mw_com_config_json)
     result["global"]["asil-level"] = asil_level
     result["serviceInstances"][0]["instances"][0]["asil-level"] = asil_level
-    result["serviceInstances"][0]["instances"][0]["events"][0][
-        "numberOfSampleSlots"
-    ] = number_of_sample_slots
+    result["serviceInstances"][0]["instances"][0]["events"][0]["numberOfSampleSlots"] = number_of_sample_slots
     return result
 
 
@@ -167,9 +155,7 @@ def main():
 
     numberOfSampleSlots, maxSamples = calculate_slot_numbers(joined_config_json)
 
-    client_config_benchmark_json = create_client_benchmark_config(
-        joined_config_json, maxSamples
-    )
+    client_config_benchmark_json = create_client_benchmark_config(joined_config_json, maxSamples)
     save_json(f"{out_dir}/client_benchmark_config.json", client_config_benchmark_json)
     client_mw_com_config_json = create_client_mw_com_config(
         base_mw_com_config_json, joined_config_json["common"]["asil_level"]

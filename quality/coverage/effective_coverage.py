@@ -69,9 +69,7 @@ def main() -> None:
         _main_llvm_cov(args, html_dir, justified_files)
 
 
-def _main_llvm_cov(
-    args: argparse.Namespace, html_dir: Path, justified_files: Dict
-) -> None:
+def _main_llvm_cov(args: argparse.Namespace, html_dir: Path, justified_files: Dict) -> None:
     """Main logic for llvm-cov HTML format."""
 
     # Parse raw coverage totals from the index page (matches llvm-cov exactly).
@@ -94,13 +92,9 @@ def _main_llvm_cov(
         if not rel_source_path:
             continue
 
-        file_justifications = find_matching_justifications(
-            rel_source_path, justified_files
-        )
+        file_justifications = find_matching_justifications(rel_source_path, justified_files)
 
-        file_stats = process_html_file(
-            html_file, file_justifications, applied_justifications, stale_justifications
-        )
+        file_stats = process_html_file(html_file, file_justifications, applied_justifications, stale_justifications)
 
         total_justified += file_stats["justified"]
         total_stale += file_stats["stale"]
@@ -121,25 +115,17 @@ def _main_llvm_cov(
         "justified_lines": total_justified,
         "unjustified_uncovered_lines": max(0, unjustified_uncovered),
         "stale_justifications": total_stale,
-        "raw_line_coverage_pct": floor_two_decimals(100.0 * raw_covered / raw_total)
-        if raw_total > 0
-        else 0.0,
-        "effective_line_coverage_pct": floor_two_decimals(
-            100.0 * (raw_covered + total_justified) / raw_total
-        )
+        "raw_line_coverage_pct": floor_two_decimals(100.0 * raw_covered / raw_total) if raw_total > 0 else 0.0,
+        "effective_line_coverage_pct": floor_two_decimals(100.0 * (raw_covered + total_justified) / raw_total)
         if raw_total > 0
         else 0.0,
         "total_branches": raw_branch_total,
         "covered_branches": raw_branch_covered,
         "justified_branches": total_justified_branches,
-        "raw_branch_coverage_pct": floor_two_decimals(
-            100.0 * raw_branch_covered / raw_branch_total
-        )
+        "raw_branch_coverage_pct": floor_two_decimals(100.0 * raw_branch_covered / raw_branch_total)
         if raw_branch_total > 0
         else 0.0,
-        "effective_branch_coverage_pct": floor_two_decimals(
-            100.0 * effective_branch_covered / raw_branch_total
-        )
+        "effective_branch_coverage_pct": floor_two_decimals(100.0 * effective_branch_covered / raw_branch_total)
         if raw_branch_total > 0
         else 0.0,
     }
@@ -237,12 +223,8 @@ def process_html_file(
         r"Branch \(<span class='line-number'><a name='L(\d+)' href='[^']*'>"
         r"<span>(\d+:\d+)</span></a></span>\):\s*\[(.*?)\]"
     )
-    covered_branch_dirs_check: Dict[
-        str, set
-    ] = {}  # branch_id → set of covered directions
-    uncovered_branch_dirs_check: Dict[
-        str, set
-    ] = {}  # branch_id → set of uncovered directions
+    covered_branch_dirs_check: Dict[str, set] = {}  # branch_id → set of covered directions
+    uncovered_branch_dirs_check: Dict[str, set] = {}  # branch_id → set of uncovered directions
     branch_line_map: Dict[str, int] = {}  # branch_id → line_num
 
     for m in branch_check_pattern.finditer(content):
@@ -321,9 +303,7 @@ def process_html_file(
             return match.group(0)
 
         justification = justifications[line_num]
-        reason = (
-            justification.get("reason", "").replace("'", "&#39;").replace('"', "&quot;")
-        )
+        reason = justification.get("reason", "").replace("'", "&#39;").replace('"', "&quot;")
         jid = justification.get("id", "")
         tooltip = f"Justified [{jid}]: {reason}"
         modified = True
@@ -332,14 +312,10 @@ def process_html_file(
         # 1. Line number td (unchanged)
         line_td = match.group(1)
         # 2. Count td: change class and show "J" instead of "0"
-        count_td = (
-            f"<td class='justified-line' title='{tooltip}'><pre>J{match.group(4)}"
-        )
+        count_td = f"<td class='justified-line' title='{tooltip}'><pre>J{match.group(4)}"
         # 3. Code td: replace 'region red' spans with 'region justified'
         code_start = match.group(5)
-        code_content = match.group(6).replace(
-            "class='region red'", "class='region justified'"
-        )
+        code_content = match.group(6).replace("class='region red'", "class='region justified'")
         code_end = match.group(7)
 
         return line_td + count_td + code_start + code_content + code_end
@@ -374,9 +350,7 @@ def process_html_file(
                 covered_branch_dirs.add((branch_id, direction))
 
     # Second pass: restyle and count only truly uncovered branch directions
-    justified_branch_ids: set = (
-        set()
-    )  # Track unique uncovered (line:col, direction) pairs
+    justified_branch_ids: set = set()  # Track unique uncovered (line:col, direction) pairs
 
     def replace_branch(match: re.Match) -> str:
         nonlocal modified
@@ -400,12 +374,8 @@ def process_html_file(
                     file_stats["justified_branches"] += 1
 
         # Restyle: red branch → justified-branch, uncovered-line → justified-line
-        branch_content = branch_content.replace(
-            "class='red branch'", "class='justified-branch'"
-        )
-        branch_content = branch_content.replace(
-            "class='uncovered-line'", "class='justified-line'"
-        )
+        branch_content = branch_content.replace("class='red branch'", "class='justified-branch'")
+        branch_content = branch_content.replace("class='uncovered-line'", "class='justified-line'")
         return match.group(1) + branch_content
 
     new_content = branch_pattern.sub(replace_branch, new_content)
@@ -444,9 +414,7 @@ def parse_index_page_totals(html_dir: Path) -> Dict[str, Tuple[int, int]]:
         result["branches"] = (int(branch_covered), int(branch_total))
 
     if result["lines"] == (0, 0):
-        print(
-            "WARNING: Could not parse coverage totals from index.html", file=sys.stderr
-        )
+        print("WARNING: Could not parse coverage totals from index.html", file=sys.stderr)
 
     return result
 
@@ -493,9 +461,7 @@ tr:has(> td.justified-line) > td.code {
         f.write(justified_css)
 
 
-def update_index_page(
-    html_dir: Path, stats: Dict[str, Any], per_file_stats: Dict[str, Dict[str, int]]
-) -> None:
+def update_index_page(html_dir: Path, stats: Dict[str, Any], per_file_stats: Dict[str, Dict[str, int]]) -> None:
     """Update the index page with effective coverage info and per-file adjusted percentages."""
     index_file = html_dir / "index.html"
     if not index_file.exists():
@@ -536,9 +502,7 @@ def update_index_page(
     #   <td class='column-entry-...'><pre>  XX.XX% (covered/total)</pre></td>  ← line
     #   <td class='column-entry-...'><pre>  XX.XX% (covered/total)</pre></td>  ← branch
     # </tr>
-    pct_cell_pattern = re.compile(
-        r"<td class='column-entry-(\w+)'><pre>\s*(\d+\.\d+)%\s*\((\d+)/(\d+)\)</pre></td>"
-    )
+    pct_cell_pattern = re.compile(r"<td class='column-entry-(\w+)'><pre>\s*(\d+\.\d+)%\s*\((\d+)/(\d+)\)</pre></td>")
 
     for file_path, fstats in per_file_stats.items():
         justified_lines = fstats.get("justified", 0)
@@ -574,15 +538,10 @@ def update_index_page(
             covered = int(line_cell.group(3))
             total = int(line_cell.group(4))
             eff_covered = covered + justified_lines
-            eff_pct = (
-                floor_two_decimals(100.0 * eff_covered / total) if total > 0 else 0.0
-            )
+            eff_pct = floor_two_decimals(100.0 * eff_covered / total) if total > 0 else 0.0
             color = _get_coverage_color(eff_pct)
             old_cell = line_cell.group(0)
-            new_cell = (
-                f"<td class='column-entry-{color}'><pre>"
-                f"{eff_pct:>7.2f}% ({eff_covered}/{total})</pre></td>"
-            )
+            new_cell = f"<td class='column-entry-{color}'><pre>{eff_pct:>7.2f}% ({eff_covered}/{total})</pre></td>"
             new_row = new_row.replace(old_cell, new_cell)
 
         # Update branch coverage cell (third cell, index 2)
@@ -591,15 +550,10 @@ def update_index_page(
             covered = int(branch_cell.group(3))
             total = int(branch_cell.group(4))
             eff_covered = covered + justified_branches
-            eff_pct = (
-                floor_two_decimals(100.0 * eff_covered / total) if total > 0 else 0.0
-            )
+            eff_pct = floor_two_decimals(100.0 * eff_covered / total) if total > 0 else 0.0
             color = _get_coverage_color(eff_pct)
             old_cell = branch_cell.group(0)
-            new_cell = (
-                f"<td class='column-entry-{color}'><pre>"
-                f"{eff_pct:>7.2f}% ({eff_covered}/{total})</pre></td>"
-            )
+            new_cell = f"<td class='column-entry-{color}'><pre>{eff_pct:>7.2f}% ({eff_covered}/{total})</pre></td>"
             new_row = new_row.replace(old_cell, new_cell)
 
         if new_row != row:
@@ -636,9 +590,7 @@ def _update_totals_row(content: str, stats: Dict[str, Any]) -> str:
 
     row = content[row_start : row_end + 5]
 
-    pct_cell_pattern = re.compile(
-        r"<td class='column-entry-(\w+)'><pre>\s*(\d+\.\d+)%\s*\((\d+)/(\d+)\)</pre></td>"
-    )
+    pct_cell_pattern = re.compile(r"<td class='column-entry-(\w+)'><pre>\s*(\d+\.\d+)%\s*\((\d+)/(\d+)\)</pre></td>")
     cells = list(pct_cell_pattern.finditer(row))
 
     new_row = row
@@ -651,10 +603,7 @@ def _update_totals_row(content: str, stats: Dict[str, Any]) -> str:
         eff_pct = stats["effective_line_coverage_pct"]
         color = _get_coverage_color(eff_pct)
         old_cell = line_cell.group(0)
-        new_cell = (
-            f"<td class='column-entry-{color}'><pre>"
-            f"{eff_pct:>7.2f}% ({eff_covered}/{total})</pre></td>"
-        )
+        new_cell = f"<td class='column-entry-{color}'><pre>{eff_pct:>7.2f}% ({eff_covered}/{total})</pre></td>"
         new_row = new_row.replace(old_cell, new_cell)
 
     # Update branch coverage in totals (index 2)
@@ -665,10 +614,7 @@ def _update_totals_row(content: str, stats: Dict[str, Any]) -> str:
         eff_pct = stats["effective_branch_coverage_pct"]
         color = _get_coverage_color(eff_pct)
         old_cell = branch_cell.group(0)
-        new_cell = (
-            f"<td class='column-entry-{color}'><pre>"
-            f"{eff_pct:>7.2f}% ({eff_covered}/{total})</pre></td>"
-        )
+        new_cell = f"<td class='column-entry-{color}'><pre>{eff_pct:>7.2f}% ({eff_covered}/{total})</pre></td>"
         new_row = new_row.replace(old_cell, new_cell)
 
     if new_row != row:
@@ -728,9 +674,7 @@ def find_matching_justifications(
     return result
 
 
-def write_summary(
-    path: Path, stats: Dict[str, Any], stale: List[Dict[str, Any]]
-) -> None:
+def write_summary(path: Path, stats: Dict[str, Any], stale: List[Dict[str, Any]]) -> None:
     """Write human-readable summary."""
     with open(path, "w", encoding="utf-8") as f:
         f.write("Coverage Justification Summary\n")
@@ -748,9 +692,7 @@ def write_summary(
             f.write(f"Covered branches:         {stats['covered_branches']}\n")
             f.write(f"Justified branches:       {stats['justified_branches']}\n")
             f.write(f"Raw branch coverage:      {stats['raw_branch_coverage_pct']}%\n")
-            f.write(
-                f"Effective branch coverage: {stats['effective_branch_coverage_pct']}%\n"
-            )
+            f.write(f"Effective branch coverage: {stats['effective_branch_coverage_pct']}%\n")
             f.write("\n")
         if stale:
             f.write(f"Stale justifications ({len(stale)}):\n")
@@ -770,9 +712,7 @@ def load_manifest(path: Path) -> Dict[str, Any]:
 
 def parse_args() -> argparse.Namespace:
     """Parse command-line arguments."""
-    parser = argparse.ArgumentParser(
-        description="Effective coverage calculator and HTML post-processor"
-    )
+    parser = argparse.ArgumentParser(description="Effective coverage calculator and HTML post-processor")
     parser.add_argument(
         "--html-dir",
         type=Path,
@@ -852,9 +792,7 @@ def _parse_lcov_totals(lcov_path: Path) -> Dict[str, Tuple[int, int]]:
 # =============================================================================
 
 
-def _main_gcovr(
-    args: argparse.Namespace, html_dir: Path, justified_files: Dict
-) -> None:
+def _main_gcovr(args: argparse.Namespace, html_dir: Path, justified_files: Dict) -> None:
     """Main logic for gcovr HTML format (produced by lcov_to_html.py via gcovr)."""
 
     # Parse coverage totals from LCOV file or gcovr index page.
@@ -880,13 +818,9 @@ def _main_gcovr(
         if not rel_source_path:
             continue
 
-        file_justifications = find_matching_justifications(
-            rel_source_path, justified_files
-        )
+        file_justifications = find_matching_justifications(rel_source_path, justified_files)
 
-        file_stats = _process_gcovr_file(
-            html_file, file_justifications, applied_justifications, stale_justifications
-        )
+        file_stats = _process_gcovr_file(html_file, file_justifications, applied_justifications, stale_justifications)
 
         total_justified += file_stats["justified"]
         total_stale += file_stats["stale"]
@@ -906,25 +840,17 @@ def _main_gcovr(
         "justified_lines": total_justified,
         "unjustified_uncovered_lines": max(0, unjustified_uncovered),
         "stale_justifications": total_stale,
-        "raw_line_coverage_pct": floor_two_decimals(100.0 * raw_covered / raw_total)
-        if raw_total > 0
-        else 0.0,
-        "effective_line_coverage_pct": floor_two_decimals(
-            100.0 * (raw_covered + total_justified) / raw_total
-        )
+        "raw_line_coverage_pct": floor_two_decimals(100.0 * raw_covered / raw_total) if raw_total > 0 else 0.0,
+        "effective_line_coverage_pct": floor_two_decimals(100.0 * (raw_covered + total_justified) / raw_total)
         if raw_total > 0
         else 0.0,
         "total_branches": raw_branch_total,
         "covered_branches": raw_branch_covered,
         "justified_branches": total_justified_branches,
-        "raw_branch_coverage_pct": floor_two_decimals(
-            100.0 * raw_branch_covered / raw_branch_total
-        )
+        "raw_branch_coverage_pct": floor_two_decimals(100.0 * raw_branch_covered / raw_branch_total)
         if raw_branch_total > 0
         else 0.0,
-        "effective_branch_coverage_pct": floor_two_decimals(
-            100.0 * effective_branch_covered / raw_branch_total
-        )
+        "effective_branch_coverage_pct": floor_two_decimals(100.0 * effective_branch_covered / raw_branch_total)
         if raw_branch_total > 0
         else 0.0,
     }

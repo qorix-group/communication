@@ -14,9 +14,7 @@
 
 def producer(target, num_cycles, **kwargs):
     args = ["-n", str(num_cycles)]
-    return target.wrap_exec(
-        "bin/bigdata-producer", args, cwd="/opt/bigdata-com-api-async", **kwargs
-    )
+    return target.wrap_exec("bin/bigdata-producer", args, cwd="/opt/bigdata-com-api-async", **kwargs)
 
 
 def consumer_async_with_cancellation(target, num_cycles, **kwargs):

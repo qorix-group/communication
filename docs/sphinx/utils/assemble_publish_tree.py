@@ -51,9 +51,7 @@ _JS = _STATIC / "js" / "version_flyout.js"
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Assemble the GitHub Pages publish tree for versioned Sphinx docs."
-    )
+    parser = argparse.ArgumentParser(description="Assemble the GitHub Pages publish tree for versioned Sphinx docs.")
     parser.add_argument(
         "--version",
         required=True,
@@ -65,17 +63,13 @@ def main() -> int:
         choices=["true", "false"],
         help="'true' when triggered by a release tag push",
     )
-    parser.add_argument(
-        "--docs-output", required=True, help="Path to the Sphinx HTML output directory"
-    )
+    parser.add_argument("--docs-output", required=True, help="Path to the Sphinx HTML output directory")
     parser.add_argument(
         "--publish-dir",
         default="publish",
         help="Root publish directory (default: publish/)",
     )
-    parser.add_argument(
-        "--repo-url", required=True, help="Base GitHub Pages URL without trailing slash"
-    )
+    parser.add_argument("--repo-url", required=True, help="Base GitHub Pages URL without trailing slash")
     parser.add_argument(
         "--root-index",
         required=True,
@@ -153,16 +147,11 @@ def main() -> int:
         key=lambda d: d.name,
         reverse=True,
     ):
-        versions.append(
-            {"name": d.name, "version": d.name, "url": f"{repo_url}/{d.name}/"}
-        )
+        versions.append({"name": d.name, "version": d.name, "url": f"{repo_url}/{d.name}/"})
 
     switcher = publish / "switcher.json"
     switcher.write_text(json.dumps(versions, indent=2) + "\n", encoding="utf-8")
-    print(
-        f"Generated {switcher} with {len(versions)} version(s): "
-        f"{[v['version'] for v in versions]}"
-    )
+    print(f"Generated {switcher} with {len(versions)} version(s): {[v['version'] for v in versions]}")
 
     return 0
 

@@ -31,9 +31,7 @@ project = "{PROJECT_NAME}"
 author = "S-CORE"
 version = "1.0"
 release = "1.0.0"
-project_url = (
-    "https://github.com/eclipse-score"  # Required by score_metamodel extension
-)
+project_url = "https://github.com/eclipse-score"  # Required by score_metamodel extension
 
 # Sphinx extensions - comprehensive list for SCORE modules
 extensions = [
@@ -95,11 +93,7 @@ html_theme_options = {
     # Logo configuration
     "logo": {
         "text": "Eclipse S-CORE",
-        **(
-            {}
-            if (Path(__file__).parent / "docs").is_dir()
-            else {"link": "../index.html"}
-        ),
+        **({} if (Path(__file__).parent / "docs").is_dir() else {"link": "../index.html"}),
     },
     # External links - S-CORE GitHub
     "icon_links": [
@@ -119,9 +113,7 @@ numfig = True
 # "sphinx_module_ext" extension registered above (see
 # @score_tooling//bazel/rules/rules_score:src/sphinx_module_ext.py) instead of
 # calling bazel_sphinx_needs directly.
-suppress_warnings = sphinx_conf_helpers.DEFAULT_SUPPRESS_WARNINGS + [
-    "myst.xref_missing"
-]
+suppress_warnings = sphinx_conf_helpers.DEFAULT_SUPPRESS_WARNINGS + ["myst.xref_missing"]
 
 # Hermetic PlantUML / Graphviz / FTA-metamodel resolution.
 # PLANTUML_BIN, GRAPHVIZ_DOT and FTA_METAMODEL_DIR are injected into every

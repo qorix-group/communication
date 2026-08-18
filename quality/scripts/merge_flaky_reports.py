@@ -83,17 +83,12 @@ def _build_markdown(
         lines.extend(["## Flaky targets", ""])
         for item in flaky_targets:
             configs = ", ".join(sorted(item["configs"]))
-            lines.append(
-                f"- `{item['target']}` — {item['failed_runs']}/{item['total_runs']} failed "
-                f"across [{configs}]"
-            )
+            lines.append(f"- `{item['target']}` — {item['failed_runs']}/{item['total_runs']} failed across [{configs}]")
         lines.append("")
     if not flaky_targets:
         lines.append(":white_check_mark: No flaky targets detected.")
     else:
-        lines.append(
-            ":warning: Flaky targets detected. GitHub issues have been created/updated for each."
-        )
+        lines.append(":warning: Flaky targets detected. GitHub issues have been created/updated for each.")
     lines.append("")
     return "\n".join(lines)
 
@@ -124,9 +119,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     output_md = Path(args.output_md)
     output_json.parent.mkdir(parents=True, exist_ok=True)
     output_md.parent.mkdir(parents=True, exist_ok=True)
-    output_json.write_text(
-        json.dumps(merged, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
+    output_json.write_text(json.dumps(merged, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     output_md.write_text(
         _build_markdown(summaries, flaky_targets, total_failed),
         encoding="utf-8",

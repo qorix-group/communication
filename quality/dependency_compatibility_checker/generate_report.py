@@ -41,9 +41,7 @@ def _load_results(results_dir):
             {
                 "index": data["index"],
                 "versions": data["versions"],
-                "result": classify(
-                    data["build_status"], data.get("has_patches", False)
-                ),
+                "result": classify(data["build_status"], data.get("has_patches", False)),
             }
         )
     rows.sort(key=lambda r: r["index"])

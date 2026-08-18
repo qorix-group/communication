@@ -242,9 +242,7 @@ def is_in_target_files(file_path: str, target_files: set[str]) -> bool:
         norm_target = os.path.normpath(target)
         if normalized == norm_target:
             return True
-        if normalized.endswith("/" + norm_target) or normalized.endswith(
-            os.sep + norm_target
-        ):
+        if normalized.endswith("/" + norm_target) or normalized.endswith(os.sep + norm_target):
             return True
     return False
 
@@ -257,9 +255,7 @@ def find_comment(node: dict) -> Optional[dict]:
     return None
 
 
-def _get_underlying_type_for_alias(
-    ast_root: dict, name: str, qualified_name: str
-) -> Optional[str]:
+def _get_underlying_type_for_alias(ast_root: dict, name: str, qualified_name: str) -> Optional[str]:
     """Find the underlying type (qualType) for a type alias in the AST."""
 
     def search(node: dict, ns_stack: list[str]) -> Optional[str]:
@@ -373,11 +369,7 @@ def extract_from_ast(
             for child in node.get("inner", []):
                 _collect_defined(child, new_stack)
             return
-        if (
-            kind in ("CXXRecordDecl", "ClassTemplateSpecializationDecl")
-            and name
-            and node.get("completeDefinition")
-        ):
+        if kind in ("CXXRecordDecl", "ClassTemplateSpecializationDecl") and name and node.get("completeDefinition"):
             defined_record_qnames.add(build_qualified_name(name, ns_stack))
         for child in node.get("inner", []):
             _collect_defined(child, ns_stack)
@@ -450,9 +442,7 @@ def extract_from_ast(
                 return
             seen_forward.add(qualified)
             tag = node.get("tagUsed", "class")
-            kind_str = (
-                "extern_template" if access == "public" else "protected_extern_template"
-            )
+            kind_str = "extern_template" if access == "public" else "protected_extern_template"
             symbols.append(
                 ApiSymbol(
                     name=name,
@@ -483,11 +473,7 @@ def extract_from_ast(
                         and qualified not in seen_forward
                     ):
                         seen_forward.add(qualified)
-                        fwd_kind = (
-                            "forward_class"
-                            if access == "public"
-                            else "protected_forward_class"
-                        )
+                        fwd_kind = "forward_class" if access == "public" else "protected_forward_class"
                         symbols.append(
                             ApiSymbol(
                                 name=name,
@@ -538,12 +524,7 @@ def extract_from_ast(
 
         # Handle ClassTemplateDecl
         if kind == "ClassTemplateDecl":
-            if (
-                not in_target
-                or not name
-                or access != "public"
-                or node.get("isImplicit")
-            ):
+            if not in_target or not name or access != "public" or node.get("isImplicit"):
                 return
             qualified = build_qualified_name(name, namespace_stack)
             if is_internal_name(qualified):
@@ -569,36 +550,21 @@ def extract_from_ast(
 
         # Handle FunctionTemplateDecl
         if kind == "FunctionTemplateDecl":
-            if (
-                not in_target
-                or not name
-                or access not in ("public", "protected")
-                or node.get("isImplicit")
-            ):
+            if not in_target or not name or access not in ("public", "protected") or node.get("isImplicit"):
                 return
             qualified = build_qualified_name(name, namespace_stack)
             if is_internal_name(qualified):
                 return
             inner_func = next(
-                (
-                    c
-                    for c in node.get("inner", [])
-                    if c.get("kind") in ("FunctionDecl", "CXXMethodDecl")
-                ),
+                (c for c in node.get("inner", []) if c.get("kind") in ("FunctionDecl", "CXXMethodDecl")),
                 None,
             )
-            type_info = (
-                inner_func.get("type", {}).get("qualType", "") if inner_func else ""
-            )
+            type_info = inner_func.get("type", {}).get("qualType", "") if inner_func else ""
             comment = find_comment(node)
             has_api, has_brief = get_comment_markers(comment)
             base_sig = f"{name} : {type_info}" if type_info else name
             signature = enrich_signature(base_sig, inner_func or node, extern_c)
-            tmpl_kind = (
-                "template_function"
-                if access == "public"
-                else "protected_template_function"
-            )
+            tmpl_kind = "template_function" if access == "public" else "protected_template_function"
             symbols.append(
                 ApiSymbol(
                     name=name,
@@ -632,9 +598,7 @@ def extract_from_ast(
                     name=name,
                     qualified_name=qualified,
                     kind="template_type_alias",
-                    signature=f"using {name} = {underlying}"
-                    if underlying
-                    else f"using {name}",
+                    signature=f"using {name} = {underlying}" if underlying else f"using {name}",
                     file=make_relative(effective_file),
                     line=line,
                     has_api_marker=has_api,
@@ -720,9 +684,7 @@ def extract_from_ast(
             qualified = build_qualified_name(name, ns_stack)
             # Find the inner CXXRecordDecl
             for child in node.get("inner", []):
-                if child.get("kind") == "CXXRecordDecl" and child.get(
-                    "completeDefinition"
-                ):
+                if child.get("kind") == "CXXRecordDecl" and child.get("completeDefinition"):
                     class_index[qualified] = child
                     break
 
@@ -734,14 +696,10 @@ def extract_from_ast(
             index_classes(node, [])
 
     # For each type alias that references a class, extract the class's public members
-    alias_symbols = [
-        s for s in symbols if s.kind in ("type_alias", "template_type_alias")
-    ]
+    alias_symbols = [s for s in symbols if s.kind in ("type_alias", "template_type_alias")]
     followed_members: list[ApiSymbol] = []
 
-    def _resolve_class_node(
-        type_name: str, alias_qualified_name: str = ""
-    ) -> Optional[dict]:
+    def _resolve_class_node(type_name: str, alias_qualified_name: str = "") -> Optional[dict]:
         """Resolve a type name to its CXXRecordDecl in the class index."""
         name = type_name.lstrip(":")
         base = name.split("<")[0].strip()
@@ -756,16 +714,12 @@ def extract_from_ast(
                 node = class_index.get(f"{alias_namespace}::{base}")
         if not node:
             for key, n in class_index.items():
-                if key.endswith("::" + base.split("::")[-1]) and base.endswith(
-                    key.split("::")[-1]
-                ):
+                if key.endswith("::" + base.split("::")[-1]) and base.endswith(key.split("::")[-1]):
                     node = n
                     break
         return node
 
-    def _get_public_members(
-        class_node: dict, visited: Optional[set] = None
-    ) -> list[dict]:
+    def _get_public_members(class_node: dict, visited: Optional[set] = None) -> list[dict]:
         """Get all public method/constructor/destructor members, including inherited ones."""
         if visited is None:
             visited = set()
@@ -816,9 +770,7 @@ def extract_from_ast(
 
     for alias_sym in alias_symbols:
         # Find the original TypeAliasDecl/TypeAliasTemplateDecl node to get qualType
-        underlying_type = _get_underlying_type_for_alias(
-            ast_root, alias_sym.name, alias_sym.qualified_name
-        )
+        underlying_type = _get_underlying_type_for_alias(ast_root, alias_sym.name, alias_sym.qualified_name)
         if not underlying_type:
             continue
 
@@ -842,11 +794,7 @@ def extract_from_ast(
             attr_node = child
             if child_kind == "FunctionTemplateDecl":
                 inner_func = next(
-                    (
-                        c
-                        for c in child.get("inner", [])
-                        if c.get("kind") in ("FunctionDecl", "CXXMethodDecl")
-                    ),
+                    (c for c in child.get("inner", []) if c.get("kind") in ("FunctionDecl", "CXXMethodDecl")),
                     None,
                 )
                 if inner_func:
@@ -904,22 +852,12 @@ def extract_from_ast(
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Extract public C++ API surface from headers using clang AST"
-    )
+    parser = argparse.ArgumentParser(description="Extract public C++ API surface from headers using clang AST")
     parser.add_argument("--ast-json", help="Path to pre-generated clang AST JSON dump")
-    parser.add_argument(
-        "--target-headers", help="Comma-separated target header paths to filter on"
-    )
-    parser.add_argument(
-        "--target-headers-file", help="Path to newline-separated target header paths"
-    )
-    parser.add_argument(
-        "--target-label", default="", help="Bazel target label (metadata)"
-    )
-    parser.add_argument(
-        "--target", default="", help="Target label (alias for --target-label)"
-    )
+    parser.add_argument("--target-headers", help="Comma-separated target header paths to filter on")
+    parser.add_argument("--target-headers-file", help="Path to newline-separated target header paths")
+    parser.add_argument("--target-label", default="", help="Bazel target label (metadata)")
+    parser.add_argument("--target", default="", help="Target label (alias for --target-label)")
     parser.add_argument("--output", default="-", help="Output file (- for stdout)")
     args = parser.parse_args()
 

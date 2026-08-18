@@ -59,11 +59,7 @@ class IvshmemQemu(Qemu):
 
     def _extra_qemu_args(self):
         """Inject ivshmem, per-VM-MAC port forwarding, and inter-VM NIC arguments."""
-        return (
-            self._ivshmem_args()
-            + self._port_forwarding_with_mac_args()
-            + self._intervm_args()
-        )
+        return self._ivshmem_args() + self._port_forwarding_with_mac_args() + self._intervm_args()
 
     def _ivshmem_args(self):
         if not self._ivshmem_path:
@@ -73,10 +69,7 @@ class IvshmemQemu(Qemu):
         # BAR2 of each guest is backed by the same physical pages.
         return [
             "-object",
-            (
-                "memory-backend-file,id=ivshmem_mem,"
-                f"mem-path={self._ivshmem_path},size={self._ivshmem_size},share=on"
-            ),
+            (f"memory-backend-file,id=ivshmem_mem,mem-path={self._ivshmem_path},size={self._ivshmem_size},share=on"),
             "-device",
             "ivshmem-plain,memdev=ivshmem_mem",
         ]

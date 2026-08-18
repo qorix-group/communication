@@ -23,7 +23,5 @@ KILL_PROVIDER = 0
 
 def test_provider_restart_graceful(target):
     """Test provider restart with graceful shutdown."""
-    with partial_restart_provider(
-        target, NUMBER_RESTART_CYCLES, CREATE_PROXY, KILL_PROVIDER
-    ):
+    with partial_restart_provider(target, NUMBER_RESTART_CYCLES, CREATE_PROXY, KILL_PROVIDER):
         pass

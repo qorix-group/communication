@@ -60,7 +60,5 @@ def test_cross_vm_lib_memory_over_bar(target_a, target_b):
 
     assert rc_a == 0, f"producer (VM-A) failed (rc={rc_a}): {text_a}"
     assert rc_b == 0, f"consumer (VM-B) failed (rc={rc_b}): {text_b}"
-    assert "verified" in text_a, (
-        f"producer did not complete the handshake, got: {text_a!r}"
-    )
+    assert "verified" in text_a, f"producer did not complete the handshake, got: {text_a!r}"
     assert "verified" in text_b, f"consumer did not verify the list, got: {text_b!r}"

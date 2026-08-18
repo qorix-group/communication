@@ -71,8 +71,7 @@ class APITagExtractor:  # pylint: disable=too-few-public-methods
         # Verify this is an api.xml file with pre-filtered @api tagged items
         if not self._is_api_reference_file():
             print(
-                f"Error: Expected api.xml file with @api tagged items, "
-                f"got {self.xml_file_path}",
+                f"Error: Expected api.xml file with @api tagged items, got {self.xml_file_path}",
                 file=sys.stderr,
             )
             sys.exit(1)
@@ -81,9 +80,7 @@ class APITagExtractor:  # pylint: disable=too-few-public-methods
         self._drop_members_covered_by_enclosing_scope(api_items)
         return api_items
 
-    def _drop_members_covered_by_enclosing_scope(
-        self, api_items: Dict[str, List[Dict[str, str]]]
-    ) -> None:
+    def _drop_members_covered_by_enclosing_scope(self, api_items: Dict[str, List[Dict[str, str]]]) -> None:
         """Remove members already documented via their enclosing
         namespace or class/struct directive.
 
@@ -219,9 +216,7 @@ class APITagExtractor:  # pylint: disable=too-few-public-methods
         api_compound = self.root.find('.//compounddef[@kind="page"][@id="api"]')
         return api_compound is not None
 
-    def _extract_from_api_references(
-        self, api_items: Dict[str, List[Dict[str, str]]]
-    ) -> None:
+    def _extract_from_api_references(self, api_items: Dict[str, List[Dict[str, str]]]) -> None:
         """Extract API items from api.xml reference file.
 
         The api.xml file structure contains:
@@ -287,9 +282,7 @@ class APITagExtractor:  # pylint: disable=too-few-public-methods
                 # Track function overloads
                 if member_kind == "function" or "(" in signature:
                     base_name = signature.split("(", maxsplit=1)[0].strip()
-                    function_overloads[base_name] = (
-                        function_overloads.get(base_name, 0) + 1
-                    )
+                    function_overloads[base_name] = function_overloads.get(base_name, 0) + 1
 
                 item_data = {"name": signature, "id": refid, "kind": member_kind}
                 api_items["members"].append(item_data)
@@ -382,9 +375,7 @@ class RSTGenerator:  # pylint: disable=too-few-public-methods
 
         return "".join(cleaned_name_parts)
 
-    def generate_rst_files(
-        self, api_items: Dict[str, List[Dict[str, str]]]
-    ) -> List[str]:
+    def generate_rst_files(self, api_items: Dict[str, List[Dict[str, str]]]) -> List[str]:
         """Generate separate RST files for each category.
 
         Args:
@@ -458,9 +449,7 @@ category.
 
         return str(index_path)
 
-    def _generate_category_file(
-        self, category: str, items: List[Dict[str, str]]
-    ) -> str:
+    def _generate_category_file(self, category: str, items: List[Dict[str, str]]) -> str:
         """Generate RST file for a specific category.
 
         Args:
@@ -724,9 +713,7 @@ def parse_arguments() -> argparse.Namespace:
 
     # Support both positional and flag-based arguments for flexibility
     parser.add_argument("xml_file", nargs="?", help="Path to Doxygen api.xml file")
-    parser.add_argument(
-        "output_dir", nargs="?", help="Output directory for generated RST files"
-    )
+    parser.add_argument("output_dir", nargs="?", help="Output directory for generated RST files")
     parser.add_argument(
         "--xml-file",
         dest="xml_file_flag",
@@ -748,9 +735,7 @@ def parse_arguments() -> argparse.Namespace:
         default=1000,
         help="Maximum number of items per category (default: 1000)",
     )
-    parser.add_argument(
-        "--verbose", "-v", action="store_true", help="Enable verbose output"
-    )
+    parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose output")
 
     args = parser.parse_args()
 
@@ -786,10 +771,7 @@ def main() -> None:
     for category, items in api_items.items():
         if len(items) > args.max_items:
             if args.verbose:
-                print(
-                    f"Warning: Limiting {category} from {len(items)} "
-                    f"to {args.max_items} items"
-                )
+                print(f"Warning: Limiting {category} from {len(items)} to {args.max_items} items")
             api_items[category] = items[: args.max_items]
 
     # Generate RST files

@@ -31,9 +31,7 @@ from .ivshmem_qemu import IvshmemQemu
 logger = logging.getLogger(__name__)
 
 
-def _wait_for_ssh(
-    target, total_timeout: int = 180, interval: int = 3, stable_successes: int = 3
-):
+def _wait_for_ssh(target, total_timeout: int = 180, interval: int = 3, stable_successes: int = 3):
     """Wait until the VM *stably* serves SSH.
 
     Early-boot sshd is briefly unstable, so require several consecutive successes to
@@ -56,9 +54,7 @@ def _wait_for_ssh(
             last_error = ex
             consecutive = 0
         time.sleep(interval)
-    raise TimeoutError(
-        f"VM never became stably reachable via SSH within {total_timeout}s: {last_error}"
-    )
+    raise TimeoutError(f"VM never became stably reachable via SSH within {total_timeout}s: {last_error}")
 
 
 class DualQemuProcess(QemuProcess):
@@ -136,9 +132,7 @@ class DualQemuProcess(QemuProcess):
     def ensure_responsive(self, timeout: int = 30, stable_successes: int = 2):
         """Re-verify the VM is still reachable; restart in place if not."""
         try:
-            _wait_for_ssh(
-                self._target, total_timeout=timeout, stable_successes=stable_successes
-            )
+            _wait_for_ssh(self._target, total_timeout=timeout, stable_successes=stable_successes)
         except Exception as ex:  # pylint: disable=broad-except
             logger.warning("VM went unresponsive (%s); restarting", ex)
             self.restart()

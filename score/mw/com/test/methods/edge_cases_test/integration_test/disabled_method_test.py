@@ -12,7 +12,5 @@
 # *******************************************************************************
 def test_edge_cases(target):
     args = ["--service_instance_manifest", "./etc/disabled_methods_mw_com_config.json"]
-    with target.wrap_exec(
-        "bin/disabled_method_test", args, cwd="/opt/EdgeCasesTestApp", wait_on_exit=True
-    ):
+    with target.wrap_exec("bin/disabled_method_test", args, cwd="/opt/EdgeCasesTestApp", wait_on_exit=True):
         pass

@@ -124,15 +124,11 @@ def _read_pack_identity(pack_root):
             elif version is None and stripped.startswith("version:"):
                 version = stripped.split(":", 1)[1].strip().strip("'\"")
     if not name or not version:
-        raise RuntimeError(
-            f"Could not read pack name/version from {pack_root}/qlpack.yml"
-        )
+        raise RuntimeError(f"Could not read pack name/version from {pack_root}/qlpack.yml")
     return name, version
 
 
-def create_database(
-    code_ql_path, config_path, target, source_root, database_path, build_configs=None
-):
+def create_database(code_ql_path, config_path, target, source_root, database_path, build_configs=None):
     """Create the CodeQL database: init, build with tracing, finalize.
 
     ``build_configs`` is an optional list of additional Bazel ``--config`` names
@@ -169,9 +165,7 @@ def create_database(
     for extra_config in build_configs or []:
         bazel_cmd += f" --config={extra_config}"
     bazel_cmd += _get_action_env_extension(codeql_env)
-    subprocess.run(
-        f"{bazel_cmd} {target}", shell=True, env=env, cwd=source_root, check=True
-    )
+    subprocess.run(f"{bazel_cmd} {target}", shell=True, env=env, cwd=source_root, check=True)
 
     # Finalize database
     subprocess.run(
@@ -285,17 +279,11 @@ def analyze_database(
 def recategorize_sarif(recategorize_path, coding_standards_config_path, sarif_path):
     if not recategorize_path:
         return sarif_path
-    if not coding_standards_config_path or not os.path.isfile(
-        coding_standards_config_path
-    ):
-        raise RuntimeError(
-            f"Coding standards config file not found: {coding_standards_config_path!r}"
-        )
+    if not coding_standards_config_path or not os.path.isfile(coding_standards_config_path):
+        raise RuntimeError(f"Coding standards config file not found: {coding_standards_config_path!r}")
 
     recategorize_path = os.path.realpath(recategorize_path)
-    coding_standards_schema_path, sarif_schema_path = (
-        _find_recategorization_schema_paths()
-    )
+    coding_standards_schema_path, sarif_schema_path = _find_recategorization_schema_paths()
     coding_standards_schema_path = os.path.realpath(coding_standards_schema_path)
     sarif_schema_path = os.path.realpath(sarif_schema_path)
     recategorized_sarif_path = f"{sarif_path}.recategorized"
@@ -342,22 +330,15 @@ def _normalize_sarif_run(run):
         enumerate(rules),
         key=lambda indexed_rule: indexed_rule[1].get("id", ""),
     )
-    index_map = {
-        old_index: new_index for new_index, (old_index, _) in enumerate(ordered_rules)
-    }
+    index_map = {old_index: new_index for new_index, (old_index, _) in enumerate(ordered_rules)}
     driver["rules"] = [rule for _, rule in ordered_rules]
 
     artifacts = run.get("artifacts", [])
     ordered_artifacts = sorted(
         enumerate(artifacts),
-        key=lambda indexed_artifact: (
-            indexed_artifact[1].get("location", {}).get("uri", "")
-        ),
+        key=lambda indexed_artifact: indexed_artifact[1].get("location", {}).get("uri", ""),
     )
-    artifact_index_map = {
-        old_index: new_index
-        for new_index, (old_index, _) in enumerate(ordered_artifacts)
-    }
+    artifact_index_map = {old_index: new_index for new_index, (old_index, _) in enumerate(ordered_artifacts)}
     run["artifacts"] = [artifact for _, artifact in ordered_artifacts]
 
     for result in run.get("results", []):
@@ -379,9 +360,7 @@ def _remap_artifact_indices(value, artifact_index_map):
             if artifact_location.get("uri"):
                 del artifact_location["index"]
             else:
-                artifact_location["index"] = artifact_index_map[
-                    artifact_location["index"]
-                ]
+                artifact_location["index"] = artifact_index_map[artifact_location["index"]]
         for child in value.values():
             _remap_artifact_indices(child, artifact_index_map)
     elif isinstance(value, list):
@@ -396,12 +375,8 @@ def _find_recategorization_schema_paths():
     coding_standards_schema_path = runfiles.Rlocation(
         "codeql_coding_standards/schemas/coding-standards-schema-1.0.0.json"
     )
-    sarif_schema_path = runfiles.Rlocation(
-        "codeql_coding_standards/schemas/sarif-schema-2.1.0.json"
-    )
-    if not coding_standards_schema_path or not os.path.isfile(
-        coding_standards_schema_path
-    ):
+    sarif_schema_path = runfiles.Rlocation("codeql_coding_standards/schemas/sarif-schema-2.1.0.json")
+    if not coding_standards_schema_path or not os.path.isfile(coding_standards_schema_path):
         raise RuntimeError("Failed to load Coding Standards schema!")
     if not sarif_schema_path or not os.path.isfile(sarif_schema_path):
         raise RuntimeError("Failed to load Sarif schema!")
@@ -444,9 +419,7 @@ def main():
 
     # Make codeql_path absolute
     codeql_path = os.path.abspath(args.codeql_path) if args.codeql_path else None
-    coding_standards_config_path = os.path.join(
-        source_root, CODING_STANDARDS_CONFIG_RELATIVE_PATH
-    )
+    coding_standards_config_path = os.path.join(source_root, CODING_STANDARDS_CONFIG_RELATIVE_PATH)
     if not os.path.isabs(coding_standards_config_path):
         coding_standards_config_path = os.path.abspath(coding_standards_config_path)
 
@@ -482,9 +455,7 @@ def main():
         # database inside it (codeql database init does not create parents).
         os.makedirs(output_path, exist_ok=True)
         os.makedirs(TMP_PATH_FOR_DATABASES, exist_ok=True)
-        with tempfile.TemporaryDirectory(
-            dir=TMP_PATH_FOR_DATABASES
-        ) as database_location:
+        with tempfile.TemporaryDirectory(dir=TMP_PATH_FOR_DATABASES) as database_location:
             create_database(
                 codeql_path,
                 args.config_path,
@@ -516,9 +487,7 @@ def _get_action_env_extension(codeql_env):
 def _get_merged_environment(codeql_env):
     env = os.environ.copy()
     for var in codeql_env:
-        env[var] = (
-            f"{codeql_env[var]}:{env.get(var, '')}" if var in env else codeql_env[var]
-        )
+        env[var] = f"{codeql_env[var]}:{env.get(var, '')}" if var in env else codeql_env[var]
     return env
 
 

@@ -23,9 +23,7 @@ def bigdata(target, mode, cycle_time=None, num_cycles=None, **kwargs):
     if mode == "recv":
         wait_on_exit = True
 
-    return target.wrap_exec(
-        "bin/bigdata", args, cwd="/opt/bigdata", wait_on_exit=wait_on_exit, **kwargs
-    )
+    return target.wrap_exec("bin/bigdata", args, cwd="/opt/bigdata", wait_on_exit=wait_on_exit, **kwargs)
 
 
 def test_bigdata_exchange(target):

@@ -50,9 +50,7 @@ class LoadConfigTest(unittest.TestCase):
         deps = {d.key: d for d in cfg.dependencies}
         self.assertTrue(deps["bazel"].is_bazel)
         self.assertEqual(deps["rules_cc"].module_name, "rules_cc")
-        self.assertEqual(
-            [v.version for v in deps["rules_cc"].versions], ["0.2.17", "0.2.21"]
-        )
+        self.assertEqual([v.version for v in deps["rules_cc"].versions], ["0.2.17", "0.2.21"])
         baselibs = deps["score_baselibs"].versions[0]
         self.assertEqual(baselibs.patches, ["//p:a.patch"])
         self.assertEqual(baselibs.patch_strip, 1)

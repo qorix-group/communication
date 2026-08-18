@@ -23,7 +23,5 @@ KILL_PROVIDER = 1
 
 def test_provider_restart_kill(target):
     """Test provider restart with kill (SIGKILL) signal."""
-    with partial_restart_provider(
-        target, NUMBER_RESTART_CYCLES, CREATE_PROXY, KILL_PROVIDER
-    ):
+    with partial_restart_provider(target, NUMBER_RESTART_CYCLES, CREATE_PROXY, KILL_PROVIDER):
         pass

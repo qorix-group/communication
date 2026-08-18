@@ -99,9 +99,7 @@ def run_extract_api(headers: list[str], target_files: list[str]) -> dict:
     workspace_root = os.path.dirname(os.path.dirname(test_dir))
 
     # Run clang AST dump
-    with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".cpp", delete=False, prefix="test_api_"
-    ) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".cpp", delete=False, prefix="test_api_") as f:
         for header in headers:
             f.write(f'#include "{os.path.abspath(header)}"\n')
         combined_path = f.name
@@ -123,9 +121,7 @@ def run_extract_api(headers: list[str], target_files: list[str]) -> dict:
         ]
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
         if not result.stdout:
-            raise RuntimeError(
-                f"clang produced no output. stderr: {result.stderr[:500]}"
-            )
+            raise RuntimeError(f"clang produced no output. stderr: {result.stderr[:500]}")
         ast = json.loads(result.stdout)
     finally:
         os.unlink(combined_path)
@@ -141,9 +137,7 @@ def run_extract_api(headers: list[str], target_files: list[str]) -> dict:
         "--target-label",
         "//test:target",
     ]
-    result = subprocess.run(
-        cmd, input=json.dumps(ast), capture_output=True, text=True, timeout=30
-    )
+    result = subprocess.run(cmd, input=json.dumps(ast), capture_output=True, text=True, timeout=30)
     if result.returncode != 0:
         raise RuntimeError(f"extract_api.py failed: {result.stderr}")
     return json.loads(result.stdout)
@@ -471,9 +465,7 @@ class TestLockFileFormat(unittest.TestCase):
 
     def test_no_file_metadata(self):
         """Symbols do NOT have file/line/doc metadata."""
-        for sym in self.result.get("symbols", []) + self.result.get(
-            "undocumented_symbols", []
-        ):
+        for sym in self.result.get("symbols", []) + self.result.get("undocumented_symbols", []):
             self.assertNotIn("file", sym)
             self.assertNotIn("line", sym)
             self.assertNotIn("has_api_marker", sym)
@@ -497,9 +489,7 @@ class TestCliModes(unittest.TestCase):
         test_dir = os.path.dirname(os.path.abspath(__file__))
         extract_script = os.path.join(os.path.dirname(test_dir), "extract_api.py")
 
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".h", delete=False, prefix="test_api_"
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".h", delete=False, prefix="test_api_") as f:
             f.write("// header for CLI mode test\n")
             header_path = f.name
 
@@ -567,19 +557,10 @@ class TestRefQualifiers(unittest.TestCase):
         self.assertIn("test::Buffer", qualified_names(self.symbols))
 
     def test_both_data_overloads_present(self):
-        sigs = [
-            s["signature"]
-            for s in self.symbols
-            if s["qualified_name"] == "test::Buffer::data"
-        ]
+        sigs = [s["signature"] for s in self.symbols if s["qualified_name"] == "test::Buffer::data"]
         self.assertEqual(len(sigs), 2)
         self.assertTrue(any(sig.rstrip().endswith("&&") for sig in sigs))
-        self.assertTrue(
-            any(
-                sig.rstrip().endswith("&") and not sig.rstrip().endswith("&&")
-                for sig in sigs
-            )
-        )
+        self.assertTrue(any(sig.rstrip().endswith("&") and not sig.rstrip().endswith("&&") for sig in sigs))
 
     def test_const_lvalue_qualifier(self):
         sym = find_symbol(self.symbols, "test::Buffer::size")
@@ -852,9 +833,7 @@ def _public_surface(result: dict) -> dict:
 
 def _extract_source(source: str) -> dict:
     """Write `source` to a temporary header and run the extraction pipeline."""
-    with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".h", delete=False, prefix="neg_case_"
-    ) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".h", delete=False, prefix="neg_case_") as f:
         f.write(source)
         header = f.name
     try:

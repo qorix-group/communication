@@ -57,6 +57,7 @@ copyright_checker(
 
 exports_files([
     ".clang-tidy",
+    ".ruff.toml",
 ])
 
 format_multirun(

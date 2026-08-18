@@ -33,12 +33,12 @@ def consumer(
     else:
         # consumer app may be asil b but consume asil qm provider thus two separate
         # Criticality values need to be specified here
-        consumer_config_name = f"consumer_{consumer_criticality.value}_to_{consumer_expects_criticality.value}_mw_com_config.json"
+        consumer_config_name = (
+            f"consumer_{consumer_criticality.value}_to_{consumer_expects_criticality.value}_mw_com_config.json"
+        )
 
     args = ["--service_instance_manifest", f"./etc/{consumer_config_name}"]
-    return target.wrap_exec(
-        "bin/consumer_main", args, cwd="/opt/ConsumerApp", wait_on_exit=True, **kwargs
-    )
+    return target.wrap_exec("bin/consumer_main", args, cwd="/opt/ConsumerApp", wait_on_exit=True, **kwargs)
 
 
 def provider(target, provider_criticality: Criticality, **kwargs):
@@ -47,6 +47,4 @@ def provider(target, provider_criticality: Criticality, **kwargs):
     provider_config_name = f"{provider_criticality.value}_to_{provider_criticality.value}_mw_com_config.json"
 
     args = ["--service_instance_manifest", f"./etc/{provider_config_name}"]
-    return target.wrap_exec(
-        "bin/provider_main", args, cwd="/opt/ProviderApp", wait_on_exit=True, **kwargs
-    )
+    return target.wrap_exec("bin/provider_main", args, cwd="/opt/ProviderApp", wait_on_exit=True, **kwargs)

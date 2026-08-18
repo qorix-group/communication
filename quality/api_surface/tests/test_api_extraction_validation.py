@@ -68,9 +68,7 @@ def load_api_surface(name: str) -> dict:
                     with open(os.path.join(root, fname)) as f:
                         return json.load(f)
 
-    raise FileNotFoundError(
-        f"Could not find {name}_api_test_gen.json in runfiles. Searched: {candidates}"
-    )
+    raise FileNotFoundError(f"Could not find {name}_api_test_gen.json in runfiles. Searched: {candidates}")
 
 
 def get_all_symbols(result: dict) -> list[dict]:
@@ -379,9 +377,7 @@ class TestResultTypeRegression(unittest.TestCase):
 
     def test_known_result_signatures_are_not_degraded_to_int(self):
         symbol = find_symbol(self.symbols, "test::ResultFactory::CreateWidget")
-        self.assertIsNotNone(
-            symbol, "Missing symbol: test::ResultFactory::CreateWidget"
-        )
+        self.assertIsNotNone(symbol, "Missing symbol: test::ResultFactory::CreateWidget")
         signature = symbol["signature"]
         self.assertIn("support::Result<support::Widget>", signature)
         self.assertNotIn(" : int ", signature)
@@ -435,19 +431,10 @@ class TestRefQualifiers(unittest.TestCase):
         self.assertIn("test::Buffer", qualified_names(self.symbols))
 
     def test_both_data_overloads_present(self):
-        sigs = [
-            s["signature"]
-            for s in self.symbols
-            if s["qualified_name"] == "test::Buffer::data"
-        ]
+        sigs = [s["signature"] for s in self.symbols if s["qualified_name"] == "test::Buffer::data"]
         self.assertEqual(len(sigs), 2)
         self.assertTrue(any(sig.rstrip().endswith("&&") for sig in sigs))
-        self.assertTrue(
-            any(
-                sig.rstrip().endswith("&") and not sig.rstrip().endswith("&&")
-                for sig in sigs
-            )
-        )
+        self.assertTrue(any(sig.rstrip().endswith("&") and not sig.rstrip().endswith("&&") for sig in sigs))
 
     def test_const_lvalue_qualifier(self):
         sym = find_symbol(self.symbols, "test::Buffer::size")
@@ -698,9 +685,7 @@ class TestSfinae(unittest.TestCase):
 
 def public_surface(result: dict) -> dict:
     """Return a comparable {qualified_name: signature} map of the public API."""
-    return {
-        s["qualified_name"]: s.get("signature", "") for s in get_all_symbols(result)
-    }
+    return {s["qualified_name"]: s.get("signature", "") for s in get_all_symbols(result)}
 
 
 class TestPrivateAttributeChanges(unittest.TestCase):

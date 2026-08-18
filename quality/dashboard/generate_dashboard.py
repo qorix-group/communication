@@ -159,11 +159,7 @@ def _extract_sarif_rule_levels(run: dict) -> dict[str, str]:
     ]:
         for rule in rule_set:
             rule_id = rule.get("id") or rule.get("name")
-            level = (
-                ((rule.get("defaultConfiguration") or {}).get("level") or "")
-                .lower()
-                .strip()
-            )
+            level = ((rule.get("defaultConfiguration") or {}).get("level") or "").lower().strip()
             if rule_id and level:
                 rules[rule_id] = level
     return rules
@@ -197,9 +193,7 @@ def _load_linter_sarif(path: pathlib.Path) -> dict | None:
             # CodeQL SARIF classifies correctly instead of silently falling back
             # to "note" for every finding.
             rule_id = result.get("ruleId") or (result.get("rule") or {}).get("id") or ""
-            level = _normalise_linter_level(
-                result.get("level") or rule_levels.get(rule_id, "")
-            )
+            level = _normalise_linter_level(result.get("level") or rule_levels.get(rule_id, ""))
             if level == "error":
                 errors += 1
             elif level == "warning":
@@ -299,9 +293,7 @@ def save_history(path: pathlib.Path, history: list[dict]) -> None:
 # ── HTML rendering ────────────────────────────────────────────────────────────
 
 
-def render_dashboard(
-    cov_summary, cov_files, clang_tidy, clippy, codeql, history, timestamp
-) -> str:
+def render_dashboard(cov_summary, cov_files, clang_tidy, clippy, codeql, history, timestamp) -> str:
     env = Environment(loader=FileSystemLoader(str(_TEMPLATE_DIR)), autoescape=True)
     env.globals["cov_colour"] = _cov_colour
     env.globals["delta"] = _delta_badge
@@ -323,9 +315,7 @@ def render_dashboard(
 # ── GitHub Actions step summary ───────────────────────────────────────────────
 
 
-def write_github_summary(
-    cov_summary, clang_tidy, clippy, codeql, history, summary_path
-) -> None:
+def write_github_summary(cov_summary, clang_tidy, clippy, codeql, history, summary_path) -> None:
     lines = ["## Quality Dashboard\n"]
 
     lines.append("### Coverage\n")
@@ -406,17 +396,9 @@ def write_github_summary(
                 diff = cv - pv
                 sym = "↓" if diff < 0 else ("↑" if diff > 0 else "=")
                 improved = (diff < 0) if not higher_better else (diff > 0)
-                icon = (
-                    "✅"
-                    if (diff != 0 and improved)
-                    else ("⚠️" if (diff != 0 and not improved) else "")
-                )
-                lines.append(
-                    f"| {label} | {pv:.1f} | {cv:.1f} | {sym}{abs(diff):.1f} {icon} |"
-                )
-        lines.append(
-            f"\n_Tracking since {history[0].get('date', 'start')} ({len(history)} runs)_"
-        )
+                icon = "✅" if (diff != 0 and improved) else ("⚠️" if (diff != 0 and not improved) else "")
+                lines.append(f"| {label} | {pv:.1f} | {cv:.1f} | {sym}{abs(diff):.1f} {icon} |")
+        lines.append(f"\n_Tracking since {history[0].get('date', 'start')} ({len(history)} runs)_")
 
     with open(summary_path, "a", encoding="utf-8") as fh:
         fh.write("\n".join(lines) + "\n")
@@ -503,9 +485,7 @@ def main() -> int:
         save_history(hist_path, history)
 
     html_path.write_text(
-        render_dashboard(
-            cov_summary, cov_files, clang_tidy, clippy, codeql, history, timestamp
-        ),
+        render_dashboard(cov_summary, cov_files, clang_tidy, clippy, codeql, history, timestamp),
         encoding="utf-8",
     )
 
@@ -513,15 +493,11 @@ def main() -> int:
     if cov_summary:
         print(f"  Lines:     {cov_summary['line_pct']:.1f}% ({cov_summary['lines']})")
         print(f"  Functions: {cov_summary['func_pct']:.1f}% ({cov_summary['funcs']})")
-        print(
-            f"  Branches:  {cov_summary['branch_pct']:.1f}% ({cov_summary['branches']})"
-        )
+        print(f"  Branches:  {cov_summary['branch_pct']:.1f}% ({cov_summary['branches']})")
     else:
         print("  Coverage:  N/A")
     if clang_tidy:
-        print(
-            f"  Clang-Tidy errors: {clang_tidy['errors']}  warnings: {clang_tidy['warnings']}"
-        )
+        print(f"  Clang-Tidy errors: {clang_tidy['errors']}  warnings: {clang_tidy['warnings']}")
     else:
         print("  Clang-Tidy: N/A")
     if clippy:

@@ -19,9 +19,7 @@ import json
 import shutil
 
 
-def clean_up(
-    mw_com_config_path: str, processes: Optional[List[subprocess.Popen]] = None
-):
+def clean_up(mw_com_config_path: str, processes: Optional[List[subprocess.Popen]] = None):
 
     with open(mw_com_config_path, "r") as mw_com_config_fp:
         mw_com_config = json.load(mw_com_config_fp)
@@ -51,26 +49,18 @@ class CommandLineArguments:
     def __init__(self):
         # Parse command-line arguments
         if len(sys.argv) != 3:
-            print(
-                "Usage: python script.py <LOGGING_JSON_PATH>", "<path/to/config_dir> "
-            )
+            print("Usage: python script.py <LOGGING_JSON_PATH>", "<path/to/config_dir> ")
             print("config_dir will usually be an output artifact of a bazel.")
             sys.exit(1)
 
         run_dir = "/".join(sys.argv[0].split("/")[0:-1])
         config_dir = sys.argv[2]
 
-        self.client_mw_com_config_path = (
-            f"{run_dir}/{config_dir}/client_mw_com_config.json"
-        )
-        self.service_mw_com_config_path = (
-            f"{run_dir}/{config_dir}/service_mw_com_config.json"
-        )
+        self.client_mw_com_config_path = f"{run_dir}/{config_dir}/client_mw_com_config.json"
+        self.service_mw_com_config_path = f"{run_dir}/{config_dir}/service_mw_com_config.json"
 
         self.client_config_path = f"{run_dir}/{config_dir}/client_benchmark_config.json"
-        self.service_config_path = (
-            f"{run_dir}/{config_dir}/service_benchmark_config.json"
-        )
+        self.service_config_path = f"{run_dir}/{config_dir}/service_benchmark_config.json"
 
         self.service_path = f"{run_dir}/lola_benchmarking_service"
         self.client_path = f"{run_dir}/lola_benchmarking_client"
@@ -78,9 +68,7 @@ class CommandLineArguments:
 
 def launch_processes(cla: CommandLineArguments()):
 
-    service_proc = subprocess.Popen(
-        [cla.service_path, cla.service_config_path, cla.client_mw_com_config_path]
-    )
+    service_proc = subprocess.Popen([cla.service_path, cla.service_config_path, cla.client_mw_com_config_path])
     service_pid = service_proc.pid
 
     service_perf = subprocess.Popen(
@@ -98,9 +86,7 @@ def launch_processes(cla: CommandLineArguments()):
         ]
     )
 
-    client_proc = subprocess.Popen(
-        [cla.client_path, cla.client_config_path, cla.service_mw_com_config_path]
-    )
+    client_proc = subprocess.Popen([cla.client_path, cla.client_config_path, cla.service_mw_com_config_path])
     client_pid = client_proc.pid
 
     client_perf = subprocess.Popen(

@@ -16,9 +16,7 @@ def producer(target, num_cycles, data_type=None, **kwargs):
     args = ["-n", str(num_cycles)]
     if data_type is not None:
         args += ["-t", data_type]
-    return target.wrap_exec(
-        "bin/bigdata-producer", args, cwd="/opt/bigdata-com-api-sync", **kwargs
-    )
+    return target.wrap_exec("bin/bigdata-producer", args, cwd="/opt/bigdata-com-api-sync", **kwargs)
 
 
 def consumer(target, num_cycles, data_type=None, **kwargs):

@@ -34,13 +34,16 @@ clang_tidy = lint_clang_tidy_aspect(
 # Create a test rule for clang-tidy (for individual targets)
 clang_tidy_test = lint_test(aspect = clang_tidy)
 
-# Define the ruff linter aspect for Python targets. No repo config file is
-# passed, so ruff falls back to its own built-in default rule selection
-# (https://docs.astral.sh/ruff/rules/#default-rules) rather than a
-# project-specific override.
+# Define the ruff linter aspect for Python targets. The repo's //:.ruff.toml
+# is passed so the lint aspect and `ruff format` read the same config file,
+# but that file currently has no [lint]/[lint.*] tables, so ruff still falls
+# back to its own built-in default rule selection
+# (https://docs.astral.sh/ruff/rules/#default-rules). Wiring the file in now
+# means a future project-specific lint override only requires adding a
+# [lint] table to //:.ruff.toml, not touching this aspect definition.
 ruff = lint_ruff_aspect(
     binary = Label("@aspect_rules_lint//lint:ruff_bin"),
-    configs = [],
+    configs = [Label("//:.ruff.toml")],
 )
 
 APPLY_PATCHES = [

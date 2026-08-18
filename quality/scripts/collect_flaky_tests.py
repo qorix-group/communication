@@ -63,13 +63,9 @@ def _parse_bep(path: Path, target_stats: dict[str, dict]) -> None:
             failed_runs = int(failed_runs_value)
             total_runs = int(total_runs_value)
             if total_runs <= 0:
-                total_runs = len(summary.get("failed", [])) + len(
-                    summary.get("passed", [])
-                )
+                total_runs = len(summary.get("failed", [])) + len(summary.get("passed", []))
 
-            current = target_stats.get(
-                label, {"status": None, "failed_runs": 0, "total_runs": 0}
-            )
+            current = target_stats.get(label, {"status": None, "failed_runs": 0, "total_runs": 0})
             if overall == "FLAKY":
                 current["status"] = _merge_status(current["status"], "FLAKY")
             elif overall in FAILED_STATES:
@@ -93,9 +89,7 @@ def _parse_raw_log(path: Path, target_stats: dict[str, dict]) -> None:
                 continue
             target = match.group(1)
             status = match.group(2)
-            current = target_stats.get(
-                target, {"status": None, "failed_runs": 0, "total_runs": 0}
-            )
+            current = target_stats.get(target, {"status": None, "failed_runs": 0, "total_runs": 0})
             current["status"] = _merge_status(current["status"], status)
             target_stats[target] = current
 
@@ -133,9 +127,7 @@ def _write_markdown(summary: dict, output_md: Path) -> None:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(
-        description="Collect flaky tests from Bazel outputs."
-    )
+    parser = argparse.ArgumentParser(description="Collect flaky tests from Bazel outputs.")
     parser.add_argument("--config-name", required=True)
     parser.add_argument("--bep-json", required=True)
     parser.add_argument("--raw-log", required=True)
@@ -156,17 +148,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     for target, stats in target_stats.items():
         if stats["status"] != "FLAKY":
             continue
-        total_runs = (
-            int(stats["total_runs"])
-            if int(stats["total_runs"]) > 0
-            else int(args.runs_per_test)
-        )
+        total_runs = int(stats["total_runs"]) if int(stats["total_runs"]) > 0 else int(args.runs_per_test)
         failed_runs = int(stats["failed_runs"])
         if failed_runs <= 0:
             failed_runs = 1
-        failures_per_thousand = (
-            (failed_runs * 1000.0 / total_runs) if total_runs > 0 else 0.0
-        )
+        failures_per_thousand = (failed_runs * 1000.0 / total_runs) if total_runs > 0 else 0.0
         flaky_details.append(
             {
                 "target": target,
@@ -175,17 +161,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "failures_per_thousand": failures_per_thousand,
             }
         )
-    flaky_details.sort(
-        key=lambda item: (-item["failures_per_thousand"], item["target"])
-    )
+    flaky_details.sort(key=lambda item: (-item["failures_per_thousand"], item["target"]))
 
     flaky_tests = [item["target"] for item in flaky_details]
-    failed_tests = sorted(
-        target for target, stats in target_stats.items() if stats["status"] == "FAILED"
-    )
-    passed_tests = sorted(
-        target for target, stats in target_stats.items() if stats["status"] == "PASSED"
-    )
+    failed_tests = sorted(target for target, stats in target_stats.items() if stats["status"] == "FAILED")
+    passed_tests = sorted(target for target, stats in target_stats.items() if stats["status"] == "PASSED")
 
     summary = {
         "config_name": args.config_name,
@@ -202,9 +182,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     output_json = output_dir / "summary.json"
     output_md = output_dir / "summary.md"
-    output_json.write_text(
-        json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
+    output_json.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     _write_markdown(summary, output_md)
 
     if args.github_output:

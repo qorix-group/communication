@@ -226,14 +226,11 @@ def render_body(stats: Stats) -> str:
 def render_run_comment(record: RunRecord, run_url: str, reopened: bool = False) -> str:
     """Render a per-run ledger comment (human text + machine-readable marker)."""
     config_bits = ", ".join(
-        f"{name} {vals['failed_runs']}/{vals['total_runs']}"
-        for name, vals in sorted(record.configs.items())
+        f"{name} {vals['failed_runs']}/{vals['total_runs']}" for name, vals in sorted(record.configs.items())
     )
     lines = []
     if reopened:
-        lines.append(
-            "♻️ Reopened: this test was flaky again after the issue was closed."
-        )
+        lines.append("♻️ Reopened: this test was flaky again after the issue was closed.")
         lines.append("")
     lines.extend(
         [
@@ -258,11 +255,7 @@ def merge_body(existing_body: str, new_region: str) -> str:
     if STATS_BEGIN in existing_body and STATS_END in existing_body:
         return STATS_REGION_RE.sub(lambda _m: new_region, existing_body, count=1)
     separator = "\n\n" if existing_body.strip() else ""
-    return (
-        f"{existing_body.rstrip()}{separator}{new_region}\n"
-        if existing_body.strip()
-        else new_region + "\n"
-    )
+    return f"{existing_body.rstrip()}{separator}{new_region}\n" if existing_body.strip() else new_region + "\n"
 
 
 def _run_record_from_target(target_item: dict, ctx: RunContext) -> RunRecord:
@@ -311,9 +304,7 @@ def sync(merged_summary: dict, client: GitHubClient, ctx: RunContext) -> list[di
             body = render_body(stats)
             issue = client.create_issue(_issue_title(target), body, [FLAKY_LABEL])
             client.add_comment(issue, render_run_comment(this_run, ctx.run_url))
-            actions.append(
-                {"target": target, "action": "created", "issue": issue.number}
-            )
+            actions.append({"target": target, "action": "created", "issue": issue.number})
             continue
 
         # Update branch.
@@ -332,15 +323,11 @@ def sync(merged_summary: dict, client: GitHubClient, ctx: RunContext) -> list[di
         reopened = existing.state == "closed"
         if reopened:
             client.reopen_issue(existing)
-        client.add_comment(
-            existing, render_run_comment(this_run, ctx.run_url, reopened=reopened)
-        )
+        client.add_comment(existing, render_run_comment(this_run, ctx.run_url, reopened=reopened))
 
         all_records = existing_records + [this_run]
         stats = aggregate(target, all_records)
-        client.update_issue_body(
-            existing, merge_body(existing.body, render_body(stats))
-        )
+        client.update_issue_body(existing, merge_body(existing.body, render_body(stats)))
         actions.append(
             {
                 "target": target,
@@ -411,9 +398,7 @@ class RestGitHubClient:
 
     def search_issue(self, target: str) -> Issue | None:
         # Search open+closed issues carrying the label; match by body marker.
-        issues = self._paginate(
-            f"/repos/{self._repo}/issues?state=all&labels={FLAKY_LABEL}"
-        )
+        issues = self._paginate(f"/repos/{self._repo}/issues?state=all&labels={FLAKY_LABEL}")
         for raw in issues:
             if "pull_request" in raw:
                 continue
@@ -444,15 +429,11 @@ class RestGitHubClient:
         return Issue(number=int(raw["number"]), body=body, state="open", labels=labels)
 
     def update_issue_body(self, issue: Issue, body: str) -> None:
-        self._request(
-            "PATCH", f"/repos/{self._repo}/issues/{issue.number}", {"body": body}
-        )
+        self._request("PATCH", f"/repos/{self._repo}/issues/{issue.number}", {"body": body})
         issue.body = body
 
     def reopen_issue(self, issue: Issue) -> None:
-        self._request(
-            "PATCH", f"/repos/{self._repo}/issues/{issue.number}", {"state": "open"}
-        )
+        self._request("PATCH", f"/repos/{self._repo}/issues/{issue.number}", {"state": "open"})
         issue.state = "open"
 
     def add_comment(self, issue: Issue, body: str) -> None:
@@ -515,9 +496,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     else:
         token = os.environ.get("GITHUB_TOKEN", "")
         if not token:
-            parser.error(
-                "GITHUB_TOKEN environment variable is required (or use --dry-run)."
-            )
+            parser.error("GITHUB_TOKEN environment variable is required (or use --dry-run).")
         client = RestGitHubClient(args.repo, token)
 
     actions = sync(merged_summary, client, ctx)

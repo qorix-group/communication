@@ -24,9 +24,7 @@ class FieldScenario(str, Enum):
 
 def consumer(target, scenario, config, **kwargs):
     args = ["--mode", scenario.value, "--service-instance-manifest", f"./etc/{config}"]
-    return target.wrap_exec(
-        "bin/consumer", args, cwd="/opt/MainConsumerApp", wait_on_exit=True, **kwargs
-    )
+    return target.wrap_exec("bin/consumer", args, cwd="/opt/MainConsumerApp", wait_on_exit=True, **kwargs)
 
 
 def provider(target, scenario, config, **kwargs):
