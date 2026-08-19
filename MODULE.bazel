@@ -202,20 +202,6 @@ imagefs.toolchain(
 )
 use_repo(imagefs, "score_qnx_aarch64_ifs_toolchain", "score_qnx_x86_64_ifs_toolchain")
 
-# Register the QNX toolchains so that toolchain resolution can select them for
-# any target built for a QNX platform (e.g. via the test_on_qnx transition),
-# without every caller having to pass --extra_toolchains. This is also why they
-# are no longer listed as --extra_toolchains in the qnx_x86_64/qnx_arm64
-# .bazelrc configs: keeping them there in addition to here would just
-# reintroduce the duplication.
-register_toolchains(
-    "@score_qnx_x86_64_ifs_toolchain//:ifs-x86_64-qnx-sdp_8.0.0",
-    "@score_qcc_x86_64_toolchain//:x86_64-qnx-sdp_8.0.0",
-    "@score_qnx_aarch64_ifs_toolchain//:ifs-aarch64-qnx-sdp_8.0.0",
-    "@score_qcc_aarch64_toolchain//:aarch64-qnx-sdp_8.0.0",
-    dev_dependency = True,
-)
-
 # rules_distroless is only used via its plain, BCR-published apt.install()
 # API (see @score_tooling//bazel/rules/sysroot_from_lock:sysroot_from_lock.bzl
 # for how the amd64/arm64 sysroots are derived from the resulting lockfiles
