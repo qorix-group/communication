@@ -15,7 +15,6 @@
 
 from __future__ import annotations
 
-import os
 import sys
 import types
 from unittest.mock import MagicMock, patch
@@ -23,7 +22,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 import yaml
 
-import helpers
 from helpers import (
     CHECKLIST_MARKER,
     MERGE_QUEUE_COMMENT_MARKER,
