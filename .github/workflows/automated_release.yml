@@ -85,39 +85,18 @@ jobs:
       SCORE_QNX_PASSWORD: ${{ secrets.SCORE_QNX_PASSWORD }}
       UBUNTU_SNAPSHOT_MIRROR_URL: ${{ secrets.UBUNTU_SNAPSHOT_MIRROR_URL }}
 
-  run-coverage-report:
+  run-nightly-quality:
     needs: create-draft-release
-    uses: ./.github/workflows/_coverage_report.yml
-    with:
-      cache-mode: read-only
+    uses: ./.github/workflows/nightly_quality.yml
     permissions:
-      contents: read
-      actions: write
-    secrets:
-      UBUNTU_SNAPSHOT_MIRROR_URL: ${{ secrets.UBUNTU_SNAPSHOT_MIRROR_URL }}
-
-  run-clang-tidy:
-    needs: create-draft-release
-    uses: ./.github/workflows/_clang_tidy.yml
-    with:
-      cache-mode: read-only
-    permissions:
-      contents: read
-      actions: write
-    secrets:
-      UBUNTU_SNAPSHOT_MIRROR_URL: ${{ secrets.UBUNTU_SNAPSHOT_MIRROR_URL }}
-
-  run-codeql:
-    needs: create-draft-release
-    uses: ./.github/workflows/_codeql.yml
-    with:
-      cache-mode: read-only
-    permissions:
-      contents: read
+      contents: write
       actions: write
       security-events: write
     secrets:
       UBUNTU_SNAPSHOT_MIRROR_URL: ${{ secrets.UBUNTU_SNAPSHOT_MIRROR_URL }}
+      SCORE_QNX_LICENSE: ${{ secrets.SCORE_QNX_LICENSE }}
+      SCORE_QNX_USER: ${{ secrets.SCORE_QNX_USER }}
+      SCORE_QNX_PASSWORD: ${{ secrets.SCORE_QNX_PASSWORD }}
 
   run-docs-build:
     needs: create-draft-release
@@ -152,182 +131,38 @@ jobs:
           name: ${{ github.event.repository.name }}_docs_release_${{ needs.create-draft-release.outputs.release-tag }}
           path: docs-${{ needs.create-draft-release.outputs.release-tag }}.tar.gz
 
-  upload-coverage-report:
+  upload-quality-reports:
     needs:
       - create-draft-release
-      - run-coverage-report
+      - run-nightly-quality
     runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6.0.2
-
-      - name: Abort if coverage failed
-        if: needs.run-coverage-report.result != 'success'
+      - name: Abort if quality jobs failed
+        if: needs.run-nightly-quality.result != 'success'
         run: |
-          echo "::error::Coverage failed — aborting release. Draft will be deleted."
+          echo "::error::One or more quality jobs failed — aborting release. Draft will be deleted."
           exit 1
 
-      - name: Download coverage report artifact
+      # ------------------------------------------------------------------
+      # nightly_quality.yml's deploy-quality-reports job already downloads,
+      # merges, and packages coverage/clang-tidy/clippy/CodeQL findings plus
+      # the generated dashboard into a single "nightly-quality-reports"
+      # artifact — reuse it directly instead of duplicating that logic here.
+      # ------------------------------------------------------------------
+      - name: Download unified quality reports artifact
         uses: actions/download-artifact@v4
         with:
-          name: ${{ github.event.repository.name }}_coverage_report_${{ github.sha }}
-          path: ./
+          name: nightly-quality-reports
+          path: ./_quality
 
-      - name: Upload coverage report to existing draft release
+      - name: Package and upload quality reports to existing draft release
         run: |
           VERSION="${{ needs.create-draft-release.outputs.release-tag }}"
           REPO_NAME="${{ github.event.repository.name }}"
-          mv "${REPO_NAME}_coverage_report_${{ github.sha }}.zip" "${REPO_NAME}_coverage_report_${VERSION}.zip"
-          gh release upload "${VERSION}" "${REPO_NAME}_coverage_report_${VERSION}.zip" --clobber
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  upload-clang-tidy-report:
-    needs:
-      - create-draft-release
-      - run-clang-tidy
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6.0.2
-
-      - name: Abort if clang-tidy failed
-        if: needs.run-clang-tidy.result != 'success'
-        run: |
-          echo "::error::Clang-Tidy failed — aborting release. Draft will be deleted."
-          exit 1
-
-      - name: Download clang-tidy findings artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: clang-tidy-findings
-          path: ./clang_tidy_report
-
-      - name: Package and upload clang-tidy report to existing draft release
-        run: |
-          VERSION="${{ needs.create-draft-release.outputs.release-tag }}"
-          REPO_NAME="${{ github.event.repository.name }}"
-          ARCHIVE="${REPO_NAME}_clang_tidy_report_${VERSION}.zip"
-          (cd clang_tidy_report && zip -r "../${ARCHIVE}" .)
-          gh release upload "${VERSION}" "${ARCHIVE}" --clobber
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  upload-codeql-report:
-    needs:
-      - create-draft-release
-      - run-codeql
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6.0.2
-
-      - name: Abort if CodeQL failed
-        if: needs.run-codeql.result != 'success'
-        run: |
-          echo "::error::CodeQL failed — aborting release. Draft will be deleted."
-          exit 1
-
-      - name: Download CodeQL SARIF findings artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: codeql-sarif-results
-          path: ./codeql_report
-
-      - name: Download CodeQL MISRA reports artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: codeql-misra-reports
-          path: ./codeql_report
-
-      - name: Package and upload CodeQL report to existing draft release
-        run: |
-          VERSION="${{ needs.create-draft-release.outputs.release-tag }}"
-          REPO_NAME="${{ github.event.repository.name }}"
-          ARCHIVE="${REPO_NAME}_codeql_report_${VERSION}.zip"
-          (cd codeql_report && zip -r "../${ARCHIVE}" .)
-          gh release upload "${VERSION}" "${ARCHIVE}" --clobber
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  upload-dashboard-report:
-    needs:
-      - create-draft-release
-      - run-coverage-report
-      - run-clang-tidy
-      - run-codeql
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6.0.2
-
-      - name: Abort if any quality job failed
-        if: needs.run-coverage-report.result != 'success' || needs.run-clang-tidy.result != 'success' || needs.run-codeql.result != 'success'
-        run: |
-          echo "::error::A quality job failed — aborting release. Draft will be deleted."
-          exit 1
-
-      - name: Set up Bazel
-        uses: ./.github/actions/00_infrastructure/prepare_bazel_environment
-        with:
-          disk-cache: ""
-          cache-mode: read-only
-          ubuntu-snapshot-mirror-url: ${{ secrets.UBUNTU_SNAPSHOT_MIRROR_URL }}
-
-      - name: Download coverage artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ github.event.repository.name }}_coverage_report_${{ github.sha }}
-          path: /tmp/coverage_zip
-
-      - name: Extract coverage report
-        run: |
-          bash quality/scripts/extract_coverage_artifact.sh \
-            /tmp/coverage_zip \
-            "${GITHUB_WORKSPACE}/_quality/coverage"
-
-      - name: Download clang-tidy findings
-        uses: actions/download-artifact@v4
-        with:
-          name: clang-tidy-findings
-          path: /tmp/clang_tidy
-
-      - name: Download CodeQL SARIF artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: codeql-sarif-results
-          path: /tmp/codeql
-
-      - name: Prepare CodeQL findings for dashboard
-        run: |
-          mkdir -p "${GITHUB_WORKSPACE}/_quality"
-          if [[ -f /tmp/codeql/codeql-nightly.sarif ]]; then
-            cp /tmp/codeql/codeql-nightly.sarif \
-               "${GITHUB_WORKSPACE}/_quality/codeql_findings.sarif"
-          fi
-
-      - name: Generate quality dashboard
-        run: |
-          bazel run --config=ci //quality/dashboard:generate_dashboard -- \
-            --lcov     /tmp/coverage_zip/extracted/artifacts/coverage_report.dat \
-            --clang-tidy /tmp/clang_tidy/clang_tidy_findings.txt \
-            --codeql "${GITHUB_WORKSPACE}/_quality/codeql_findings.sarif" \
-            --html     "${GITHUB_WORKSPACE}/_dashboard/index.html"
-
-      - name: Package and upload quality dashboard to existing draft release
-        run: |
-          VERSION="${{ needs.create-draft-release.outputs.release-tag }}"
-          REPO_NAME="${{ github.event.repository.name }}"
-          ARCHIVE="${REPO_NAME}_quality_dashboard_${VERSION}.zip"
-          (cd _dashboard && zip -r "../${ARCHIVE}" .)
+          ARCHIVE="${REPO_NAME}_quality_reports_${VERSION}.zip"
+          (cd _quality && zip -r "../${ARCHIVE}" .)
           gh release upload "${VERSION}" "${ARCHIVE}" --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -367,14 +202,9 @@ jobs:
       - create-draft-release
       - run-host-quality
       - run-build-and-test-qnx
-      - run-coverage-report
-      - run-clang-tidy
-      - run-codeql
+      - run-nightly-quality
       - run-docs-build
-      - upload-coverage-report
-      - upload-clang-tidy-report
-      - upload-codeql-report
-      - upload-dashboard-report
+      - upload-quality-reports
       - upload-docs-report
     if: ${{ success() }}
     permissions:
@@ -393,14 +223,9 @@ jobs:
       - create-draft-release
       - run-host-quality
       - run-build-and-test-qnx
-      - run-coverage-report
-      - run-clang-tidy
-      - run-codeql
+      - run-nightly-quality
       - run-docs-build
-      - upload-coverage-report
-      - upload-clang-tidy-report
-      - upload-codeql-report
-      - upload-dashboard-report
+      - upload-quality-reports
       - upload-docs-report
     if: ${{ failure() || cancelled() }}
     permissions:
