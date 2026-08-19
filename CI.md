@@ -222,6 +222,13 @@ but with the addition of the flag `--runs_per_test=20`.
 To be able to have fast feedback, all our CI job use Bazel cache. To avoid permanent cache poisoning and cache size exploding, the cache is recreated nightly.
 More details can be found in the [cache strategy design document](./.github/cache-strategy.md).
 
+#### Review checklists
+
+Ensures that specific manual actions are performed by the reviewers of a pull request.
+Reviewers must acknowledge that they have performed the actions in the checklist before a pull request can be merged.
+During merge to the base branch, the acknowledgements are stored in the git history as evidence.
+The checklists are defined in the [review checklist configuration document](./.github/review_checklists.yml).
+
 ## Post-mortem analysis and follow-up actions
 
 It is acknowledged that this design is not perfect, and experience will teach us that this design will have to be adapted.
