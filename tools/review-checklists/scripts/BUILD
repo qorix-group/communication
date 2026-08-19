@@ -16,7 +16,7 @@ load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
 py_library(
     name = "helpers",
     srcs = ["helpers.py"],
-    data = ["//.github:review_checklists_config"],
+    data = ["//:review_checklists_config"],
     imports = ["."],
     visibility = ["//tools/review-checklists:__subpackages__"],
     deps = [

@@ -23,6 +23,17 @@ exports_files(["MODULE.bazel"])
 
 sync_skills()
 
+# Kept in the root package (rather than a .github/BUILD file) so that this
+# package doesn't become its own Bazel package: a BUILD file under .github
+# would create a package boundary there, causing the sync_skills.check
+# glob(".github/skills/score-*/**") above to silently stop matching any
+# files and always report the score_tooling skills as missing.
+filegroup(
+    name = "review_checklists_config",
+    srcs = [".github/review_checklists.yml"],
+    visibility = ["//tools/review-checklists:__subpackages__"],
+)
+
 sphinx_docs_library(
     name = "contributing_md",
     srcs = ["CONTRIBUTING.md"],
