@@ -77,9 +77,7 @@ def _get_files_in_latest_push(pr: Any, repo: Any) -> list[str]:
         try:
             run_id = int(run_id_raw)
             workflow = repo.get_workflow(TRIGGER_WORKFLOW_FILE)
-            runs = list(
-                workflow.get_runs(branch=head_branch, event=TRIGGER_EVENT_NAME)
-            )
+            runs = list(workflow.get_runs(branch=head_branch, event=TRIGGER_EVENT_NAME))
             run_ids = [run.id for run in runs]
             idx = run_ids.index(run_id)
             before_sha = runs[idx + 1].head_sha
@@ -110,11 +108,7 @@ def handle_synchronize(pr: Any, repo: Any, config_path: str) -> None:
         return
 
     existing = find_existing_checklist_comments(pr)
-    posted_affected_ids = [
-        checklist["id"]
-        for checklist in affected_checklists
-        if checklist["id"] in existing
-    ]
+    posted_affected_ids = [checklist["id"] for checklist in affected_checklists if checklist["id"] in existing]
     ok_replies = find_ok_replies_for_checklists(pr, existing, posted_affected_ids)
 
     any_invalidated = False
@@ -127,10 +121,7 @@ def handle_synchronize(pr: Any, repo: Any, config_path: str) -> None:
             any_invalidated = True
             try:
                 ok_comment.delete()
-                print(
-                    f"Deleted OK comment {ok_comment.id} from {user} "
-                    f"for checklist '{finding_comment.id}'"
-                )
+                print(f"Deleted OK comment {ok_comment.id} from {user} for checklist '{finding_comment.id}'")
             except Exception as e:
                 print(f"Warning: could not delete comment {ok_comment.id}: {e}")
 
@@ -144,9 +135,7 @@ def handle_synchronize(pr: Any, repo: Any, config_path: str) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Invalidate OK acknowledgements after a new push."
-    )
+    parser = argparse.ArgumentParser(description="Invalidate OK acknowledgements after a new push.")
     parser.add_argument(
         "--config-path",
         default=".github/review_checklists.yml",

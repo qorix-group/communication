@@ -159,11 +159,7 @@ def make_checklist_comment_body(checklist: dict) -> str:
     marker = CHECKLIST_MARKER.format(checklist_id=checklist["id"])
     include_patterns = checklist.get("include", [])
     exclude_patterns = checklist.get("exclude", [])
-    exclude_line = (
-        f"**Excluding files matching:** `{'`, `'.join(exclude_patterns)}`\n\n"
-        if exclude_patterns
-        else ""
-    )
+    exclude_line = f"**Excluding files matching:** `{'`, `'.join(exclude_patterns)}`\n\n" if exclude_patterns else ""
     body = (
         f"{marker}\n"
         f"## 📋 {checklist['name']}\n\n"
@@ -230,9 +226,7 @@ def find_ok_replies_for_checklists(
     """
     replies: dict[str, list[Any]] = {checklist_id: [] for checklist_id in checklist_ids}
     comment_id_to_checklist_id: dict[int, str] = {
-        comment.id: checklist_id
-        for checklist_id, comment in existing_comments.items()
-        if checklist_id in checklist_ids
+        comment.id: checklist_id for checklist_id, comment in existing_comments.items() if checklist_id in checklist_ids
     }
 
     for comment in pr.get_review_comments():
@@ -294,10 +288,7 @@ def set_commit_status(
 ) -> None:
     """Set a commit status on the given SHA."""
     desc = description[:COMMIT_STATUS_DESCRIPTION_MAX_LENGTH]
-    print(
-        f"Setting commit status: context='{context}', state='{state}', "
-        f"sha='{sha}', description='{desc}'"
-    )
+    print(f"Setting commit status: context='{context}', state='{state}', sha='{sha}', description='{desc}'")
     repo.get_commit(sha).create_status(
         state=state,
         description=desc,
@@ -429,9 +420,7 @@ def is_pr_in_merge_queue(pr: Any) -> bool:
     PR itself and fails the commit status (does not default to success)
     if that resolution or validation fails.
     """
-    repo_name = getattr(
-        getattr(getattr(pr, "base", None), "repo", None), "full_name", ""
-    )
+    repo_name = getattr(getattr(getattr(pr, "base", None), "repo", None), "full_name", "")
     if not repo_name or "/" not in repo_name:
         repo_name = os.environ.get("GITHUB_REPOSITORY", "")
     if "/" not in repo_name:
@@ -468,12 +457,7 @@ def is_pr_in_merge_queue(pr: Any) -> bool:
         print(f"GraphQL merge-queue lookup failed: {exc}")
         return False
 
-    is_in_queue = (
-        result.get("data", {})
-        .get("repository", {})
-        .get("pullRequest", {})
-        .get("isInMergeQueue")
-    )
+    is_in_queue = result.get("data", {}).get("repository", {}).get("pullRequest", {}).get("isInMergeQueue")
     if isinstance(is_in_queue, bool):
         return is_in_queue
 

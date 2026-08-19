@@ -45,9 +45,7 @@ from helpers import (
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Post or update review-checklist findings on a PR."
-    )
+    parser = argparse.ArgumentParser(description="Post or update review-checklist findings on a PR.")
     parser.add_argument(
         "--config-path",
         default=".github/review_checklists.yml",
@@ -102,11 +100,7 @@ def main() -> None:
             print(f"Created checklist finding for '{checklist['id']}'")
 
     # Collect current acknowledgements and update evidence in PR description
-    posted_relevant_ids = [
-        checklist["id"]
-        for checklist in relevant_checklists
-        if checklist["id"] in existing
-    ]
+    posted_relevant_ids = [checklist["id"] for checklist in relevant_checklists if checklist["id"] in existing]
     if posted_relevant_ids:
         ack_details = collect_acknowledgement_details(pr, existing, posted_relevant_ids)
         evidence_block = build_evidence_block(relevant_checklists, ack_details)

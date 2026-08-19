@@ -206,9 +206,7 @@ class TestValidateChecklistEvidence:
             # Only api-review has been posted; doc-review has not.
             return_value={"api-review": api_review_comment},
         ):
-            state, description = _validate_checklist_evidence(
-                pr, TWO_SAMPLE_CHECKLISTS
-            )
+            state, description = _validate_checklist_evidence(pr, TWO_SAMPLE_CHECKLISTS)
 
         assert state == "pending"
         assert description == "Checklist comments not yet posted"
@@ -241,9 +239,7 @@ class TestValidateChecklistEvidence:
                 return_value=["alice"],
             ),
         ):
-            state, description = _validate_checklist_evidence(
-                pr, SAMPLE_CHECKLISTS
-            )
+            state, description = _validate_checklist_evidence(pr, SAMPLE_CHECKLISTS)
 
         assert state == "success"
         assert description == "All checklists acknowledged by all approving reviewers"
@@ -263,9 +259,7 @@ class TestCheckAcknowledgementsMain:
     )
     @patch("check_acknowledgements.get_repo_and_pr")
     @patch("check_acknowledgements.get_github_client")
-    def test_no_relevant_checklists_sets_success(
-        self, mock_gh, mock_repo_pr, mock_load, mock_status, mock_in_queue
-    ):
+    def test_no_relevant_checklists_sets_success(self, mock_gh, mock_repo_pr, mock_load, mock_status, mock_in_queue):
         repo = MagicMock()
         pr = MagicMock()
         pr.head.sha = "abc"
@@ -274,9 +268,7 @@ class TestCheckAcknowledgementsMain:
         # Ensure the argument parser doesn't see pytest's CLI arguments.
         with patch.object(sys, "argv", ["check_acknowledgements"]):
             main()
-        mock_status.assert_called_once_with(
-            repo, "abc", "success", "No checklists applicable"
-        )
+        mock_status.assert_called_once_with(repo, "abc", "success", "No checklists applicable")
 
     @patch("check_acknowledgements.is_pr_in_merge_queue", return_value=False)
     @patch("check_acknowledgements.set_commit_status")
@@ -303,9 +295,7 @@ class TestCheckAcknowledgementsMain:
         with patch.object(sys, "argv", ["check_acknowledgements"]):
             main()
 
-        mock_status.assert_called_once_with(
-            repo, "abc", "pending", "Checklist comments not yet posted"
-        )
+        mock_status.assert_called_once_with(repo, "abc", "pending", "Checklist comments not yet posted")
 
     @patch("check_acknowledgements.is_pr_in_merge_queue", return_value=False)
     @patch("check_acknowledgements.set_commit_status")
@@ -349,9 +339,7 @@ class TestCheckAcknowledgementsMain:
         ):
             main()
 
-        mock_status.assert_called_once_with(
-            repo, "abc", "pending", "Checklist comments not yet posted"
-        )
+        mock_status.assert_called_once_with(repo, "abc", "pending", "Checklist comments not yet posted")
 
     @patch("check_acknowledgements.is_pr_in_merge_queue", return_value=False)
     @patch("check_acknowledgements.set_commit_status")
@@ -386,9 +374,7 @@ class TestCheckAcknowledgementsMain:
         ):
             main()
 
-        mock_status.assert_called_with(
-            repo, "abc", "pending", "Awaiting at least one approving review"
-        )
+        mock_status.assert_called_with(repo, "abc", "pending", "Awaiting at least one approving review")
 
     @patch("check_acknowledgements.is_pr_in_merge_queue", return_value=False)
     @patch("check_acknowledgements.set_commit_status")
@@ -511,9 +497,7 @@ class TestCheckAcknowledgementsMain:
         ):
             main()
 
-        mock_status.assert_called_with(
-            repo, "abc", "pending", "api-review: awaiting bob"
-        )
+        mock_status.assert_called_with(repo, "abc", "pending", "api-review: awaiting bob")
 
     @patch("check_acknowledgements.ensure_merge_queue_notice_description")
     @patch("check_acknowledgements.ensure_merge_queue_notice_comment")
@@ -550,9 +534,7 @@ class TestCheckAcknowledgementsMain:
     @patch("check_acknowledgements.set_commit_status")
     @patch("check_acknowledgements.get_repo_and_pr")
     @patch("check_acknowledgements.get_github_client")
-    def test_merge_group_without_pr_number_sets_failure(
-        self, mock_gh, mock_repo_pr, mock_status
-    ):
+    def test_merge_group_without_pr_number_sets_failure(self, mock_gh, mock_repo_pr, mock_status):
         repo = MagicMock()
         gh = MagicMock()
         gh.get_repo.return_value = repo

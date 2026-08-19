@@ -156,9 +156,7 @@ class TestLoadChecklists:
         monkeypatch.delenv("RUNFILES_MANIFEST_FILE", raising=False)
         with patch(
             "helpers._find_checklists_config",
-            side_effect=FileNotFoundError(
-                "Cannot locate .github/review_checklists.yml"
-            ),
+            side_effect=FileNotFoundError("Cannot locate .github/review_checklists.yml"),
         ):
             with pytest.raises(FileNotFoundError):
                 load_checklists()
@@ -405,9 +403,7 @@ class TestFindOkRepliesForChecklists:
             pr = MagicMock()
             pr.get_review_comments.return_value = [c1, c2]
 
-            result = find_ok_replies_for_checklists(
-                pr, {"api-review": c1}, ["api-review"]
-            )
+            result = find_ok_replies_for_checklists(pr, {"api-review": c1}, ["api-review"])
             assert len(result["api-review"]) == 1
 
     def test_ignores_reply_to_different_comment(self):
@@ -615,9 +611,7 @@ class TestFindChecklistsConfig:
 class TestIsPrInMergeQueue:
     @patch("helpers._run_graphql_query")
     def test_true_when_graphql_returns_true(self, mock_query):
-        mock_query.return_value = {
-            "data": {"repository": {"pullRequest": {"isInMergeQueue": True}}}
-        }
+        mock_query.return_value = {"data": {"repository": {"pullRequest": {"isInMergeQueue": True}}}}
 
         pr = MagicMock()
         pr.base.repo.full_name = "org/repo"
@@ -628,9 +622,7 @@ class TestIsPrInMergeQueue:
 
     @patch("helpers._run_graphql_query")
     def test_false_when_graphql_returns_false(self, mock_query):
-        mock_query.return_value = {
-            "data": {"repository": {"pullRequest": {"isInMergeQueue": False}}}
-        }
+        mock_query.return_value = {"data": {"repository": {"pullRequest": {"isInMergeQueue": False}}}}
 
         pr = MagicMock()
         pr.base.repo.full_name = "org/repo"
@@ -673,12 +665,7 @@ class TestEnsureMergeQueueNoticeDescription:
 
     def test_updates_tampered_notice_block(self):
         pr = MagicMock()
-        pr.body = (
-            "User summary\n"
-            f"{MERGE_QUEUE_NOTICE_START}\n"
-            "tampered\n"
-            f"{MERGE_QUEUE_NOTICE_END}"
-        )
+        pr.body = f"User summary\n{MERGE_QUEUE_NOTICE_START}\ntampered\n{MERGE_QUEUE_NOTICE_END}"
 
         ensure_merge_queue_notice_description(pr)
 

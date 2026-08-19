@@ -108,9 +108,7 @@ class TestGetFilesInLatestPush:
         result = _get_files_in_latest_push(pr, repo)
 
         repo.get_workflow.assert_called_once_with("review_checklists_trigger.yml")
-        workflow.get_runs.assert_called_once_with(
-            branch="feature", event="pull_request_target"
-        )
+        workflow.get_runs.assert_called_once_with(branch="feature", event="pull_request_target")
         repo.compare.assert_called_once_with("oldsha", "newsha")
         assert result == ["src/api/handler.py"]
 

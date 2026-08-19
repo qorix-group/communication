@@ -46,9 +46,7 @@ class TestPostChecklistsMain:
     @patch("post_checklists.load_checklists", return_value=SAMPLE_CHECKLISTS)
     @patch("post_checklists.get_repo_and_pr")
     @patch("post_checklists.get_github_client")
-    def test_no_relevant_checklists_sets_success(
-        self, mock_gh, mock_repo_pr, mock_load, mock_status
-    ):
+    def test_no_relevant_checklists_sets_success(self, mock_gh, mock_repo_pr, mock_load, mock_status):
         repo = MagicMock()
         pr = MagicMock()
         pr.head.sha = "abc123"
@@ -57,18 +55,14 @@ class TestPostChecklistsMain:
 
         main()
 
-        mock_status.assert_called_once_with(
-            repo, "abc123", "success", "No checklists applicable"
-        )
+        mock_status.assert_called_once_with(repo, "abc123", "success", "No checklists applicable")
 
     @patch("post_checklists.set_commit_status")
     @patch("post_checklists.find_existing_checklist_comments", return_value={})
     @patch("post_checklists.load_checklists", return_value=SAMPLE_CHECKLISTS)
     @patch("post_checklists.get_repo_and_pr")
     @patch("post_checklists.get_github_client")
-    def test_creates_new_review_with_inline_comment(
-        self, mock_gh, mock_repo_pr, mock_load, mock_existing, mock_status
-    ):
+    def test_creates_new_review_with_inline_comment(self, mock_gh, mock_repo_pr, mock_load, mock_existing, mock_status):
         repo = MagicMock()
         pr = MagicMock()
         pr.head.sha = "abc123"
@@ -94,9 +88,7 @@ class TestPostChecklistsMain:
     @patch("post_checklists.load_checklists", return_value=SAMPLE_CHECKLISTS)
     @patch("post_checklists.get_repo_and_pr")
     @patch("post_checklists.get_github_client")
-    def test_updates_existing_review_when_body_changed(
-        self, mock_gh, mock_repo_pr, mock_load, mock_status
-    ):
+    def test_updates_existing_review_when_body_changed(self, mock_gh, mock_repo_pr, mock_load, mock_status):
         repo = MagicMock()
         pr = MagicMock()
         pr.head.sha = "abc123"
@@ -118,9 +110,7 @@ class TestPostChecklistsMain:
     @patch("post_checklists.load_checklists", return_value=SAMPLE_CHECKLISTS)
     @patch("post_checklists.get_repo_and_pr")
     @patch("post_checklists.get_github_client")
-    def test_skips_update_when_body_unchanged(
-        self, mock_gh, mock_repo_pr, mock_load, mock_status
-    ):
+    def test_skips_update_when_body_unchanged(self, mock_gh, mock_repo_pr, mock_load, mock_status):
         repo = MagicMock()
         pr = MagicMock()
         pr.head.sha = "abc123"

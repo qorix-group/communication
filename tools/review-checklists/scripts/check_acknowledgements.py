@@ -81,10 +81,7 @@ def _collect_ok_acknowledgements(
     The conversation thread itself associates the reply with the checklist.
     """
     replies = find_ok_replies_for_checklists(pr, existing_comments, posted_relevant_ids)
-    return {
-        checklist_id: {comment.user.login for comment in comments}
-        for checklist_id, comments in replies.items()
-    }
+    return {checklist_id: {comment.user.login for comment in comments} for checklist_id, comments in replies.items()}
 
 
 def _acknowledgement_status(
@@ -103,17 +100,12 @@ def _acknowledgement_status(
 
     missing: dict[str, list[str]] = {}
     for checklist_id in posted_relevant_ids:
-        not_acked = [
-            username for username in approvers if username not in acks[checklist_id]
-        ]
+        not_acked = [username for username in approvers if username not in acks[checklist_id]]
         if not_acked:
             missing[checklist_id] = not_acked
 
     if missing:
-        summary_parts = [
-            f"{checklist_id}: awaiting {', '.join(users)}"
-            for checklist_id, users in missing.items()
-        ]
+        summary_parts = [f"{checklist_id}: awaiting {', '.join(users)}" for checklist_id, users in missing.items()]
         return "pending", "; ".join(summary_parts)
 
     return "success", "All checklists acknowledged by all approving reviewers"
@@ -137,11 +129,7 @@ def _validate_checklist_evidence(pr: Any, checklists: list[dict]) -> tuple[str, 
         return "success", "No checklists applicable"
 
     existing = find_existing_checklist_comments(pr)
-    posted_relevant_ids = [
-        checklist["id"]
-        for checklist in relevant_checklists
-        if checklist["id"] in existing
-    ]
+    posted_relevant_ids = [checklist["id"] for checklist in relevant_checklists if checklist["id"] in existing]
 
     if len(posted_relevant_ids) < len(relevant_checklists):
         # At least one relevant checklist has no posted comment yet — do not
@@ -156,9 +144,7 @@ def _validate_checklist_evidence(pr: Any, checklists: list[dict]) -> tuple[str, 
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Verify review-checklist acknowledgements on a PR."
-    )
+    parser = argparse.ArgumentParser(description="Verify review-checklist acknowledgements on a PR.")
     parser.add_argument(
         "--config-path",
         default=".github/review_checklists.yml",
@@ -183,9 +169,7 @@ def main() -> None:
             pr_number = 0
 
         if not pr_number:
-            description = (
-                "Could not resolve pull request to validate checklist evidence"
-            )
+            description = "Could not resolve pull request to validate checklist evidence"
             print(description)
             set_commit_status(repo, head_sha, "failure", description)
             sys.exit(1)
@@ -222,11 +206,7 @@ def main() -> None:
         return
 
     existing = find_existing_checklist_comments(pr)
-    posted_relevant_ids = [
-        checklist["id"]
-        for checklist in relevant_checklists
-        if checklist["id"] in existing
-    ]
+    posted_relevant_ids = [checklist["id"] for checklist in relevant_checklists if checklist["id"] in existing]
 
     if len(posted_relevant_ids) < len(relevant_checklists):
         # At least one relevant checklist has no posted comment yet — keep
@@ -255,9 +235,7 @@ def main() -> None:
     # Write acknowledgement data for downstream use (merge evidence).
     ack_data = {checklist_id: sorted(users) for checklist_id, users in acks.items()}
     runner_temp = os.environ.get("RUNNER_TEMP", "./")
-    output_path = os.environ.get(
-        "ACK_OUTPUT_PATH", runner_temp + "/checklist_acks.json"
-    )
+    output_path = os.environ.get("ACK_OUTPUT_PATH", runner_temp + "/checklist_acks.json")
     with open(output_path, "w") as f:
         json.dump(ack_data, f, indent=2)
     print(f"Acknowledgement data written to {output_path}")
