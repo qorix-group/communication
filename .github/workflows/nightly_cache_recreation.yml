@@ -43,7 +43,7 @@ jobs:
   fetch-qnx:
     uses: ./.github/workflows/build_and_test_qnx.yml
     with:
-      cache_mode: "recreate-update"
+      cache_mode: "recreate"
       fetch_only: "true"
     secrets:
       SCORE_QNX_LICENSE: ${{ secrets.SCORE_QNX_LICENSE }}
@@ -59,8 +59,11 @@ jobs:
     needs: fetch-qnx
     uses: ./.github/workflows/_build_and_test_gcc15.yml
     with:
-      cache-mode: "recreate"
+      cache-mode: "recreate-update"
       fetch-only: "true"
+    permissions:
+      contents: read
+      actions: write
     secrets:
       UBUNTU_SNAPSHOT_MIRROR_URL: ${{ secrets.UBUNTU_SNAPSHOT_MIRROR_URL }}
 
