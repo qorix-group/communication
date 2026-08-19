@@ -27,15 +27,14 @@ bazel_dep(name = "rules_rust", version = "0.68.1-score")
 
 # Cannot be dev-dependency due to being required in "load" statements
 bazel_dep(name = "score_qnx_unit_tests", version = "0.2.0")
-bazel_dep(name = "score_baselibs", version = "0.2.10")
-git_override(
+bazel_dep(name = "score_baselibs", version = "0.2.11")
+single_version_override(
     module_name = "score_baselibs",
-    commit = "d6f4b39ad8a97ec0b7b7b94595d3517a67bae769",
     patch_strip = 1,
     # Patch baselibs with a QNX8 workaround for poll
     # until a fix is provided by the QNX SDP
+    # See https://github.com/eclipse-score/bazel_cpp_toolchains/issues/68
     patches = ["//third_party/score_baselibs:restore_qnx8_poll_workaround.patch"],
-    remote = "https://github.com/eclipse-score/baselibs.git",
 )
 
 bazel_dep(name = "score_bazel_platforms", version = "1.0.0")
@@ -50,22 +49,7 @@ download_archive(
     urls = ["https://github.com/python-jsonschema/jsonschema/archive/refs/tags/v4.23.0.tar.gz"],
 )
 
-bazel_dep(name = "score_tooling", version = "2.0.1")
-
-# TEMPORARY: score_tooling 2.0.1's DEFAULT_EXCLUDE_PATTERNS ("**/*_design")
-# silently drops this repo's architectural_design docs (Message Passing and
-# mw::com architecture pages) from the Sphinx build; a second, previously
-# masked bug then breaks the same-directory `.. uml::` diagram reference once
-# that exclusion is lifted. Both are fixed upstream in
-# https://github.com/eclipse-score/tooling/pull/428, merged to main as
-# commit 8eb4166. Pin to that commit until it is included in a released
-# score_tooling version, then remove this override and restore the plain
-# bazel_dep pin above.
-git_override(
-    module_name = "score_tooling",
-    commit = "8eb41667929f75748ade3c3f9186186ea22a06a0",
-    remote = "https://github.com/eclipse-score/tooling.git",
-)
+bazel_dep(name = "score_tooling", version = "2.0.2")
 
 # Dependencies required for development that will not get propagated to our users as transitive dependencies
 bazel_dep(name = "gcc_toolchain", version = "0.10.0", dev_dependency = True)
