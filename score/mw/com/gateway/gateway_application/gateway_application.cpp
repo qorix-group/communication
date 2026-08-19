@@ -110,7 +110,7 @@ score::Result<void> GatewayApplication::StartServiceDiscovery()
         auto find_result = score::mw::com::GenericProxy::StartFindService(
             [scoped_find_callback](score::mw::com::ServiceHandleContainer<score::mw::com::HandleType> handles,
                                    score::mw::com::FindServiceHandle find_handle) {
-                (*scoped_find_callback)(std::move(handles), std::move(find_handle));
+                (*scoped_find_callback)(std::move(handles), find_handle);
             },
             std::move(specifier_result).value());
 
@@ -201,10 +201,11 @@ void GatewayApplication::PropagateService(const std::string& specifier_str)
 
     std::vector<score::mw::com::EventInfo> elements{};
     const auto& event_map = proxy_it->second.GetEvents();
-    for (auto it = event_map.cbegin(); it != event_map.cend(); ++it)
+    for (const auto& [event_name, event] : std::as_const(event_map))
     {
-        const auto sample_size = it->second.GetSampleSize();
-        elements.push_back(impl::EventInfo{it->first, impl::DataTypeMetaInfo{sample_size, 0U}});
+        const auto sample_size = event.GetSampleSize();
+        elements.push_back(
+            score::mw::com::impl::EventInfo{event_name, score::mw::com::impl::DataTypeMetaInfo{sample_size, 0U}});
     }
 
     auto provide_result = transport_layer_->ProvideService(std::move(specifier_result).value(), std::move(elements));
