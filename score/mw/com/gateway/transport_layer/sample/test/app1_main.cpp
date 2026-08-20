@@ -105,7 +105,7 @@ int ExecuteWithReconnect()
     std::atomic<int> received_message_count{0};
     std::atomic<int> sent_message_count{0};
 
-    transport.SetMessageHandler([&](std::unique_ptr<score::mw::com::gateway::TransportMessage> message) {
+    transport.SetMessageHandler([&](std::unique_ptr<score::mw::com::gateway::TransportMessage> /*message*/) {
         const int count = ++received_message_count;
 
         // Send a notification back to the sender when receiving the message after reconnect
