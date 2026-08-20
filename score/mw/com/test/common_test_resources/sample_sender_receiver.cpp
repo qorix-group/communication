@@ -89,17 +89,14 @@ class MmanMock : public os::Mman
                                                 const std::int64_t offset) const noexcept override
     {
         // mmap calls are uninteresting and are forwarded directly
-        return reinterpret_cast<os::internal::MmanImpl&>(
-                   utils::StaticDestructionGuard<os::internal::MmanImpl>::GetStorage())
-            .mmap(addr, length, protection, flags, fd, offset);
+        return utils::StaticDestructionGuard<os::internal::MmanImpl>::GetStorage().mmap(
+            addr, length, protection, flags, fd, offset);
     };
 
     score::cpp::expected_blank<os::Error> munmap(void* addr, const std::size_t length) const noexcept override
     {
         // munmap calls are uninteresting and are forwarded directly
-        return reinterpret_cast<os::internal::MmanImpl&>(
-                   utils::StaticDestructionGuard<os::internal::MmanImpl>::GetStorage())
-            .munmap(addr, length);
+        return utils::StaticDestructionGuard<os::internal::MmanImpl>::GetStorage().munmap(addr, length);
     };
 
     score::cpp::expected<std::int32_t, os::Error> shm_open(const char* pathname,
@@ -109,17 +106,13 @@ class MmanMock : public os::Mman
         // shm_open calls are INTERESTING for this test - we memorize the pathname - and then forward
         std::strcpy(last_shm_open_path_, pathname);
         shm_open_callcount_++;
-        return reinterpret_cast<os::internal::MmanImpl&>(
-                   utils::StaticDestructionGuard<os::internal::MmanImpl>::GetStorage())
-            .shm_open(pathname, oflag, mode);
+        return utils::StaticDestructionGuard<os::internal::MmanImpl>::GetStorage().shm_open(pathname, oflag, mode);
     };
 
     score::cpp::expected_blank<os::Error> shm_unlink(const char* pathname) const noexcept override
     {
         // shm_unlink calls are uninteresting and are forwarded directly
-        return reinterpret_cast<os::internal::MmanImpl&>(
-                   utils::StaticDestructionGuard<os::internal::MmanImpl>::GetStorage())
-            .shm_unlink(pathname);
+        return utils::StaticDestructionGuard<os::internal::MmanImpl>::GetStorage().shm_unlink(pathname);
     };
 
 #if defined(__EXT_POSIX1_200112)
@@ -128,18 +121,15 @@ class MmanMock : public os::Mman
         const os::Fcntl::Open oflag,
         const os::Mman::PosixTypedMem tflag) const noexcept override
     {
-        return reinterpret_cast<os::internal::MmanImpl&>(
-                   utils::StaticDestructionGuard<os::internal::MmanImpl>::GetStorage())
-            .posix_typed_mem_open(name, oflag, tflag);
+        return utils::StaticDestructionGuard<os::internal::MmanImpl>::GetStorage().posix_typed_mem_open(
+            name, oflag, tflag);
     }
 
     score::cpp::expected<std::int32_t, os::Error> posix_typed_mem_get_info(
         const std::int32_t fd,
         struct posix_typed_mem_info* info) const noexcept override
     {
-        return reinterpret_cast<os::internal::MmanImpl&>(
-                   utils::StaticDestructionGuard<os::internal::MmanImpl>::GetStorage())
-            .posix_typed_mem_get_info(fd, info);
+        return utils::StaticDestructionGuard<os::internal::MmanImpl>::GetStorage().posix_typed_mem_get_info(fd, info);
     }
 
 #endif
