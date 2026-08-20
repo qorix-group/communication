@@ -102,8 +102,8 @@ SCORE_GCC_MINIMAL_WARNING_COMPILE_FLAGS = [
     "-Wno-free-nonheap-object",
     "-Wno-maybe-uninitialized",
     "-Wno-unused-macros",
-    "-Wno-unused-parameter",
-    "-Wno-unused-variable",
+    "-Wunused-parameter",
+    "-Wunused-variable",
     "-Wunused-but-set-parameter",
 ]
 

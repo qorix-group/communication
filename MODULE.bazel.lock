@@ -12580,7 +12580,7 @@
     "@@score_bazel_cpp_toolchains+//extensions:gcc.bzl%gcc": {
       "general": {
         "bzlTransitiveDigest": "B6oxR5SAFtgjCf88BJ6mxzjaNRt2oC3WzxFKX/oOkpc=",
-        "usagesDigest": "nl7QzVglw+Kw+ILX7E5w7QOrgmhI7oNaMKfR2/jKgYM=",
+        "usagesDigest": "K1KMSVa7vVax/Fl2O0G/OjUOfGdqskwvdcpnNtyjAck=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
         "envVariables": {},
@@ -12643,8 +12643,8 @@
                 "-Wno-free-nonheap-object",
                 "-Wno-maybe-uninitialized",
                 "-Wno-unused-macros",
-                "-Wno-unused-parameter",
-                "-Wno-unused-variable",
+                "-Wunused-parameter",
+                "-Wunused-variable",
                 "-Wunused-but-set-parameter"
               ],
               "extra_c_compile_flags": [],
@@ -12685,8 +12685,8 @@
                 "-Wno-free-nonheap-object",
                 "-Wno-maybe-uninitialized",
                 "-Wno-unused-macros",
-                "-Wno-unused-parameter",
-                "-Wno-unused-variable",
+                "-Wunused-parameter",
+                "-Wunused-variable",
                 "-Wunused-but-set-parameter"
               ],
               "extra_c_compile_flags": [],
@@ -12727,8 +12727,8 @@
                 "-Wno-free-nonheap-object",
                 "-Wno-maybe-uninitialized",
                 "-Wno-unused-macros",
-                "-Wno-unused-parameter",
-                "-Wno-unused-variable",
+                "-Wunused-parameter",
+                "-Wunused-variable",
                 "-Wunused-but-set-parameter"
               ],
               "extra_c_compile_flags": [],
@@ -12769,8 +12769,8 @@
                 "-Wno-free-nonheap-object",
                 "-Wno-maybe-uninitialized",
                 "-Wno-unused-macros",
-                "-Wno-unused-parameter",
-                "-Wno-unused-variable",
+                "-Wunused-parameter",
+                "-Wunused-variable",
                 "-Wunused-but-set-parameter"
               ],
               "extra_c_compile_flags": [],
