@@ -63,6 +63,8 @@ build --per_file_copt=external/.*flatbuffers.*@-Wno-error=switch-enum
 build --host_per_file_copt=external/.*flatbuffers.*@-Wno-error=switch-enum
 build --per_file_copt=external/.*boost.*@-Wno-error=sign-conversion
 build --host_per_file_copt=external/.*boost.*@-Wno-error=sign-conversion
+build --per_file_copt=external/.*boost.*@-Wno-error=shadow
+build --host_per_file_copt=external/.*boost.*@-Wno-error=shadow
 
 # Places with warnings that we need to fix
 build --per_file_copt=score/mw/com/impl/bindings/lola/slot_decrementer.*@-w

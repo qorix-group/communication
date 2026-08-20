@@ -12580,7 +12580,7 @@
     "@@score_bazel_cpp_toolchains+//extensions:gcc.bzl%gcc": {
       "general": {
         "bzlTransitiveDigest": "B6oxR5SAFtgjCf88BJ6mxzjaNRt2oC3WzxFKX/oOkpc=",
-        "usagesDigest": "oDOMlsWBcwENa+btMjiKuR7AqzQ/wCoT8KfatnP4gt0=",
+        "usagesDigest": "nl7QzVglw+Kw+ILX7E5w7QOrgmhI7oNaMKfR2/jKgYM=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
         "envVariables": {},
@@ -12634,6 +12634,8 @@
             "attributes": {
               "extra_compile_flags": [
                 "-Wall",
+                "-Werror",
+                "-Wshadow",
                 "-Wno-error=deprecated-declarations",
                 "-Wno-error=cpp",
                 "-Wno-builtin-macro-redefined",
@@ -12674,6 +12676,8 @@
             "attributes": {
               "extra_compile_flags": [
                 "-Wall",
+                "-Werror",
+                "-Wshadow",
                 "-Wno-error=deprecated-declarations",
                 "-Wno-error=cpp",
                 "-Wno-builtin-macro-redefined",
@@ -12714,6 +12718,8 @@
             "attributes": {
               "extra_compile_flags": [
                 "-Wall",
+                "-Werror",
+                "-Wshadow",
                 "-Wno-error=deprecated-declarations",
                 "-Wno-error=cpp",
                 "-Wno-builtin-macro-redefined",
@@ -12754,6 +12760,8 @@
             "attributes": {
               "extra_compile_flags": [
                 "-Wall",
+                "-Werror",
+                "-Wshadow",
                 "-Wno-error=deprecated-declarations",
                 "-Wno-error=cpp",
                 "-Wno-builtin-macro-redefined",
