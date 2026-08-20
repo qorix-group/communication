@@ -93,6 +93,8 @@ score_gcc = use_extension("@score_bazel_cpp_toolchains//extensions:gcc.bzl", "gc
 # score_communication_* cc_features (currently consumed by the LLVM toolchain).
 SCORE_GCC_MINIMAL_WARNING_COMPILE_FLAGS = [
     "-Wall",
+    "-Werror",
+    "-Wshadow",
     "-Wno-error=deprecated-declarations",
     "-Wno-error=cpp",
     "-Wno-builtin-macro-redefined",
