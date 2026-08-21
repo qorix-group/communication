@@ -251,7 +251,7 @@ class TestValidateChecklistEvidence:
 
 
 class TestCheckAcknowledgementsMain:
-    @patch("check_acknowledgements.is_pr_in_merge_queue", return_value=False)
+    @patch("check_acknowledgements.refresh_merge_queue_notice")
     @patch("check_acknowledgements.set_commit_status")
     @patch(
         "check_acknowledgements.load_checklists",
@@ -270,7 +270,7 @@ class TestCheckAcknowledgementsMain:
             main()
         mock_status.assert_called_once_with(repo, "abc", "success", "No checklists applicable")
 
-    @patch("check_acknowledgements.is_pr_in_merge_queue", return_value=False)
+    @patch("check_acknowledgements.refresh_merge_queue_notice")
     @patch("check_acknowledgements.set_commit_status")
     @patch(
         "check_acknowledgements.find_existing_checklist_comments",
@@ -297,7 +297,7 @@ class TestCheckAcknowledgementsMain:
 
         mock_status.assert_called_once_with(repo, "abc", "pending", "Checklist comments not yet posted")
 
-    @patch("check_acknowledgements.is_pr_in_merge_queue", return_value=False)
+    @patch("check_acknowledgements.refresh_merge_queue_notice")
     @patch("check_acknowledgements.set_commit_status")
     @patch(
         "check_acknowledgements.load_checklists",
@@ -341,7 +341,7 @@ class TestCheckAcknowledgementsMain:
 
         mock_status.assert_called_once_with(repo, "abc", "pending", "Checklist comments not yet posted")
 
-    @patch("check_acknowledgements.is_pr_in_merge_queue", return_value=False)
+    @patch("check_acknowledgements.refresh_merge_queue_notice")
     @patch("check_acknowledgements.set_commit_status")
     @patch("check_acknowledgements.get_approving_reviewers", return_value=[])
     @patch(
@@ -376,7 +376,7 @@ class TestCheckAcknowledgementsMain:
 
         mock_status.assert_called_with(repo, "abc", "pending", "Awaiting at least one approving review")
 
-    @patch("check_acknowledgements.is_pr_in_merge_queue", return_value=False)
+    @patch("check_acknowledgements.refresh_merge_queue_notice")
     @patch("check_acknowledgements.set_commit_status")
     @patch(
         "check_acknowledgements.get_approving_reviewers",
@@ -442,7 +442,7 @@ class TestCheckAcknowledgementsMain:
             data = json.load(f)
         assert data["api-review"] == ["alice"]
 
-    @patch("check_acknowledgements.is_pr_in_merge_queue", return_value=False)
+    @patch("check_acknowledgements.refresh_merge_queue_notice")
     @patch("check_acknowledgements.set_commit_status")
     @patch(
         "check_acknowledgements.get_approving_reviewers",
@@ -499,26 +499,28 @@ class TestCheckAcknowledgementsMain:
 
         mock_status.assert_called_with(repo, "abc", "pending", "api-review: awaiting bob")
 
-    @patch("check_acknowledgements.ensure_merge_queue_notice_description")
-    @patch("check_acknowledgements.ensure_merge_queue_notice_comment")
-    @patch("check_acknowledgements.is_pr_in_merge_queue", return_value=True)
+    @patch("check_acknowledgements.refresh_merge_queue_notice")
     @patch("check_acknowledgements.set_commit_status")
     @patch(
         "check_acknowledgements.load_checklists",
         return_value=SAMPLE_CHECKLISTS,
     )
+    @patch("check_acknowledgements.find_existing_checklist_comments", return_value={})
     @patch("check_acknowledgements.get_repo_and_pr")
     @patch("check_acknowledgements.get_github_client")
-    def test_merge_queue_notice_refreshed_when_pr_enqueued(
+    def test_merge_queue_notice_refresh_invoked(
         self,
         mock_gh,
         mock_repo_pr,
+        mock_existing,
         mock_load,
         mock_status,
-        mock_in_queue,
-        mock_notice_comment,
-        mock_notice_description,
+        mock_refresh_notice,
     ):
+        # The detailed status/wording logic (modified/unmodified/unknown)
+        # lives in and is unit-tested against helpers.refresh_merge_queue_notice
+        # directly; this just verifies check_acknowledgements.py wires it up
+        # with the right arguments for every non-merge_group event.
         repo = MagicMock()
         pr = MagicMock()
         pr.head.sha = "abc"
@@ -528,8 +530,7 @@ class TestCheckAcknowledgementsMain:
         with patch.object(sys, "argv", ["check_acknowledgements"]):
             main()
 
-        mock_notice_comment.assert_called_once_with(pr)
-        mock_notice_description.assert_called_once_with(pr)
+        mock_refresh_notice.assert_called_once_with(pr, {})
 
     @patch("check_acknowledgements.set_commit_status")
     @patch("check_acknowledgements.get_repo_and_pr")
