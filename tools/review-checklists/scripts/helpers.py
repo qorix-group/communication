@@ -275,6 +275,60 @@ def get_approving_reviewers(pr: PullRequest) -> list[str]:
     return sorted(approvers)
 
 
+def get_review_decision(pr: Any) -> str | None:
+    """Return the PR's branch-protection review decision via GraphQL.
+
+    ``reviewDecision`` is GitHub's own computed verdict on whether the PR
+    currently satisfies its required-review branch-protection rules (required
+    approving review count, CODEOWNERS, etc.) — one of ``"APPROVED"``,
+    ``"REVIEW_REQUIRED"``, or ``"CHANGES_REQUESTED"``. It is not exposed via
+    the REST API, hence the GraphQL round-trip.
+
+    Used to gate the "review-checklists" commit status: it must not go
+    green from a partial/current approver set alone (see
+    ``_acknowledgement_status``) if the PR is not yet fully approved per
+    branch protection — otherwise a still-outstanding required reviewer
+    could approve later, instantly satisfying GitHub's native review-count
+    check against our *already-green*, stale status, before our (slower,
+    two-stage) workflow has re-validated that this new reviewer has also
+    acknowledged every checklist.
+
+    Returns ``None`` on any lookup failure so callers can fail closed
+    (treat as not yet fully approved) rather than silently proceeding.
+    """
+    owner_and_name = _resolve_repo_owner_and_name(pr)
+    if owner_and_name is None:
+        print("Could not determine repository for review-decision lookup")
+        return None
+    owner, name = owner_and_name
+
+    number = _resolve_pr_number(pr)
+    if number is None:
+        print("Could not determine PR number for review-decision lookup")
+        return None
+
+    query = """
+      query($owner: String!, $name: String!, $number: Int!) {
+        repository(owner: $owner, name: $name) {
+          pullRequest(number: $number) {
+            reviewDecision
+          }
+        }
+      }
+    """
+
+    try:
+        result = _run_graphql_query(
+            query,
+            {"owner": owner, "name": name, "number": int(number)},
+        )
+    except Exception as exc:
+        print(f"GraphQL review-decision lookup failed: {exc}")
+        return None
+
+    return result.get("data", {}).get("repository", {}).get("pullRequest", {}).get("reviewDecision")
+
+
 # GitHub's commit-status API silently truncates/rejects descriptions longer
 # than this; keep our own text within the limit explicitly.
 COMMIT_STATUS_DESCRIPTION_MAX_LENGTH = 140
