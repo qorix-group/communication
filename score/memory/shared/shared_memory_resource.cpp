@@ -261,6 +261,7 @@ void* do_allocation_algorithm(const void* const alloc_start,
     // (https://timsong-cpp.github.io/cppwp/n4659/ptr.align#lib:align) so the const_cast will not result in undefined
     // behaviour.
     // coverity[autosar_cpp14_a5_2_3_violation]
+    // Deviation of MISRA RULE-8-2-3: codeql::misra_deviation_next_line(shared-memory-align-const-cast)
     void* aligned_address = const_cast<void*>(alloc_start);
     auto buffer_space = static_cast<std::size_t>(SubtractPointersBytes(alloc_end, alloc_start));
     return std::align(alignment, bytes, aligned_address, buffer_space);
