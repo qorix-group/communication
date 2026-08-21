@@ -42,6 +42,7 @@ from helpers import (
     get_github_client,
     get_merge_queue_state,
     get_repo_and_pr,
+    get_review_decision,
     load_checklists,
     make_checklist_comment_body,
     match_checklists,
@@ -513,6 +514,50 @@ class TestGetApprovingReviewers:
         pr = MagicMock()
         pr.get_reviews.return_value = []
         assert get_approving_reviewers(pr) == []
+
+
+# ---------------------------------------------------------------------------
+# get_review_decision
+# ---------------------------------------------------------------------------
+
+
+class TestGetReviewDecision:
+    @patch("helpers._run_graphql_query")
+    def test_returns_approved(self, mock_query):
+        mock_query.return_value = {"data": {"repository": {"pullRequest": {"reviewDecision": "APPROVED"}}}}
+
+        pr = MagicMock()
+        pr.base.repo.full_name = "org/repo"
+        pr.number = 42
+
+        assert get_review_decision(pr) == "APPROVED"
+
+    @patch("helpers._run_graphql_query")
+    def test_returns_review_required(self, mock_query):
+        mock_query.return_value = {"data": {"repository": {"pullRequest": {"reviewDecision": "REVIEW_REQUIRED"}}}}
+
+        pr = MagicMock()
+        pr.base.repo.full_name = "org/repo"
+        pr.number = 42
+
+        assert get_review_decision(pr) == "REVIEW_REQUIRED"
+
+    @patch("helpers._run_graphql_query")
+    def test_returns_none_on_graphql_failure(self, mock_query):
+        mock_query.side_effect = RuntimeError("boom")
+
+        pr = MagicMock()
+        pr.base.repo.full_name = "org/repo"
+        pr.number = 42
+
+        assert get_review_decision(pr) is None
+
+    def test_returns_none_when_repo_unresolvable(self):
+        pr = MagicMock()
+        pr.base = None
+        pr.number = 42
+
+        assert get_review_decision(pr) is None
 
 
 # ---------------------------------------------------------------------------
