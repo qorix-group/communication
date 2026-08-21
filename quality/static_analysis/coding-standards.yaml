@@ -4,6 +4,11 @@ deviations:
     justification: "The software is designed for a fail-silent system. The agreed safe-state for a process is the termination. Thus, we do not need to care about not cleaning up the environment, as this is exactly the desired behavior."
     paths:
       - "score/**"
+  - rule-id: "RULE-21-6-3"
+    query-id: "cpp/misra/advanced-memory-management-used"
+    code-identifier: "shared-memory-placement-new"
+    scope: "Applies only to the specific placement-new expressions marked with this code identifier in score/memory/shared/managed_memory_resource.h and score/memory/shared/shared_memory_resource.cpp. This code-identifier must not be used anywhere else in the codebase."
+    justification: "These marked placement-new expressions are part of the shared-memory allocator abstraction layer and must construct objects at a caller-supplied, already-allocated address (e.g. a page mapped via mmap or a slot from a custom memory resource). This requires placement new, i.e. the non-replaceable `operator new(std::size_t, void*)`. The raw new/delete usage is intentionally confined to these two call sites in the abstraction layer so that the rest of the codebase does not need to use advanced memory management directly."
 guideline-recategorizations:
   - rule-id: "RULE-0-1-1"
     category: "disapplied"

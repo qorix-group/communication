@@ -977,6 +977,7 @@ auto SharedMemoryResource::initializeControlBlock() noexcept -> void
     // base_address_ is the address we got back from mmap() call and it is therefore guaranteed to be page aligned!
     // Proper usage of the operator new according to Autosar rule A18-5-10.
     // NOLINTNEXTLINE(score-no-dynamic-raw-memory): Placement new is used.
+    // Deviation of MISRA RULE-21-6-3: codeql::misra_deviation_next_line(shared-memory-placement-new)
     this->control_block_ = new (this->base_address_) ControlBlock(memory_identifier_);
     // we want the memory region, where later further allocations start from, to be "worst case aligned".
     // The main reason: Reproducibility of memory needs for a deterministic set of allocations.
