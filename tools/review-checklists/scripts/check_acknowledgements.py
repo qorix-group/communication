@@ -53,17 +53,15 @@ from typing import Any
 from helpers import (
     build_evidence_block,
     collect_acknowledgement_details,
-    ensure_merge_queue_notice_comment,
-    ensure_merge_queue_notice_description,
     find_existing_checklist_comments,
     find_ok_replies_for_checklists,
     get_approving_reviewers,
     get_changed_files,
     get_github_client,
     get_repo_and_pr,
-    is_pr_in_merge_queue,
     load_checklists,
     match_checklists,
+    refresh_merge_queue_notice,
     set_commit_status,
     update_pr_description_with_evidence,
 )
@@ -186,6 +184,8 @@ def main() -> None:
 
     repo, pr = get_repo_and_pr(gh)
 
+    existing = find_existing_checklist_comments(pr)
+
     # Note this is intentionally separate from the `merge_group` branch
     # above (which already implies the PR is in the queue and instead
     # re-validates evidence and returns/exits). This check instead covers
@@ -193,9 +193,7 @@ def main() -> None:
     # comment posted on a PR that happens to still be enqueued) fires while
     # the PR is enqueued, so we can (re-)post the advisory merge-queue
     # notice for it.
-    if is_pr_in_merge_queue(pr):
-        ensure_merge_queue_notice_comment(pr)
-        ensure_merge_queue_notice_description(pr)
+    refresh_merge_queue_notice(pr, existing)
 
     checklists = load_checklists(args.config_path)
     changed_files = get_changed_files(pr)
@@ -205,7 +203,6 @@ def main() -> None:
         set_commit_status(repo, pr.head.sha, "success", "No checklists applicable")
         return
 
-    existing = find_existing_checklist_comments(pr)
     posted_relevant_ids = [checklist["id"] for checklist in relevant_checklists if checklist["id"] in existing]
 
     if len(posted_relevant_ids) < len(relevant_checklists):
