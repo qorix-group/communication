@@ -685,7 +685,7 @@ auto ParseServiceInstanceDeployments(const score::json::Object& json_map,
     auto deplymentObjs_result = deploymentInstances->second.As<score::json::List>();
     SCORE_LANGUAGE_FUTURECPP_PRECONDITION_PRD_MESSAGE(deplymentObjs_result.has_value(),
                                                       "Configuration corrupted, check with json schema");
-    auto& deplymentObjs = deplymentObjs_result.value().get();
+    const auto& deplymentObjs = deplymentObjs_result.value().get();
     for (const auto& deploymentInstance : deplymentObjs)
     {
         auto deployment_obj = deploymentInstance.As<score::json::Object>();
