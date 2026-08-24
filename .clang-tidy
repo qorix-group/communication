@@ -166,7 +166,7 @@ Checks: >
 WarningsAsErrors: >
   clang-analyzer-*,
 
-HeaderFilterRegex: '^(?!.*/third_party/).*'
+HeaderFilterRegex: '^(?!(third_party|external)/).*'
 
 FormatStyle: file
 
