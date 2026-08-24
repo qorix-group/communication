@@ -25,7 +25,7 @@
 #include <gmock/gmock.h>
 
 #include <unistd.h>
-#include <stdint.h>
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <optional>
