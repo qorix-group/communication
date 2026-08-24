@@ -128,7 +128,6 @@ Checks: >
   performance-unnecessary-copy-initialization,
   performance-unnecessary-value-param,
   readability-container-data-pointer,
-  readability-else-after-return,
   readability-magic-numbers,
   readability-math-missing-parentheses,
   readability-redundant-casting,
