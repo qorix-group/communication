@@ -531,7 +531,7 @@ score::cpp::expected_blank<Error> SharedMemoryResource::CreateImpl(const std::si
 
     SCORE_LANGUAGE_FUTURECPP_ASSERT_PRD_MESSAGE(file_descriptor_ >= 0, "No valid file descriptor");
 
-    const auto typed_memory_ptr = (is_shm_in_typed_memory_ ? typed_memory_ptr_.get() : nullptr);
+    auto* const typed_memory_ptr = (is_shm_in_typed_memory_ ? typed_memory_ptr_.get() : nullptr);
     const auto stat_values = GetShmObjectStatInfo(file_descriptor_, (path != nullptr), path, typed_memory_ptr);
     file_owner_uid_ = stat_values.owner_uid;
 

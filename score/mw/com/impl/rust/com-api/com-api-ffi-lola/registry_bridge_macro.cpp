@@ -59,7 +59,7 @@ ProxyEventBase* mw_com_get_event_from_proxy(ProxyBase* proxy_ptr, StringView int
     auto event = static_cast<std::string_view>(event_id);
     auto id = static_cast<std::string_view>(interface_id);
 
-    auto registry = GlobalRegistryMapping::FindMemberOperation(id, event);
+    auto* registry = GlobalRegistryMapping::FindMemberOperation(id, event);
 
     if (registry == nullptr)
     {
@@ -86,7 +86,7 @@ SkeletonEventBase* mw_com_get_event_from_skeleton(SkeletonBase* skeleton_ptr,
     auto event = static_cast<std::string_view>(event_id);
     auto id = static_cast<std::string_view>(interface_id);
 
-    auto registry = GlobalRegistryMapping::FindMemberOperation(id, event);
+    auto* registry = GlobalRegistryMapping::FindMemberOperation(id, event);
 
     if (registry == nullptr)
     {
@@ -152,7 +152,7 @@ ProxyBase* mw_com_create_proxy(StringView interface_id, const HandleType& handle
         return nullptr;
     }
     auto id = static_cast<std::string_view>(interface_id);
-    auto registry = GlobalRegistryMapping::FindInterfaceRegistry(id);
+    auto* registry = GlobalRegistryMapping::FindInterfaceRegistry(id);
 
     if (registry == nullptr)
     {
@@ -174,7 +174,7 @@ SkeletonBase* mw_com_create_skeleton(StringView interface_id, ::score::mw::com::
     }
 
     auto id = static_cast<std::string_view>(interface_id);
-    auto registry = GlobalRegistryMapping::FindInterfaceRegistry(id);
+    auto* registry = GlobalRegistryMapping::FindInterfaceRegistry(id);
 
     if (registry == nullptr)
     {
@@ -457,7 +457,7 @@ const void* mw_com_get_type_ops_instance(StringView interface_id, StringView mem
     auto id = static_cast<std::string_view>(interface_id);
     auto member = static_cast<std::string_view>(member_name);
 
-    auto registry = GlobalRegistryMapping::FindMemberOperation(id, member);
+    auto* registry = GlobalRegistryMapping::FindMemberOperation(id, member);
 
     if (registry == nullptr)
     {
