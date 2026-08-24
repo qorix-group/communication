@@ -101,7 +101,7 @@ json::Object ConvertUidMapToJson(const std::unordered_map<QualityType, std::vect
 
 auto areCompatible(const LolaServiceInstanceDeployment& lhs, const LolaServiceInstanceDeployment& rhs) noexcept -> bool
 {
-    if (((lhs.instance_id_.has_value()) == false) || (rhs.instance_id_.has_value() == false))
+    if ((!lhs.instance_id_.has_value()) || (!rhs.instance_id_.has_value()))
     {
         return true;
     }

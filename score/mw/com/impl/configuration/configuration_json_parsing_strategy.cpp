@@ -1055,7 +1055,7 @@ auto ParseGlobalProperties(const score::json::Object& top_level_object) -> Globa
                                                           "Configuration corrupted, check with json schema");
         const auto& process_properties_map = process_properties_obj.value().get();
         const auto asil_level = ParseAsilLevel(process_properties_map);
-        if (asil_level.has_value() == false)
+        if (!asil_level.has_value())
         {
             // set default (ASIL-QM)
             global_configuration.SetProcessAsilLevel(QualityType::kASIL_QM);

@@ -125,12 +125,7 @@ bool mw_com_proxy_event_subscribe(ProxyEventBase* event_ptr, uint32_t max_sample
 
     auto result = event_ptr->Subscribe(max_sample_count);
 
-    if (!result.has_value())
-    {
-        return false;
-    }
-
-    return true;
+    return result.has_value();
 }
 
 /// \brief Unsubscribe from a proxy event to release sample buffers
@@ -261,7 +256,7 @@ std::uint32_t mw_com_type_registry_get_samples_from_event(ProxyEventBase* event_
 
     auto result = type_ops->GetSamplesFromEvent(event_ptr, max_samples, *callback);
 
-    if (result.has_value() == false)
+    if (!result.has_value())
     {
         return std::numeric_limits<std::uint32_t>::max();
     }
@@ -368,11 +363,7 @@ bool mw_com_proxy_set_event_receive_handler(ProxyEventBase* event_ptr, const Fat
     }
 
     auto result = event_ptr->SetReceiveHandler(RustFnMutCallable<RustBoxedCallable>{*boxed_handler});
-    if (result.has_value() == false)
-    {
-        return false;
-    }
-    return true;
+    return result.has_value();
 }
 
 /// \brief Clear event receive handler for proxy event
