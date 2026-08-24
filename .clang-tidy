@@ -241,6 +241,8 @@ CheckOptions:
     value: true
   - key: performance-unnecessary-value-param.IncludeStyle
     value: "llvm"
+  - key: performance-unnecessary-value-param.AllowedTypes
+    value: "::score::cpp::stop_token"
   - key: readability-container-data-pointer.IgnoredContainers
     value: ""
   - key: readability-redundant-casting.IgnoreTypeAliases
