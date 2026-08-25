@@ -567,7 +567,7 @@ TEST_F(ProxyEventMoveAssignmentTest, MoveAssignmentTransfersBindingFromSourceToD
 
 TEST(ProxyEventTest, ClassTypeDependsOnEventDataType)
 {
-    RecordProperty("Verifies", "SCR-29235350");
+    RecordProperty("lobster-tracing", "Communication.ProxyEventClassDefinition");
     RecordProperty("Description", "ProxyEvents with different field data types should be different classes.");
     RecordProperty("TestType", "Requirements-based test");
     RecordProperty("Priority", "1");
