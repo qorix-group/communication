@@ -127,7 +127,6 @@ section "com" {
                     version = 1
                 }
 
-                /* broken_link_c/issue/14137273 */
                 ScoreReq.CompReq ProxyEventGetNewSamples {
                     description = '''The {{ProxyEvent}}
                     shall provide a public method:
