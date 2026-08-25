@@ -466,7 +466,8 @@ TYPED_TEST(AServiceElement, WhenSettingAReceiveHandlerThenItWillPropagateAnError
 
 TYPED_TEST(AServiceElement, WhenUnsettingAReceiveHandlerAfterSettingThenItWillDispatchToBinding)
 {
-    this->RecordProperty("Verifies", "SCR-14035152, SCR-17292405, SCR-14137275");
+    this->RecordProperty("Verifies", "SCR-14035152, SCR-17292405");
+    this->RecordProperty("lobster-tracing", "Communication.ProxyEventUnsetReceiveHandler");
     this->RecordProperty("Description", "Checks whether a unsetting receive handler is correctly forwarded");
     this->RecordProperty("TestType", "Requirements-based test");
     this->RecordProperty("Priority", "1");
@@ -484,7 +485,8 @@ TYPED_TEST(AServiceElement, WhenUnsettingAReceiveHandlerAfterSettingThenItWillDi
 
 TYPED_TEST(AServiceElement, WhenUnsettingReceiveHandlerAfterSettingThenItWillReturnAValidResult)
 {
-    this->RecordProperty("Verifies", "SCR-14035152, SCR-17292405, SCR-14137275");
+    this->RecordProperty("Verifies", "SCR-14035152, SCR-17292405");
+    this->RecordProperty("lobster-tracing", "Communication.ProxyEventUnsetReceiveHandler");
     this->RecordProperty("Description", "Checks whether a unsetting receive handler is correctly forwarded");
     this->RecordProperty("TestType", "Requirements-based test");
     this->RecordProperty("Priority", "1");
@@ -527,7 +529,8 @@ TYPED_TEST(AServiceElement, WhenUnsettingAReceiveHandlerWithoutSettingThenItWill
 
 TYPED_TEST(AServiceElement, WhenUnsettingReceiveHandlerThenItWillPropagateErrorFromBinding)
 {
-    this->RecordProperty("Verifies", "SCR-14035152, SCR-17292405, SCR-14137275");
+    this->RecordProperty("Verifies", "SCR-14035152, SCR-17292405");
+    this->RecordProperty("lobster-tracing", "Communication.ProxyEventUnsetReceiveHandler");
     this->RecordProperty(
         "Description",
         "Checks that an unset receive handler returns a kUnsetFailure error code if binding returns any error.");
