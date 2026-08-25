@@ -75,7 +75,6 @@ section "com" {
                     version = 1
                 }
 
-                /* broken_link_c/issue/14137271 */
                 ScoreReq.CompReq ProxyEventUnsubscribe {
                     description = '''The {{ProxyEvent}} class shall provide a public method:
 
