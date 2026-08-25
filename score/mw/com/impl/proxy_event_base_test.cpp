@@ -137,7 +137,7 @@ TYPED_TEST_SUITE(ProxyEventBaseGetNumNewSamplesAvailableFixture, MyTypes, );
 
 TEST(ProxyEventBaseTest, NotCopyable)
 {
-    RecordProperty("Verifies", "SCR-14137269");
+    RecordProperty("lobster-tracing", "Communication.ProxyEventCopySemantics");
     RecordProperty("Description", "Checks copy semantics for ProxyEventBases");
     RecordProperty("TestType", "Requirements-based test");
     RecordProperty("Priority", "1");

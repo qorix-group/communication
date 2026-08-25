@@ -55,7 +55,6 @@ section "com" {
                     version = 1
                 }
 
-                /* broken_link_c/issue/14137269 */
                 ScoreReq.CompReq ProxyEventCopySemantics {
                     description = '''The {{ProxyEvent}} class shall neither be copy-constructible nor copy-assignable.'''
                     safety = ScoreReq.Asil.B
