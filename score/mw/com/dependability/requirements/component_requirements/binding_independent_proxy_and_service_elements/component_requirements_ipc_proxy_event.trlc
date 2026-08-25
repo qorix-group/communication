@@ -86,7 +86,6 @@ section "com" {
                     version = 1
                 }
 
-                /* broken_link_c/issue/14137272 */
                 ScoreReq.CompReq ProxyEventGetSubscriptionState {
                     description = '''The {{ProxyClass}} shall provide a public method:
 
@@ -99,6 +98,7 @@ section "com" {
                 }
 
                 /* broken_link_c/issue/18805456 */
+                /* ToDo: Potentially uncovered requirement! */
                 ScoreReq.CompReq ProxyEventSetSubscriptionStateChangeHandler {
                     description = '''The {{ProxyEvent}} class shall provide a public method:
 
@@ -115,6 +115,7 @@ section "com" {
                 }
 
                 /* broken_link_c/issue/18805552 */
+                /* ToDo: Potentially uncovered requirement! */
                 ScoreReq.CompReq ProxyEventUnsetSubscriptionStateChangeHandler {
                     description = '''The {{ProxyEvent}} class shall provide a public method:
 
