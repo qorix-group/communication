@@ -870,7 +870,8 @@ TYPED_TEST(ProxyEventBaseGetSubscriptionStatefixture, GetSubscriptionStateDispat
 
 TYPED_TEST(ProxyEventBaseGetFreeSampleCountFixture, GetFreeSampleCountReturnsCountFromReferenceTracker)
 {
-    this->RecordProperty("Verifies", "SCR-14035121, SCR-17292402, SCR-14137276, SCR-21293991");
+    this->RecordProperty("Verifies", "SCR-14035121, SCR-17292402, SCR-21293991");
+    this->RecordProperty("lobster-tracing", "Communication.ProxyEventGetFreeSampleCount");
     this->RecordProperty(
         "Description",
         "Checks that GetFreeSampleCount will return the free sample count returned by the reference tracker.");
