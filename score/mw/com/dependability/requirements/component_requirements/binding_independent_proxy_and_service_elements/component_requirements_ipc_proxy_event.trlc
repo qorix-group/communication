@@ -46,7 +46,6 @@ section "com" {
                     version = 1
                 }
 
-                /* broken_link_c/issue/14137294 */
                 ScoreReq.CompReq ProxyEventMemberTypeSampleType {
                     description = '''The {{ProxyEvent}} class shall have a public member type {{SampleType}}, which denotes the data type of an event.
 

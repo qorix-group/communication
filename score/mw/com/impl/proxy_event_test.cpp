@@ -581,7 +581,7 @@ TEST(ProxyEventTest, ClassTypeDependsOnEventDataType)
 
 TEST(ProxyEventTest, ProxyEventContainsPublicSampleType)
 {
-    RecordProperty("Verifies", "SCR-14137294");
+    RecordProperty("lobster-tracing", "Communication.ProxyEventMemberTypeSampleType");
     RecordProperty("Description",
                    "A ProxyEvent contains a public member type SampleType which denotes the type of the event.");
     RecordProperty("TestType", "Requirements-based test");
