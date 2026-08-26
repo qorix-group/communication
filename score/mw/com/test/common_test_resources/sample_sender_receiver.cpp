@@ -246,6 +246,10 @@ class TestDestructor
 {
   public:
     TestDestructor(score::cpp::stop_source& stop_source) : stop_source_{stop_source} {}
+    TestDestructor(const TestDestructor&) = delete;
+    TestDestructor& operator=(const TestDestructor&) = delete;
+    TestDestructor(TestDestructor&&) = delete;
+    TestDestructor& operator=(TestDestructor&&) = delete;
     ~TestDestructor()
     {
         stop_source_.request_stop();

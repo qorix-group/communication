@@ -137,6 +137,13 @@ struct SharedState
         pthread_barrierattr_destroy(&barrier_attr);
     }
 
+    // Not copyable/movable: `barrier_` is an OS resource tied to this object's address (it is placed directly
+    // into shared memory via placement-new), so copying or moving it would not be meaningful.
+    SharedState(const SharedState&) = delete;
+    SharedState& operator=(const SharedState&) = delete;
+    SharedState(SharedState&&) = delete;
+    SharedState& operator=(SharedState&&) = delete;
+
     ~SharedState()
     {
         pthread_barrier_destroy(&barrier_);
