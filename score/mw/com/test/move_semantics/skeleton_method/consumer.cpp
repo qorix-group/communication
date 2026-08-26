@@ -21,6 +21,7 @@
 
 #include <chrono>
 #include <iostream>
+#include <optional>
 #include <thread>
 
 namespace score::mw::com::test
@@ -28,9 +29,7 @@ namespace score::mw::com::test
 namespace
 {
 
-constexpr auto kDetectionWindow = std::chrono::milliseconds{5000};
-
-constexpr auto kDetectionCallGap = std::chrono::milliseconds{5};
+constexpr auto kDetectionCallGap = std::chrono::milliseconds{2};
 
 std::int32_t CallMethodOrFail(SkeletonMethodMoveProxy& proxy)
 {
@@ -42,21 +41,9 @@ std::int32_t CallMethodOrFail(SkeletonMethodMoveProxy& proxy)
     return *(result.value());
 }
 
-void VerifyResultIsOneOf(std::int32_t actual,
-                         std::int32_t first_expected,
-                         std::int32_t second_expected,
-                         std::size_t call_index)
-{
-    if (actual != first_expected && actual != second_expected)
-    {
-        FailTest(
-            "Consumer: call ", call_index, " expected ", first_expected, " or ", second_expected, " but got ", actual);
-    }
-}
-
 }  // namespace
 
-void RunConsumer(const SkeletonMoveScenario& scenario, const score::cpp::stop_token& stop_token)
+void RunConsumer(const score::cpp::stop_token& stop_token)
 {
     static_cast<void>(stop_token);
 
@@ -71,24 +58,37 @@ void RunConsumer(const SkeletonMoveScenario& scenario, const score::cpp::stop_to
     //         (fuzzy) scenarios the move may already have happened, so any call may return either
     //         handler's result — each call is just checked against the two known-valid results.
     std::cout << "\nConsumer: Step 2 - Loop calling until second handler is detected" << std::endl;
-    const std::int32_t first_expected = GetFirstHandlerExpectedResult(scenario);
-    const std::int32_t second_expected = GetSecondHandlerExpectedResult(scenario);
-    const auto deadline = std::chrono::steady_clock::now() + kDetectionWindow;
     std::size_t call_count = 0U;
-    std::int32_t actual = 0;
-    do
+    std::optional<std::int32_t> actual{};
+    while (!actual.has_value() || actual.value() != kSecondHandlerExpectedResult)
     {
-        if (std::chrono::steady_clock::now() >= deadline)
-        {
-            FailTest("Consumer: timed out waiting to observe the second handler's result");
-        }
         actual = CallMethodOrFail(proxy_moved_to);
-        VerifyResultIsOneOf(actual, first_expected, second_expected, call_count);
         ++call_count;
-        std::this_thread::sleep_for(kDetectionCallGap);
-    } while (actual != second_expected);
 
-    std::cout << "\nConsumer: Step 2 done (" << call_count << " calls, second handler result=" << actual << ")"
+        // If the first handler is still registered, then we continue calling the method.
+        if (actual == kFirstHandlerExpectedResult)
+        {
+            std::this_thread::sleep_for(kDetectionCallGap);
+            continue;
+        }
+
+        // If the second handler has been registered, then we can finish.
+        if (actual == kSecondHandlerExpectedResult)
+        {
+            break;
+        }
+
+        FailTest("Consumer: call ",
+                 call_count,
+                 " expected ",
+                 kFirstHandlerExpectedResult,
+                 " or ",
+                 kSecondHandlerExpectedResult,
+                 " but got ",
+                 actual.value());
+    }
+
+    std::cout << "\nConsumer: Step 2 done (" << call_count << " calls, second handler result=" << actual.value() << ")"
               << std::endl;
 }
 

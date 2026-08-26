@@ -40,26 +40,4 @@ CombinedTestConfiguration ReadCommandLineArguments(int argc, const char** argv)
     return {scenario, service_instance_manifest};
 }
 
-std::int32_t GetFirstHandlerExpectedResult(const SkeletonMoveScenario scenario)
-{
-    if (scenario >= SkeletonMoveScenario::kNumberOfScenarios)
-    {
-        FailTest("GetFirstHandlerExpectedResult: Unknown scenario");
-        return 0;
-    }
-    // Handler A is always registered first and always computes a + b, for all scenarios.
-    return kTestArgA + kTestArgB;
-}
-
-std::int32_t GetSecondHandlerExpectedResult(const SkeletonMoveScenario scenario)
-{
-    if (scenario >= SkeletonMoveScenario::kNumberOfScenarios)
-    {
-        FailTest("GetSecondHandlerExpectedResult: Unknown scenario");
-        return 0;
-    }
-    // The second handler (Handler B/C) always computes a * b, for all scenarios.
-    return kTestArgA * kTestArgB;
-}
-
 }  // namespace score::mw::com::test

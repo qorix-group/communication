@@ -41,8 +41,7 @@ int main(int argc, const char** argv)
     auto provider_future =
         std::async(score::mw::com::test::RunProvider, test_configuration.scenario, stop_source.get_token());
 
-    auto consumer_future =
-        std::async(score::mw::com::test::RunConsumer, test_configuration.scenario, stop_source.get_token());
+    auto consumer_future = std::async(score::mw::com::test::RunConsumer, stop_source.get_token());
 
     provider_future.get();
     consumer_future.get();

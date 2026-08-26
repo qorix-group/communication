@@ -20,7 +20,7 @@
 namespace score::mw::com::test
 {
 
-void RunConsumer(const SkeletonMoveScenario& scenario, const score::cpp::stop_token& stop_token);
+void RunConsumer(const score::cpp::stop_token& stop_token);
 
 }  // namespace score::mw::com::test
 

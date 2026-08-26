@@ -86,14 +86,14 @@ void RunProviderMoveConstructBeforeOffered(const score::cpp::stop_token& stop_to
     std::cout << "\nProvider: Step 2 - Move #1: Skeleton B = std::move(Skeleton A)" << std::endl;
     auto skeleton_b = std::move(skeleton_a);
 
-    // Step 3. Register Handler A on Skeleton B. Its body notifies notification_a when called.
+    // Step 3. Register Handler A on Skeleton B. Its body notifies handler_a_called when called.
     std::cout << "\nProvider: Step 3 - Register Handler A (a + b) on Skeleton B" << std::endl;
-    concurrency::Notification notification_a{};
+    concurrency::Notification handler_a_called{};
     RegisterHandlerOrFail(
         skeleton_b.moved_method_,
-        [&notification_a](std::int32_t& result, const std::int32_t& a, const std::int32_t& b) {
+        [&handler_a_called](std::int32_t& result, const std::int32_t& a, const std::int32_t& b) {
             result = a + b;
-            notification_a.notify();
+            handler_a_called.notify();
         },
         "Provider: Failed to register Handler A: ");
 
@@ -107,22 +107,22 @@ void RunProviderMoveConstructBeforeOffered(const score::cpp::stop_token& stop_to
 
     // Step 6. Wait until Handler A has been called at least once.
     std::cout << "\nProvider: Step 6 - Wait for Handler A to be called" << std::endl;
-    WaitOrFail(notification_a, stop_token, "Provider: Notification wait (Handler A) timed out");
+    WaitOrFail(handler_a_called, stop_token, "Provider: Notification wait (Handler A) timed out");
 
-    // Step 7. Register Handler B on Skeleton C. Its body notifies notification_b when called.
+    // Step 7. Register Handler B on Skeleton C. Its body notifies handler_b_called when called.
     std::cout << "\nProvider: Step 7 - Register Handler B (a * b) on Skeleton C" << std::endl;
-    concurrency::Notification notification_b{};
+    concurrency::Notification handler_b_called{};
     RegisterHandlerOrFail(
         skeleton_c.moved_method_,
-        [&notification_b](std::int32_t& result, const std::int32_t& a, const std::int32_t& b) {
+        [&handler_b_called](std::int32_t& result, const std::int32_t& a, const std::int32_t& b) {
             result = a * b;
-            notification_b.notify();
+            handler_b_called.notify();
         },
         "Provider: Failed to register Handler B: ");
 
     // Step 8. Wait until Handler B has been called at least once before finishing.
     std::cout << "\nProvider: Step 8 - Wait for Handler B to be called" << std::endl;
-    WaitOrFail(notification_b, stop_token, "Provider: Notification wait (Handler B) timed out");
+    WaitOrFail(handler_b_called, stop_token, "Provider: Notification wait (Handler B) timed out");
 
     // Step 9. Return: Skeleton C's destructor calls StopOfferService().
     std::cout << "\nProvider: Step 9 - Finishing" << std::endl;
@@ -136,12 +136,14 @@ void RunProviderMoveConstructAfterOffered(const score::cpp::stop_token& stop_tok
     skeleton_container.CreateSkeleton(kInstanceSpecifierMovedTo, "skeleton_method_move_semantics");
     auto skeleton_a = skeleton_container.Extract();
 
-    // Step 2. Register Handler A on Skeleton A.
+    // Step 2. Register Handler A on Skeleton A. Its body notifies handler_a_called when called.
     std::cout << "\nProvider: Step 2 - Register Handler A (a + b)" << std::endl;
+    concurrency::Notification handler_a_called{};
     RegisterHandlerOrFail(
         skeleton_a.moved_method_,
-        [](std::int32_t& result, const std::int32_t& a, const std::int32_t& b) {
+        [&handler_a_called](std::int32_t& result, const std::int32_t& a, const std::int32_t& b) {
             result = a + b;
+            handler_a_called.notify();
         },
         "Provider: Failed to register Handler A: ");
 
@@ -149,31 +151,35 @@ void RunProviderMoveConstructAfterOffered(const score::cpp::stop_token& stop_tok
     std::cout << "\nProvider: Step 3 - Offer Skeleton A" << std::endl;
     OfferSkeletonOrFail(skeleton_a, "Provider: OfferService failed: ");
 
-    // Step 4. Sleep a random duration (0-500ms). Fuzzy Scenario: Move operation is done at random point while
+    // Step 4. Wait until Handler A has been called at least once before proceeding.
+    std::cout << "\nProvider: Step 4 - Wait for Handler A to be called" << std::endl;
+    WaitOrFail(handler_a_called, stop_token, "Provider: Notification wait (Handler A) timed out");
+
+    // Step 5. Sleep a random duration (0-500ms). Fuzzy Scenario: Move operation is done at random point while
     //         the consumer is independently calling the method in a loop.
     SleepRandomDuration();
 
-    // Step 5. Move construct: Skeleton B = std::move(Skeleton A)  [already offered, random timing]
-    std::cout << "\nProvider: Step 5 - Move construct Skeleton B = std::move(Skeleton A)" << std::endl;
+    // Step 6. Move construct: Skeleton B = std::move(Skeleton A)  [already offered, random timing]
+    std::cout << "\nProvider: Step 6 - Move construct Skeleton B = std::move(Skeleton A)" << std::endl;
     auto skeleton_b = std::move(skeleton_a);
 
-    // Step 6. Register Handler B on Skeleton B. Its body notifies notification_b when called.
-    std::cout << "\nProvider: Step 6 - Register Handler B (a * b) on Skeleton B" << std::endl;
-    concurrency::Notification notification_b{};
+    // Step 7. Register Handler B on Skeleton B. Its body notifies handler_b_called when called.
+    std::cout << "\nProvider: Step 7 - Register Handler B (a * b) on Skeleton B" << std::endl;
+    concurrency::Notification handler_b_called{};
     RegisterHandlerOrFail(
         skeleton_b.moved_method_,
-        [&notification_b](std::int32_t& result, const std::int32_t& a, const std::int32_t& b) {
+        [&handler_b_called](std::int32_t& result, const std::int32_t& a, const std::int32_t& b) {
             result = a * b;
-            notification_b.notify();
+            handler_b_called.notify();
         },
         "Provider: Failed to register Handler B: ");
 
-    // Step 7. Wait until Handler B has been called at least once before finishing.
-    std::cout << "\nProvider: Step 7 - Wait for Handler B to be called" << std::endl;
-    WaitOrFail(notification_b, stop_token, "Provider: Notification wait (Handler B) timed out");
+    // Step 8. Wait until Handler B has been called at least once before finishing.
+    std::cout << "\nProvider: Step 8 - Wait for Handler B to be called" << std::endl;
+    WaitOrFail(handler_b_called, stop_token, "Provider: Notification wait (Handler B) timed out");
 
-    // Step 8. Return: Skeleton B's destructor calls StopOfferService().
-    std::cout << "\nProvider: Step 8 - Finishing" << std::endl;
+    // Step 9. Return: Skeleton B's destructor calls StopOfferService().
+    std::cout << "\nProvider: Step 9 - Finishing" << std::endl;
 }
 
 void RunProviderMoveAssignBeforeOffered(const score::cpp::stop_token& stop_token)
@@ -192,14 +198,14 @@ void RunProviderMoveAssignBeforeOffered(const score::cpp::stop_token& stop_token
     std::cout << "\nProvider: Step 2 - Move-assign #1: Skeleton B = std::move(Skeleton A)" << std::endl;
     skeleton_b = std::move(skeleton_a);
 
-    // Step 3. Register Handler A on Skeleton B. Its body notifies notification_a when called.
+    // Step 3. Register Handler A on Skeleton B. Its body notifies handler_a_called when called.
     std::cout << "\nProvider: Step 3 - Register Handler A (a + b) on Skeleton B" << std::endl;
-    concurrency::Notification notification_a{};
+    concurrency::Notification handler_a_called{};
     RegisterHandlerOrFail(
         skeleton_b.moved_method_,
-        [&notification_a](std::int32_t& result, const std::int32_t& a, const std::int32_t& b) {
+        [&handler_a_called](std::int32_t& result, const std::int32_t& a, const std::int32_t& b) {
             result = a + b;
-            notification_a.notify();
+            handler_a_called.notify();
         },
         "Provider: Failed to register Handler A: ");
 
@@ -219,23 +225,23 @@ void RunProviderMoveAssignBeforeOffered(const score::cpp::stop_token& stop_token
 
     // Step 7. Wait until Handler A has been called at least once.
     std::cout << "\nProvider: Step 7 - Wait for Handler A to be called" << std::endl;
-    WaitOrFail(notification_a, stop_token, "Provider: Notification wait (Handler A) timed out");
+    WaitOrFail(handler_a_called, stop_token, "Provider: Notification wait (Handler A) timed out");
 
     // Step 8. Register Handler C (a * b) on Skeleton C. Its body notifies
-    //         notification_c when called.
+    //         handler_c_called when called.
     std::cout << "\nProvider: Step 8 - Register Handler C (a * b) on Skeleton C" << std::endl;
-    concurrency::Notification notification_c{};
+    concurrency::Notification handler_c_called{};
     RegisterHandlerOrFail(
         skeleton_c.moved_method_,
-        [&notification_c](std::int32_t& result, const std::int32_t& a, const std::int32_t& b) {
+        [&handler_c_called](std::int32_t& result, const std::int32_t& a, const std::int32_t& b) {
             result = a * b;
-            notification_c.notify();
+            handler_c_called.notify();
         },
         "Provider: Failed to register Handler C: ");
 
     // Step 9. Wait until Handler C has been called at least once before finishing.
     std::cout << "\nProvider: Step 9 - Wait for Handler C to be called" << std::endl;
-    WaitOrFail(notification_c, stop_token, "Provider: Notification wait (Handler C) timed out");
+    WaitOrFail(handler_c_called, stop_token, "Provider: Notification wait (Handler C) timed out");
 
     // Step 10. Return: Skeleton C's destructor calls StopOfferService().
     std::cout << "\nProvider: Step 10 - Finishing" << std::endl;
@@ -253,12 +259,15 @@ void RunProviderMoveAssignAfterOffered(const score::cpp::stop_token& stop_token)
     skeleton_b_container.CreateSkeleton(kInstanceSpecifierMovedFrom, "skeleton_method_move_semantics");
     auto skeleton_b = skeleton_b_container.Extract();
 
-    // Step 2. Register Handler A on Skeleton A and Register Handler B on Skeleton B.
+    // Step 2. Register Handler A on Skeleton A. Its body notifies notification_a when called.
+    //         Register the placeholder handler on Skeleton B.
     std::cout << "\nProvider: Step 2 - Register Handler A (a + b) on Skeleton A" << std::endl;
+    concurrency::Notification handler_a_called{};
     RegisterHandlerOrFail(
         skeleton_a.moved_method_,
-        [](std::int32_t& result, const std::int32_t& a, const std::int32_t& b) {
+        [&handler_a_called](std::int32_t& result, const std::int32_t& a, const std::int32_t& b) {
             result = a + b;
+            handler_a_called.notify();
         },
         "Provider: Failed to register Handler A: ");
     RegisterHandlerOrFail(
@@ -273,31 +282,35 @@ void RunProviderMoveAssignAfterOffered(const score::cpp::stop_token& stop_token)
     OfferSkeletonOrFail(skeleton_a, "Provider: OfferService (Skeleton A) failed: ");
     OfferSkeletonOrFail(skeleton_b, "Provider: OfferService (Skeleton B) failed: ");
 
-    // Step 4. Sleep a random duration (0-500ms).
+    // Step 4. Wait until Handler A has been called at least once before proceeding.
+    std::cout << "\nProvider: Step 4 - Wait for Handler A to be called" << std::endl;
+    WaitOrFail(handler_a_called, stop_token, "Provider: Notification wait (Handler A) timed out");
+
+    // Step 5. Sleep a random duration (0-500ms).
     SleepRandomDuration();
 
-    // Step 5. Move-assign: Skeleton B = std::move(Skeleton A)  [already offered, random timing]
-    std::cout << "\nProvider: Step 5 - Move-assign Skeleton B = std::move(Skeleton A)" << std::endl;
+    // Step 6. Move-assign: Skeleton B = std::move(Skeleton A)  [already offered, random timing]
+    std::cout << "\nProvider: Step 6 - Move-assign Skeleton B = std::move(Skeleton A)" << std::endl;
     skeleton_b = std::move(skeleton_a);
 
-    // Step 6. Register Handler C (a * b) on Skeleton B. Its body notifies
-    //         notification_c when called.
-    std::cout << "\nProvider: Step 6 - Register Handler C (a * b) on Skeleton B" << std::endl;
-    concurrency::Notification notification_c{};
+    // Step 7. Register Handler C (a * b) on Skeleton B. Its body notifies
+    //         handler_c_called when called.
+    std::cout << "\nProvider: Step 7 - Register Handler C (a * b) on Skeleton B" << std::endl;
+    concurrency::Notification handler_c_called{};
     RegisterHandlerOrFail(
         skeleton_b.moved_method_,
-        [&notification_c](std::int32_t& result, const std::int32_t& a, const std::int32_t& b) {
+        [&handler_c_called](std::int32_t& result, const std::int32_t& a, const std::int32_t& b) {
             result = a * b;
-            notification_c.notify();
+            handler_c_called.notify();
         },
         "Provider: Failed to register Handler C: ");
 
-    // Step 7. Wait until Handler C has been called at least once before finishing.
-    std::cout << "\nProvider: Step 7 - Wait for Handler C to be called" << std::endl;
-    WaitOrFail(notification_c, stop_token, "Provider: Notification wait (Handler C) timed out");
+    // Step 8. Wait until Handler C has been called at least once before finishing.
+    std::cout << "\nProvider: Step 8 - Wait for Handler C to be called" << std::endl;
+    WaitOrFail(handler_c_called, stop_token, "Provider: Notification wait (Handler C) timed out");
 
-    // Step 8. Return: Skeleton B's destructor calls StopOfferService().
-    std::cout << "\nProvider: Step 8 - Finishing" << std::endl;
+    // Step 9. Return: Skeleton B's destructor calls StopOfferService().
+    std::cout << "\nProvider: Step 9 - Finishing" << std::endl;
 }
 
 }  // namespace

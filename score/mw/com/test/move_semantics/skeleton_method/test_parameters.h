@@ -32,6 +32,12 @@ constexpr std::int32_t kTestArgB{5};
 // scenarios.
 constexpr std::chrono::milliseconds kMaxFuzzySleepDuration{500};
 
+// Handler A is always registered first and always computes a + b, for all scenarios.
+constexpr std::int32_t kFirstHandlerExpectedResult{kTestArgA + kTestArgB};
+
+// The second handler (Handler B/C) always computes a * b, for all scenarios.
+constexpr std::int32_t kSecondHandlerExpectedResult{kTestArgA * kTestArgB};
+
 const InstanceSpecifier kInstanceSpecifierMovedTo =
     InstanceSpecifier::Create(std::string{"test/move_semantics/skeleton_method/SkeletonMethodMoveInterfaceMovedTo"})
         .value();
@@ -55,14 +61,6 @@ struct CombinedTestConfiguration
 };
 
 CombinedTestConfiguration ReadCommandLineArguments(int argc, const char** argv);
-
-/// \brief Returns the expected return value of moved_method_(kTestArgA, kTestArgB) for the first,
-///        deterministic call (always resolves to Handler A: a + b = 15).
-std::int32_t GetFirstHandlerExpectedResult(SkeletonMoveScenario scenario);
-
-/// \brief Returns the expected return value once the second handler is registered and called
-///        (Handler B/C: a * b = 50, for all scenarios).
-std::int32_t GetSecondHandlerExpectedResult(SkeletonMoveScenario scenario);
 
 }  // namespace score::mw::com::test
 

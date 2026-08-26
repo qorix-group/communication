@@ -36,7 +36,7 @@ int main(int argc, const char** argv)
     std::cout << "Starting consumer with scenario " << static_cast<std::size_t>(test_configuration.scenario)
               << std::endl;
 
-    score::mw::com::test::RunConsumer(test_configuration.scenario, stop_source.get_token());
+    score::mw::com::test::RunConsumer(stop_source.get_token());
 
     return EXIT_SUCCESS;
 }
