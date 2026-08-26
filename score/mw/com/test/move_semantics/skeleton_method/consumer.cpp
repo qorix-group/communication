@@ -17,8 +17,6 @@
 #include "score/mw/com/test/move_semantics/skeleton_method/test_method_datatype.h"
 #include "score/mw/com/test/move_semantics/skeleton_method/test_parameters.h"
 
-#include <score/stop_token.hpp>
-
 #include <chrono>
 #include <iostream>
 #include <optional>
@@ -29,7 +27,7 @@ namespace score::mw::com::test
 namespace
 {
 
-constexpr auto kDetectionCallGap = std::chrono::milliseconds{2};
+constexpr auto kMethodCallInterval = std::chrono::milliseconds{2};
 
 std::int32_t CallMethodOrFail(SkeletonMethodMoveProxy& proxy)
 {
@@ -43,10 +41,8 @@ std::int32_t CallMethodOrFail(SkeletonMethodMoveProxy& proxy)
 
 }  // namespace
 
-void RunConsumer(const score::cpp::stop_token& stop_token)
+void RunConsumer()
 {
-    static_cast<void>(stop_token);
-
     // Step 1. Create proxy for kInstanceSpecifierMovedTo.
     std::cout << "\nConsumer: Step 1 - Create proxy (kMovedTo)" << std::endl;
     ProxyContainer<SkeletonMethodMoveProxy> proxy_moved_to_container{};
@@ -59,21 +55,22 @@ void RunConsumer(const score::cpp::stop_token& stop_token)
     //         handler's result — each call is just checked against the two known-valid results.
     std::cout << "\nConsumer: Step 2 - Loop calling until second handler is detected" << std::endl;
     std::size_t call_count = 0U;
-    std::optional<std::int32_t> actual{};
-    while (!actual.has_value() || actual.value() != kSecondHandlerExpectedResult)
+    std::optional<std::int32_t> actual_method_return_value{};
+    while (!actual_method_return_value.has_value() ||
+           actual_method_return_value.value() != kSecondHandlerExpectedResult)
     {
-        actual = CallMethodOrFail(proxy_moved_to);
+        actual_method_return_value = CallMethodOrFail(proxy_moved_to);
         ++call_count;
 
         // If the first handler is still registered, then we continue calling the method.
-        if (actual == kFirstHandlerExpectedResult)
+        if (actual_method_return_value == kFirstHandlerExpectedResult)
         {
-            std::this_thread::sleep_for(kDetectionCallGap);
+            std::this_thread::sleep_for(kMethodCallInterval);
             continue;
         }
 
         // If the second handler has been registered, then we can finish.
-        if (actual == kSecondHandlerExpectedResult)
+        if (actual_method_return_value == kSecondHandlerExpectedResult)
         {
             break;
         }
@@ -85,11 +82,11 @@ void RunConsumer(const score::cpp::stop_token& stop_token)
                  " or ",
                  kSecondHandlerExpectedResult,
                  " but got ",
-                 actual.value());
+                 actual_method_return_value.value());
     }
 
-    std::cout << "\nConsumer: Step 2 done (" << call_count << " calls, second handler result=" << actual.value() << ")"
-              << std::endl;
+    std::cout << "\nConsumer: Step 2 done (" << call_count
+              << " calls, second handler result=" << actual_method_return_value.value() << ")" << std::endl;
 }
 
 }  // namespace score::mw::com::test

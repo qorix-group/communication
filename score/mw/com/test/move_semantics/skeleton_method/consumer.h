@@ -15,12 +15,10 @@
 
 #include "score/mw/com/test/move_semantics/skeleton_method/test_parameters.h"
 
-#include <score/stop_token.hpp>
-
 namespace score::mw::com::test
 {
 
-void RunConsumer(const score::cpp::stop_token& stop_token);
+void RunConsumer();
 
 }  // namespace score::mw::com::test
 
