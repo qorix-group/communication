@@ -242,8 +242,14 @@ int run_receiver(SharedState& shared_state,
         std::promise<std::vector<DataProxy::HandleType>> service_discovery_promise{};
         auto service_discovery_future = service_discovery_promise.get_future();
         auto handles_result = DataProxy::StartFindService(
-            [moved_service_discovery_promise = std::move(service_discovery_promise)](auto found_handles,
-                                                                                     auto handle) mutable {
+            [moved_service_discovery_promise = std::move(service_discovery_promise)](
+                // The enclosing FindServiceHandler is a type-erased callback whose call signature takes this
+                // parameter by value; the caller already copies it into that fixed signature before invoking this
+                // lambda, so taking it by const& here would not avoid any copy - it would only (misleadingly) hide
+                // the fact that one already happened.
+                // NOLINTNEXTLINE(performance-unnecessary-value-param)
+                auto found_handles,
+                auto handle) mutable {
                 moved_service_discovery_promise.set_value(found_handles);
                 score::cpp::ignore = DataProxy::StopFindService(handle);
             },

@@ -46,7 +46,7 @@ class ProvideServiceRequest : public TransportMessage
   public:
     ProvideServiceRequest() : TransportMessage(MessageType::kProvideServiceRequest) {}
 
-    ProvideServiceRequest(score::mw::com::InstanceSpecifier service_instance_specifier,
+    ProvideServiceRequest(const score::mw::com::InstanceSpecifier& service_instance_specifier,
                           std::vector<score::mw::com::EventInfo> service_elements,
                           std::uint32_t shm_control_size = 0U,
                           std::uint32_t shm_data_size = 0U)
@@ -142,7 +142,7 @@ class OfferServiceRequest : public TransportMessage
   public:
     OfferServiceRequest() : TransportMessage(MessageType::kOfferServiceRequest) {}
 
-    explicit OfferServiceRequest(score::mw::com::InstanceSpecifier service_instance_specifier)
+    explicit OfferServiceRequest(const score::mw::com::InstanceSpecifier& service_instance_specifier)
         : TransportMessage(MessageType::kOfferServiceRequest),
           instance_specifier_(std::string{service_instance_specifier.ToString()})
     {
@@ -175,7 +175,7 @@ class StopOfferServiceRequest : public TransportMessage
   public:
     StopOfferServiceRequest() : TransportMessage(MessageType::kStopOfferServiceRequest) {}
 
-    explicit StopOfferServiceRequest(score::mw::com::InstanceSpecifier service_instance_specifier)
+    explicit StopOfferServiceRequest(const score::mw::com::InstanceSpecifier& service_instance_specifier)
         : TransportMessage(MessageType::kStopOfferServiceRequest),
           instance_specifier_(std::string{service_instance_specifier.ToString()})
     {
@@ -222,7 +222,7 @@ class ServiceElementMessage : public TransportMessage
     using TransportMessage::TransportMessage;
 
     ServiceElementMessage(MessageType message_type,
-                          score::mw::com::InstanceSpecifier service_instance_specifier,
+                          const score::mw::com::InstanceSpecifier& service_instance_specifier,
                           impl::ServiceElementType element_type,
                           std::string element_name)
         : TransportMessage(message_type),
@@ -270,11 +270,11 @@ class RegisterNotificationRequest final : public ServiceElementMessage
 {
   public:
     RegisterNotificationRequest() : ServiceElementMessage(MessageType::kRegisterNotificationRequest) {}
-    RegisterNotificationRequest(score::mw::com::InstanceSpecifier service_instance_specifier,
+    RegisterNotificationRequest(const score::mw::com::InstanceSpecifier& service_instance_specifier,
                                 impl::ServiceElementType element_type,
                                 std::string element_name)
         : ServiceElementMessage(MessageType::kRegisterNotificationRequest,
-                                std::move(service_instance_specifier),
+                                service_instance_specifier,
                                 element_type,
                                 std::move(element_name))
     {
@@ -286,11 +286,11 @@ class UnregisterNotificationRequest final : public ServiceElementMessage
 {
   public:
     UnregisterNotificationRequest() : ServiceElementMessage(MessageType::kUnregisterNotificationRequest) {}
-    UnregisterNotificationRequest(score::mw::com::InstanceSpecifier service_instance_specifier,
+    UnregisterNotificationRequest(const score::mw::com::InstanceSpecifier& service_instance_specifier,
                                   impl::ServiceElementType element_type,
                                   std::string element_name)
         : ServiceElementMessage(MessageType::kUnregisterNotificationRequest,
-                                std::move(service_instance_specifier),
+                                service_instance_specifier,
                                 element_type,
                                 std::move(element_name))
     {
@@ -303,11 +303,11 @@ class UpdateNotification final : public ServiceElementMessage
 {
   public:
     UpdateNotification() : ServiceElementMessage(MessageType::kUpdateNotification) {}
-    UpdateNotification(score::mw::com::InstanceSpecifier service_instance_specifier,
+    UpdateNotification(const score::mw::com::InstanceSpecifier& service_instance_specifier,
                        impl::ServiceElementType element_type,
                        std::string element_name)
         : ServiceElementMessage(MessageType::kUpdateNotification,
-                                std::move(service_instance_specifier),
+                                service_instance_specifier,
                                 element_type,
                                 std::move(element_name))
     {
