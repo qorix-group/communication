@@ -387,11 +387,11 @@ int main(int argc, const char** argv)
     namespace ipc = boost::interprocess;
     using namespace score;
 
-    std::size_t num_clients;
-    std::size_t turns;
-    std::size_t batch_size;
-    bool no_wait;
-    std::size_t num_slots;
+    std::size_t num_clients{0U};
+    std::size_t turns{0U};
+    std::size_t batch_size{0U};
+    bool no_wait{false};
+    std::size_t num_slots{0U};
 
     po::options_description options;
     // clang-format off
@@ -487,7 +487,7 @@ int main(int argc, const char** argv)
         bool children_successful = true;
         for (auto pid : children)
         {
-            int wstatus;
+            int wstatus{0};
             waitpid(pid, &wstatus, 0);
             if (WIFEXITED(wstatus))
             {
