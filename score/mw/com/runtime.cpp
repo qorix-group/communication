@@ -31,7 +31,7 @@ IRuntime* RuntimeMockHolder::runtime_mock_{nullptr};
 
 }
 
-score::Result<InstanceIdentifierContainer> ResolveInstanceIDs(const impl::InstanceSpecifier model_name)
+score::Result<InstanceIdentifierContainer> ResolveInstanceIDs(const impl::InstanceSpecifier& model_name)
 {
     if (auto* const runtime_mock_holder = detail::RuntimeMockHolder::GetRuntimeMock())
     {

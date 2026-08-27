@@ -53,7 +53,7 @@ constexpr auto kSharedMemoryPathPrefix = "/dev/shm/";
 class ConfigParser
 {
   public:
-    ConfigParser(const std::string& service_instance_manifest_path, const InstanceSpecifier instance_specifier)
+    ConfigParser(const std::string& service_instance_manifest_path, const InstanceSpecifier& instance_specifier)
     {
         const auto configuration = score::mw::com::impl::configuration::Parse(service_instance_manifest_path);
 

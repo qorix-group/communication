@@ -23,7 +23,7 @@
       "name": "ResolveInstanceIDs",
       "qualified_name": "score::mw::com::runtime::ResolveInstanceIDs",
       "kind": "function",
-      "signature": "ResolveInstanceIDs : score::Result<score::mw::com::InstanceIdentifierContainer> (const InstanceSpecifier)"
+      "signature": "ResolveInstanceIDs : score::Result<score::mw::com::InstanceIdentifierContainer> (const InstanceSpecifier &)"
     },
     {
       "name": "InitializeRuntime",

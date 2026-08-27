@@ -49,20 +49,20 @@ std::ostream& operator<<(std::ostream& stream, const InstanceSpecifier& instance
 }
 
 template <typename T>
-void ToStringImpl(std::ostream& o, T t)
+void ToStringImpl(std::ostream& o, const T& t)
 {
     o << t;
 }
 
 template <typename T, typename... Args>
-void ToStringImpl(std::ostream& o, T t, Args... args)
+void ToStringImpl(std::ostream& o, const T& t, Args... args)
 {
     ToStringImpl(o, t);
     ToStringImpl(o, args...);
 }
 
 template <typename... Args>
-std::string ToString(Args... args)
+std::string ToString(const Args&... args)
 {
     std::ostringstream oss;
     ToStringImpl(oss, args...);
