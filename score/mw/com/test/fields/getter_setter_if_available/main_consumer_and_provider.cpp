@@ -1,4 +1,4 @@
-/********************************************************************************
+/*******************************************************************************
  * Copyright (c) 2026 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
@@ -9,14 +9,12 @@
  * https://www.apache.org/licenses/LICENSE-2.0
  *
  * SPDX-License-Identifier: Apache-2.0
- ********************************************************************************/
-#include "score/mw/com/runtime.h"
+ *******************************************************************************/
 
-#include "score/mw/com/test/common_test_resources/assert_handler.h"
+#include "score/mw/com/runtime.h"
 #include "score/mw/com/test/common_test_resources/stop_token_sig_term_handler.h"
-#include "score/mw/com/test/methods/semi_dynamic_methods/consumer.h"
-#include "score/mw/com/test/methods/semi_dynamic_methods/provider.h"
-#include "score/string_manipulation/arguments/arguments.h"
+#include "score/mw/com/test/fields/getter_setter_if_available/consumer.h"
+#include "score/mw/com/test/fields/getter_setter_if_available/provider.h"
 
 #include <cstdlib>
 #include <future>
@@ -24,8 +22,9 @@
 
 int main(int argc, const char** argv)
 {
-    score::mw::com::test::SetupAssertHandler();
-    score::mw::com::runtime::InitializeRuntime(score::string_manipulation::GetArguments(argc, argv));
+    const auto config = score::mw::com::test::ParseConfig(argc, argv);
+
+    score::mw::com::runtime::InitializeRuntime(score::mw::com::runtime::RuntimeConfiguration{config.config_file_path});
 
     score::cpp::stop_source stop_source{};
     const bool sig_term_handler_setup_success = score::mw::com::SetupStopTokenSigTermHandler(stop_source);
@@ -34,13 +33,13 @@ int main(int argc, const char** argv)
         std::cerr << "Unable to set signal handler for SIGINT and/or SIGTERM, cautiously continuing\n";
     }
 
-    auto provider_future = std::async(std::launch::async, score::mw::com::test::run_provider, stop_source.get_token());
-    auto consumer_future = std::async(std::launch::async, score::mw::com::test::run_consumer);
+    auto provider_future =
+        std::async(std::launch::async, score::mw::com::test::run_provider, stop_source.get_token(), config.mode);
+    auto consumer_future = std::async(std::launch::async, score::mw::com::test::run_consumer, config.mode);
 
     provider_future.get();
     consumer_future.get();
 
-    std::cout << "BasicAcceptanceSameProcessTest: Provider and Consumer completed successfully" << std::endl;
-
+    std::cout << "GetterSetterIfAvailableTest: Provider and Consumer completed successfully" << std::endl;
     return EXIT_SUCCESS;
 }
